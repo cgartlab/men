@@ -85,6 +85,18 @@ spawn("npx eslint . && bun test")
 5. L1 全部通过 → 报告结果
 ```
 
+## 项目规范参考
+
+- **verify.mjs 五项机械检查**：output-exists / secrets / todo-scan / structure / gate-exit-code
+- **gate.mjs 白名单**：只允许 typecheck / test / lint，60s 超时，强化次数上限 5
+- **gate.mjs 状态**：GATE_PASS / GATE_FAIL / GATE_SKIP / GATE_EXHAUSTED
+- **5 项检查通过顺序**：output-exists → secrets → todo-scan → structure → gate-exit-code
+- **event.mjs 审计**：每次 gate 结果用 `event.mjs append --type gate.passed` 或 `gate.failed` 记录
+- **全员红线 #1**：不伪造验证结果。退出码 0 = 通过，非 0 = 失败，不接受"应该没问题"
+- **全员红线 #2**：不跳过 L1 直接推给 L2（chi judge）
+- **LLM 自评禁止**：不接受"我觉得代码没问题"作为验证结果
+- **CHARTER_CHECK**：ji 角色 Clarification level=MEDIUM
+
 ## 完成标准
 
 代码交付后必须确认：

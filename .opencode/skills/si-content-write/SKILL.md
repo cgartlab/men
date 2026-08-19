@@ -204,6 +204,17 @@ license: Apache-2.0
 - **导语含关键词** — 前 100 字出现核心关键词，利于摘要抓取
 - **无空标题** — 每个标题下至少 1 句正文或列表，不出现孤立标题
 
+## 项目规范参考
+
+- **全员红线 #7**：写作产出必须遵循——粗体关键信息、emoji 标注状态、列表优先于段落、单段 ≤6 行
+- **全员红线 #1**：完成=验证过的完成。产出 .md 文件后必须执行 `Test-Path` 确认文件存在且非空
+- **写作前确认需求**（红线 #6）：目标读者、篇幅、风格、发布日期——信息不全先追问
+- **事实核查**：引用外部信息必须走 xun-factcheck，三级标注 ✅/❌/⚠️ 附来源链接
+- **结构检查**：产出 .md 文件需通过 verify.mjs 的 `structure` 检查（YAML frontmatter 合法）
+- **event.mjs 审计**：重要写作完成事件用 `event.mjs append --type decision.made --subject <摘要>` 记录到 events.jsonl
+- **CHARTER_CHECK**：si 角色 Clarification level=HIGH，需求模糊时阻塞并追问，不脑补
+- **协作边界**：内容写作由 si 执行，代码实现由 ji 执行，视觉设计由 yi 执行
+
 ## Pre-Commit Checklist
 
 - [ ] 观点有据（关键论断有来源或推理链）

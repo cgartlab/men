@@ -72,6 +72,18 @@ Wave 2: {依赖 Wave 1 的任务}
 6. 标注每个任务的 Category / Skills / QA
 7. 产出 `<plan>` envelope
 
+## 项目规范参考
+
+- **9 步协议**：PLAN 是第 3 步，位于 CERTAINTY（需求确认）和 TRIAGE（意图判定）之后
+- **4 种意图**：search→xun 单路 / analyze→专家+chi judge / team→si 规划多 Wave / hyperplan→访谈式规划
+- **wave 并行上限**：≤4 个任务同时并行
+- **子任务自洽**：每个子任务 prompt 必须完整自洽（子 agent 无法追问 men）
+- **强化次数上限**：5 次（gate.mjs MAX_REINFORCEMENTS=5），超限报"卡住"
+- **双层验证**：plan 验收标准供 verify.mjs 机械检查 + chi judge 语义复核
+- **chi judge 状态**：PASS / FAIL / REGRESSED / BLOCKED
+- **事件审计**：plan 决策用 `event.mjs append --type decision.made` 记录
+- **CHARTER_CHECK**：si 角色 Clarification level=HIGH，验收标准不可缺
+
 ## Plan Envelope 完整示例
 
 ```markdown

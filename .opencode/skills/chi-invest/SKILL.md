@@ -54,6 +54,17 @@ description: "Use when analyzing portfolio holdings, calculating investment retu
 | 数据格式异常 | 报告原始响应，标记 "数据异常" |
 | 部分标的无行情 | 该标的位置标注 "（待核实）" |
 
+## 项目规范参考
+
+- **全员红线 #1**：持仓数据必须来自 Wealth Tracker API 的真实响应，不凭记忆或训练数据"估算"
+- **全员红线 #4**：外部操作（发邮件、公开发布持仓报告）前必须征得用户同意
+- **内网数据源**：Wealth Tracker API（192.168.31.111:8888），仅在内网可用
+- **决策权在用户**：chi 只出分析不出决策（AGENTS.md chi.md）
+- **event.mjs 审计**：每次持仓查询用 `event.mjs append --type decision.made` 记录
+- **数据标注**：估算值标注（估算），不确定标注（待核实）
+- **CHARTER_CHECK**：chi 角色 Clarification level=MEDIUM
+- **协作边界**：投资分析由 chi 执行，市场资讯搜索由 xun 执行
+
 ## 客观性原则
 
 - 数据是什么就是什么，不美化、不粉饰

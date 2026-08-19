@@ -103,6 +103,17 @@ description: "Use when making visual design decisions — color palettes, typogr
 ji 需在 :root 和 [data-theme="dark"] 中声明以上两个 Token。
 ```
 
+## 项目规范参考
+
+- **全员红线 #1**：设计 Token 产出后必须验证文件存在且非空
+- **全员红线 #7**：输出格式——粗体关键信息、列表优先、单段 ≤6 行
+- **模型**：yi 使用 sensenova/sensenova-6.8-flash-lite（opencode.json agent.yi.model）
+- **协作边界**：yi 产出 Token 定义和设计决策文档，ji 执行组件 CSS 实现
+- **design Token 规范**：oklch() 经 CSS 变量声明，禁止 bare 颜色值出现在组件规则
+- **dark mode 覆盖**：每个 :root 颜色 Token 必须在 [data-theme="dark"] 中有 override
+- **WCAG AA**：正文/背景 ≥4.5:1，大文本 ≥3:1
+- **CHARTER_CHECK**：yi 角色 Clarification level=MEDIUM
+
 ## 协作边界
 
 - **yi 产出**：Token 定义、设计决策文档、审美分析

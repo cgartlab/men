@@ -126,6 +126,16 @@ Base class + modifier pattern。禁止嵌套 modifier 链（如 `.parent .child-
 | 无 `[data-theme="dark"]` 覆写 | 每个颜色 Token 都有 dark 覆写 |
 | 直接用 `<a>` 包裹 `<button>` | 语义正确：`<button>` 做动作，`<a>` 做导航 |
 
+## 项目规范参考
+
+- **全员红线 #1**：完成=文件存在且非空。产出 .html/.css/.js 后必须 `Test-Path` 确认
+- **全员红线 #2**：不跳过验证。提交前必须通过 verify.mjs 五项机械检查
+- **全员红线 #7**：输出格式——粗体关键信息、列表优先、单段 ≤6 行
+- **模型**：ji 使用 huoshan/ark-code-latest（opencode.json agent.ji.model）
+- **协作边界**：设计决策由 yi 产出，ji 只执行代码实现；ji 不直接做设计决策
+- **PR 流程**：代码完成后由 chi 做 fresh-context 独立 Judge
+- **CHARTER_CHECK**：ji 角色 Clarification level=MEDIUM
+
 ## Pre-Commit Checklist
 
 完成 UI 任务后逐条核对：

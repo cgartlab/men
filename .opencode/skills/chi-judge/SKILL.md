@@ -69,6 +69,20 @@ description: "Use when performing independent mechanical verification (judge) of
 **Verdict**: FAIL（S2 failed, S4 regressed）
 ```
 
+## 项目规范参考
+
+- **双层验证架构**：verify.mjs 5项机械检查（output-exists/secrets/todo-scan/structure/gate-exit-code）→ 全PASS → chi fresh-context 语义复核
+- **5 项机械检查**：通过 `node scripts/verify.mjs <target>` 执行，退出码 0 = 通过
+- **Fresh context spawn**：judge 不共享执行者上下文，只接收验收标准
+- **状态机**：PASS→本轮通过 / FAIL→本轮失败 / REGRESSED→上一轮PASS→本轮FAIL / BLOCKED→连续3次失败
+- **3 次失败即 BLOCKED**：连续 3 次 FAIL 后标记 BLOCKED，停止重试，汇报卡住
+- **不接受 LLM 自评**：不接受"测试通过"作为唯一证据
+- **不接受自述**：只核对实际产物文件，不接受任何子 agent 的"我完成了"作为完成证据
+- **verify.mjs 五项检查**：output-exists→secrets→todo-scan→structure→gate-exit-code
+- **全员红线 #1**：judge 报告必须有机械证据（退出码/文件存在/命令输出）
+- **全员红线 #2**：不跳过 verify.mjs 直接做 judge
+- **CHARTER_CHECK**：chi 角色 Clarification level=MEDIUM
+
 ## 事件审计
 
 judge 决策追加到 `.agents/state/sessions/{sid}/events.jsonl`（append-only）：

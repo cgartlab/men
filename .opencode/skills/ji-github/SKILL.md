@@ -100,6 +100,17 @@ PR 标题也使用 Conventional Commits，例如：
 5. 验证操作结果（PR 已创建/issue 已关联等）
 6. 输出结构化结果
 
+## 项目规范参考
+
+- **全员红线 #4**：外部操作先确认——PR 创建、合并、发布前必须征得用户同意
+- **全员红线 #5**：破坏性操作先询问——`trash > rm`，`git push --force` 绝对禁止
+- **全员红线 #1**：git status + git diff 作为机械证据，不信任"我记得我改了"
+- **Conventional Commits**：本仓库强制使用 `<type>(<scope>): <description>`，豁免格式见 ji-github skill 定义
+- **分支命名**：dev-xxx（开发）/ write-xxx（写作）/ feature/xxx / fix/xxx
+- **不跳过 gate**：push 前必须通过 gate.mjs（白名单：typecheck/test/lint）
+- **不自己 merge 自己 PR**：chi 独立评审或 human merge gate
+- **CHARTER_CHECK**：ji 角色 Clarification level=MEDIUM
+
 ## 提交前检查清单
 
 ```bash

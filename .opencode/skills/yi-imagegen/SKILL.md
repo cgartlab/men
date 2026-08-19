@@ -87,6 +87,18 @@ description: "Use when generating images, concept art, illustrations, or visual 
 5. 将结果落盘为图片文件（.png / .jpg）
 6. 生图结果经用户确认后方可对外使用
 
+## 项目规范参考
+
+- **全员红线 #1**：生图完成后必须验证图片文件存在且非空（`Test-Path` 确认）
+- **全员红线 #4**：生图结果未经用户确认不得对外发布（邮件/公开发布/商业使用）
+- **全员红线 #6**：用途/风格/尺寸信息不全时先追问，不脑补
+- **全员红线 #7**：输出格式——粗体关键信息、列表优先、单段 ≤6 行
+- **模型**：yi 使用 sensenova/sensenova-6.8-flash-lite（opencode.json agent.yi.model）
+- **生图引擎**：唯一引擎 SenseNova U1 Fast，直连必传 `watermark: false`
+- **风格体系**：复古未来主义 / 柴油朋克 / 模拟科幻 + 超现实主义，材质做旧、磨损
+- **协作边界**：生图由 yi 执行，生图结果供 ji 嵌入文章/页面
+- **CHARTER_CHECK**：yi 角色 Clarification level=MEDIUM
+
 ## 红线
 
 - 不跳过水印关闭参数

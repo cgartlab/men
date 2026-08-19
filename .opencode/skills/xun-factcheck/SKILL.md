@@ -93,6 +93,17 @@ description: "Use when verifying the accuracy of specific claims, cross-referenc
 - 不猜测缺失的信息
 - 不将未经确认的信息呈现为事实
 
+## 项目规范参考
+
+- **全员红线 #1**：核查结论必须附≥2个独立来源链接，单来源标注"待核实"
+- **全员红线 #6**：核查标准不明时向用户确认，不猜测核查范围
+- **确认阈值**：≥2独立来源一致→✅确认 / 仅1来源→⚠️待核实 / 无来源→❌未找到
+- **独立来源判定**：不同域名+不同编辑团队=独立；同一媒体集团旗下子刊=不独立；转载=不独立
+- **依赖 xun-search**：事实核查基于 xun-search 的搜索结果作为输入
+- **event.mjs 审计**：核查完成用 `event.mjs append --type decision.made` 记录到 events.jsonl
+- **只读约束**：不修改源数据，不写文件到生产目录
+- **CHARTER_CHECK**：xun 角色 Clarification level=LOW
+
 ## 与 xun-search 的协作
 
 事实核查依赖 xun-search 的搜索结果作为输入。当需要额外搜索时，按 xun-search 的搜索策略执行，并遵循同样的来源优先级标准。
