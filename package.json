@@ -1,0 +1,40 @@
+{
+  "name": "@fakevis/men",
+  "version": "0.1.0",
+  "description": "6+1 Agent 团队系统 —— OpenCode 首发，假维斯（fakevis）出品",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "install": "node scripts/install.mjs",
+    "verify": "node scripts/verify.mjs men",
+    "release": "node scripts/release.mjs",
+    "release:patch": "node scripts/release.mjs patch",
+    "release:minor": "node scripts/release.mjs minor",
+    "release:major": "node scripts/release.mjs major"
+  },
+  "files": [
+    "opencode.json",
+    "AGENTS.md",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    ".env.example",
+    "install.sh",
+    "install.ps1",
+    ".opencode/",
+    "scripts/",
+    "config/",
+    "docs/"
+  ],
+  "keywords": [
+    "opencode",
+    "agent",
+    "team",
+    "orchestration",
+    "ai",
+    "fakevis"
+  ]
+}

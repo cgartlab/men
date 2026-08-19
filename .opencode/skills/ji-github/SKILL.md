@@ -1,0 +1,114 @@
+---
+name: ji-github
+description: "Use when creating/viewing pull requests, handling issues, or performing any GitHub repository operation. Trigger on phrases like '开 PR', '创建 PR', '看 issue', '合并', 'push', 'branch'."
+---
+
+# ji-github — GitHub 工程工作流
+
+当此 skill 激活时，所有 GitHub 仓库操作必须遵循本规范：规范提交、规范 PR、不跳过审查。
+
+## 触发词
+
+- 开 PR / 创建 PR / 提交 PR
+- 看 issue / 处理 issue / 列出 issue
+- push 代码 / 推到远程 / 切分支
+- 代码审查 / review / 合并
+
+## gh CLI 用法
+
+### PR 操作
+
+| 操作 | 命令 |
+|------|------|
+| 创建 PR | `gh pr create --title "<title>" --body "<body>"` |
+| 查看当前 PR | `gh pr view` |
+| 列出 PR | `gh pr list` |
+| 查看 PR diff | `gh pr diff` |
+| 评论 PR | `gh pr comment <number> --body "<message>"` |
+
+### Issue 操作
+
+| 操作 | 命令 |
+|------|------|
+| 列出 issue | `gh issue list` |
+| 创建 issue | `gh issue create --title "<title>" --body "<body>"` |
+| 查看 issue | `gh issue view <number>` |
+| 关联 issue | PR body 中写 `Closes #<number>` |
+
+### 分支与提交
+
+- `gh branch` — 列出本地/远程分支
+- `git push -u origin <branch>` — 推送新分支
+- 推前务必 `git status` + `git diff` 确认
+
+## PR 提交规范
+
+### Conventional Commits
+
+提交信息格式：`<type>(<scope>): <description>`
+
+| type | 用途 |
+|------|------|
+| `feat` | 新功能 |
+| `fix` | 修复 |
+| `docs` | 文档 |
+| `style` | 格式（不影响逻辑） |
+| `refactor` | 重构 |
+| `perf` | 性能优化 |
+| `test` | 测试 |
+| `chore` | 杂项 |
+| `ci` | CI 配置 |
+
+豁免格式：`Merge` / `Revert` / `This reverts commit` / `vault backup:`
+
+### PR 标题
+
+PR 标题也使用 Conventional Commits，例如：
+- `feat(ui): add dark mode toggle`
+- `fix(layout): fix card overflow on mobile`
+
+### PR 描述模板
+
+```markdown
+## 变更
+
+- ...
+
+## 验证
+
+- [ ] typecheck 通过
+- [ ] lint 通过
+- [ ] test 通过
+
+## 截图（如涉及 UI）
+
+...
+```
+
+## 提交前检查清单
+
+```bash
+git status              # 确认无意外文件
+git diff                # 逐文件审 diff
+git log --oneline -5    # 确认分支提交历史
+```
+
+- **不 force push 到 main**
+- **不跳过 gate 直接 push** — typecheck/lint/test 必跑
+- **不自己 merge 自己的 PR** — 由 chi 独立评审
+
+## 代码审查响应
+
+收到 review 意见后：
+
+1. 逐条回应（`gh pr comment` 或行内 comment）
+2. 修改后 push 到同一分支，PR 自动更新
+3. 回应格式：`已修复` / `已修改` / `不同意，原因是...`
+4. 全部 resolved 后再请求 merge
+
+## Anti-Patterns
+
+- ❌ 不提交多个不相关的改动到同一个 PR
+- ❌ 不直接 push 到 main 绕过 review
+- ❌ 不用 `git commit --amend` 修改已 push 的 commit
+- ❌ 不在 PR 描述里写 `NO` / `随便看看`

@@ -1,0 +1,122 @@
+# 快速上手指南（Quickstart）— 假维斯（men Agent 团队）
+
+> 适用对象：第一次使用假维斯的用户
+> 前置条件：已安装 OpenCode 并进入 `men` 项目目录
+
+---
+
+## 一、安装与启动
+
+1. 打开终端，进入 `men` 项目目录：
+   ```powershell
+   cd D:\github-repos\men
+   ```
+2. 启动 OpenCode（会自动读取 `opencode.json`，将 `men` 设为默认 agent）：
+   ```
+   opencode
+   ```
+3. 首次或修改配置后需重启 OpenCode 才能加载：
+   - 输入 `/quit` 退出，再重新执行 `opencode`
+   - 或关闭终端重开
+
+## 二、三个命令用法表
+
+| 命令 | 用法 | 场景 | 触发 agent |
+|------|------|------|-----------|
+| `/ultrawork <任务>` | 一键编排，men 自动完成意图分诊→拆分→分发→验证→汇总 | 日常绝大多数任务 | men（唯一 spawner） |
+| `/verify <角色或路径>` | 双层验证：机械检查（verify.mjs）+ 语义复核（chi） | 需要独立验收某个角色的产物 | chi（fresh-context Judge） |
+| `/hyperplan <项目>` | 访谈式规划，产出 plan envelope（不执行） | 复杂项目立项、长期规划 | men → si |
+
+## 三、命令示例
+
+### 3.1 `/ultrawork` 一键编排
+
+**单一任务（search 类，单路执行）**：
+```
+/ultrawork 查一下本周 AI 领域最新发布的开源模型有哪些
+```
+→ men 判定为 `search` 意图，直接 spawn `xun` 用 Exa MCP 搜索并整理报告。
+
+**分析任务（analyze 类，需 chi judge）**：
+```
+/ultrawork 评估一下最近 DeepSeek V4 Pro 的定价对行业的影响
+```
+→ men 判定为 `analyze`，spawn `xun` 搜集资料 → 再 spawn `chi` 做 fresh-context 独立复核 → 输出四段报告。
+
+**混合任务（team 类，多路 Wave 并行 + 汇总）**：
+```
+/ultrawork 写一篇关于"AI 图像生成最新进展"的周报，需要查最新新闻和配图概念
+```
+→ men 判定为 `team`，spawn `si` 规划 → 按 plan 拆分：
+- Wave 1：`xun` 查新闻 + `yi` 出配图概念（并行）
+- Wave 2：`si` 撰写正文（依赖 Wave 1 数据）
+- Chi judge 独立复核全部产物
+→ 最终四段汇总报告：【结论】【关键信息】【子任务状态】【来源/证据】【未决问题】
+
+### 3.2 `/verify` 独立验收
+
+**验证某个角色的产物**：
+```
+/verify ji docs/m2-acceptance/ji-skill-structure.md
+```
+→ chi 作为独立 Judge：先跑 `node scripts/verify.mjs` 机械检查 → 全 PASS 后再语义复核。
+
+**附加验收标准**：
+```
+/verify xun docs/drafts/ai-news.md 每段必须有真实 URL 来源
+```
+→ chi 按提供的标准表逐条核对，输出 PASS/FAIL/REGRESSED/BLOCKED verdict。
+
+### 3.3 `/hyperplan` 项目规划
+
+```
+/hyperplan 为公司搭建一个内部知识库
+```
+→ men 逐项访谈（目标/范围/阶段/角色/约束/验收），六项全部明确后产出 `<plan>` envelope，包含阶段划分、依赖图、Wave 划分、角色矩阵、验收标准总表。**只规划不执行**，用户确认后下次用 `/ultrawork` 按计划分发。
+
+## 四、常用技能提示
+
+| 技能包 | 所属角色 | 触发场景 |
+|--------|----------|----------|
+| `xun-search` | xun | 搜索新闻/资料/网页 |
+| `xun-factcheck` | xun | 多源对比、逐条事实核查 |
+| `xun-rss-scan` | xun | RSS feed 扫描（Miniflux 等本地源） |
+| `chi-judge` | chi | 独立 Judge 复核流程 |
+| `chi-invest` | chi | 持仓/收益/市场跟踪（Wealth Tracker API） |
+| `si-plan-compose` | si | 规划产出、plan envelope 撰写 |
+| `si-content-write` | si | 正文写作 |
+| `si-knowledge` | si | 知识条目撰写 |
+| `ji-frontend-design` | ji | 前端实现、UI 组件 |
+| `ji-github` | ji | GitHub 仓库操作 |
+| `ji-l1-verify` | ji | L1 机械验证（文件结构/退出码） |
+| `yi-design` | yi | 设计决策、设计文档 |
+| `yi-imagegen` | yi | SenseNova U1 Fast 生图 |
+
+## 五、事件审计查看
+
+每次 `/ultrawork` 执行会生成一个独立 sid（格式 `ultrawork-<时间戳>`），事件写入 `.agents/state/sessions/<sid>/events.jsonl`。
+
+```bash
+# 回放某次编排的完整决策链
+node scripts/event.mjs replay --sid ultrawork-20260815T103000
+
+# 查看某次执行的某一类事件（如 gate 通过）
+node scripts/event.mjs list --sid ultrawork-20260815T103000 --type gate.passed
+
+# 验证事件文件格式完整
+node scripts/event.mjs validate --sid ultrawork-20260815T103000
+```
+
+replay 输出按时间排序，展示每步 `type` / `eventId` / `subject` / `detail` / `payload`，可用于回溯编排过程。
+
+## 六、红线提醒
+
+团队所有 agent 共享 7 条红线（在 agent 定义底部逐字一致）：
+
+1. **不伪造输出**：完成 = 验证过的完成
+2. **不跳过验证**：执行后必须确认结果
+3. **不泄露用户隐私**
+4. **外部操作先确认**（发邮件/公开发布）
+5. **破坏性操作先询问**（trash > rm）
+6. **需求模糊先问清楚**
+7. **输出格式**：粗体关键信息、emoji 标注、列表优先、单段 ≤6 行

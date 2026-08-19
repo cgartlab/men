@@ -1,0 +1,21 @@
+# 依赖
+node_modules/
+.opencode/node_modules/
+
+# 运行态
+.agents/state/
+state/
+
+# 环境
+.env
+.env.local
+*.local
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 日志/临时
+*.log
+tmp/
+temp/

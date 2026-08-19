@@ -1,0 +1,43 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "men",
+  "instructions": ["AGENTS.md"],
+
+  "agent": {
+    "men": { "model": "opencode-go/deepseek-v4-flash" },
+    "si": { "model": "sensenova/deepseek-v4-flash" },
+    "ji": { "model": "huoshan/ark-code-latest" },
+    "chi": { "model": "sensenova/glm-5.2" },
+    "yi": { "model": "sensenova/sensenova-6.8-flash-lite" },
+    "xun": { "model": "sensenova/sensenova-6.8-flash-lite" }
+  },
+
+  "plugin": [],
+
+  "skills": {
+    "paths": [".opencode/skills"]
+  },
+
+  "mcp": {
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "enabled": true
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "grep_app": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": true
+    },
+
+    "fetch": { "enabled": false },
+    "github-mcp-server": { "enabled": false },
+    "memory": { "enabled": false },
+    "sequential-thinking": { "enabled": false }
+  }
+}
