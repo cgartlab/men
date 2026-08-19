@@ -1,6 +1,6 @@
 ---
 name: chi-judge
-description: 对任意 agent 产物做机械验证（file exists / tests pass / lint / command output / secrets 扫描 / TODO 扫描），触发关键词：评审、judge、验收、verify、review。
+description: "Use when performing independent mechanical verification (judge) of any agent's output — checking file existence, test results, lint, secrets, or TODO scans. 触发关键词：评审、judge、验收、verify、review、验收标准、独立评审、质量门禁。Don't call when the task is writing new code (use ji), or when doing semantic content review (use si)."
 ---
 
 # chi-judge — 独立评审（Judge）技能
@@ -8,6 +8,12 @@ description: 对任意 agent 产物做机械验证（file exists / tests pass / 
 ## 用途
 
 对 si / ji / yi / xun 任意 agent 的产物做 fresh context 机械验证，输出结构化 Judge 报告。
+
+## 不要触发
+
+- 用户要求写新代码（由 ji 负责）
+- 用户要求做内容风格评审（由 si 负责）
+- 用户要求做视觉设计评审（由 yi 负责）
 
 ## Judge 协议
 
@@ -40,6 +46,14 @@ description: 对任意 agent 产物做机械验证（file exists / tests pass / 
 | REGRESSED | 上一轮 PASS → 本轮 FAIL（回归） |
 | BLOCKED | 连续 3 次失败，停止重试 |
 
+## 测试 Flakiness 处理
+
+| 场景 | 处理 |
+|------|------|
+| 同一测试连续失败但错误信息不同 | 标记为 `UNSTABLE`（非 FAIL），提示检查测试稳定性 |
+| 时间相关测试失败 | 记录当前时间，标记 `TIME-DEPENDENT` |
+| 网络相关测试失败 | 检查网络连接，标记 `NETWORK-DEPENDENT` |
+
 ### 输出格式
 
 ```
@@ -47,11 +61,12 @@ description: 对任意 agent 产物做机械验证（file exists / tests pass / 
 
 | 标准ID | 验证类型 | 状态 | 证据 |
 |--------|----------|------|------|
-| S1 | file exists | PASS | ls output |
-| S2 | tests pass | FAIL | exit code 1, stderr: ... |
-| S3 | hardcoded secrets 扫描 | REGRESSED | found API_KEY in xxx.ts |
+| S1 | file exists | PASS | `ls -la src/index.html` → 4128 bytes |
+| S2 | tests pass | FAIL | exit code 1, stderr: `Error: Cannot find module` |
+| S3 | hardcoded secrets 扫描 | PASS | 0 matches in 12 files |
+| S4 | command output | REGRESSED | expected `200`, got `404` |
 
-**Verdict**: PASS / FAIL / BLOCKED
+**Verdict**: FAIL（S2 failed, S4 regressed）
 ```
 
 ## 事件审计

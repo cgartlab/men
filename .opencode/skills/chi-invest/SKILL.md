@@ -1,6 +1,6 @@
 ---
 name: chi-invest
-description: 基于 Wealth Tracker API 做持仓记录、收益计算与市场跟踪，触发关键词：持仓、收益、投资分析、portfolio、AU9999、港股通、纳斯达克、中证红利。
+description: "Use when analyzing portfolio holdings, calculating investment returns, or tracking market performance for AU9999, Nasdaq, Hong Kong Stock Connect, or CSI Dividend Index. 触发关键词：持仓、收益、投资分析、portfolio、AU9999、港股通、纳斯达克、中证红利、金价、黄金。Don't call when the task is general market research (use xun-search), or when the user wants to write about finance (use si-content-write)."
 ---
 
 # chi-invest — 投资分析技能
@@ -8,6 +8,22 @@ description: 基于 Wealth Tracker API 做持仓记录、收益计算与市场�
 ## 用途
 
 基于 Wealth Tracker 数据做持仓记录、收益计算与跟踪标的市场跟踪。输出客观持仓报告与风险提示。
+
+## 不要触发
+
+- 用户要求一般市场资讯搜索（用 xun-search）
+- 用户要求撰写财经文章（用 si-content-write）
+- 用户要求产品投资决策（决策权永远在用户）
+
+## 投资分析工作流（step-by-step）
+
+1. 查询持仓数据（GET /api/assets）
+2. 获取市场行情（查询跟踪标的最新价格）
+3. 计算当前市值 = 持仓数量 × 最新价格
+4. 计算收益率 = (当前市值 - 成本) / 成本 × 100%
+5. 计算较上期变动
+6. 标注估算值（估算）和不确定值（待核实）
+7. 输出结构化报告（持仓表 + 收益变动 + 风险提示）
 
 ## 数据源
 
@@ -28,6 +44,15 @@ description: 基于 Wealth Tracker API 做持仓记录、收益计算与市场�
 - **纳斯达克**（Nasdaq 指数）
 - **港股通**（港股通标的）
 - **中证红利**（中证红利指数）
+
+## API 错误处理
+
+| 场景 | 处理 |
+|------|------|
+| API 离线（连接超时） | 报告 "数据源不可用"，使用最近一次缓存数据标注 "（缓存）" |
+| 返回空数据 | 报告 "无数据"，不编造 |
+| 数据格式异常 | 报告原始响应，标记 "数据异常" |
+| 部分标的无行情 | 该标的位置标注 "（待核实）" |
 
 ## 客观性原则
 

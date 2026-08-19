@@ -1,6 +1,6 @@
 ---
 name: xun-search
-description: 网络搜索：在需要查信息、新闻、资料或进行事实核查时触发，调用搜索工具链并多源对比。触发关键词：搜索、查找、检索、查询、查资料、查新闻。
+description: "Use when searching for information online — user asks to find news, data, research, or verify a claim on the web. 触发关键词：搜索、查找、检索、查资料、查新闻、google、搜索一下、找一下。Don't call when the task is purely about local file operations, knowledge base retrieval (use si-knowledge), or when the user wants to write content (use si-content-write)."
 ---
 
 # xun-search — 网络搜索
@@ -20,6 +20,23 @@ description: 网络搜索：在需要查信息、新闻、资料或进行事实�
 1. **首选 SearXNG**：本地部署，隐私优先，无外泄风险
 2. **补充 Exa MCP**：当 SearXNG 结果不足时，通过 Exa 补充覆盖面
 3. **代理兜底**：直连被墙或被禁时，用 r.jina.ai 代理
+
+## 不要触发
+
+- 用户要求本地文件搜索（用 read/glob/grep 工具）
+- 用户要求进行事实核查（用 xun-factcheck）
+- 用户要求 RSS 扫描（用 xun-rss-scan）
+- 用户要求进行知识管理/沉淀（用 si-knowledge）
+
+## 搜索工作流（step-by-step）
+
+1. 分析用户查询意图（事实/趋势/对比/定义）
+2. 构造多关键词组合（中文 + 英文 + 正向 + 反向）
+3. 按工具链优先级执行（SearXNG → Exa MCP → r.jina.ai）
+4. 收集 ≥3 个候选结果
+5. 按来源优先级筛选（1 原始 > 2 权威 > 3 行业 > 4 二手）
+6. 输出结构化结果（含来源链接 + 时间戳）
+7. 低置信时标注 "待核实"
 
 ## 搜索策略
 

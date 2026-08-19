@@ -1,6 +1,6 @@
 ---
 name: ji-frontend-design
-description: "Use when implementing frontend UI in pure HTML/CSS/JS — components, pages, layouts, interactions, or any visual work. Trigger on phrases like '写一个组件', '实现这个设计', '布局', 'dark mode', 'CSS', '前端'."
+description: "Use when implementing UI in pure HTML/CSS/JS — user asks to build a component, page, layout, or any visual interface. 触发关键词：写组件、实现设计、布局、CSS、dark mode、前端、UI、页面、样式。Don't call when the user wants to write backend code, configure build tools, or work with a framework like React/Vue/Angular without explicit request."
 ---
 
 # ji-frontend-design — 前端实现规范
@@ -80,6 +80,25 @@ Base class + modifier pattern。禁止嵌套 modifier 链（如 `.parent .child-
 ### Stack / Cluster 布局
 
 使用布局辅助类。禁止用 ad-hoc margin trick。
+
+## 不要触发
+
+- 用户要求用 React/Vue/Angular 写组件（除非明确要求纯 HTML/CSS/JS）
+- 用户要求写后端 API 或数据库操作
+- 用户要求配置 webpack/vite/esbuild 等构建工具
+- 用户要求进行视觉设计决策（由 yi 负责，非 ji）
+- 用户要求进行设计 Token 定义（由 yi 负责）
+
+## 工作流（step-by-step）
+
+1. 读取设计依据（设计稿/Token 定义/现有代码）
+2. 确认 Token 可用性（查 `--ds-*` 变量，不存在则报告缺失）
+3. 选择组件模式（Button/Card/Stack 等）
+4. 编写 HTML 结构（语义化，aria 属性完整）
+5. 编写 CSS（仅用 Token，无 bare value）
+6. 添加 dark mode 覆盖（`[data-theme="dark"]` 块）
+7. 执行 Pre-Commit Checklist
+8. 落盘并验证文件存在
 
 ## 可访问性检查
 

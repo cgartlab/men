@@ -1,6 +1,6 @@
 ---
 name: ji-l1-verify
-description: "Use when verifying completed code — running typecheck, lint, or test locally. Trigger on phrases like '验证', '检查代码', '跑测试', 'gate', 'typecheck', 'lint', 'test'."
+description: "Use when verifying completed code by running typecheck, lint, or test commands. 触发关键词：验证、检查代码、跑测试、gate、typecheck、lint、test、验证、确认代码能跑。Don't call when the user wants to review PR semantics (use chi-judge), or when the task is writing new code without verification intent."
 ---
 
 # ji-l1-verify — L1 机械验证
@@ -59,6 +59,12 @@ spawn("npx eslint . && bun test")
 - **退出码 0** = 通过
 - **退出码非 0** = 失败，记录错误信息，不继续后续步骤
 - 不接受"应该没问题"——必须有机械证据
+
+## 不要触发
+
+- 用户要求做代码审查/语义评审（由 chi-judge 负责）
+- 用户要求写新代码但尚未完成（L1 验证在代码完成后）
+- 用户要求做 UI 视觉评审（由 yi 负责）
 
 ## L1 执行流程
 

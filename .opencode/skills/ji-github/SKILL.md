@@ -1,6 +1,6 @@
 ---
 name: ji-github
-description: "Use when creating/viewing pull requests, handling issues, or performing any GitHub repository operation. Trigger on phrases like '开 PR', '创建 PR', '看 issue', '合并', 'push', 'branch'."
+description: "Use when creating pull requests, reviewing code, managing issues, or performing GitHub repository operations. 触发关键词：开 PR、创建 PR、提交 PR、看 issue、合并、push、branch、review、代码审查、GitHub。Don't call when doing local git operations without remote push, or when the task is purely local file editing without PR intent."
 ---
 
 # ji-github — GitHub 工程工作流
@@ -84,6 +84,21 @@ PR 标题也使用 Conventional Commits，例如：
 
 ...
 ```
+
+## 不要触发
+
+- 纯本地文件编辑，不涉及 PR/issue/branch 操作
+- 本地 git commit 不涉及远程推送
+- 非 GitHub 的代码托管平台（Gitee、GitLab 等）
+
+## 工作流（step-by-step）
+
+1. 确定操作类型（PR/issue/branch/review）
+2. 检查当前分支状态（`git status` + `git diff`）
+3. 确认 Conventional Commits 格式
+4. 执行对应 gh CLI 命令
+5. 验证操作结果（PR 已创建/issue 已关联等）
+6. 输出结构化结果
 
 ## 提交前检查清单
 

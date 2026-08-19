@@ -1,11 +1,18 @@
 ---
 name: xun-factcheck
-description: 事实核查：在需要多源对比、逐条验证、评估可信度时触发，按标准流程核查每条事实并输出三级置信度标注。触发关键词：核查、验证、事实核查、可信度、真实性、确认。
+description: "Use when verifying the accuracy of specific claims, cross-referencing multiple sources, or conducting systematic fact-checking. 触发关键词：核查、验证、事实核查、可信度、真实性、确认、验证一下、是真的吗。Don't call when the task is general web searching without verification intent (use xun-search), or when the user only needs one source."
 ---
 
 # xun-factcheck — 事实核查
 
 本 skill 定义 xun 的事实核查流程，覆盖核查标准、来源优先级和结构化输出格式。
+
+## 不要触发
+
+- 用户只需要一个来源的信息（用 xun-search 即可）
+- 用户要求 RSS 扫描（用 xun-rss-scan）
+- 用户要求进行内容写作（用 si-content-write）
+- 用户要求本地知识检索（用 si-knowledge）
 
 ## 核查标准
 

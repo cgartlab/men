@@ -1,11 +1,27 @@
 ---
 name: xun-rss-scan
-description: RSS 聚合：在需要追踪新闻、阅读订阅、收集周报素材时触发，通过 Miniflux 和本地 RSS 工具获取并整理内容。触发关键词：RSS、订阅、新闻追踪、周报、素材收集、扫读。
+description: "Use when scanning RSS feeds for news tracking, weekly digest material collection, or bulk content aggregation from multiple sources. 触发关键词：RSS、订阅、新闻追踪、周报、素材收集、扫读、feed、订阅源。Don't call when the task is one-off web searching (use xun-search) or fact-checking individual claims (use xun-factcheck)."
 ---
 
 # xun-rss-scan — RSS 聚合
 
 本 skill 定义 xun 的 RSS 新闻聚合与整理行为，覆盖工具链、获取策略和输出规范。
+
+## 不要触发
+
+- 用户只需要搜索一条特定信息（用 xun-search）
+- 用户要求进行事实核查（用 xun-factcheck）
+- 用户要求内容写作（用 si-content-write）
+
+## 扫描工作流（step-by-step）
+
+1. 获取订阅列表（Miniflux API / 本地 RSS 配置）
+2. 按 3 路策略逐源获取（直连 → jina.ai → feedparser）
+3. 解析每条新闻的标题/链接/时间/来源/摘要
+4. 按主题分类
+5. 去重（URL 相同/标题 >80% 相似）
+6. 按时间降序排列
+7. 输出结构化结果
 
 ## 工具链
 
