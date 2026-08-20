@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate scripts & toolkit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Syntax check all scripts
+        run: |
+          for f in scripts/*.mjs; do
+            echo "checking $f"
+            node --check "$f"
+          done
+
+      - name: Run mechanical verification (men agent)
+        run: npm run verify
+
+      - name: Dry-run release bump (no writes)
+        run: node scripts/release.mjs --dry-run
+
+      - name: Smoke test installer (no deps, no verify)
+        run: node scripts/install.mjs --skip-deps --skip-verify --json
+
+  opencode-dep:
+    name: Validate OpenCode plugin dependency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install OpenCode plugin dependency
+        run: npm install --prefix .opencode --no-audit --no-fund
