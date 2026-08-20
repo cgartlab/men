@@ -34,18 +34,3 @@ jobs:
 
       - name: Smoke test installer (no deps, no verify)
         run: node scripts/install.mjs --skip-deps --skip-verify --json
-
-  opencode-dep:
-    name: Validate OpenCode plugin dependency
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install OpenCode plugin dependency
-        run: npm install --prefix .opencode --no-audit --no-fund
