@@ -5,7 +5,7 @@
 ## 仓库状态
 
 - **main 分支已有提交**，`feat/pi-harness` 分支为 Pi 框架适配开发中
-- **M0–M4 已完成**（调研/骨架/单兵/编排/机械验证），M5 文档完善进行中，见 `docs/guide/milestones.md`
+- **M0–M7 全部完成**，进入维护迭代阶段，见 `docs/guide/milestones.md`
 - **无 CI / 无测试框架**：验证靠机械脚本（`scripts/verify.mjs` / `gate.mjs` / `event.mjs`）+ agent 定义一致性检查
 
 ## 关键文件
@@ -65,9 +65,10 @@
 
 - **验证哲学**：机械优先（退出码 / 文件存在性），拒绝 LLM 自评
 - **角色路由**：关键词判定表 + 低置信时向用户确认，不猜
-- **技术栈**：TypeScript + Bun（`oh-my-openagent/` 已提供上游实现参考）
+- **技术栈**：纯 Node ESM（.mjs）零依赖，Windows pwsh 兼容
 - **本地优先**：内网数据源（192.168.31.x），SenseNova 生图仅 yi 挂载
 - **M1 先不做插件**：用 OpenCode 原生 agent 定义 + 自定义 command 起步
+- **M7 双 Harness 兼容**：Pi Harness 通过 `.pi/` 目录桥接，共享 skills 与 scripts
 
 ## 上游参考
 
