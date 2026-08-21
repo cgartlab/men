@@ -53,6 +53,18 @@ flowchart TD
 
 9 步协议：`CERTAINTY → TRIAGE → PLAN → DISPATCH → COLLECT → EVALUATE → VERIFY → REPORT → LOOP`
 
+### 10. LEARN（M7 新增）
+
+`/ultrawork` 完成后，men 触发 `node scripts/learn.mjs --sid <sid> --json`：
+- 从 events.jsonl 提取经验（type-A/B/C 分类）
+- 写入 `knowledge/errors/`（错误模式）和 `knowledge/patterns/`（协作模式）
+- best-effort，不阻塞 REPORT
+
+`/verify` 完成后，chi 触发 `node scripts/eval-metrics.mjs --sid <sid> --json`：
+- 从 events.jsonl 计算 8 项 KPI（最近 10 次任务窗口）
+- 输出通过率、回归率、平均耗时等指标
+- best-effort，不阻塞 Judge 报告
+
 ## 三、验证体系
 
 ```mermaid
@@ -75,6 +87,19 @@ flowchart LR
 - **gate.mjs**：stop-hook 门禁（白名单 typecheck/test/lint，60s 超时，强化次数上限 5）
 - **event.mjs**：append-only events.jsonl（append / list / replay / validate 四子命令）
 - **全部纯 Node 零依赖**，Windows pwsh 兼容
+
+### 学习回路（M7）
+
+```mermaid
+flowchart LR
+    A[任务完成<br/>PASS/FAIL/BLOCKED] --> B[events.jsonl<br/>事件流]
+    B --> C{LEARN 触发<br/>men 或 chi}
+    C -->|ultrawork| D[learn.mjs<br/>L0 机械聚合<br/>L1 规则分类]
+    C -->|verify| E[eval-metrics.mjs<br/>KPI 计算]
+    D --> F[knowledge/errors/<br/>错误模式]
+    D --> G[knowledge/patterns/<br/>协作模式]
+    E --> H[KPI JSON<br/>8 项指标]
+```
 
 ## 四、目录结构
 

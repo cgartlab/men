@@ -59,6 +59,21 @@
    - chi: `sensenova/glm-5.2`
    - yi/xun: `sensenova/sensenova-6.8-flash-lite`
 
+## 自主学习回路（M7）
+
+所有任务完成后的自动学习触发：
+
+| 触发点 | 命令 | 执行者 |
+|--------|------|--------|
+| `/ultrawork` 第 10 步 | `node scripts/learn.mjs --sid <sid> --json` | men |
+| `/verify` 第 5 步 | `node scripts/eval-metrics.mjs --sid <sid> --json` | chi |
+
+**学习输出**：
+- `learn.mjs` → `knowledge/errors/error-*.md`（错误模式）+ `knowledge/patterns/pattern-*.md`（协作模式）
+- `eval-metrics.mjs` → JSON KPI（从 events.jsonl 计算最近 10 次任务的通过率、回归率等）
+
+**所有学习操作 best-effort**，不阻塞主流程。
+
 ## 全员红线（7 条）
 
 1. **不伪造输出**：完成 = 验证过的完成。声称完成前必须有机械证据（退出码 0 / 产物文件存在）

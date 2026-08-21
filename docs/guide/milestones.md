@@ -1,7 +1,7 @@
 # 里程碑进度记录（Milestones）
 
 > 日期：2026-08-21 ｜ 项目：假维斯（men Agent 团队）
-> 总进度：M0–M5 全部验收通过，项目已发布 v0.2.0
+> 总进度：M0–M6 全部验收通过，M7 自主学习回路开发中，项目已发布 v0.2.0
 
 ---
 
@@ -16,6 +16,7 @@
 | M4 | 机械验证 | `verify.mjs` / `gate.mjs` / `event.mjs` 三项脚本 + chi 双层复核流程 | ✅ 完成：见下方 M4 验收详情 | 2026-08-15 |
 | M5 | 文档 | `docs/PRD.md`、`docs/architecture.md`、`docs/guide/quickstart.md`、`docs/guide/milestones.md` | ✅ 完成：PRD / architecture / quickstart / milestones / governance 五份文档 | 2026-08-21 |
 | M6 | GitHub 基础设施 + 团队治理 | PR 模板 / Issue 模板 / CODEOWNERS / FUNDING / dependabot / SECURITY.md / CONTRIBUTING.md / CODE_OF_CONDUCT.md / LICENSE / docs/governance.md | ✅ 完成：GitHub 标准文档与模板全部就位 | 2026-08-21 |
+| M7 | 自主学习回路 | learn.mjs 接入 /ultrawork / eval-metrics.mjs 接入 /verify / knowledge/errors/ / knowledge/patterns/ / knowledge/decisions/ | 🔄 开发中：脚本就绪，流程接入中 | 2026-08-21 |
 
 ## M2 单兵验收详情（5/5 通过）
 
@@ -72,9 +73,10 @@ M4 验收过程中，用 verify.mjs 对"声称完成但未产出文件"的场景
 
 ## 下一步
 
-- M5/M6 已收官
-- 后续规划（M7+）：
-  - 跨运行时 adapter（Codex / OpenClaw）
-  - 插件化封装（将 M1 决定不做的外部插件化方案重新评估）
-  - 持续集成接入 GitHub Actions
-  - Agent 团队规模扩展（新角色招募）
+- M5/M6 已收官，M7 开发中
+- M7 待完成项：
+  - [ ] `/ultrawork` 第 10 步：触发 `learn.mjs --sid <sid> --json`
+  - [ ] `/verify` 第 5 步：触发 `eval-metrics.mjs --sid <sid> --json`
+  - [ ] `knowledge/decisions/` 补全历史决策条目
+  - [ ] `knowledge/patterns/` 初始模式库（从 M0–M6 产物提取）
+  - [ ] 后续规划（M8+）：跨运行时 adapter / 插件化封装 / Agent 团队扩展

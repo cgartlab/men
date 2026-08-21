@@ -140,7 +140,45 @@ node scripts/event.mjs append --type gate.failed --subject "verify.<目标>" --s
 
 # 有 BLOCKED
 node scripts/event.mjs append --type blocker.raised --subject "verify.<目标>" --sid <sid> --detail "BLOCKED: <原因>"
+
+# EVALUATE 完成
+node scripts/event.mjs append --type decision.made --subject "eval.metrics-computed" --sid <sid> --detail "eval-metrics.mjs 执行完成"
 ```
+
+---
+
+### 第 5 步：自主学习触发（M7）
+
+验证完成后（第 4 步事件记录完成），chi 触发评估指标计算：
+
+```bash
+node scripts/eval-metrics.mjs --sid <sid> --json
+```
+
+#### EVALUATE 行为
+
+| 场景 | 行为 |
+|------|------|
+| **验证 PASS** | eval-metrics.mjs 从 events.jsonl 计算 8 项 KPI（通过率、平均耗时、回归率等） |
+| **验证 FAIL / BLOCKED** | 仍然触发 eval-metrics，失败数据计入 KPI |
+| **命令失败** | best-effort，不影响 Judge 报告 |
+
+#### EVALUATE 输出
+
+eval-metrics.mjs 输出 JSON，包含窗口期（默认最近 10 次任务）的：
+- 通过率（pass_rate）
+- 平均执行耗时
+- 回归次数（regression_count）
+- gate 失败率
+- 各角色 KPI 明细
+
+#### 触发时机
+
+```
+第 1 层机械检查 → 第 2 层语义复核 → 第 3 步输出报告 → 第 4 步事件记录 → 第 5 步 EVALUATE → 结束
+```
+
+EVALUATE 在事件记录之后执行，不要阻塞 Judge 报告的输出。
 
 ---
 

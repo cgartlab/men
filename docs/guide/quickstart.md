@@ -126,7 +126,47 @@ node scripts/event.mjs validate --sid ultrawork-20260815T103000
 
 replay 输出按时间排序，展示每步 `type` / `eventId` / `subject` / `detail` / `payload`，可用于回溯编排过程。
 
-## 七、红线提醒
+## 七、自主学习回路（M7）
+
+每次 `/ultrawork` 和 `/verify` 完成后，系统会自动触发自主学习：
+
+### 7.1 Learn（经验提取）
+
+`/ultrawork` 完成后自动执行：
+
+```bash
+node scripts/learn.mjs --sid <sid> --json
+```
+
+输出写入 `knowledge/errors/` 和 `knowledge/patterns/`，格式为带 YAML frontmatter 的 .md 文件。
+
+### 7.2 Eval（指标计算）
+
+`/verify` 完成后自动执行：
+
+```bash
+node scripts/eval-metrics.mjs --sid <sid> --json
+```
+
+输出 8 项 KPI（通过率、回归率、平均耗时等），覆盖最近 10 次任务窗口。
+
+### 7.3 手动查看
+
+```bash
+# 查看最近一次学习结果
+node scripts/learn.mjs --sid ultrawork-20260815T103000 --json
+
+# 查看最近一次评估指标
+node scripts/eval-metrics.mjs --sid verify-1787043854820 --json
+```
+
+### 7.4 知识库
+
+- `knowledge/errors/` — 错误模式记录（自动写入）
+- `knowledge/patterns/` — 协作模式库（自动写入）
+- `knowledge/decisions/` — 决策记录（手动 + 自动归档）
+
+## 八、红线提醒
 
 团队所有 agent 共享 7 条红线（在 agent 定义底部逐字一致）：
 

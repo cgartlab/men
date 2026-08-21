@@ -141,6 +141,37 @@ node scripts/gate.mjs typecheck --dir <产物所在目录> --sid <sid>
 - **上限 5 次**，超限停止并报"卡住"，把已完成的中间产物和失败原因交给用户
 - 过程中把关键节点通过 `scripts/event.mjs append` 追加到事件流（best-effort，命令失败不影响主流程）
 
+### 10. LEARN —— 自主学习触发（M7）
+
+任务完成（第 9 步 LOOP 结束，无论成功还是卡住）后，men 作为编排者触发自主学习回路：
+
+```bash
+node scripts/learn.mjs --sid <sid> --json
+```
+
+#### LEARN 行为
+
+| 场景 | 行为 |
+|------|------|
+| **任务成功完成** | learn.mjs 读取 events.jsonl，按 type-A/B/C 分类写入 knowledge/errors/（错误模式）和 knowledge/patterns/（协作模式） |
+| **任务卡住（BLOCKED）** | 仍然触发 learn，错误模式会被写入 errors/ |
+| **命令失败** | best-effort，不影响 REPORT 输出 |
+
+#### LEARN 不阻塞流程
+
+- LEARN 是第 10 步，在第 8 步 REPORT 之后
+- LEARN 结果不影响当前任务的 Verdict
+- LEARN 产出写入 `knowledge/errors/error-*.md` 和 `knowledge/patterns/pattern-*.md`
+- LEARN 的 decision 事件自动 append 到 events.jsonl
+
+#### 触发时机
+
+```
+... → 8. REPORT（汇报用户） → 9. LOOP（如需要重试） → 10. LEARN（自主学习） → 结束
+```
+
+REPORT 完成后立刻触发 LEARN，不要等待用户回复。LEARN 执行结果通过 stdout JSON 输出，men 可在 REPORT 中附加一行："📚 自主学习已触发：X 条经验提取完成"。
+
 ## 事件审计
 
 所有事件统一通过 `scripts/event.mjs` 追加（best-effort，命令失败不影响主流程）：
@@ -166,10 +197,11 @@ node scripts/event.mjs append --type <kind> --subject <s> --sid <sid> [--detail 
 | `gate.failed` | gate 自动记录 | 每次机械门禁失败（**gate.mjs 内部自动 append，不需手动**） | 无需手动 |
 | `gate.passed` | `ultrawork.completed` | 汇总完成时（最终 gate 通过或全部 PASS） | `node scripts/event.mjs append --type gate.passed --subject ultrawork.completed --sid <sid> --detail "全部子任务通过验证"` |
 | `blocker.raised` | `ultrawork.blocked` | 卡住/报停时 | `node scripts/event.mjs append --type blocker.raised --subject ultrawork.blocked --sid <sid> --detail "gate 达强化上限"` |
+| `decision.made` | `men.learn-triggered` | LEARN 步骤完成时 | `node scripts/event.mjs append --type decision.made --subject men.learn-triggered --sid <sid> --detail "learn.mjs 执行完成"` |
 
 ### 事件 kind 枚举
 
-`session.created` / `session.ended` / `boundary` / `workflow.phase` / `gate.passed` / `gate.failed` / `blocker.raised` / `decision.made` / `decision.missing`
+`session.created` / `session.ended` / `boundary` / `workflow.phase` / `gate.passed` / `gate.failed` / `blocker.raised` / `decision.made` / `decision.missing`（共 9 种）
 
 ### 执行要点
 
