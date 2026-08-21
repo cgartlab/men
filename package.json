@@ -29,6 +29,10 @@
     "config/",
     "docs/"
   ],
+  "pi": {
+    "skills": ["./.opencode/skills"],
+    "prompts": ["./prompts"]
+  },
   "keywords": [
     "opencode",
     "agent",

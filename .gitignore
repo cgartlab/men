@@ -19,3 +19,9 @@ Thumbs.db
 *.log
 tmp/
 temp/
+
+# Pi harness
+.pi/npm/
+.pi/git/
+.pi/junction.ps1
+debug-system-prompt.md

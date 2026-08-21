@@ -4,7 +4,7 @@
 
 ## 仓库状态
 
-- **main 分支已有提交**，`feat/learning-p0` 分支有 P0 学习回路开发，两个分支均需保持同步
+- **main 分支已有提交**，`feat/pi-harness` 分支为 Pi 框架适配开发中
 - **M0–M4 已完成**（调研/骨架/单兵/编排/机械验证），M5 文档完善进行中，见 `docs/guide/milestones.md`
 - **无 CI / 无测试框架**：验证靠机械脚本（`scripts/verify.mjs` / `gate.mjs` / `event.mjs`）+ agent 定义一致性检查
 
@@ -82,3 +82,15 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - **Node >= 18**（`@opencode-ai/plugin` engines 要求）
 - 依赖在 `.opencode/node_modules/` 下本地安装，不共享根目录
 - `.opencode/.gitignore` 排除了 `node_modules`, `package.json`, `package-lock.json`
+
+## Pi Harness 兼容（feat/pi-harness 分支）
+
+本分支专用于 Pi 编码 Agent 框架（`@johnnywu/pi-subagents`）。
+
+- 主 session 扮演 **men（门）**，编排指令由 `.pi/APPEND_SYSTEM.md` 注入
+- 5 个子 agent 定义在 `.pi/agents/`（Pi subagents 格式）
+- 13 个 skills 从 `.opencode/skills/` 加载（junction `.pi/skills/` 桥接）
+- 3 个命令映射为 `prompts/` 模板（ultrawork / hyperplan / verify）
+- 模型由 CC Switch 管理（agent 定义省略 model 字段，继承主 session）
+- `package.json` 含 `pi` manifest，声明 skills 和 prompts 路径
+- 安装：`pi install npm:@johnnywu/pi-subagents`
