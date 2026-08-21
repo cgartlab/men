@@ -4,7 +4,7 @@
 
 ## 仓库状态
 
-- **已 git init（master 分支，无提交）**：首次提交前需完成全部修复与验证。
+- **main 分支已有提交**，`feat/learning-p0` 分支有 P0 学习回路开发，两个分支均需保持同步
 - **M0–M4 已完成**（调研/骨架/单兵/编排/机械验证），M5 文档完善进行中，见 `docs/guide/milestones.md`
 - **无 CI / 无测试框架**：验证靠机械脚本（`scripts/verify.mjs` / `gate.mjs` / `event.mjs`）+ agent 定义一致性检查
 
