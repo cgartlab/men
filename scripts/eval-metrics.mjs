@@ -12,6 +12,11 @@
  *   main(argv) — CLI 入口
  */
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+const EVENTS_DIR = '.agents/state/sessions';
+
 /**
  * 解析 verify/judge 事件的 outcome
  */
@@ -21,6 +26,11 @@ function parseOutcome(ev) {
     const j = typeof ev.detail === 'string' ? JSON.parse(ev.detail) : ev.detail;
     return j.outcome || j.result || j.status || 'unknown';
   } catch { return 'unknown'; }
+}
+
+/** 兼容读取事件类型：新格式 e.type，旧格式 e.kind */
+function eventType(e) {
+  return e.type || e.kind || '';
 }
 
 /**
@@ -33,9 +43,9 @@ export function computeMetrics(events, opts = {}) {
   const recent = Array.isArray(events) ? events.slice(-window) : [];
 
   // 提取 verify/judge 事件
-  const judgeEvents = recent.filter(e => e.kind === 'judge' || e.kind === 'verify');
-  const errorEvents = recent.filter(e => e.kind === 'error');
-  const dispatchEvents = recent.filter(e => e.kind === 'dispatch');
+  const judgeEvents = recent.filter(e => eventType(e) === 'judge' || eventType(e) === 'verify');
+  const errorEvents = recent.filter(e => eventType(e) === 'error');
+  const dispatchEvents = recent.filter(e => eventType(e) === 'dispatch');
 
   const total = judgeEvents.length;
   const pass = judgeEvents.filter(e => parseOutcome(e) === 'PASS').length;
@@ -72,7 +82,7 @@ export function computeMetrics(events, opts = {}) {
   const errorRepeatRate = errorTypes.length > 0 ? repeatedErrors / Object.keys(errorTypeCounts).length : 0;
 
   // 知识沉淀（从 dispatch 事件估算）
-  const knowledgeEvents = recent.filter(e => e.kind === 'decision' || e.kind === 'handoff');
+  const knowledgeEvents = recent.filter(e => eventType(e) === 'decision' || eventType(e) === 'handoff');
 
   // 学习效率（学习相关事件占比）
   const learnEvents = recent.filter(e => {
@@ -155,13 +165,29 @@ function usage() {
 `;
 }
 
+/** 读取会话的 events.jsonl */
+function readEvents(sid) {
+  const file = path.join(EVENTS_DIR, sid, 'events.jsonl');
+  if (!fs.existsSync(file)) return [];
+  const lines = fs.readFileSync(file, 'utf8').split('\n').filter(l => l.trim());
+  const events = [];
+  for (const line of lines) {
+    try { events.push(JSON.parse(line)); } catch { /* skip malformed */ }
+  }
+  return events;
+}
+
 export function main(argv) {
   const args = argv || [];
   if (args.includes('--help') || args.includes('-h')) return usage();
 
-  // 简化版：直接返回空 metrics（真实场景从 events.jsonl 读取）
+  const sidIdx = args.indexOf('--sid');
+  const sid = sidIdx >= 0 ? args[sidIdx + 1] : null;
   const window = parseInt(args[args.indexOf('--window') + 1] || '10', 10);
-  const metrics = computeMetrics([], { windowSize: window });
+
+  // 有 sid 时从 events.jsonl 读取，否则返回空 metrics（向后兼容）
+  const events = sid ? readEvents(sid) : [];
+  const metrics = computeMetrics(events, { windowSize: window });
   return JSON.stringify(metrics, null, 2);
 }
 

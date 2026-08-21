@@ -12,10 +12,11 @@
  *
  * 目标路径: .agents\state\sessions\<sid>\events.jsonl
  *
- * 事件 kind 枚举（9 种）:
+ * 事件 kind 枚举（14 种）:
  *   session.created / session.ended / boundary
  *   workflow.phase / gate.passed / gate.failed
  *   blocker.raised / decision.made / decision.missing
+ *   verify / judge / error / dispatch / handoff
  */
 
 import fs from 'node:fs';
@@ -35,6 +36,11 @@ const KINDS = [
   'blocker.raised',
   'decision.made',
   'decision.missing',
+  'verify',
+  'judge',
+  'error',
+  'dispatch',
+  'handoff',
 ];
 const KIND_SET = new Set(KINDS);
 const REQUIRED_FIELDS = ['eventId', 'ts', 'sid', 'type'];

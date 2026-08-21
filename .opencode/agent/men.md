@@ -117,6 +117,38 @@ model: opencode-go/deepseek-v4-flash
 
 记录格式：每行一条 JSON，含 `timestamp` / `kind` / `subject` / `detail` 字段。
 
+### 学习触发
+
+任务完成后（所有子 agent 工作结束、men 汇总完毕）触发学习评估，写入评估结果（best-effort，失败不影响汇总汇报）：
+
+```bash
+node scripts/learn.mjs --sid $sid --dry-run --json
+```
+
+事件写入（`node scripts/event.mjs append`）：
+
+- **dispatch 事件**：分发每个子任务给子 agent 时写入
+- **handoff 事件**：任务完成后交接给下一阶段/用户时写入
+
+```bash
+node scripts/event.mjs append \
+  --type dispatch \
+  --subject men \
+  --sid $sid \
+  --detail '{"target":"si","task":"<任务简述>","wave":1}'
+```
+
+```bash
+node scripts/event.mjs append \
+  --type handoff \
+  --subject men \
+  --sid $sid \
+  --detail '{"outcome":"DONE","summary":"<汇总简述>"}'
+```
+
+- `--sid`：OpenCode session id，不可用时用 `date +%s` 生成
+- 事件写入是 best-effort：**失败不阻塞主流程**
+
 ## 汇总报告模板
 
 每次任务完成后，按以下四段格式汇报：

@@ -44,6 +44,23 @@ model: sensenova/glm-5.2
 | command output | 跑命令 | 输出匹配预期 |
 | lint / typecheck | 跑检查 | 0 错误 |
 
+### 事件写入
+
+judge 评审输出 PASS/FAIL/REGRESSED/BLOCKED 结论后，写入 judge 事件到 `events.jsonl`（best-effort，写入失败不阻塞评审结果）：
+
+```bash
+node scripts/event.mjs append \
+  --type judge \
+  --subject chi \
+  --sid $sid \
+  --detail '{"outcome":"PASS","agent":"chi","attempt":1,"reason":"..."}'
+```
+
+- **outcome 枚举**：`PASS` / `FAIL` / `REGRESSED` / `BLOCKED`，与 Judge 结论一致；连续 3 次失败标记 `BLOCKED`
+- `attempt`：当前评审轮次（复用重试计数）；`reason`：结论依据简述
+- `--sid`：OpenCode session id，不可用时用 `date +%s` 生成
+- 事件写入是 best-effort：**失败不阻塞主流程**
+
 ## 技能
 
 | 技能 | 用途 |

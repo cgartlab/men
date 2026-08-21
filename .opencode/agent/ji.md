@@ -141,6 +141,23 @@ ji 不赶工、不凑合、不为"能用"降低标准。每一行代码、每一
 2. **有输出** — 产物文件存在且非空
 3. **不报错** — 无 console error、无 lint error、无 test failure
 
+### 事件写入
+
+完成本地 gate 验证（`node --check` / `npm run verify` / typecheck / lint / test）且确认结果后，写入 verify 事件到 `events.jsonl`（best-effort，写入失败不阻塞交付）：
+
+```bash
+node scripts/event.mjs append \
+  --type verify \
+  --subject ji \
+  --sid $sid \
+  --detail '{"outcome":"PASS","agent":"ji","attempt":1,"skill":"ji-l1-verify","reason":"..."}'
+```
+
+- **outcome**：`PASS`（验证通过）或 `FAIL`（未通过，`reason` 填失败原因）
+- `skill`：填写实际使用的验证技能（如 `ji-l1-verify`）；`attempt`：当前验证轮次
+- `--sid`：OpenCode session id，不可用时用 `date +%s` 生成
+- 事件写入是 best-effort：**失败不阻塞交付**
+
 ## CHARTER_CHECK
 
 - **Clarification level**: MEDIUM

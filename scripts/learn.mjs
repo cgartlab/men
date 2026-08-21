@@ -12,6 +12,7 @@
  */
 
 import * as fs from 'node:fs';
+import * as crypto from 'node:crypto';
 import { classify } from './learn-rules.mjs';
 import { main as budgetMain } from './learn-budget.mjs';
 
@@ -36,12 +37,21 @@ function readEvents(sid) {
   return events;
 }
 
-/** 写事件到 events.jsonl（best-effort） */
+/** 写事件到 events.jsonl（best-effort，event.mjs 标准格式） */
 function appendEvent(sid, event) {
   const file = `${EVENTS_DIR}/${sid}/events.jsonl`;
   ensureDir(`${EVENTS_DIR}/${sid}`);
   try {
-    fs.appendFileSync(file, JSON.stringify(event) + '\n');
+    const fullEvent = {
+      eventId: crypto.randomUUID(),
+      ts: new Date().toISOString(),
+      sid,
+      type: event.type || event.kind || 'decision',
+      subject: event.subject || '',
+      detail: event.detail || '',
+      payload: event.payload || {},
+    };
+    fs.appendFileSync(file, JSON.stringify(fullEvent) + '\n');
   } catch { /* best-effort, silent */ }
 }
 
@@ -159,10 +169,9 @@ export function main(argv) {
 
   // 记录决策事件
   appendEvent(sid, {
-    kind: 'decision',
+    type: 'decision',
     subject: `learn.${result.type === 'skip' ? 'skipped' : 'extracted'}`,
     detail: JSON.stringify({ type: result.type, actions: actions.length, dryRun }),
-    timestamp: new Date().toISOString()
   });
 
   const output = {
