@@ -1,22 +1,34 @@
-## What
+## 描述
 
-<!-- What does this PR change? Keep it to one or two sentences. -->
+<!-- 简要描述本 PR 的改动内容 -->
 
-## Why
+## 变更类型
 
-<!-- Why is this change needed? Link the issue with "Closes #123". -->
+- [ ] `feat` 新功能
+- [ ] `fix` 修复
+- [ ] `docs` 文档
+- [ ] `chore` 杂项
+- [ ] `refactor` 重构
 
-## How to test
+## 影响范围
 
-<!-- How can a reviewer verify the change locally? -->
+- [ ] Agent 定义（.opencode/agent/）
+- [ ] Skill 包（.opencode/skills/）
+- [ ] 命令（.opencode/command/）
+- [ ] 脚本（scripts/）
+- [ ] 配置（opencode.json / config/）
+- [ ] 文档（docs/）
+- [ ] GitHub 基础设施（.github/）
 
-- [ ] `npm run verify` passes
-- [ ] `node scripts/release.mjs --dry-run` is clean
-- [ ] Relevant `scripts/*.mjs` pass `node --check`
+## 自审清单
 
-## Checklist
+- [ ] 文件已通过验证（`node scripts/verify.mjs <path>` 退出码 0）
+- [ ] 未引入敏感信息（API key / 个人信息 / 密钥）
+- [ ] 编辑 agent 定义时已先 read 再 edit，frontmatter 完整
+- [ ] 编辑 agent 定义时全员红线逐字一致
+- [ ] 符合 Conventional Commits 提交规范
+- [ ] 已检查 git diff，变更范围符合预期
 
-- [ ] Commits follow Conventional Commits (`feat/fix/docs/refactor/test/chore/perf/ci(scope): ...`)
-- [ ] No new third-party dependencies added to zero-dep scripts
-- [ ] `AGENTS.md` and `README.md` updated if behavior changed
-- [ ] All 7 red-line rules for agent definitions preserved (if edited)
+## 关联 Issue
+
+Closes #

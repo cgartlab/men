@@ -1,0 +1,37 @@
+# men Agent 团队 — CODEOWNERS
+# 规则：文件路径匹配时，指定的 owner 必须参与评审
+
+# 全局默认 owner
+* @cgartlab
+
+# Agent 定义 — men 编排核心
+/opencode/agent/men.md @cgartlab
+
+# Agent 定义 — si 思
+/opencode/agent/si.md @cgartlab
+
+# Agent 定义 — ji 记
+/opencode/agent/ji.md @cgartlab
+
+# Agent 定义 — chi 持
+/opencode/agent/chi.md @cgartlab
+
+# Agent 定义 — yi 艺
+/opencode/agent/yi.md @cgartlab
+
+# Agent 定义 — xun 寻
+/opencode/agent/xun.md @cgartlab
+
+# 脚本
+/scripts/*.mjs @cgartlab
+
+# 配置
+/opencode.json @cgartlab
+/config/* @cgartlab
+
+# 文档
+/docs/ @cgartlab
+README.md @cgartlab
+CHANGELOG.md @cgartlab
+CONTRIBUTING.md @cgartlab
+SECURITY.md @cgartlab

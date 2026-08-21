@@ -1,7 +1,7 @@
 # 里程碑进度记录（Milestones）
 
-> 日期：2026-08-15 ｜ 项目：假维斯（men Agent 团队）
-> 总进度：M0–M4 全部验收通过，M5 文档完善进行中
+> 日期：2026-08-21 ｜ 项目：假维斯（men Agent 团队）
+> 总进度：M0–M5 全部验收通过，项目已发布 v0.2.0
 
 ---
 
@@ -14,7 +14,8 @@
 | M2 | 单兵 | 5 角色独立任务产物（si/ji/xi/yi/chi） | ✅ 完成：**5/5 全部通过**，chi judge 报告 13/13 标准 PASS | 2026-08-15 |
 | M3 | 编排 | ultrawork 三路并行汇总流程跑通 | ✅ 完成：写文章+查新闻+查金价混合任务，多 Wave 分发 + men 汇总 | 2026-08-15 |
 | M4 | 机械验证 | `verify.mjs` / `gate.mjs` / `event.mjs` 三项脚本 + chi 双层复核流程 | ✅ 完成：见下方 M4 验收详情 | 2026-08-15 |
-| M5 | 文档 | `docs/PRD.md`、`docs/architecture.md`、`docs/guide/quickstart.md`、`docs/guide/milestones.md` | 🔄 进行中：本文件正在归档 | 2026-08-15 |
+| M5 | 文档 | `docs/PRD.md`、`docs/architecture.md`、`docs/guide/quickstart.md`、`docs/guide/milestones.md` | ✅ 完成：PRD / architecture / quickstart / milestones / governance 五份文档 | 2026-08-21 |
+| M6 | GitHub 基础设施 | PR 模板 / Issue 模板 / CODEOWNERS / FUNDING / dependabot / SECURITY.md / CONTRIBUTING.md / CODE_OF_CONDUCT.md / LICENSE / docs/governance.md | ✅ 完成：GitHub 标准文档与模板全部就位 | 2026-08-21 |
 
 ## M2 单兵验收详情（5/5 通过）
 
@@ -71,5 +72,9 @@ M4 验收过程中，用 verify.mjs 对"声称完成但未产出文件"的场景
 
 ## 下一步
 
-- M5 收官：本文档归档后，M5 完成
-- M5 后规划：跨运行时 adapter（Codex / OpenClaw）+ 插件化封装 + 持续集成接入
+- M5/M6 已收官
+- 后续规划（M7+）：
+  - 跨运行时 adapter（Codex / OpenClaw）
+  - 插件化封装（将 M1 决定不做的外部插件化方案重新评估）
+  - 持续集成接入 GitHub Actions
+  - Agent 团队规模扩展（新角色招募）

@@ -9,9 +9,28 @@
 
 ### Added
 
+- **GitHub 基础设施**：`.github/` 目录，含 PR 模板、Issue 模板（bug/feature）、CODEOWNERS、FUNDING、dependabot
+- **GitHub 标准文档**：`LICENSE`（MIT）、`CONTRIBUTING.md`、`SECURITY.md`、`CODE_OF_CONDUCT.md`
+- **团队治理文档**：`docs/governance.md`
+
+## [v0.2.0] - 2026-08-21
+
+### Added
+
+- **GitHub 基础设施**：PR 模板 / Issue 模板 / CODEOWNERS / FUNDING / dependabot 配置
+- **GitHub 标准文档**：`LICENSE`（MIT）、`CONTRIBUTING.md`、`SECURITY.md`、`CODE_OF_CONDUCT.md`
+- **团队治理文档**：`docs/governance.md`
+- **远程仓库**：GitHub 私有仓库 `cgartlab/men`，主分支 main
+
 ### Changed
 
+- **README.md**：更新为 GitHub 标准结构，添加徽章、mermaid 流程图、贡献/安全/行为准则章节
+- **里程碑 M5**：状态更新为 ✅ 完成
+
 ### Fixed
+
+- **CHANGELOG.md**：补全 `[v0.1.0]` 的 Added 条目
+- **LICENSE**：新增 MIT 许可证文件
 
 ## [v0.1.0] - 2026-08-21
 

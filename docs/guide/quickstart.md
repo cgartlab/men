@@ -74,7 +74,24 @@
 ```
 → men 逐项访谈（目标/范围/阶段/角色/约束/验收），六项全部明确后产出 `<plan>` envelope，包含阶段划分、依赖图、Wave 划分、角色矩阵、验收标准总表。**只规划不执行**，用户确认后下次用 `/ultrawork` 按计划分发。
 
-## 四、常用技能提示
+## 四、GitHub 使用指南
+
+本仓库已在 GitHub 上托管（`cgartlab/men`），支持 issue、PR、release 等标准协作流程。
+
+### 4.1 报告问题
+
+- Bug 报告：https://github.com/cgartlab/men/issues/new?template=bug_report.md
+- 功能建议：https://github.com/cgartlab/men/issues/new?template=feature_request.md
+
+### 4.2 贡献代码
+
+参见 [CONTRIBUTING.md](../../CONTRIBUTING.md)，主要流程：Fork → Branch → Commit → Push → PR
+
+### 4.3 查看发布
+
+参见 https://github.com/cgartlab/men/releases
+
+## 五、常用技能提示
 
 | 技能包 | 所属角色 | 触发场景 |
 |--------|----------|----------|
@@ -92,7 +109,7 @@
 | `yi-design` | yi | 设计决策、设计文档 |
 | `yi-imagegen` | yi | SenseNova U1 Fast 生图 |
 
-## 五、事件审计查看
+## 六、事件审计查看
 
 每次 `/ultrawork` 执行会生成一个独立 sid（格式 `ultrawork-<时间戳>`），事件写入 `.agents/state/sessions/<sid>/events.jsonl`。
 
@@ -109,7 +126,7 @@ node scripts/event.mjs validate --sid ultrawork-20260815T103000
 
 replay 输出按时间排序，展示每步 `type` / `eventId` / `subject` / `detail` / `payload`，可用于回溯编排过程。
 
-## 六、红线提醒
+## 七、红线提醒
 
 团队所有 agent 共享 7 条红线（在 agent 定义底部逐字一致）：
 
