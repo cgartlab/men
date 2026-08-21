@@ -1,4 +1,5 @@
 name: Auto Triage
+# Auto-triage: label, assign, milestone, project on PR events
 
 on:
   pull_request:
