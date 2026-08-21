@@ -21,19 +21,31 @@ jobs:
       - run: node scripts/install.mjs --skip-deps --skip-verify --json
 
   triage:
+    name: Auto triage PR
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     permissions:
       contents: write
       pull-requests: write
-    if: github.event_name == 'pull_request'
+      issues: write
+    concurrency:
+      group: triage-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
 
-      - name: Triage PR
+      - name: Read PR diff
         env:
           GH_TOKEN: "${{ github.token }}"
         run: |
-          FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only)
+          gh pr diff ${{ github.event.pull_request.number }} --name-only > changed-files.txt
+          echo "Files:"
+          cat changed-files.txt
+
+      - name: Auto label + milestone
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: |
           LABELS=""
           while IFS= read -r file; do
             case "$file" in
@@ -46,13 +58,16 @@ jobs:
               README.md) LABELS="$LABELS,meta" ;;
               config/*) LABELS="$LABELS,config" ;;
             esac
-          done <<< "$FILES"
+          done < changed-files.txt
           LABELS=$(echo "$LABELS" | tr ',' '\n' | sort -u | grep -v '^$' | paste -sd,)
+          echo "LABELS=$LABELS" >> $GITHUB_ENV
+          echo "Determined labels: $LABELS"
           if [ -z "$LABELS" ]; then
             echo "No matching files for triage, skipping"
             exit 0
           fi
-          for l in $(echo "$LABELS" | tr ',' '\n'); do
+          IFS=',' read -ra LARR <<< "$LABELS"
+          for l in "${LARR[@]}"; do
             [ -n "$l" ] && gh pr edit ${{ github.event.pull_request.number }} --add-label "$l"
           done
           if echo "$LABELS" | grep -q "learning"; then
@@ -62,5 +77,20 @@ jobs:
           else
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Meta" || true
           fi
-          gh pr edit ${{ github.event.pull_request.number }} --add-assignee "${{ github.event.pull_request.user.login }}" || true
 
+      - name: Auto-assign author
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: |
+          AUTHOR=$(gh pr view ${{ github.event.pull_request.number }} --json author --jq '.author.login')
+          gh pr edit ${{ github.event.pull_request.number }} --add-assignee "@$AUTHOR" || true
+          echo "Assigned to @$AUTHOR"
+
+      - name: Auto-project
+        continue-on-error: true
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: |
+          PROJ=$(node -e "const p=JSON.parse(require('fs').readFileSync('.github/projects.json','utf8'));const o=p['pc-automatic'];console.log(o.number+' '+o.owner)")
+          echo "Project: number=${PROJ%% *} owner=${PROJ##* }"
+          gh project item-add "${PROJ%% *}" --owner "${PROJ##* }" --url "${{ github.event.pull_request.html_url }}" || true
