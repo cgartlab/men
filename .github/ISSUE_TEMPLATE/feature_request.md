@@ -1,6 +1,7 @@
 ---
 name: Feature Request
-description: 提出新功能建议
+about: 提出新功能建议
+title: "[feat]: "
 labels: enhancement
 ---
 
@@ -11,6 +12,10 @@ labels: enhancement
 ## 使用场景
 
 <!-- 描述你的使用场景和痛点 -->
+
+## 影响范围
+
+<!-- 哪些 agent / 脚本 / 命令会受影响（men/si/ji/chi/yi/xun, scripts/*, .opencode/*） -->
 
 ## 影响角色
 
@@ -24,6 +29,10 @@ labels: enhancement
 ## 关联文档
 
 <!-- 如果有相关的文档或调研笔记，在此链接 -->
+
+## 验收标准
+
+<!-- 如何验证功能已完成（优先机械检查） -->
 
 ## 优先级
 

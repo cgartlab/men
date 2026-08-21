@@ -5,23 +5,31 @@
 ## 仓库状态
 
 - **main 分支已有提交**，`feat/learning-p0` 分支有 P0 学习回路开发，两个分支均需保持同步
-- **M0–M4 已完成**（调研/骨架/单兵/编排/机械验证），M5 文档完善进行中，见 `docs/guide/milestones.md`
-- **无 CI / 无测试框架**：验证靠机械脚本（`scripts/verify.mjs` / `gate.mjs` / `event.mjs`）+ agent 定义一致性检查
+- **M0–M6 已全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施），自主学习回路（M7）开发中
+- **CI + 机械验证**：GitHub Actions（`ci.yml`）执行脚本语法检查 + verify + release dry-run + installer smoke；本地 `scripts/verify.mjs` / `gate.mjs` / `event.mjs` 三项脚本 + agent 定义一致性检查
 
 ## 关键文件
 
 | 路径 | 用途 |
 |------|------|
-| `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，MCP×3（exa/context7/grep_app） |
+| `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking） |
 | `.opencode/agent/*.md` | **6 个 agent 定义**（唯一源代码）。每次编辑必须先 read 再 edit |
 | `.opencode/skills/*/SKILL.md` | 13 个技能包（ji×3/si×3/xun×3/chi×2/yi×2） |
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
 | `scripts/*.mjs` | 机械验证三件套：`verify.mjs`（check battery）/ `gate.mjs`（门禁）/ `event.mjs`（事件审计），纯 Node 零依赖 |
+| `scripts/learn.mjs` / `scripts/eval-metrics.mjs` | 自主学习回路（L0/L1 经验提取与评估） |
+| `scripts/fix-port-4096.ps1` | 修复 OpenCode 端口 4096 占用 |
+| `scripts/sync-to-opencode.ps1` | 同步 agent/skills/commands 到 OpenCode 全局 |
+| `.github/workflows/ci.yml` | CI 工作流（validate/triage） |
+| `.github/` | PR/Issue 模板、CODEOWNERS、FUNDING、dependabot |
+| `docs/governance.md` | 团队治理（角色/决策/变更/审查/发布） |
+| `docs/learning-architecture.md` | 自主学习与进化架构（四层认知模型） |
+| `knowledge/` | 团队知识库（errors/、patterns/、decisions/） |
 | `.opencode/package.json` | `@opencode-ai/plugin` 1.18.18，本地安装 |
 | `config/mcporter.json` | MCP 配置（Exa 搜索） |
 | `docs/PRD.md` | 正式 PRD（里程碑 M0–M5） |
 | `docs/architecture.md` | 架构说明（拓扑/编排流程/验证体系 mermaid） |
-| `docs/guide/` | 使用指南（quickstart / milestones） |
+| `docs/guide/` | 使用指南（quickstart / milestones / release） |
 | `docs/research/00-m0-synthesis.md` | 架构决策（PRD → 落地映射），重大变更前必读 |
 
 ## Agent 团队拓扑
@@ -76,6 +84,7 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - `docs/research/oh-my-openagent.md` — OmO 编排机制（ultrawork/Team Mode/IntentGate）
 - `docs/research/oh-my-agent.md` — oma 机械验证机制（gate/judge/events）
 - `docs/research/00-m0-synthesis.md` — 两套机制的合成决策与落地映射
+- `docs/research/05-agents-autonomous-evolution-sota.md` — 自主学习 agent 架构调研（M0 补充）
 
 ## Node 环境
 

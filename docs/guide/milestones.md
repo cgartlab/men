@@ -15,7 +15,7 @@
 | M3 | 编排 | ultrawork 三路并行汇总流程跑通 | ✅ 完成：写文章+查新闻+查金价混合任务，多 Wave 分发 + men 汇总 | 2026-08-15 |
 | M4 | 机械验证 | `verify.mjs` / `gate.mjs` / `event.mjs` 三项脚本 + chi 双层复核流程 | ✅ 完成：见下方 M4 验收详情 | 2026-08-15 |
 | M5 | 文档 | `docs/PRD.md`、`docs/architecture.md`、`docs/guide/quickstart.md`、`docs/guide/milestones.md` | ✅ 完成：PRD / architecture / quickstart / milestones / governance 五份文档 | 2026-08-21 |
-| M6 | GitHub 基础设施 | PR 模板 / Issue 模板 / CODEOWNERS / FUNDING / dependabot / SECURITY.md / CONTRIBUTING.md / CODE_OF_CONDUCT.md / LICENSE / docs/governance.md | ✅ 完成：GitHub 标准文档与模板全部就位 | 2026-08-21 |
+| M6 | GitHub 基础设施 + 团队治理 | PR 模板 / Issue 模板 / CODEOWNERS / FUNDING / dependabot / SECURITY.md / CONTRIBUTING.md / CODE_OF_CONDUCT.md / LICENSE / docs/governance.md | ✅ 完成：GitHub 标准文档与模板全部就位 | 2026-08-21 |
 
 ## M2 单兵验收详情（5/5 通过）
 

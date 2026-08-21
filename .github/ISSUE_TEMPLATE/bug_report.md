@@ -1,6 +1,7 @@
 ---
 name: Bug Report
-description: 报告一个问题
+about: 报告一个问题
+title: "[bug]: "
 labels: bug
 ---
 

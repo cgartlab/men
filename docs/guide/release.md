@@ -81,4 +81,4 @@ git push && git push --tags
    - `install.sh` / `install.ps1` 中的 `<INSTALL_URL>` 与 `<REPO_URL>`
    - README「快速开始」中的 `<INSTALL_URL>`
    - `package.json` 的 `repository`（若启用 npm publish 则必填）
-4. **License 与署名**：Apache-2.0 LICENSE 已在根目录，发布前确认版权声明
+4. **License 与署名**：MIT LICENSE 已在根目录，确认 `package.json` 的 `"license": "MIT"` 一致

@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "version": "0.2.0",
   "default_agent": "men",
   "instructions": ["AGENTS.md"],
 
@@ -34,10 +35,9 @@
       "url": "https://mcp.grep.app",
       "enabled": true
     },
-
-    "fetch": { "enabled": false },
-    "github-mcp-server": { "enabled": false },
-    "memory": { "enabled": false },
-    "sequential-thinking": { "enabled": false }
+    "fetch": { "enabled": true },
+    "github-mcp-server": { "enabled": true },
+    "memory": { "enabled": true },
+    "sequential-thinking": { "enabled": true }
   }
 }

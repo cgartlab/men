@@ -81,47 +81,92 @@ flowchart LR
 ```
 men/
 ├── AGENTS.md                   ← 项目级共享规则（红线 / Charter / 目录结构）
-├── opencode.json               ← default_agent: men + MCP×3（exa/context7/grep_app）
+├── README.md                   ← 项目首页（徽章 / 特性 / 安装 / 角色 / 命令）
+├── LICENSE                     ← MIT 许可证
+├── CONTRIBUTING.md             ← 贡献指南
+├── SECURITY.md                 ← 安全策略
+├── CODE_OF_CONDUCT.md          ← 行为准则
+├── CHANGELOG.md                ← 变更日志（Keep a Changelog）
+├── package.json                ← 包管理（版本 / scripts / files 白名单）
+├── .env.example                ← 环境变量模板
+├── install.sh                  ← Linux/macOS 一键安装引导
+├── install.ps1                 ← Windows 一键安装引导
+│
+├── opencode.json               ← default_agent: men + MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking）
 ├── config/
-│   └── mcporter.json           ← MCP 配置
+│   └── mcporter.json           ← MCP 配置（Exa 搜索）
+│
 ├── .opencode/
-│   ├── agent/
-│   │   ├── men.md              ← 编排核心（primary）
-│   │   ├── si.md               ← 规划/写作（subagent）
-│   │   ├── ji.md               ← 代码工程（subagent）
-│   │   ├── chi.md              ← 投资/评审（subagent + judge）
-│   │   ├── yi.md               ← 视觉设计（subagent）
-│   │   └── xun.md              ← 搜索研究（subagent）
-│   ├── skills/                 ← 13 个 skill（每个含 SKILL.md + frontmatter）
+│   ├── agent/                  ← 6 个 agent 定义
+│   │   ├── men.md              ← 门 — 编排与路由
+│   │   ├── si.md               ← 思 — 规划与写作
+│   │   ├── ji.md               ← 记 — 代码与工程
+│   │   ├── chi.md              ← 持 — 投资与评审
+│   │   ├── yi.md               ← 艺 — 视觉设计
+│   │   └── xun.md              ← 寻 — 搜索与研究
+│   ├── skills/                 ← 13 个 skill
 │   │   ├── chi-invest / chi-judge
 │   │   ├── ji-frontend-design / ji-github / ji-l1-verify
 │   │   ├── si-content-write / si-knowledge / si-plan-compose
 │   │   ├── xun-factcheck / xun-rss-scan / xun-search
 │   │   └── yi-design / yi-imagegen
-│   ├── command/
-│   │   ├── ultrawork.md        ← 一键编排（9 步协议）
-│   │   ├── verify.md           ← 双层验证（verify.mjs + chi judge）
+│   ├── command/                ← 3 个自定义命令
+│   │   ├── ultrawork.md        ← 一键编排
+│   │   ├── verify.md           ← 验证命令
 │   │   └── hyperplan.md        ← 访谈式规划
-│   ├── package.json            ← @opencode-ai/plugin 1.18.18（本地安装）
+│   ├── package.json            ← @opencode-ai/plugin 本地依赖
 │   └── .gitignore
-├── .agents/
-│   └── state/
-│       └── sessions/           ← events.jsonl 事件审计
-│           └── <sid>/events.jsonl
-├── scripts/                    ← 纯 Node 零依赖
+│
+├── .github/
+│   ├── workflows/
+│   │   └── ci.yml              ← CI 工作流
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── ISSUE_TEMPLATE/         ← bug_report + feature_request（.md + .yml）
+│   ├── CODEOWNERS
+│   ├── FUNDING.yml
+│   ├── dependabot.yml
+│   └── projects.json
+│
+├── scripts/                    ← 纯 Node 零依赖脚本
 │   ├── verify.mjs              ← 五项机械检查
-│   ├── gate.mjs                ← stop-hook 门禁
-│   └── event.mjs               ← events.jsonl 读写
+│   ├── gate.mjs                ← 门禁
+│   ├── event.mjs               ← 事件审计
+│   ├── install.mjs             ← 一键安装核心
+│   ├── release.mjs             ← 版本发布
+│   ├── learn.mjs               ← 自主学习循环入口
+│   ├── learn-rules.mjs         ← 学习分类规则
+│   ├── learn-budget.mjs        ← 学习预算
+│   ├── eval-metrics.mjs        ← 评估指标计算
+│   ├── eval-report.mjs         ← 评估报告生成
+│   ├── fix-port-4096.ps1       ← 端口修复
+│   └── sync-to-opencode.ps1    ← OpenCode 全局同步
+│
 ├── docs/
-│   ├── PRD.md                  ← 产品需求文档
-│   ├── architecture.md         ← 本文档
-│   ├── research/               ← M0 调研笔记
+│   ├── PRD.md
+│   ├── architecture.md
+│   ├── governance.md           ← 团队治理
+│   ├── learning-architecture.md ← 自主学习架构
 │   ├── guide/
-│   │   ├── quickstart.md       ← 快速上手
-│   │   └── milestones.md       ← 里程碑进度
-│   ├── m2-acceptance/          ← M2 验收产物
-│   └── drafts/                 ← 任务产物草稿
-└── oh-my-openagent/            ← 上游参考 clone
+│   │   ├── quickstart.md
+│   │   ├── milestones.md
+│   │   └── release.md
+│   ├── research/
+│   │   ├── 00-m0-synthesis.md
+│   │   ├── oh-my-agent.md
+│   │   ├── oh-my-openagent.md
+│   │   └── 05-agents-autonomous-evolution-sota.md
+│   ├── m2-acceptance/
+│   └── drafts/
+│
+├── knowledge/                  ← 团队知识库
+│   ├── errors/                 ← 错误模式
+│   ├── patterns/               ← 模式库
+│   └── decisions/              ← 决策记录
+│
+├── .agents/state/
+│   ├── sessions/               ← events.jsonl 事件审计
+│   ├── gates/                  ← gate 状态文件
+│   └── learn/                  ← 学习队列
 ```
 
 ## 五、技术决策记录
@@ -140,3 +185,6 @@ men/
 | D10 | **命名暂定 men（门）**，团队名暂定 fakevis（假维斯） | 命名可后续调整 | 已落地 |
 | D11 | **adapter 后续适配 Codex / OpenClaw** | 跨运行时复用，未进入当前里程碑 | 待 M5 后 |
 | D12 | **技术栈 TypeScript + Bun** | 两上游一致，OpenCode 插件生态 | 已落地（脚本侧用纯 Node） |
+| D13 | **自主学习回路**（M5+ 增量） | 四层认知模型（评估/认知/行为/记忆），L0/L1/L2 三级触发，events.jsonl → learn.mjs → errors/ + patterns/ | 开发中 |
+| D14 | **GitHub 标准化**（M6） | LICENSE/CONTRIBUTING/SECURITY/CODE_OF_CONDUCT/PR&Issue 模板/CODEOWNERS/dependabot/CI workflow | 已落地 |
+| D15 | **MIT 许可证** | 替代 Apache-2.0，简化贡献流程 | 已落地 |

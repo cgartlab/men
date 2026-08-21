@@ -1,25 +1,41 @@
 {
   "name": "@fakevis/men",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "6+1 Agent 团队系统 —— OpenCode 首发，假维斯（fakevis）出品",
   "type": "module",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "engines": {
     "node": ">=18"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cgartlab/men.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cgartlab/men/issues"
+  },
+  "homepage": "https://github.com/cgartlab/men#readme",
   "scripts": {
     "install": "node scripts/install.mjs",
     "verify": "node scripts/verify.mjs men",
     "release": "node scripts/release.mjs",
     "release:patch": "node scripts/release.mjs patch",
     "release:minor": "node scripts/release.mjs minor",
-    "release:major": "node scripts/release.mjs major"
+    "release:major": "node scripts/release.mjs major",
+    "release:dry-run": "node scripts/release.mjs --dry-run",
+    "learn": "node scripts/learn.mjs",
+    "learn:dry-run": "node scripts/learn.mjs --dry-run",
+    "eval": "node scripts/eval-metrics.mjs",
+    "eval:dry-run": "node scripts/eval-metrics.mjs --dry-run"
   },
   "files": [
     "opencode.json",
     "AGENTS.md",
     "README.md",
     "LICENSE",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CODE_OF_CONDUCT.md",
     "CHANGELOG.md",
     ".env.example",
     "install.sh",
@@ -27,7 +43,9 @@
     ".opencode/",
     "scripts/",
     "config/",
-    "docs/"
+    "docs/",
+    "knowledge/",
+    ".github/"
   ],
   "keywords": [
     "opencode",
