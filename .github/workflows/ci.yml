@@ -1,6 +1,6 @@
 name: CI
 
-on:
+"on":
   push:
     branches: [main]
   pull_request:
@@ -30,6 +30,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Triage PR
+        env:
+          GH_TOKEN: "${{ github.token }}"
         run: |
           FILES=$(gh pr diff ${{ github.event.pull_request.number }} --name-only)
           LABELS=""
@@ -46,15 +48,19 @@ jobs:
             esac
           done <<< "$FILES"
           LABELS=$(echo "$LABELS" | tr ',' '\n' | sort -u | grep -v '^$' | paste -sd,)
+          if [ -z "$LABELS" ]; then
+            echo "No matching files for triage, skipping"
+            exit 0
+          fi
           for l in $(echo "$LABELS" | tr ',' '\n'); do
             [ -n "$l" ] && gh pr edit ${{ github.event.pull_request.number }} --add-label "$l"
           done
           if echo "$LABELS" | grep -q "learning"; then
-            gh pr edit ${{ github.event.pull_request.number }} --milestone "Learning P0"
+            gh pr edit ${{ github.event.pull_request.number }} --milestone "Learning P0" || true
           elif echo "$LABELS" | grep -q "infra"; then
-            gh pr edit ${{ github.event.pull_request.number }} --milestone "Infra"
+            gh pr edit ${{ github.event.pull_request.number }} --milestone "Infra" || true
           else
-            gh pr edit ${{ github.event.pull_request.number }} --milestone "Meta"
+            gh pr edit ${{ github.event.pull_request.number }} --milestone "Meta" || true
           fi
-          gh pr edit ${{ github.event.pull_request.number }} --add-assignee "${{ github.event.pull_request.user.login }}"
+          gh pr edit ${{ github.event.pull_request.number }} --add-assignee "${{ github.event.pull_request.user.login }}" || true
 
