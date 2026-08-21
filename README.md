@@ -18,6 +18,7 @@
 | **零依赖脚本** | 纯 Node 运行，验证/门禁/审计三件套无第三方依赖 |
 | **本地优先** | 内网数据源 + free 模型通道，SenseNova 生图仅艺角色挂载 |
 | **单字命名** | 门·思·记·持·艺·寻，古典文人气质，易记好读 |
+| **自主学习回路** | learn.mjs 自动提取经验写入 knowledge/，eval-metrics.mjs 计算 8 项 KPI |
 
 ---
 
@@ -33,13 +34,13 @@
 **Linux / macOS**
 
 ```bash
-bash <(curl -fsSL https://github.com/cgartlab/men)
+bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)
 ```
 
 **Windows（PowerShell 7+）**
 
 ```powershell
-irm https://github.com/cgartlab/men | iex
+irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex
 ```
 
 安装器会自动完成：检测 Node ≥ 18 → 拉取仓库 → 安装 `.opencode/` 依赖 → 从 `.env.example` 生成 `.env` → 运行端到端验证。
@@ -120,6 +121,14 @@ flowchart LR
 ```
 
 `/ultrawork` 遵循 9 步协议，低置信任务循环迭代，直至达到交付标准。
+
+```mermaid
+flowchart LR
+    A[任务完成] --> B[events.jsonl]
+    B --> C{LEARN 触发}
+    C -->|/ultrawork| D[learn.mjs → errors/ + patterns/]
+    C -->|/verify| E[eval-metrics.mjs → KPI JSON]
+```
 
 ---
 

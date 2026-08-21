@@ -4,9 +4,11 @@
 
 ## 仓库状态
 
-- **main 分支已有提交**，`feat/learning-p0` 分支有 P0 学习回路开发，两个分支均需保持同步
-- **M0–M6 已全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施），自主学习回路（M7）开发中
-- **CI + 机械验证**：GitHub Actions（`ci.yml`）执行脚本语法检查 + verify + release dry-run + installer smoke；本地 `scripts/verify.mjs` / `gate.mjs` / `event.mjs` 三项脚本 + agent 定义一致性检查
+- **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.2.0
+- **自主学习回路已验证**：learn.mjs 正确识别 ultrawork 事件并写入 errors/，eval-metrics.mjs 计算 8 项 KPI 正常
+- **MCP×7 全部启用**：exa / context7 / grep_app / fetch / github-mcp-server / memory / sequential-thinking
+- **GitHub 私有仓库**：`cgartlab/men`（main 分支），MIT 许可证
+- **CI + 机械验证**：GitHub Actions（ci.yml）执行脚本语法检查 + verify + release dry-run + installer smoke
 
 ## 关键文件
 
@@ -18,6 +20,12 @@
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
 | `scripts/*.mjs` | 机械验证三件套：`verify.mjs`（check battery）/ `gate.mjs`（门禁）/ `event.mjs`（事件审计），纯 Node 零依赖 |
 | `scripts/learn.mjs` / `scripts/eval-metrics.mjs` | 自主学习回路（L0/L1 经验提取与评估） |
+| `scripts/learn-rules.mjs` | 学习规则判定表（L1 机械，men.* 类型归一化） |
+| `scripts/learn-budget.mjs` | 学习预算控制 |
+| `scripts/eval-report.mjs` | 评估报告生成 |
+| `errors/` | 学习回路自动生成的错误模式（error-*.md） |
+| `knowledge/patterns/` | 协作模式库（3 条初始条目） |
+| `knowledge/decisions/` | 决策记录（3 条：M0/M6/M7） |
 | `scripts/fix-port-4096.ps1` | 修复 OpenCode 端口 4096 占用 |
 | `scripts/sync-to-opencode.ps1` | 同步 agent/skills/commands 到 OpenCode 全局 |
 | `.github/workflows/ci.yml` | CI 工作流（validate/triage） |
@@ -106,3 +114,15 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - **Node >= 18**（`@opencode-ai/plugin` engines 要求）
 - 依赖在 `.opencode/node_modules/` 下本地安装，不共享根目录
 - `.opencode/.gitignore` 排除了 `node_modules`, `package.json`, `package-lock.json`
+- **事件类型归一化**：learn-rules.mjs 和 eval-metrics.mjs 均支持 men.* 前缀 → 标准类型映射（subject-first 策略）
+
+## CHARTER_CHECK
+
+- **项目状态**：v0.2.0（M0–M7 完成）
+- **许可证**：MIT
+- **远程仓库**：https://github.com/cgartlab/men
+- **CI 状态**：GitHub Actions validate/triage 自动运行
+- **学习回路**：learn.mjs + eval-metrics.mjs 均已验证运行正常
+- **事件审计**：9 种 kind 枚举，events.jsonl 可回放
+- **依赖管理**：.opencode/node_modules/ 本地安装，不共享根目录
+- **事件类型**：统一使用 event.mjs 标准格式（ts/event/subject/detail/payload）

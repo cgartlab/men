@@ -1,6 +1,6 @@
 # 产品需求文档（PRD）— 假维斯（men Agent 团队）
 
-> 版本：M6 归档版 + M7 开发版 ｜ 日期：2026-08-21
+> 版本：M7 完成版 ｜ 日期：2026-08-21
 > 定位：OpenCode 首发 6+1 Agent 团队，面向一人内容创作与工程协作
 
 ---
@@ -70,7 +70,7 @@ chi fresh-context 独立 Judge 语义复核（只信自己的检查结果，不�
 | M4 机械验证 | verify.mjs / gate.mjs / event.mjs 三项脚本 + chi 双层复核跑通；识破"假完成"（产出文件缺失）、修复 verify.mjs structure 误报（非 `.opencode/` 作用域的 .md 跳过 frontmatter 检查） | ✅ 完成 |
 | M5 文档 | PRD / architecture / quickstart / milestones / governance / learning-architecture 六份文档 | ✅ 完成 |
 | M6 GitHub 基础设施 | LICENSE (MIT) / CONTRIBUTING / SECURITY / CODE_OF_CONDUCT / PR&Issue 模板 / CODEOWNERS / FUNDING / dependabot / CI workflow / docs/governance | ✅ 完成 |
-| M7 自主学习回路 | learn.mjs / eval-metrics.mjs / knowledge/errors/ / knowledge/patterns/ / learn 触发接入 ultrawork + verify | 🔄 开发中：脚本就绪，流程接入中 |
+| M7 自主学习回路 | learn.mjs / eval-metrics.mjs / knowledge/errors/ / knowledge/patterns/ / knowledge/decisions/ | ✅ 完成：已验证 learn.mjs 正确提取 REVISION_NEEDED，eval-metrics.mjs 计算 8 项 KPI |
 
 ## 五、验收标准
 
@@ -85,3 +85,7 @@ chi fresh-context 独立 Judge 语义复核（只信自己的检查结果，不�
 - **自主学习可触发**：`/ultrawork` 完成后自动调用 `learn.mjs`，`/verify` 完成后自动调用 `eval-metrics.mjs`
 - **经验可沉淀**：错误模式写入 `knowledge/errors/`，协作模式写入 `knowledge/patterns/`
 - **评估可量化**：`eval-metrics.mjs` 从 events.jsonl 计算 KPI（通过率、回归率、耗时）
+- **自主学习验证通过**：learn.mjs 对 ultrawork-20260815-213941 正确输出 type:B，写入 errors/error-*.md
+- **评估指标验证通过**：eval-metrics.mjs 对 ultrawork 会话输出 total:3, knowledge:5, efficiency:50%
+- **事件类型归一化**：learn-rules.mjs 和 eval-metrics.mjs 均支持 men.* 前缀映射
+- **知识库已初始化**：errors/（1 条）+ knowledge/patterns/（3 条）+ knowledge/decisions/（3 条）
