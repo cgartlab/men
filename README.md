@@ -1,6 +1,6 @@
 # men（门）Agent 团队
 
-> 围绕一人内容创作与工程协作的 6+1 Agent 团队系统 —— OpenCode 首发，假维斯（fakevis）出品。
+> 围绕一人内容创作与工程协作的 6+1 Agent 团队系统 —— OpenCode 首发 + Pi Harness 兼容，假维斯（fakevis）出品。
 
 ---
 
@@ -13,7 +13,9 @@
 | **双层机械验证** | `verify.mjs` 五项机械检查 + chi 独立 Judge 语义复核，假完成必识破 |
 | **安全门禁** | `gate.mjs` 白名单 typecheck/test/lint 防注入，强化上限 5 次防死循环 |
 | **全量事件审计** | `events.jsonl` 记录 9 种事件，支持命令行回放，所有决策可追溯 |
-| **零依赖脚本** | 纯 Node 运行，验证/门禁/审计三件套无第三方依赖 |
+| **零依赖脚本** | 纯 Node 运行，验证/门禁/审计/学习/评估五件套无第三方依赖 |
+| **自主学习闭环** | learn.mjs 自动从失败中提取经验，eval-metrics.mjs 量化团队进化 |
+| **双 Harness 兼容** | OpenCode 原生 agent 定义 + Pi Harness（`@johnnywu/pi-subagents`），同一套 skills 与 scripts 共享 |
 | **本地优先** | 内网数据源 + free 模型通道，SenseNova 生图仅艺角色挂载 |
 | **单字命名** | 门·思·记·持·艺·寻，古典文人气质，易记好读 |
 
@@ -23,39 +25,37 @@
 
 ### 前置要求
 
-- **Node.js ≥ 18**（`@opencode-ai/plugin` engines 要求）
-- 已安装 [OpenCode](https://opencode.ai/) CLI
+- **Node.js ≥ 18**
+- **OpenCode CLI**（[opencode.ai](https://opencode.ai/)）
 
 ### 一键安装（推荐）
 
 **Linux / macOS**
 
 ```bash
-bash <(curl -fsSL <INSTALL_URL>)
+bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)
 ```
 
 **Windows（PowerShell 7+）**
 
 ```powershell
-irm <INSTALL_URL> | iex
+irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex
 ```
 
-安装器会自动完成：检测 Node ≥ 18 → 拉取仓库 → 安装 `.opencode/` 依赖 → 从 `.env.example` 生成 `.env` → 运行端到端验证。核心逻辑在 `scripts/install.mjs`，`install.sh` / `install.ps1` 只做平台引导。
+### 手动三步
 
-### 手动三步（备选）
-
-1. **获取项目** — 克隆或复制本仓库到本地
+1. **获取项目**
    ```bash
-   git clone <repo-url> men
+   git clone https://github.com/cgartlab/men.git
    cd men
    ```
 
-2. **安装依赖** — OpenCode 插件在 `.opencode/` 目录下本地安装
+2. **安装依赖**
    ```bash
    cd .opencode && npm install && cd ..
    ```
 
-3. **启动使用** — 在项目目录运行 opencode，默认 agent 即为 men（门）
+3. **启动使用**
    ```bash
    opencode
    ```
@@ -67,17 +67,6 @@ irm <INSTALL_URL> | iex
 | `/ultrawork` | `/ultrawork <任务描述>` | 一键编排：9 步协议自动调度多角色协作 |
 | `/verify` | `/verify <角色名>` | 运行机械验证 + chi 独立 Judge 复核 |
 | `/hyperplan` | `/hyperplan <项目名>` | 访谈式规划：逐层拆解复杂项目为可执行计划 |
-
-### 混合任务示例
-
-```
-/ultrawork 帮我做三件事：
-1. 写一篇关于 AI Agent 的 800 字短文
-2. 查一下本周 AI 领域的重要新闻
-3. 查一下当前黄金价格
-```
-
-→ men 自动识别为 `team` 意图，si 负责写作、xun 负责新闻与金价，多路 Wave 并行调度，最终汇总交付。
 
 ---
 
@@ -113,7 +102,51 @@ men 是唯一 spawner，禁止嵌套 spawn。所有子 agent 共享 7 条全员�
 | **ultrawork** | `/ultrawork <任务>` | 9 步协议一键编排：意图判定 → 规划 → 多路 Wave 并行 → 汇总 → 验证 → 交付 |
 | **verify** | `/verify <角色>` | 运行 `scripts/verify.mjs` 五项机械检查，随后 chi 以 fresh context 独立 Judge 语义复核 |
 | **hyperplan** | `/hyperplan <项目>` | 访谈式规划：逐层提问澄清需求 → 生成 plan envelope → 拆解为可执行子任务 |
-| **release** | `npm run release` | 版本发布：SemVer bump + CHANGELOG + git tag（`patch` / `minor` / `major`，详见 [`docs/guide/release.md`](docs/guide/release.md)） |
+| **release** | `npm run release` | 版本发布：SemVer bump + CHANGELOG + git tag |
+
+---
+
+## 🧠 自主学习闭环
+
+团队支持自我改进系统（详见 [`docs/learning-architecture.md`](docs/learning-architecture.md)）：
+
+```
+任务完成（chi judge PASS/FAIL）
+  → learn.mjs 自动触发
+    → 经验分类（规则判定表）
+    → 落盘到 errors/ + knowledge/patterns/
+  → eval-metrics.mjs 每 10 次任务采集 8 项 KPI
+```
+
+### 8 项 KPI 指标
+
+| 指标 | ID | 含义 |
+|------|----|------|
+| 任务完成率 | KPI-task-completion | PASS / 总任务数 |
+| 一次通过率 | KPI-first-pass | 首次即 PASS 的任务占比 |
+| 回归率 | KPI-regression | REGRESSED / 总 judge 次数 |
+| 平均重试次数 | KPI-avg-retries | 总重试 / 总任务 |
+| 技能使用率 | KPI-skill-usage | 各技能触发分布 |
+| 知识沉淀率 | KPI-knowledge | knowledge/ 新增条目 / 日 |
+| 错误重复率 | KPI-error-repeat | 同类错误重复占比 |
+| 学习效率 | KPI-learn-efficiency | 学习 token / 总 token |
+
+---
+
+## 🔧 双 Harness 兼容
+
+本项目同时兼容两套 Agent 框架：
+
+| 框架 | 配置入口 | Agent 定义 | Skills |
+|------|---------|-----------|--------|
+| **OpenCode** | `opencode.json` | `.opencode/agent/*.md` | `.opencode/skills/*/SKILL.md` |
+| **Pi** | `package.json` → `pi` 字段 | `.pi/agents/*.md` | 通过 `.pi/skills/` junction 桥接到 `.opencode/skills/` |
+
+Pi 安装：
+
+```bash
+pi install npm:@johnnywu/pi-subagents
+```
 
 ---
 
@@ -121,84 +154,72 @@ men 是唯一 spawner，禁止嵌套 spawn。所有子 agent 共享 7 条全员�
 
 ```
 men/
-├── opencode.json              # OpenCode 根配置（default_agent: men, MCP×3）
-├── AGENTS.md                  # 项目级共享规则（角色表/拓扑/红线/验证体系）
-├── package.json               # 根配置（name/version/scripts，npm 发布载体）
+├── opencode.json              # OpenCode 根配置
+├── AGENTS.md                  # 项目级共享规则
+├── package.json               # 根配置（含 pi manifest）
 ├── README.md                  # 本文件
-├── LICENSE                    # 许可证（Apache-2.0）
-├── CHANGELOG.md               # 变更日志（Keep a Changelog 风格）
-├── .env.example               # 环境变量模板（复制为 .env 后填写）
-├── .env                       # 运行态生成，复制 .env.example 后填写
+├── LICENSE                    # Apache-2.0
+├── CHANGELOG.md               # 变更日志
+├── .env.example               # 环境变量模板
 ├── .gitignore                 # Git 忽略规则
-├── install.sh                 # Linux/macOS 一键安装引导
-├── install.ps1                # Windows 一键安装引导
+├── install.sh / install.ps1   # 一键安装引导
 │
-├── .opencode/
-│   ├── agent/                 # 6 个 agent 定义（唯一源代码）
-│   │   ├── men.md             # 门 — 编排与路由
-│   │   ├── si.md              # 思 — 规划与写作
-│   │   ├── ji.md              # 记 — 代码与工程
-│   │   ├── chi.md             # 持 — 投资与评审
-│   │   ├── yi.md              # 艺 — 视觉设计
-│   │   └── xun.md             # 寻 — 搜索与研究
-│   ├── skills/                # 13 个技能包（ji×3 / si×3 / xun×3 / chi×2 / yi×2）
-│   │   └── */SKILL.md
-│   ├── command/               # 自定义命令
-│   │   ├── ultrawork.md       # 一键编排
-│   │   ├── verify.md          # 验证命令
-│   │   └── hyperplan.md       # 访谈式规划
-│   ├── .gitignore             # 忽略 node_modules / package.json / package-lock.json
-│   ├── package-lock.json      # 锁定依赖版本
-│   ├── package.json           # @opencode-ai/plugin 本地依赖
-│   └── node_modules/          # 本地依赖（不纳入版本控制）
+├── .opencode/                 # OpenCode 原生配置
+│   ├── agent/                 # 6 个 agent 定义
+│   ├── skills/                # 13 个技能包
+│   ├── command/               # 3 个自定义命令
+│   └── package.json           # @opencode-ai/plugin 本地依赖
 │
-├── scripts/                   # 机械脚本（纯 Node，零依赖）
-│   ├── verify.mjs             # check battery — 五项机械检查
-│   ├── gate.mjs               # 门禁 — 白名单 + 强化上限
-│   ├── event.mjs              # 事件审计 — append/replay
-│   ├── install.mjs            # 一键安装核心（跨平台，install.sh/.ps1 调用）
-│   └── release.mjs            # 版本发布（SemVer bump + CHANGELOG + git tag）
+├── .pi/                       # Pi Harness 兼容层
+│   ├── settings.json          # 包声明
+│   ├── APPEND_SYSTEM.md       # men 编排指令
+│   ├── agents/                # 5 个子 agent 定义
+│   └── skills/                # junction → .opencode/skills/
 │
-├── config/
-│   └── mcporter.json          # MCP 配置（Exa 搜索）
+├── prompts/                   # Pi prompt 模板
+│   ├── ultrawork.md
+│   ├── hyperplan.md
+│   └── verify.md
 │
-├── docs/
-│   ├── PRD.md                 # 产品需求文档（M0–M5 全量）
-│   ├── architecture.md        # 架构说明（拓扑/编排流程/验证体系）
-│   ├── guide/
-│   │   ├── quickstart.md      # 快速上手指南
-│   │   ├── release.md         # 版本发布方案（SemVer/流程/开源准备）
-│   │   └── milestones.md      # 里程碑进度记录
-│   ├── research/              # M0 调研产物
-│   ├── drafts/                # M3 验收产物
-│   └── m2-acceptance/         # M2 单兵验收产物
+├── scripts/                   # 纯 Node 零依赖
+│   ├── verify.mjs             # 五项机械检查
+│   ├── gate.mjs               # 白名单门禁
+│   ├── event.mjs              # 事件审计
+│   ├── learn.mjs              # 学习闭环
+│   ├── learn-rules.mjs        # L1 规则判定
+│   ├── learn-budget.mjs       # 学习成本控制
+│   ├── eval-metrics.mjs       # KPI 采集
+│   ├── eval-report.mjs        # 评估报告
+│   ├── install.mjs            # 一键安装
+│   └── release.mjs            # 版本发布
 │
-├── .agents/state/
-│   ├── sessions/              # 事件审计日志（运行态，不纳入版本控制）
-│   └── gates/                 # gate 状态文件
+├── knowledge/                 # 团队知识库
+├── .agents/state/             # 事件审计 + 学习状态
+├── config/                    # MCP 配置
+└── docs/                      # 项目文档
 ```
 
 ---
 
 ## 📚 文档导航
 
-| 文档 | 路径 | 内容简介 |
-|------|------|----------|
-| **PRD** | `docs/PRD.md` | 产品需求文档，含项目定位、角色定义、核心机制、里程碑、验收标准 |
-| **架构说明** | `docs/architecture.md` | 系统架构、编排流程、验证体系，含 mermaid 流程图 |
-| **快速上手** | `docs/guide/quickstart.md` | 新用户入门指南，从安装到第一个 ultrawork 任务 |
-| **里程碑** | `docs/guide/milestones.md` | M0–M5 进度记录、验收详情、已知问题 |
-| **调研合成** | `docs/research/00-m0-synthesis.md` | M0 架构决策，重大变更前必读 |
+| 文档 | 路径 | 内容 |
+|------|------|------|
+| **PRD** | `docs/PRD.md` | 产品需求文档 |
+| **架构说明** | `docs/architecture.md` | 系统架构（含 mermaid 流程图） |
+| **快速上手** | `docs/guide/quickstart.md` | 新用户入门 |
+| **里程碑** | `docs/guide/milestones.md` | M0–M7 进度记录 |
+| **发布方案** | `docs/guide/release.md` | SemVer 发布流程 |
+| **学习架构** | `docs/learning-architecture.md` | 自主学习与进化系统设计 |
+| **调研合成** | `docs/research/00-m0-synthesis.md` | 架构决策来源 |
 
 ---
 
 ## 🏁 里程碑状态
 
-| M0 调研 | M1 骨架 | M2 单兵 | M3 编排 | M4 机械验证 | M5 文档 |
-|---------|---------|---------|---------|-------------|---------|
-| ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | 🔄 进行中 |
-
-> M5 文档完善进行中，最终状态以 [`docs/guide/milestones.md`](docs/guide/milestones.md) 为准。
+| M0 调研 | M1 骨架 | M2 单兵 | M3 编排 | M4 验证 | M5 文档 | M6 学习 | M7 Pi Harness |
+|---------|---------|---------|---------|---------|---------|---------|---------------|
+| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -206,9 +227,9 @@ men/
 
 | 层级 | 技术 |
 |------|------|
-| Agent 框架 | [OpenCode](https://opencode.ai/) 原生 agent 定义 + 自定义 command |
-| 运行时 | Node.js ≥ 18 |
-| 验证体系 | 纯 Node 脚本（`verify.mjs` / `gate.mjs` / `event.mjs`），零第三方依赖 |
+| Agent 框架 | OpenCode 原生 agent 定义 + 自定义 command + Pi Harness 兼容 |
+| 运行时 | Node.js ≥ 18（纯 Node ESM，零第三方依赖） |
+| 验证体系 | 纯 Node 脚本（verify/gate/event/learn/eval），零依赖 |
 | MCP 工具 | Exa 搜索、Context7、grep.app |
 | 设计理念 | 机械验证优先 · 不信自述 · 低置信确认 · 事件可回溯 |
 

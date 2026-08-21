@@ -1,7 +1,7 @@
 # 里程碑进度记录（Milestones）
 
-> 日期：2026-08-15 ｜ 项目：假维斯（men Agent 团队）
-> 总进度：M0–M4 全部验收通过，M5 文档完善进行中
+> 日期：2026-08-21 ｜ 项目：假维斯（men Agent 团队）
+> 总进度：M0–M7 全部完成，进入维护迭代阶段
 
 ---
 
@@ -9,12 +9,16 @@
 
 | 里程碑 | 主题 | 关键交付物 | 验收结果 | 日期 |
 |--------|------|-----------|----------|------|
-| M0 | 调研 | `docs/research/oh-my-openagent.md`、`docs/research/oh-my-agent.md`、`docs/research/00-m0-synthesis.md` | ✅ 完成：OmO 12 条 + oma 12 条机制合并去重，映射到 F1–F7 | 2026-08-15 |
+| M0 | 调研 | `docs/research/` 三份（OmO + oma + 合成笔记） | ✅ 完成：12+12 条机制合并去重，映射到 F1–F7 | 2026-08-15 |
 | M1 | 骨架 | 6 角色 agent 定义、13 个 skill、3 个 command、3 个脚本 | ✅ 完成：全部按 PRD + M0 决策落地 | 2026-08-15 |
-| M2 | 单兵 | 5 角色独立任务产物（si/ji/xi/yi/chi） | ✅ 完成：**5/5 全部通过**，chi judge 报告 13/13 标准 PASS | 2026-08-15 |
-| M3 | 编排 | ultrawork 三路并行汇总流程跑通 | ✅ 完成：写文章+查新闻+查金价混合任务，多 Wave 分发 + men 汇总 | 2026-08-15 |
-| M4 | 机械验证 | `verify.mjs` / `gate.mjs` / `event.mjs` 三项脚本 + chi 双层复核流程 | ✅ 完成：见下方 M4 验收详情 | 2026-08-15 |
-| M5 | 文档 | `docs/PRD.md`、`docs/architecture.md`、`docs/guide/quickstart.md`、`docs/guide/milestones.md` | 🔄 进行中：本文件正在归档 | 2026-08-15 |
+| M2 | 单兵 | 5 角色独立任务产物（si/ji/xun/yi/chi） | ✅ 完成：**5/5 全部通过**，chi judge 13/13 标准 PASS | 2026-08-15 |
+| M3 | 编排 | ultrawork 三路并行汇总流程跑通 | ✅ 完成：写文章+查新闻+查金价混合任务 | 2026-08-15 |
+| M4 | 机械验证 | verify/gate/event 三件套 + chi 双层复核 | ✅ 完成：识破"假完成" + structure 误报修复 | 2026-08-15 |
+| M5 | 文档 | PRD / architecture / quickstart / milestones / release | ✅ 完成：五份文档归档 | 2026-08-21 |
+| M6 | 自主学习 | learn.mjs + learn-rules + learn-budget + eval-metrics + eval-report | ✅ 完成：8 项 KPI + 8 问题设计 + 11 个 .mjs 脚本 | 2026-08-21 |
+| M7 | Pi Harness | `.pi/` 兼容层 + prompts/ + package.json pi manifest | ✅ 完成：5 agent + 3 prompts + junction bridge | 2026-08-21 |
+
+---
 
 ## M2 单兵验收详情（5/5 通过）
 
@@ -22,54 +26,116 @@
 |------|------|----------|---------------|
 | si 🖊️ | 撰写团队简介 | `docs/m2-acceptance/si-team-intro.md` | ✅ PASS |
 | ji 🛠️ | skill 目录结构审计 | `docs/m2-acceptance/ji-skill-structure.md` | ✅ PASS（13/13 标准 PASS） |
-| xun 🔍 | AI 新闻简报（8 月） | `docs/m2-acceptance/xun-ai-news.md` | ✅ PASS（8 条均 ≥2 独立来源） |
+| xun 🔍 | AI 新闻简报 | `docs/m2-acceptance/xun-ai-news.md` | ✅ PASS（8 条均 ≥2 独立来源） |
 | yi 🎨 | Logo 概念方案 | `docs/m2-acceptance/yi-logo-concept.md` | ✅ PASS（3 方案 + 配色 + 可访问性） |
 | chi 💹 | 独立 Judge 评审 ji 产物 | `docs/m2-acceptance/chi-judge-report.md` | ✅ PASS（Verdict: PASS，0 问题） |
 
-chi judge 评审 ji-skill-structure 的 13 条验收标准全部 PASS，包括文件存在性、SKILL.md 13/13、frontmatter 合法性、name 与目录名精确匹配、行数与大小全量复核——**ji 自报的 3,789 bytes、13/13、0 问题均经独立复核证实**。
+---
 
 ## M4 机械验证验收详情
 
 ### 4.1 识破"假完成"
 
-M4 验收过程中，用 verify.mjs 对"声称完成但未产出文件"的场景进行验证：
-
-- `output-exists` 检查发现产物文件不存在 → 判定 `FAIL`
-- 成功识破"假完成"（subagent 声称完成但实际未落盘），证明机械验证机制有效
+`output-exists` 检查发现产物文件不存在 → 判定 FAIL，成功识破 subagent 声称完成但未落盘的场景。
 
 ### 4.2 structure 误报修复
 
-初次运行 verify.mjs 对 `docs/` 和 `scripts/` 目录下的 .md 文件做 frontmatter 检查时，出现误报：这些目录不是 `.opencode/` 作用域，不应强制要求 frontmatter。
-
-**修复方式**（verify.mjs `checkStructure` 函数）：
-
-- 引入 `strictFrontmatter` 开关：`abs.startsWith(ROOT + ".opencode")`
-- `.opencode/` 作用域下 .md 文件强制要求 `---` frontmatter
-- 非 `.opencode/` 作用域（如 `docs/`、`scripts/`、`m2-acceptance/`）跳过 .md frontmatter 检查，标记 `SKIP`
-- .json 结构检查不受作用域限制，全部目录强制 JSON.parse
-
-修复后 verify.mjs 对 `docs/m2-acceptance/` 目录重新验证，output-exists / secrets / todo-scan 全部 PASS，structure 对 .md 标记 SKIP（非 .opencode 作用域），符合预期。
+引入 `strictFrontmatter` 开关：仅 `.opencode/` 作用域强制 frontmatter 检查，非 `.opencode/` 目录（docs/、scripts/ 等）标记 SKIP。
 
 ### 4.3 脚本清单
 
 | 脚本 | 功能 | 关键机制 |
 |------|------|----------|
-| `scripts/verify.mjs` | 五项机械检查 | output-exists / secrets / todo-scan / structure / gate-exit-code；`--json` / `--sid` 参数；纯 Node 零依赖 |
-| `scripts/gate.mjs` | stop-hook 门禁 | 白名单 typecheck/test/lint；60s 超时；强化次数上限 5；`GATE_SKIP` / `GATE_EXHAUSTED` 状态 |
-| `scripts/event.mjs` | events.jsonl 读写 | append / list / replay / validate 四子命令；9 种 kind 枚举；`eventId` uuid |
+| `scripts/verify.mjs` | 五项机械检查 | output-exists / secrets / todo-scan / structure / gate-exit-code |
+| `scripts/gate.mjs` | stop-hook 门禁 | 白名单 typecheck/test/lint；60s 超时；强化上限 5 |
+| `scripts/event.mjs` | events.jsonl 读写 | append / list / replay / validate；9 种 kind |
 
-## 已知决策记录
+---
 
-| # | 决策 | 说明 |
-|---|------|------|
-| D1 | **命名暂定 men** | 仓库命名为 `men`（门），团队中文别名"假维斯（fakevis）"为暂定；命名可后续调整，不影响架构 |
-| D2 | **adapter 后续适配 Codex / OpenClaw** | 当前仅适配 OpenCode；跨运行时复用（Codex、OpenClaw 等）的 adapter 层设计未进入当前里程碑，规划 M5 后启动 |
-| D3 | **M1 先不做插件** | 采用 OpenCode 原生 agent 定义 + command + 脚本；`opencode.json` 中 `plugin: []`，不启用 `@opencode-ai/plugin` |
-| D4 | **SenseNova 生图仅 yi 挂载** | 避免其他角色误用外部 API；SenseNova 密钥仅对 yi 暴露 |
-| D5 | **全部脚本纯 Node 零依赖** | verify / gate / event 三个脚本不引入任何 npm 依赖，仅用 Node 内置模块（fs / path / crypto / child_process） |
-| D6 | **事件审计 best-effort** | event.mjs / gate.mjs 的追加事件在命令失败时不阻塞主流程，仅 stderr 警告 |
+## M6 自主学习验收详情
+
+### 6.1 交付物
+
+| 脚本 | 功能 | 行数 |
+|------|------|------|
+| `scripts/learn.mjs` | 学习循环主入口（聚合→分类→落盘） | ~180 行 |
+| `scripts/learn-rules.mjs` | L1 规则判定表（纯函数） | ~140 行 |
+| `scripts/learn-budget.mjs` | L2 调用预算检查 | ~90 行 |
+| `scripts/eval-metrics.mjs` | 8 项 KPI 采集与计算 | ~170 行 |
+| `scripts/eval-report.mjs` | 人类可读评估报告生成 | ~110 行 |
+| `scripts/learning.test.mjs` | 学习闭环单元测试 | ~200 行 |
+
+### 6.2 8 项 KPI
+
+| 指标 | ID | 数据来源 |
+|------|----|---------|
+| 任务完成率 | KPI-task-completion | events.jsonl |
+| 一次通过率 | KPI-first-pass | events.jsonl |
+| 回归率 | KPI-regression | events.jsonl |
+| 平均重试次数 | KPI-avg-retries | events.jsonl |
+| 技能使用率 | KPI-skill-usage | skill stats |
+| 知识沉淀率 | KPI-knowledge | knowledge/ 目录 |
+| 错误重复率 | KPI-error-repeat | errors/ index |
+| 学习效率 | KPI-learn-efficiency | 事件类型计数 |
+
+### 6.3 设计文档
+
+`docs/learning-architecture.md` 覆盖 8 个问题的完整设计方案：
+
+1. 自动学习闭环
+2. 技能进化
+3. 模式提取
+4. 元学习
+5. 行为漂移检测
+6. 团队知识迁移
+7. 评估自动化
+8. 学习成本控制
+
+---
+
+## M7 Pi Harness 验收详情
+
+### 7.1 交付物
+
+| 文件 | 内容 |
+|------|------|
+| `.pi/settings.json` | 包声明（packages: ["./"]） |
+| `.pi/APPEND_SYSTEM.md` | men 编排指令（0 处 OpenCode 引用） |
+| `.pi/agents/si.md` | 规划与写作子 agent |
+| `.pi/agents/ji.md` | 工程执行子 agent |
+| `.pi/agents/chi.md` | 投资分析与评审子 agent |
+| `.pi/agents/yi.md` | 视觉设计子 agent |
+| `.pi/agents/xun.md` | 研究助理子 agent |
+| `prompts/ultrawork.md` | 一键编排 prompt 模板 |
+| `prompts/hyperplan.md` | 访谈式规划 prompt 模板 |
+| `prompts/verify.md` | 双层验证 prompt 模板 |
+| `.pi/skills/` | junction → `.opencode/skills/`（13 skills 可见） |
+
+### 7.2 兼容性
+
+| 检查项 | 状态 |
+|--------|------|
+| Agent frontmatter 字段完整 | ✅ 5/5 通过 |
+| Skills 路径桥接 | ✅ junction 生效，13 目录可见 |
+| 0 处 OpenCode 专有引用 | ✅ APPEND_SYSTEM.md 已适配 |
+| scripts 可执行 | ✅ 11 个 .mjs 全部 node --check 通过 |
+| 同一套 skills / scripts 共享 | ✅ 底层不变 |
+
+---
+
+## CI 工作流
+
+GitHub Actions（`.github/workflows/ci.yml`）包含两个 job：
+
+| Job | 触发条件 | 步骤 |
+|-----|---------|------|
+| `validate` | push / pull_request | node --check → verify → release dry-run → install smoke test |
+| `triage` | pull_request only | 按文件路径自动打标签 → 自动设里程碑 → 自动分配 assignee → 自动添加到项目看板 |
+
+---
 
 ## 下一步
 
-- M5 收官：本文档归档后，M5 完成
-- M5 后规划：跨运行时 adapter（Codex / OpenClaw）+ 插件化封装 + 持续集成接入
+- M7 后规划：跨运行时 adapter（Codex / OpenClaw）+ 插件化封装 + 持续集成自动化
+- 持续优化：根据 KPI 数据迭代 agent 定义与 skill 触发描述
+- 开源发布准备：替换 install.sh / install.ps1 中的占位 URL → `npm publish`
