@@ -74,6 +74,22 @@
 ```
 → men 逐项访谈（目标/范围/阶段/角色/约束/验收），六项全部明确后产出 `<plan>` envelope，包含阶段划分、依赖图、Wave 划分、角色矩阵、验收标准总表。**只规划不执行**，用户确认后下次用 `/ultrawork` 按计划分发。
 
+### 3.4 `npm run learn` 自主学习
+
+```bash
+npm run learn -- --sid ultrawork-20260815-213941
+```
+→ 从 events.jsonl 提取经验，写入 knowledge/errors/ 和 knowledge/patterns/。
+验证结果：type: B，1 action classified，错误写入 errors/error-*.md。
+
+### 3.5 `npm run eval` 评估指标
+
+```bash
+npm run eval -- --sid verify-1787295186835 --json
+```
+→ 输出 8 项 KPI JSON。
+验证结果：任务完成率 100%，1/1 通过。
+
 ## 四、GitHub 使用指南
 
 本仓库已在 GitHub 上托管（`cgartlab/men`），支持 issue、PR、release 等标准协作流程。
@@ -141,6 +157,34 @@ node scripts/learn.mjs --sid <sid> --json
 输出写入 `knowledge/errors/` 和 `knowledge/patterns/`，格式为带 YAML frontmatter 的 .md 文件。
 
 ### 7.2 Eval（指标计算）
+
+`/verify` 完成后自动执行：
+
+```bash
+node scripts/eval-metrics.mjs --sid <sid> --json
+```
+
+输出 8 项 KPI（通过率、回归率、平均耗时等），覆盖最近 10 次任务窗口。
+
+### 7.2.1 实际验证结果
+
+**learn.mjs**（ultrawork-20260815-213941）：
+```json
+{"ok":true,"type":"B","reason":"1 action(s) classified","eventsRead":15}
+```
+→ 正确识别 REVISION_NEEDED，写入 `errors/error-*.md`
+
+**eval-metrics.mjs**（ultrawork-20260815-213941）：
+```json
+{"KPI-task-completion":{"display":"0%","total":3},"KPI-knowledge":{"display":"5 条"},"KPI-learn-efficiency":{"display":"50%"}}
+```
+→ 3 次任务，5 条知识事件，50% 学习效率
+
+**eval-metrics.mjs**（verify-1787295186835）：
+```json
+{"KPI-task-completion":{"display":"100%","pass":1,"total":1}}
+```
+→ 100% 通过率
 
 `/verify` 完成后自动执行：
 

@@ -24,6 +24,14 @@ knowledge/
 - **patterns/**：记录团队协作中发现的有效/无效模式，提炼为可复用的行为规则
 - **decisions/**：记录架构决策、技术选型、治理规则变更，替代散落在各处的决策碎片
 
+## 当前内容（v0.2.0）
+
+| 目录 | 条目数 | 说明 |
+|------|--------|------|
+| `errors/` | 1 | learn.mjs 自动提取（verdict-revision-needed） |
+| `patterns/` | 3 | verdict-revision / wave-parallel / event-type-inconsistency |
+| `decisions/` | 3 | M0 / M6 / M7 决策记录 |
+
 ## 写入方式
 
 ### 自动写入（learn.mjs）
@@ -56,6 +64,13 @@ status: <active|archived>
 
 - 过期/被替代的条目标记 `status: archived`
 - 不直接删除文件，保留审计历史
+
+## 写入规范
+
+- **errors/**：由 learn.mjs 自动写入，无需手动编辑
+- **patterns/**：可由 learn.mjs 自动写入，也可手动补充（从项目经验中提取）
+- **decisions/**：手动写入，对应 `docs/architecture.md` 中的 D 编号
+- 所有条目必须包含 YAML frontmatter（id / type / created / status）
 
 ## 相关文档
 

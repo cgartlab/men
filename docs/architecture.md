@@ -210,6 +210,8 @@ men/
 | D10 | **命名暂定 men（门）**，团队名暂定 fakevis（假维斯） | 命名可后续调整 | 已落地 |
 | D11 | **adapter 后续适配 Codex / OpenClaw** | 跨运行时复用，未进入当前里程碑 | 待 M5 后 |
 | D12 | **技术栈 TypeScript + Bun** | 两上游一致，OpenCode 插件生态 | 已落地（脚本侧用纯 Node） |
-| D13 | **自主学习回路**（M5+ 增量） | 四层认知模型（评估/认知/行为/记忆），L0/L1/L2 三级触发，events.jsonl → learn.mjs → errors/ + patterns/ | 开发中 |
+| D13 | **自主学习回路**（M5+ 增量） | 四层认知模型（评估/认知/行为/记忆），L0/L1/L2 三级触发，events.jsonl → learn.mjs → errors/ + patterns/ | 已落地 |
 | D14 | **GitHub 标准化**（M6） | LICENSE/CONTRIBUTING/SECURITY/CODE_OF_CONDUCT/PR&Issue 模板/CODEOWNERS/dependabot/CI workflow | 已落地 |
 | D15 | **MIT 许可证** | 替代 Apache-2.0，简化贡献流程 | 已落地 |
+| D16 | **自主学习已验证** | learn.mjs 对历史 ultrawork 会话正确提取 REVISION_NEEDED 错误模式；eval-metrics 8 项 KPI 全部计算 | 已落地 |
+| D17 | **事件类型归一化** | learn-rules.mjs 和 eval-metrics.mjs 均支持 men.* 前缀映射，兼容 ultrawork 事件格式 | 已落地 |
