@@ -47,13 +47,78 @@ function hasKeyword(detail, keyword) {
 }
 
 /**
- * 从 verify 事件的 detail 中提取 outcome
+ * 从 verify/judge 事件的 detail 中提取 outcome
+ * 支持格式：
+ *   1. JSON 对象含 outcome/result/status
+ *   2. JSON 对象含 payload.passed/failed
+ *   3. 纯文本含 "PASS"/"FAIL"/"REVISION_NEEDED"/"PARTIAL"/"通过"/"失败"
  */
-function parseVerifyOutcome(detail) {
+function parseOutcomeFromDetail(detail) {
+  if (!detail) return null;
   const parsed = parseDetail(detail);
-  if (!parsed.structured) return null;
-  const j = parsed.data;
-  return j.outcome || j.result || j.status || null;
+
+  if (parsed.structured) {
+    const j = parsed.data;
+    // JSON 对象直接读取
+    if (j.outcome || j.result || j.status) return j.outcome || j.result || j.status;
+    // payload 检查
+    if (j.payload && typeof j.payload.passed === 'number' && typeof j.payload.failed === 'number') {
+      if (j.payload.failed > 0) return 'FAIL';
+      if (j.payload.passed > 0) return 'PASS';
+    }
+    // checks 数组检查
+    if (Array.isArray(j.checks)) {
+      const hasFail = j.checks.some(c => c.status === 'FAIL');
+      const hasPass = j.checks.some(c => c.status === 'PASS');
+      if (hasFail) return 'FAIL';
+      if (hasPass) return 'PASS';
+    }
+  }
+
+  // 纯文本关键词匹配
+  const raw = parsed.raw || '';
+  if (raw.includes('REVISION_NEEDED')) return 'REVISION_NEEDED';
+  if (raw.includes('PARTIAL')) return 'PARTIAL';
+  if (raw.includes('REGRESSED')) return 'REGRESSED';
+  if (raw.includes('BLOCKED')) return 'BLOCKED';
+  if (raw.toLowerCase().includes('fail')) return 'FAIL';
+  if (raw.toLowerCase().includes('pass') || raw.includes('通过')) return 'PASS';
+  return null;
+}
+
+/**
+ * 归一化事件类型：优先检查 subject 中的 men.* 前缀（ultrawork 格式），再检查 type 字段
+ */
+function normalizeType(type, subject) {
+  const typeMap = {
+    'men.verdict-received': 'judge',
+    'men.gate-passed': 'gate.passed',
+    'men.gate-failed': 'gate.failed',
+    'men.report-delivered': 'verify',
+    'men.task-dispatched': 'dispatch',
+    'men.session-started': 'session.created',
+    'men.intent-classified': 'decision.made',
+    'men.plan-received': 'workflow.phase',
+    'men.collect-wave1': 'workflow.phase',
+    'men.collect-wave': 'workflow.phase',
+    'men.session-ended': 'session.ended',
+    'men.blocker-raised': 'blocker.raised',
+    'men.report': 'verify',
+  };
+  const typeKey = type || '';
+  const subjectKey = subject || '';
+
+  // 优先：subject 中的 men.* 前缀（ultrawork 格式：event="decision.made", subject="men.verdict-received"）
+  if (subjectKey && subjectKey.startsWith('men.')) {
+    return typeMap[subjectKey] || subjectKey;
+  }
+
+  // 回退：type 字段中的 men.* 前缀
+  if (typeKey && typeKey.startsWith('men.')) {
+    return typeMap[typeKey] || typeKey;
+  }
+
+  return typeKey || subjectKey;
 }
 
 /**
@@ -65,11 +130,11 @@ export function classify(events) {
     return { type: 'skip', actions: [], reason: 'no events' };
   }
 
-  // ── 1. 连续失败检测（BLOCKED）─────────────────────────
-  const verifyEvents = events.filter(e => (e.type || e.kind || '') === 'verify');
-  if (verifyEvents.length >= 3) {
-    const lastThree = verifyEvents.slice(-3);
-    const outcomes = lastThree.map(e => parseVerifyOutcome(e.detail));
+   // ── 1. 连续失败检测（BLOCKED）─────────────────────────
+   const verifyEvents = events.filter(e => normalizeType(e.type || e.event || '', e.subject) === 'verify');
+   if (verifyEvents.length >= 3) {
+     const lastThree = verifyEvents.slice(-3);
+     const outcomes = lastThree.map(e => parseOutcomeFromDetail(e.detail));
     const agents = lastThree.map(e => {
       const parsed = parseDetail(e.detail);
       if (parsed.structured && parsed.data.agent) return parsed.data.agent;
@@ -91,7 +156,7 @@ export function classify(events) {
 
   for (const ev of events) {
     const detail = ev.detail || '';
-    const kind = ev.type || ev.kind || '';
+    const kind = normalizeType(ev.type || ev.event || '', ev.subject);
     const subject = ev.subject || '';
 
     // Rule A: 技能触发不匹配
@@ -157,6 +222,33 @@ export function classify(events) {
       hasKeyword(detail, '不兼容')
     )) {
       actions.push({ type: 'C', target: 'human-gate', gate: 'collaboration-conflict', detail });
+      continue;
+    }
+
+    // Rule B4: 判定需修改 → errors/ lesson
+    if ((kind === 'judge' || kind === 'verify') && hasKeyword(detail, 'REVISION_NEEDED')) {
+      actions.push({ type: 'B', target: 'errors', lesson: 'verdict-revision-needed', detail });
+      continue;
+    }
+
+    // Rule B5: gate 失败 → errors/ lesson
+    if (kind === 'gate.failed') {
+      actions.push({ type: 'B', target: 'errors', lesson: 'gate-failed', detail });
+      continue;
+    }
+
+    // Rule B6: gate.passed 但 payload.failed > 0 → errors/ lesson
+    if (kind === 'gate.passed') {
+      const parsed = parseDetail(detail);
+      if (parsed.structured && parsed.data.payload && parsed.data.payload.failed > 0) {
+        actions.push({ type: 'B', target: 'errors', lesson: 'gate-passed-with-failures', detail });
+        continue;
+      }
+    }
+
+    // Rule C3: 判定部分通过 → patterns/
+    if ((kind === 'judge' || kind === 'verify') && hasKeyword(detail, 'PARTIAL')) {
+      actions.push({ type: 'C', target: 'patterns', pattern: 'verdict-partial', detail });
       continue;
     }
   }

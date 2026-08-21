@@ -24,13 +24,61 @@ function parseOutcome(ev) {
   if (!ev.detail) return 'unknown';
   try {
     const j = typeof ev.detail === 'string' ? JSON.parse(ev.detail) : ev.detail;
+    // 检查 payload.passed/failed（gate.passed/gate.failed 格式）
+    if (j.payload && typeof j.payload.passed === 'number' && typeof j.payload.failed === 'number') {
+      if (j.payload.failed > 0) return 'FAIL';
+      if (j.payload.passed > 0) return 'PASS';
+    }
+    // 检查 checks 数组中的 PASS/FAIL（verify.mjs 格式）
+    if (Array.isArray(j.checks)) {
+      const hasFail = j.checks.some(c => c.status === 'FAIL');
+      const hasPass = j.checks.some(c => c.status === 'PASS');
+      if (hasFail) return 'FAIL';
+      if (hasPass) return 'PASS';
+    }
     return j.outcome || j.result || j.status || 'unknown';
-  } catch { return 'unknown'; }
+  } catch {
+    // 纯文本 fallback：匹配 PASS/FAIL/REVISION_NEEDED/PARTIAL/通过/失败
+    const raw = String(ev.detail).toLowerCase();
+    if (raw.includes('revision_needed') || raw.includes('revision needed')) return 'REVISION_NEEDED';
+    if (raw.includes('partial')) return 'PARTIAL';
+    if (raw.includes('regressed')) return 'REGRESSED';
+    if (raw.includes('blocked')) return 'BLOCKED';
+    if (raw.includes('fail')) return 'FAIL';
+    if (raw.includes('pass') || raw.includes('通过')) return 'PASS';
+    return 'unknown';
+  }
 }
 
-/** 兼容读取事件类型：新格式 e.type，旧格式 e.kind */
+/** 兼容读取事件类型：优先检查 subject 中的 men.* 前缀，再回退到 event/type/kind */
 function eventType(e) {
-  return e.type || e.kind || '';
+  const subject = e.subject || '';
+  const raw = e.event || e.type || e.kind || '';
+  const typeMap = {
+    'men.verdict-received': 'judge',
+    'men.gate-passed': 'gate.passed',
+    'men.gate-failed': 'gate.failed',
+    'men.report-delivered': 'verify',
+    'men.task-dispatched': 'dispatch',
+    'men.session-started': 'session.created',
+    'men.intent-classified': 'decision.made',
+    'men.plan-received': 'workflow.phase',
+    'men.collect-wave1': 'workflow.phase',
+    'men.collect-wave': 'workflow.phase',
+    'men.session-ended': 'session.ended',
+    'men.blocker-raised': 'blocker.raised',
+    'men.report': 'verify',
+  };
+  // 优先：subject 中的 men.* 前缀
+  if (subject && subject.startsWith('men.')) {
+    return typeMap[subject] || subject;
+  }
+  // 回退：event/type/kind 中的 men.* 前缀
+  if (raw && raw.startsWith('men.')) {
+    return typeMap[raw] || raw;
+  }
+  // 标准类型直接返回
+  return raw;
 }
 
 /**
@@ -43,7 +91,10 @@ export function computeMetrics(events, opts = {}) {
   const recent = Array.isArray(events) ? events.slice(-window) : [];
 
   // 提取 verify/judge 事件
-  const judgeEvents = recent.filter(e => eventType(e) === 'judge' || eventType(e) === 'verify');
+  const judgeEvents = recent.filter(e => {
+    const t = eventType(e);
+    return t === 'judge' || t === 'verify' || t === 'gate.passed' || t === 'gate.failed';
+  });
   const errorEvents = recent.filter(e => eventType(e) === 'error');
   const dispatchEvents = recent.filter(e => eventType(e) === 'dispatch');
 
