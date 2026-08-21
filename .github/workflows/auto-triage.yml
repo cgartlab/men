@@ -1,7 +1,6 @@
 name: Auto Triage
-# Auto-triage: label, assign, milestone, project on PR events
 
-"on":
+on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
 
