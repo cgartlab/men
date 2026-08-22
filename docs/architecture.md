@@ -1,6 +1,6 @@
 # 架构说明（Architecture）— 假维斯（men Agent 团队）
 
-> 版本：M5 ｜ 日期：2026-08-15
+> 版本：M7 ｜ 日期：2026-08-21
 > 关联：`docs/research/00-m0-synthesis.md` 提供上游调研与决策来源
 
 ---
