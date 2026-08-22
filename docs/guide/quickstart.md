@@ -19,7 +19,58 @@
    - 输入 `/quit` 退出，再重新执行 `opencode`
    - 或关闭终端重开
 
-## 二、三个命令用法表
+## 二、引导式模型配置
+
+安装完成后，运行引导脚本让 men 帮你配置好所有模型：
+
+```bash
+node scripts/setup.mjs
+```
+
+**脚本会做什么**：
+1. 检测当前模型配置状态
+2. 如果你还没有配置模型，men 会通过对话式交互帮你选择
+3. 根据你的订阅情况推荐最适合的模型组合
+4. 自动写入 `opencode.json`
+
+**交互流程**（约 2-3 分钟）：
+
+```
+👋 men 开场白 → 介绍自己和目的
+Q1: 你订阅了哪些 AI 服务的套餐？（多选）
+Q2: 有付费套餐还是免费额度？（如果有套餐）
+Q3: 让我推荐最佳组合，还是你自己指定？
+Q4: 确认分配结果 → 写入 opencode.json
+```
+
+**跳过交互（预设）**：
+
+```bash
+# 使用默认模型组合（全套餐）
+node scripts/setup.mjs --preset default
+
+# 使用免费模型组合
+node scripts/setup.mjs --preset free
+```
+
+**已配置后的重新配置**：
+
+```bash
+# 看到当前配置 + 提示重新配置
+node scripts/setup.mjs
+
+# 强制重置
+node scripts/setup.mjs --reset
+```
+
+**无套餐用户**：
+
+如果你还没有任何 AI 服务套餐，脚本会自动推荐使用免费模型，并给出各平台的注册指引：
+- SenseNova（商汤）控制台：https://console.sensenova.cn
+- 火山引擎：https://console.volcengine.com
+- DeepSeek：https://platform.deepseek.com
+
+## 三、三个命令用法表
 
 | 命令 | 用法 | 场景 | 触发 agent |
 |------|------|------|-----------|
@@ -27,9 +78,9 @@
 | `/verify <角色或路径>` | 双层验证：机械检查（verify.mjs）+ 语义复核（chi） | 需要独立验收某个角色的产物 | chi（fresh-context Judge） |
 | `/hyperplan <项目>` | 访谈式规划，产出 plan envelope（不执行） | 复杂项目立项、长期规划 | men → si |
 
-## 三、命令示例
+## 四、命令示例
 
-### 3.1 `/ultrawork` 一键编排
+### 4.1 `/ultrawork` 一键编排
 
 **单一任务（search 类，单路执行）**：
 ```
@@ -53,7 +104,7 @@
 - Chi judge 独立复核全部产物
 → 最终四段汇总报告：【结论】【关键信息】【子任务状态】【来源/证据】【未决问题】
 
-### 3.2 `/verify` 独立验收
+### 4.2 `/verify` 独立验收
 
 **验证某个角色的产物**：
 ```
@@ -67,14 +118,14 @@
 ```
 → chi 按提供的标准表逐条核对，输出 PASS/FAIL/REGRESSED/BLOCKED verdict。
 
-### 3.3 `/hyperplan` 项目规划
+### 4.3 `/hyperplan` 项目规划
 
 ```
 /hyperplan 为公司搭建一个内部知识库
 ```
 → men 逐项访谈（目标/范围/阶段/角色/约束/验收），六项全部明确后产出 `<plan>` envelope，包含阶段划分、依赖图、Wave 划分、角色矩阵、验收标准总表。**只规划不执行**，用户确认后下次用 `/ultrawork` 按计划分发。
 
-### 3.4 `npm run learn` 自主学习
+### 4.4 `npm run learn` 自主学习
 
 ```bash
 npm run learn -- --sid ultrawork-20260815-213941
@@ -82,7 +133,7 @@ npm run learn -- --sid ultrawork-20260815-213941
 → 从 events.jsonl 提取经验，写入 knowledge/errors/ 和 knowledge/patterns/。
 验证结果：type: B，1 action classified，错误写入 errors/error-*.md。
 
-### 3.5 `npm run eval` 评估指标
+### 4.5 `npm run eval` 评估指标
 
 ```bash
 npm run eval -- --sid verify-1787295186835 --json
@@ -90,24 +141,24 @@ npm run eval -- --sid verify-1787295186835 --json
 → 输出 8 项 KPI JSON。
 验证结果：任务完成率 100%，1/1 通过。
 
-## 四、GitHub 使用指南
+## 五、GitHub 使用指南
 
 本仓库已在 GitHub 上托管（`cgartlab/men`），支持 issue、PR、release 等标准协作流程。
 
-### 4.1 报告问题
+### 5.1 报告问题
 
 - Bug 报告：https://github.com/cgartlab/men/issues/new?template=bug_report.md
 - 功能建议：https://github.com/cgartlab/men/issues/new?template=feature_request.md
 
-### 4.2 贡献代码
+### 5.2 贡献代码
 
 参见 [CONTRIBUTING.md](../../CONTRIBUTING.md)，主要流程：Fork → Branch → Commit → Push → PR
 
-### 4.3 查看发布
+### 5.3 查看发布
 
 参见 https://github.com/cgartlab/men/releases
 
-## 五、常用技能提示
+## 六、常用技能提示
 
 | 技能包 | 所属角色 | 触发场景 |
 |--------|----------|----------|
@@ -125,7 +176,7 @@ npm run eval -- --sid verify-1787295186835 --json
 | `yi-design` | yi | 设计决策、设计文档 |
 | `yi-imagegen` | yi | SenseNova U1 Fast 生图 |
 
-## 六、事件审计查看
+## 七、事件审计查看
 
 每次 `/ultrawork` 执行会生成一个独立 sid（格式 `ultrawork-<时间戳>`），事件写入 `.agents/state/sessions/<sid>/events.jsonl`。
 
@@ -142,11 +193,11 @@ node scripts/event.mjs validate --sid ultrawork-20260815T103000
 
 replay 输出按时间排序，展示每步 `type` / `eventId` / `subject` / `detail` / `payload`，可用于回溯编排过程。
 
-## 七、自主学习回路（M7）
+## 八、自主学习回路（M7）
 
 每次 `/ultrawork` 和 `/verify` 完成后，系统会自动触发自主学习：
 
-### 7.1 Learn（经验提取）
+### 8.1 Learn（经验提取）
 
 `/ultrawork` 完成后自动执行：
 
@@ -156,7 +207,7 @@ node scripts/learn.mjs --sid <sid> --json
 
 输出写入 `knowledge/errors/` 和 `knowledge/patterns/`，格式为带 YAML frontmatter 的 .md 文件。
 
-### 7.2 Eval（指标计算）
+### 8.2 Eval（指标计算）
 
 `/verify` 完成后自动执行：
 
@@ -166,7 +217,7 @@ node scripts/eval-metrics.mjs --sid <sid> --json
 
 输出 8 项 KPI（通过率、回归率、平均耗时等），覆盖最近 10 次任务窗口。
 
-### 7.2.1 实际验证结果
+### 8.2.1 实际验证结果
 
 **learn.mjs**（ultrawork-20260815-213941）：
 ```json
@@ -194,7 +245,7 @@ node scripts/eval-metrics.mjs --sid <sid> --json
 
 输出 8 项 KPI（通过率、回归率、平均耗时等），覆盖最近 10 次任务窗口。
 
-### 7.3 手动查看
+### 8.3 手动查看
 
 ```bash
 # 查看最近一次学习结果
@@ -204,13 +255,13 @@ node scripts/learn.mjs --sid ultrawork-20260815T103000 --json
 node scripts/eval-metrics.mjs --sid verify-1787043854820 --json
 ```
 
-### 7.4 知识库
+### 8.4 知识库
 
 - `knowledge/errors/` — 错误模式记录（自动写入）
 - `knowledge/patterns/` — 协作模式库（自动写入）
 - `knowledge/decisions/` — 决策记录（手动 + 自动归档）
 
-## 八、红线提醒
+## 九、红线提醒
 
 团队所有 agent 共享 7 条红线（在 agent 定义底部逐字一致）：
 

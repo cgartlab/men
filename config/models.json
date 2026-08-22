@@ -1,0 +1,221 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cgartlab/men/main/config/models.schema.json",
+  "version": "1.0.0",
+  "providers": {
+    "opencode-go": {
+      "name": "OpenCode 套餐",
+      "description": "OpenCode 官方提供的模型套餐，覆盖多种主流模型",
+      "homepage": "https://opencode.ai/pricing",
+      "models": [
+        {
+          "id": "opencode-go/deepseek-v4-flash",
+          "name": "DeepSeek V4 Flash",
+          "tier": "premium",
+          "description": "DeepSeek 最新推理模型，综合能力强，适合编排、写作、代码",
+          "bestFor": ["men", "si", "ji", "chi"],
+          "free": false,
+          "registerUrl": "https://opencode.ai/pricing",
+          "limits": null
+        },
+        {
+          "id": "opencode-go/gpt-4o",
+          "name": "GPT-4o",
+          "tier": "premium",
+          "description": "OpenAI 多模态模型，适合通用任务",
+          "bestFor": ["men", "si", "chi"],
+          "free": false,
+          "registerUrl": "https://opencode.ai/pricing",
+          "limits": null
+        },
+        {
+          "id": "opencode-go/claude-3.5-sonnet",
+          "name": "Claude 3.5 Sonnet",
+          "tier": "premium",
+          "description": "Anthropic 高质量写作模型，适合写作和推理",
+          "bestFor": ["si", "men", "chi"],
+          "free": false,
+          "registerUrl": "https://opencode.ai/pricing",
+          "limits": null
+        }
+      ]
+    },
+    "sensenova": {
+      "name": "SenseNova（商汤）",
+      "description": "商汤科技大模型平台，提供多种模型",
+      "homepage": "https://console.sensenova.cn",
+      "models": [
+        {
+          "id": "sensenova/deepseek-v4-flash",
+          "name": "DeepSeek V4 Flash（SenseNova）",
+          "tier": "premium",
+          "description": "通过 SenseNova 接入的 DeepSeek V4 Flash，推理能力强",
+          "bestFor": ["men", "si", "ji"],
+          "free": false,
+          "registerUrl": "https://console.sensenova.cn",
+          "limits": null
+        },
+        {
+          "id": "sensenova/glm-5.2",
+          "name": "GLM-5.2",
+          "tier": "premium",
+          "description": "智谱最新模型，逻辑分析能力强，适合评审和独立判断",
+          "bestFor": ["chi"],
+          "free": false,
+          "registerUrl": "https://console.sensenova.cn",
+          "limits": null
+        },
+        {
+          "id": "sensenova/sensenova-6.8-flash-lite",
+          "name": "SenseNova 6.8 Flash Lite",
+          "tier": "free",
+          "description": "SenseNova 免费轻量模型，适合搜索、设计等轻量任务",
+          "bestFor": ["xun", "yi"],
+          "free": true,
+          "registerUrl": "https://console.sensenova.cn",
+          "limits": {
+            "type": "rate_limit",
+            "description": "免费额度，有一定调用频率限制"
+          }
+        }
+      ]
+    },
+    "huoshan": {
+      "name": "火山引擎（豆包/方舟）",
+      "description": "字节跳动火山引擎大模型平台",
+      "homepage": "https://console.volcengine.com",
+      "models": [
+        {
+          "id": "huoshan/ark-code-latest",
+          "name": "火山引擎方舟（最新代码模型）",
+          "tier": "premium",
+          "description": "火山引擎方舟的代码模型，代码理解和生成能力突出",
+          "bestFor": ["men", "ji"],
+          "free": false,
+          "registerUrl": "https://console.volcengine.com",
+          "limits": null
+        },
+        {
+          "id": "huoshan/doubao-lite",
+          "name": "豆包 Lite",
+          "tier": "free",
+          "description": "火山引擎免费轻量模型",
+          "bestFor": ["xun", "yi"],
+          "free": true,
+          "registerUrl": "https://console.volcengine.com",
+          "limits": {
+            "type": "rate_limit",
+            "description": "免费额度，每日有调用上限"
+          }
+        }
+      ]
+    },
+    "deepseek": {
+      "name": "DeepSeek 官方",
+      "description": "DeepSeek 官方平台",
+      "homepage": "https://platform.deepseek.com",
+      "models": [
+        {
+          "id": "deepseek/deepseek-v4-flash",
+          "name": "DeepSeek V4 Flash",
+          "tier": "premium",
+          "description": "DeepSeek 官方推理模型",
+          "bestFor": ["men", "si", "ji"],
+          "free": false,
+          "registerUrl": "https://platform.deepseek.com",
+          "limits": null
+        }
+      ]
+    }
+  },
+  "roleDefaults": {
+    "men": {
+      "roleName": "编排核心（men）",
+      "description": "接收用户指令、路由任务、汇总结果，需要强力推理和代码理解",
+      "priority": [
+        "huoshan/ark-code-latest",
+        "opencode-go/deepseek-v4-flash",
+        "sensenova/deepseek-v4-flash",
+        "deepseek/deepseek-v4-flash",
+        "sensenova/sensenova-6.8-flash-lite"
+      ],
+      "fallback": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "si": {
+      "roleName": "规划与写作（si）",
+      "description": "深度推理、任务拆解、文章写作，需要最强推理和写作能力",
+      "priority": [
+        "opencode-go/deepseek-v4-flash",
+        "sensenova/deepseek-v4-flash",
+        "deepseek/deepseek-v4-flash",
+        "opencode-go/claude-3.5-sonnet",
+        "sensenova/sensenova-6.8-flash-lite"
+      ],
+      "fallback": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "ji": {
+      "roleName": "代码与工程（ji）",
+      "description": "代码实现、前端开发、Git 操作，需要强代码能力",
+      "priority": [
+        "opencode-go/deepseek-v4-flash",
+        "huoshan/ark-code-latest",
+        "sensenova/deepseek-v4-flash",
+        "deepseek/deepseek-v4-flash",
+        "sensenova/sensenova-6.8-flash-lite"
+      ],
+      "fallback": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "chi": {
+      "roleName": "投资分析与评审（chi）",
+      "description": "独立评审其他 agent 产物，需要客观、逻辑分析能力",
+      "priority": [
+        "sensenova/glm-5.2",
+        "opencode-go/deepseek-v4-flash",
+        "opencode-go/claude-3.5-sonnet",
+        "sensenova/sensenova-6.8-flash-lite"
+      ],
+      "fallback": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "yi": {
+      "roleName": "视觉与设计（yi）",
+      "description": "设计决策、Token 定义、生图，偏向轻量推理",
+      "priority": [
+        "sensenova/sensenova-6.8-flash-lite",
+        "huoshan/doubao-lite",
+        "opencode-go/deepseek-v4-flash"
+      ],
+      "fallback": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "xun": {
+      "roleName": "研究助理（xun）",
+      "description": "搜索、事实核查、RSS 聚合，偏向轻量推理",
+      "priority": [
+        "sensenova/sensenova-6.8-flash-lite",
+        "huoshan/doubao-lite",
+        "opencode-go/deepseek-v4-flash"
+      ],
+      "fallback": "sensenova/sensenova-6.8-flash-lite"
+    }
+  },
+  "presets": {
+    "default": {
+      "name": "全功能推荐",
+      "description": "使用用户所有可用模型的最佳组合",
+      "men": "huoshan/ark-code-latest",
+      "si": "opencode-go/deepseek-v4-flash",
+      "ji": "opencode-go/deepseek-v4-flash",
+      "chi": "sensenova/glm-5.2",
+      "yi": "sensenova/sensenova-6.8-flash-lite",
+      "xun": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "free": {
+      "name": "全免费方案",
+      "description": "全部使用免费模型，能力有限但有基础可用",
+      "men": "sensenova/sensenova-6.8-flash-lite",
+      "si": "sensenova/sensenova-6.8-flash-lite",
+      "ji": "sensenova/sensenova-6.8-flash-lite",
+      "chi": "sensenova/sensenova-6.8-flash-lite",
+      "yi": "sensenova/sensenova-6.8-flash-lite",
+      "xun": "sensenova/sensenova-6.8-flash-lite"
+    }
+  }
+}
