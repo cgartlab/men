@@ -11,7 +11,7 @@ description: "Use when scanning RSS feeds for news tracking, weekly digest mater
 
 - 用户只需要搜索一条特定信息（用 xun-search）
 - 用户要求进行事实核查（用 xun-factcheck）
-- 用户要求内容写作（用 si-content-write）
+- 用户要求内容写作（用 ji-content-write）
 
 ## 扫描工作流（step-by-step）
 

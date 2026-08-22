@@ -16,6 +16,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 const EVENTS_DIR = '.agents/state/sessions';
+const KPI_OUTPUT_DIR = '.agents/state/learn';
+
+function ensureDir(d) {
+  if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+}
 
 /**
  * 解析 verify/judge 事件的 outcome
@@ -235,11 +240,25 @@ export function main(argv) {
   const sidIdx = args.indexOf('--sid');
   const sid = sidIdx >= 0 ? args[sidIdx + 1] : null;
   const window = parseInt(args[args.indexOf('--window') + 1] || '10', 10);
+  const outputIdx = args.indexOf('--output');
+  const outputFile = outputIdx >= 0 ? args[outputIdx + 1] : null;
 
   // 有 sid 时从 events.jsonl 读取，否则返回空 metrics（向后兼容）
   const events = sid ? readEvents(sid) : [];
   const metrics = computeMetrics(events, { windowSize: window });
-  return JSON.stringify(metrics, null, 2);
+
+  const result = JSON.stringify(metrics, null, 2);
+
+  // --output: 写入 KPI 文件（供 men 路由决策参考）
+  if (outputFile || (!outputIdx && sid)) {
+    const target = outputFile || path.join(KPI_OUTPUT_DIR, 'kpi-latest.json');
+    try {
+      ensureDir(path.dirname(target));
+      fs.writeFileSync(target, result, 'utf8');
+    } catch { /* best-effort */ }
+  }
+
+  return result;
 }
 
 if (process.argv[1] && process.argv[1].endsWith('eval-metrics.mjs')) {

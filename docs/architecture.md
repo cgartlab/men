@@ -132,7 +132,7 @@ men/
 │   ├── skills/                 ← 13 个 skill
 │   │   ├── chi-invest / chi-judge
 │   │   ├── ji-frontend-design / ji-github / ji-l1-verify
-│   │   ├── si-content-write / si-knowledge / si-plan-compose
+│   │   ├── ji-content-write / si-knowledge / si-plan-compose
 │   │   ├── xun-factcheck / xun-rss-scan / xun-search
 │   │   └── yi-design / yi-imagegen
 │   ├── command/                ← 3 个自定义命令
@@ -215,3 +215,5 @@ men/
 | D15 | **MIT 许可证** | 替代 Apache-2.0，简化贡献流程 | 已落地 |
 | D16 | **自主学习已验证** | learn.mjs 对历史 ultrawork 会话正确提取 REVISION_NEEDED 错误模式；eval-metrics 8 项 KPI 全部计算 | 已落地 |
 | D17 | **事件类型归一化** | learn-rules.mjs 和 eval-metrics.mjs 均支持 men.* 前缀映射，兼容 ultrawork 事件格式 | 已落地 |
+| D18 | **Ji 承担写作职责** | 用户确认 Ji 原始设计含写作，写作从 si 移交 ji（ji-content-write skill），si 专注规划与知识管理 | 已落地 |
+| D19 | **学习回流闭环**（R1-R5） | men 路由前读 knowledge/patterns + route-hint.mjs；learn.mjs --apply 转门禁；chi plan review 类型；KPI 落盘 | 已落地 |

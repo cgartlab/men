@@ -36,6 +36,7 @@ description: "Use when performing independent mechanical verification (judge) of
 | command output | 跑命令 | 输出匹配预期 |
 | hardcoded secrets 扫描 | 扫描源码 | 无 API key / 密码明文 |
 | TODO 扫描 | 扫描源码 | 无未标注 TODO |
+| **plan review** | **审查 plan envelope** | **含目标/任务依赖图/并行波次/验收标准表，四要素齐全** |
 
 ### 状态标记
 
@@ -96,3 +97,4 @@ judge 决策追加到 `.agents/state/sessions/{sid}/events.jsonl`（append-only�
 - 其他 agent 提交产物请求评审时
 - men（门）在任务流程中插入 judge 环节时
 - 周期性回归验证
+- **si 提交 plan envelope 时**（men 在 team/hyperplan 流程中可插入 plan review judge 环节）

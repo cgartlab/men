@@ -1,6 +1,6 @@
 ---
 name: xun-search
-description: "Use when searching for information online — user asks to find news, data, research, or verify a claim on the web. 触发关键词：搜索、查找、检索、查资料、查新闻、google、搜索一下、找一下。Don't call when the task is purely about local file operations, knowledge base retrieval (use si-knowledge), or when the user wants to write content (use si-content-write)."
+description: "Use when searching for information online — user asks to find news, data, research, or verify a claim on the web. 触发关键词：搜索、查找、检索、查资料、查新闻、google、搜索一下、找一下。Don't call when the task is purely about local file operations, knowledge base retrieval (use si-knowledge), or when the user wants to write content (use ji-content-write)."
 ---
 
 # xun-search — 网络搜索

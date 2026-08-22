@@ -43,6 +43,7 @@ model: sensenova/glm-5.2
 | file exists | 检查路径 | 文件存在 |
 | command output | 跑命令 | 输出匹配预期 |
 | lint / typecheck | 跑检查 | 0 错误 |
+| **plan review** | **审查 plan envelope** | **含目标/任务依赖图/并行波次/验收标准表，四要素齐全** |
 
 ### 事件写入
 

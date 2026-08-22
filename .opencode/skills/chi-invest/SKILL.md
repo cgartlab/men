@@ -1,6 +1,6 @@
 ---
 name: chi-invest
-description: "Use when analyzing portfolio holdings, calculating investment returns, or tracking market performance for AU9999, Nasdaq, Hong Kong Stock Connect, or CSI Dividend Index. 触发关键词：持仓、收益、投资分析、portfolio、AU9999、港股通、纳斯达克、中证红利、金价、黄金。Don't call when the task is general market research (use xun-search), or when the user wants to write about finance (use si-content-write)."
+description: "Use when analyzing portfolio holdings, calculating investment returns, or tracking market performance for AU9999, Nasdaq, Hong Kong Stock Connect, or CSI Dividend Index. 触发关键词：持仓、收益、投资分析、portfolio、AU9999、港股通、纳斯达克、中证红利、金价、黄金。Don't call when the task is general market research (use xun-search), or when the user wants to write about finance (use ji-content-write)."
 ---
 
 # chi-invest — 投资分析技能

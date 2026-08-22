@@ -103,19 +103,21 @@ function usage() {
   return `learn — 学习循环主入口
 
 用法:
-  learn [--sid <session-id>] [--dry-run] [--json]
+  learn [--sid <session-id>] [--dry-run] [--json] [--apply]
 
 选项:
   --sid      会话 ID，从对应 events.jsonl 读取
   --dry-run  预览学习结果但不写入文件
   --json     输出 JSON
+  --apply    将学习结果转换为门禁规则（写入 errors/ 和 knowledge/patterns/）
   --help     显示此帮助
 
 流程:
   1. 读取 events.jsonl（最近 1 次任务）
   2. 通过 learn-rules 分类（A/B/C/BLOCKED）
   3. 按分类执行：errors/ / patterns/ / human-gate / skip
-  4. 所有操作 best-effort，不阻塞主流程
+  4. --apply 模式下，额外生成门禁规则供 verify.mjs 消费
+  5. 所有操作 best-effort，不阻塞主流程
 `;
 }
 
@@ -127,6 +129,7 @@ export function main(argv) {
   const sid = sidIdx >= 0 ? args[sidIdx + 1] : 'unknown';
   const dryRun = args.includes('--dry-run');
   const jsonOut = args.includes('--json');
+  const apply = args.includes('--apply');
 
   // Step 1: 读取事件
   const events = readEvents(sid);
