@@ -61,9 +61,9 @@
 3. **`CHARTER_CHECK` 字段**：每个 agent 必须有，含 Clarification level / Task domain / Must NOT do / Success criteria
 4. **`全员红线` 段落**：6 个 agent 必须逐字一致（复制粘贴，不修改）
 5. **model**：按角色分配不同模型，运行时权威配置以 `opencode.json` 的 `agent` 字段为准：
-   - men: `opencode-go/deepseek-v4-flash`
-   - si: `sensenova/deepseek-v4-flash`
-   - ji: `huoshan/ark-code-latest`
+    - men: `huoshan/ark-code-latest`
+    - si: `sensenova/deepseek-v4-flash`
+    - ji: `opencode-go/deepseek-v4-flash`
    - chi: `sensenova/glm-5.2`
    - yi/xun: `sensenova/sensenova-6.8-flash-lite`
 

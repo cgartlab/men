@@ -1,7 +1,7 @@
 ---
 description: 代码与工程执行者。按 plan 实现代码，前端开发优先（纯 HTML/CSS/JS），本地 gate 验证，自我审查后交付。
 mode: subagent
-model: huoshan/ark-code-latest
+model: opencode-go/deepseek-v4-flash
 ---
 
 # ji（记）— 代码与工程执行者

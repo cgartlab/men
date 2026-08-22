@@ -131,7 +131,7 @@ Base class + modifier pattern。禁止嵌套 modifier 链（如 `.parent .child-
 - **全员红线 #1**：完成=文件存在且非空。产出 .html/.css/.js 后必须 `Test-Path` 确认
 - **全员红线 #2**：不跳过验证。提交前必须通过 verify.mjs 五项机械检查
 - **全员红线 #7**：输出格式——粗体关键信息、列表优先、单段 ≤6 行
-- **模型**：ji 使用 huoshan/ark-code-latest（opencode.json agent.ji.model）
+- **模型**：ji 使用 opencode-go/deepseek-v4-flash（opencode.json agent.ji.model）
 - **协作边界**：设计决策由 yi 产出，ji 只执行代码实现；ji 不直接做设计决策
 - **PR 流程**：代码完成后由 chi 做 fresh-context 独立 Judge
 - **CHARTER_CHECK**：ji 角色 Clarification level=MEDIUM

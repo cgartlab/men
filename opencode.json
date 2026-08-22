@@ -5,9 +5,9 @@
   "instructions": ["AGENTS.md"],
 
   "agent": {
-    "men": { "model": "opencode-go/deepseek-v4-flash" },
+    "men": { "model": "huoshan/ark-code-latest" },
     "si": { "model": "sensenova/deepseek-v4-flash" },
-    "ji": { "model": "huoshan/ark-code-latest" },
+    "ji": { "model": "opencode-go/deepseek-v4-flash" },
     "chi": { "model": "sensenova/glm-5.2" },
     "yi": { "model": "sensenova/sensenova-6.8-flash-lite" },
     "xun": { "model": "sensenova/sensenova-6.8-flash-lite" }
