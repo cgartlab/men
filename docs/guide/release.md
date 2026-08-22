@@ -33,7 +33,17 @@ npm run release:major      # 0.2.0 → 1.0.0
 2. bump 版本号并写回 `package.json`
 3. 在 `CHANGELOG.md` 的 `## [Unreleased]` 下插入 `## [vX.Y.Z] - <今天日期>`，并将 Unreleased 节中已整理的条目迁移到新版本节（空节按 `### Added / Changed / Fixed` 占位）
 4. 若已 `git init`：`git add` + `git commit -m "chore(release): vX.Y.Z"` + `git tag vX.Y.Z`
-5. **不自动 push** — 维护者确认后手动 `git push && git push --tags`
+5. **生成 release notes（只含当前版本）**：用 `scripts/release-notes.mjs` 从 CHANGELOG.md 提取当前版本节，供 GitHub Release 使用：
+
+```bash
+node scripts/release-notes.mjs --output /tmp/release-notes-vX.Y.Z.md
+```
+
+   - **注意**：Release notes **只记录当前发布版本的改进**，不要粘贴整个 CHANGELOG.md（那会包含历史版本，误导读者）
+   - 预览指定版本：`node scripts/release-notes.mjs --version X.Y.Z --json`
+   - 该脚本会自动去掉版本标题行，保留发布主题 blockquote 和分类内容
+
+6. **不自动 push** — 维护者确认后手动 `git push && git push --tags`
 
 预览模式（不写任何文件）：
 
@@ -58,6 +68,11 @@ git push && git push --tags
 
 - `release.mjs` 打的 tag 是轻量 tag（lightweight）；push 到 GitHub 后，在仓库 Releases 页面 **Draft a new release** → 选择 `vX.Y.Z` tag 发布
 - GitHub Release 正文建议引用 CHANGELOG 对应节的条目
+- **Release 正文只记录当前发布版本的改进**：使用 `scripts/release-notes.mjs` 提取的**只含当前版本**文件，而非粘贴整个 CHANGELOG.md。用 `gh release create` 的 `--notes-file` 指定提取文件：
+
+```bash
+gh release create vX.Y.Z --title "vX.Y.Z — <主题>" --notes-file /tmp/release-notes-vX.Y.Z.md
+```
 - 若 tag 打错：`git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z` 删除后重打
 
 ## 五、发布后 checklist
@@ -66,6 +81,7 @@ git push && git push --tags
 - [ ] `npm run release` 输出确认（版本号 + CHANGELOG 位置正确）
 - [ ] `git push` + `git push --tags`
 - [ ] GitHub Releases 已发布 `vX.Y.Z`
+- [ ] Release notes 只含当前版本内容（用 release-notes.mjs 提取，不含历史版本）
 - [ ] README「快速开始」与 `install.sh` / `install.ps1` 中的 `<INSTALL_URL>` / `<REPO_URL>` 占位已替换为真实 URL
 - [ ] （可选）`npm publish` 发布 `@fakevis/men` —— 发布前确认 `files` 白名单覆盖 `.opencode/`、`scripts/`、`docs/` 等路径，且 `.opencode/package.json` 已包含在发布包内
 - [ ] 新增文件已同步到 `docs/guide/quickstart.md`（如需）
