@@ -52,6 +52,15 @@ Get-ChildItem $TARGET_SKILLS -Directory | ForEach-Object { Write-Host "      - $
 Write-Host "`n   Commands:" -ForegroundColor Gray
 Get-ChildItem $TARGET_COMMANDS -Filter *.md | ForEach-Object { Write-Host "      - $($_.Name)" -ForegroundColor Gray }
 
+# 5. 同步 opencode.json
+Write-Host "`n📄 同步 opencode.json..." -ForegroundColor Yellow
+if (Test-Path "$MEN_ROOT\opencode.json") {
+    Copy-Item -Path "$MEN_ROOT\opencode.json" -Destination "$OPENCODE_CONFIG\opencode.json" -Force
+    Write-Host "   ✅ 已同步 opencode.json" -ForegroundColor Green
+} else {
+    Write-Host "   ⚠️ 跳过：仓库根目录未找到 opencode.json" -ForegroundColor DarkYellow
+}
+
 Write-Host "`n✅ 同步完成！" -ForegroundColor Green
 Write-Host "`n📝 下一步：" -ForegroundColor Cyan
 Write-Host "   1. 重启 OpenCode 使配置生效" -ForegroundColor Gray
