@@ -11,6 +11,7 @@
  *   node scripts/setup.mjs --json       # JSON 输出模式
  *   node scripts/setup.mjs --preset <name>  # 使用预设跳过交互
  *   node scripts/setup.mjs --dry-run    # 模拟运行，不写入文件
+ *   node scripts/setup.mjs --no-interactive  # 非交互模式（CI/管道）
  *
  * 设计文档: docs/guide/onboarding-design.md
  */
@@ -102,6 +103,7 @@ function parseArgs(argv) {
     preset: null,
     dryRun: false,
     verbose: false,
+    noInteractive: false,
     help: false,
   };
   for (let i = 0; i < args.length; i++) {
@@ -110,8 +112,9 @@ function parseArgs(argv) {
     else if (a === "--reset") out.reset = true;
     else if (a === "--json") out.json = true;
     else if (a === "--dry-run") out.dryRun = true;
-    else if (a === "--verbose") out.verbose = true;
-    else if (a === "--preset") {
+      else if (a === "--verbose") out.verbose = true;
+      else if (a === "--no-interactive") out.noInteractive = true;
+      else if (a === "--preset") {
       out.preset = args[++i];
       if (!out.preset) {
         eprintf("错误: --preset 需要参数（default | free）");
@@ -134,16 +137,18 @@ function printHelp() {
   node scripts/setup.mjs --reset      强制重新配置
   node scripts/setup.mjs --json       JSON 输出模式
   node scripts/setup.mjs --preset <name>  使用预设方案
-  node scripts/setup.mjs --dry-run    模拟运行，不写入文件
-  node scripts/setup.mjs --verbose    打印详细调试信息
+   node scripts/setup.mjs --dry-run    模拟运行，不写入文件
+   node scripts/setup.mjs --verbose    打印详细调试信息
+   node scripts/setup.mjs --no-interactive  非交互模式（CI/管道）
 
 选项:
-  --help, -h     显示帮助信息
-  --reset        强制重新配置（忽略已有配置）
-  --json         以 JSON 格式输出结果
-  --preset <name>  使用预设方案，跳过交互（default | free）
-  --dry-run      模拟运行，不修改任何文件
-  --verbose      打印详细调试信息
+   --help, -h          显示帮助信息
+   --reset             强制重新配置（忽略已有配置）
+   --json              以 JSON 格式输出结果
+   --preset <name>     使用预设方案，跳过交互（default | free）
+   --dry-run           模拟运行，不修改任何文件
+   --verbose           打印详细调试信息
+   --no-interactive    非交互模式（适合 CI/管道/自动化，已有配置则打印表；无配置则用 default 预设）
 
 流程: 检测已有配置 → 交互式问答 → 推荐算法 → 确认写入
 `);
@@ -802,6 +807,43 @@ async function main(argv = process.argv) {
       fileWritten: cfg.dryRun ? null : "opencode.json",
     };
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    process.exit(0);
+  }
+
+   // ── 非交互模式：跳过 readline，适合 CI/管道 ──
+  if (cfg.noInteractive) {
+    if (configured) {
+      const assignment = currentAssignment(config);
+      process.stdout.write(`men（门）Agent 团队 — 当前模型配置\n`);
+      process.stdout.write(`${"=".repeat(54)}\n`);
+      const table = renderAssignmentTable(assignment, models);
+      process.stdout.write(table + "\n");
+      process.stdout.write(`${"=".repeat(54)}\n`);
+      process.exit(0);
+    }
+
+    // 无配置 → 自动使用 default 预设
+    const assignment = applyPreset("default", models);
+    process.stdout.write(`men（门）Agent 团队 — 非交互模式（使用 default 预设）\n`);
+    process.stdout.write(`${"=".repeat(54)}\n`);
+    const table = renderAssignmentTable(assignment, models);
+    process.stdout.write(table + "\n");
+    process.stdout.write(`${"=".repeat(54)}\n`);
+
+    if (cfg.dryRun) {
+      process.stdout.write("[DRY RUN] 未写入文件\n");
+      process.exit(0);
+    }
+
+    const wr = writeConfig(assignment, models, false);
+    if (!wr.ok) {
+      eprintf(`错误: ${wr.error}`);
+      process.exit(1);
+    }
+    process.stdout.write(`✅ 默认配置已应用，已写入 opencode.json\n`);
+    if (wr.backupPath) {
+      process.stdout.write(`   原文件已备份为 opencode.json.bak\n`);
+    }
     process.exit(0);
   }
 
