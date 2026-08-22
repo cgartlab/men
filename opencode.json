@@ -5,7 +5,7 @@
   "instructions": ["AGENTS.md"],
 
   "agent": {
-    "men": { "model": "huoshan/ark-code-latest" },
+    "men": { "model": "opencode-go/hy3" },
     "si": { "model": "sensenova/deepseek-v4-flash" },
     "ji": { "model": "opencode-go/deepseek-v4-flash" },
     "chi": { "model": "sensenova/glm-5.2" },

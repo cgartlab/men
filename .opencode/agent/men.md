@@ -1,7 +1,7 @@
 ---
 description: 团队编排与路由核心。接收用户任务，判断意图类型，分发给对应专家，汇总结果。唯一接收用户指令的角色。
 mode: primary
-model: huoshan/ark-code-latest
+model: opencode-go/hy3
 ---
 
 # men（门）🚪 — 编排与路由核心

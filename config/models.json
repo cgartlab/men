@@ -36,6 +36,16 @@
           "free": false,
           "registerUrl": "https://opencode.ai/pricing",
           "limits": null
+        },
+        {
+          "id": "opencode-go/hy3",
+          "name": "Hy3",
+          "tier": "premium",
+          "description": "OpenCode 高级推理模型，适合编排和复杂推理任务",
+          "bestFor": ["men", "si", "chi"],
+          "free": false,
+          "registerUrl": "https://opencode.ai/pricing",
+          "limits": null
         }
       ]
     },
@@ -85,16 +95,6 @@
       "homepage": "https://console.volcengine.com",
       "models": [
         {
-          "id": "huoshan/ark-code-latest",
-          "name": "火山引擎方舟（最新代码模型）",
-          "tier": "premium",
-          "description": "火山引擎方舟的代码模型，代码理解和生成能力突出",
-          "bestFor": ["men", "ji"],
-          "free": false,
-          "registerUrl": "https://console.volcengine.com",
-          "limits": null
-        },
-        {
           "id": "huoshan/doubao-lite",
           "name": "豆包 Lite",
           "tier": "free",
@@ -132,13 +132,13 @@
       "roleName": "编排核心（men）",
       "description": "接收用户指令、路由任务、汇总结果，需要强力推理和代码理解",
       "priority": [
-        "huoshan/ark-code-latest",
+        "opencode-go/hy3",
         "opencode-go/deepseek-v4-flash",
         "sensenova/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash",
         "sensenova/sensenova-6.8-flash-lite"
       ],
-      "fallback": "sensenova/sensenova-6.8-flash-lite"
+      "fallback": "opencode-go/hy3"
     },
     "si": {
       "roleName": "规划与写作（si）",
@@ -157,9 +157,9 @@
       "description": "代码实现、前端开发、Git 操作，需要强代码能力",
       "priority": [
         "opencode-go/deepseek-v4-flash",
-        "huoshan/ark-code-latest",
         "sensenova/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash",
+        "opencode-go/claude-3.5-sonnet",
         "sensenova/sensenova-6.8-flash-lite"
       ],
       "fallback": "sensenova/sensenova-6.8-flash-lite"
@@ -200,7 +200,7 @@
     "default": {
       "name": "全功能推荐",
       "description": "使用用户所有可用模型的最佳组合",
-      "men": "huoshan/ark-code-latest",
+      "men": "opencode-go/hy3",
       "si": "opencode-go/deepseek-v4-flash",
       "ji": "opencode-go/deepseek-v4-flash",
       "chi": "sensenova/glm-5.2",
