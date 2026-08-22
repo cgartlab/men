@@ -168,7 +168,7 @@ npm run eval -- --sid verify-1787295186835 --json
 | `chi-judge` | chi | 独立 Judge 复核流程 |
 | `chi-invest` | chi | 持仓/收益/市场跟踪（Wealth Tracker API） |
 | `si-plan-compose` | si | 规划产出、plan envelope 撰写 |
-| `si-content-write` | si | 正文写作 |
+| `ji-content-write` | ji | 内容写作 |
 | `si-knowledge` | si | 知识条目撰写 |
 | `ji-frontend-design` | ji | 前端实现、UI 组件 |
 | `ji-github` | ji | GitHub 仓库操作 |

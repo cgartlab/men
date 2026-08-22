@@ -11,7 +11,7 @@ description: "Use when verifying the accuracy of specific claims, cross-referenc
 
 - 用户只需要一个来源的信息（用 xun-search 即可）
 - 用户要求 RSS 扫描（用 xun-rss-scan）
-- 用户要求进行内容写作（用 si-content-write）
+- 用户要求进行内容写作（用 ji-content-write）
 - 用户要求本地知识检索（用 si-knowledge）
 
 ## 核查标准

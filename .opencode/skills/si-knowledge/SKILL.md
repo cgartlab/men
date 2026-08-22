@@ -1,6 +1,6 @@
 ---
 name: si-knowledge
-description: "Use when organizing project knowledge, conducting PKM (Personal Knowledge Management) reviews, extracting reusable insights from sessions, or archiving decisions. 触发关键词：知识库、PKM、知识沉淀、复盘、总结、归档、知识管理。Don't call when the task is doing real-time web search (use xun-search) or writing new content from scratch (use si-content-write)."
+description: "Use when organizing project knowledge, conducting PKM (Personal Knowledge Management) reviews, extracting reusable insights from sessions, or archiving decisions. 触发关键词：知识库、PKM、知识沉淀、复盘、总结、归档、知识管理。Don't call when the task is doing real-time web search (use xun-search) or writing new content from scratch (use ji-content-write)."
 license: Apache-2.0
 ---
 
@@ -22,7 +22,7 @@ license: Apache-2.0
 ## 不要触发
 
 - ❌ **实时搜索** — 查最新新闻、外部资料，用 xun-search / xun-rss-scan
-- ❌ **新内容创作** — 写博客、文档、周刊，用 si-content-write
+- ❌ **新内容创作** — 写博客、文档、周刊，用 ji-content-write
 - ❌ **代码实现** — 修改代码、写脚本，交给 ji
 - ❌ **判断知识对错** — 事实核查交给 xun-factcheck，本技能只负责组织和归档
 

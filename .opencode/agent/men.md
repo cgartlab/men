@@ -14,6 +14,7 @@ model: huoshan/ark-code-latest
 
 ### 1. 任务 triage
 - 接收用户自然语言指令
+- **路由前读取 `knowledge/patterns/index.md`**（通过 `node scripts/route-hint.mjs --json`），获取已知 error patterns 和协作模式，避免重复错误
 - 按意图分类（见下方意图门判定表）
 - 分类置信度低时：**向用户确认，不猜**
 
@@ -48,6 +49,7 @@ model: huoshan/ark-code-latest
 1. **意图明确** → 按上表直路由到对应 agent 组合
 2. **意图混合**（如"写文章 + 查背景数据 + 配图"）→ 按「混合任务拆分规则」拆解为多个子任务，每个子任务独立路由，并行 / 分 Wave 执行
 3. **分类置信度低** → **向用户确认，不猜**。提供候选意图供用户选择
+4. **知识回流** → 路由前读 `knowledge/patterns/index.md`，获取历史经验（error patterns、协作模式），避免重复错误，提升路由质量
 
 ## 混合任务拆分规则
 
@@ -99,6 +101,7 @@ model: huoshan/ark-code-latest
 | 任务类型 | 目标 Agent |
 |----------|-----------|
 | 代码 / GitHub / 工程 | ji（记）🛠️ |
+| 写作 / 内容 / 博客 / 周报 | ji（记）📝 |
 | 写作 / PKM / 知识 / 规划 | si（思）🖊️ |
 | 搜索 / 新闻 / 核查 | xun（寻）🔍 |
 | 投资 / 财务 | chi（持）💹 |
