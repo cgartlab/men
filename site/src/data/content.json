@@ -1,0 +1,725 @@
+{
+  "hero": {
+    "title": "men（门）",
+    "subtitle": "围绕一人内容创作与工程协作的 6+1 Agent 团队系统",
+    "tagline": "门 = gate = 入口 / 编排 / 分诊",
+    "brandLine": "OpenCode 首发 · CG 艺术实验室出品",
+    "version": {
+      "topic": "从代码仓库到可协作团队"
+    },
+    "source": "README.md"
+  },
+  "traits": [
+    {
+      "title": "6+1 角色分工",
+      "desc": "门（编排）· 思（规划/写作）· 记（代码/工程）· 持（投资评审/Judge）· 艺（视觉设计）· 寻（搜索研究），各司其职",
+      "source": "README.md"
+    },
+    {
+      "title": "一键编排",
+      "desc": "/ultrawork 9 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话",
+      "source": "README.md"
+    },
+    {
+      "title": "双层机械验证",
+      "desc": "verify.mjs 五项机械检查 + chi 独立 Judge 语义复核，假完成必识破",
+      "source": "README.md"
+    },
+    {
+      "title": "安全门禁",
+      "desc": "gate.mjs 白名单防注入，强化上限 5 次防死循环",
+      "source": "README.md"
+    },
+    {
+      "title": "全量事件审计",
+      "desc": "events.jsonl 记录 9 种事件，支持命令行回放，所有决策可追溯",
+      "source": "README.md"
+    },
+    {
+      "title": "零依赖脚本",
+      "desc": "纯 Node 运行，验证/门禁/审计三件套无第三方依赖",
+      "source": "README.md"
+    },
+    {
+      "title": "本地优先",
+      "desc": "内网数据源 + free 模型通道，SenseNova 生图仅艺角色挂载",
+      "source": "README.md"
+    },
+    {
+      "title": "单字命名",
+      "desc": "门·思·记·持·艺·寻，古典文人气质，易记好读",
+      "source": "README.md"
+    },
+    {
+      "title": "自主学习回路",
+      "desc": "learn.mjs 自动提取经验写入 knowledge/，eval-metrics.mjs 计算 8 项 KPI",
+      "source": "README.md"
+    }
+  ],
+  "roles": [
+    {
+      "name": "men",
+      "cn": "门",
+      "mode": "primary · 唯一接收用户指令",
+      "desc": "编排与路由核心：意图分诊、任务分发、结果汇总、事件审计",
+      "source": "docs/PRD.md"
+    },
+    {
+      "name": "si",
+      "cn": "思",
+      "mode": "subagent",
+      "desc": "规划与写作：需求访谈、plan envelope、内容写作、回评",
+      "source": "docs/PRD.md"
+    },
+    {
+      "name": "ji",
+      "cn": "记",
+      "mode": "subagent",
+      "desc": "代码与工程：前端实现、GitHub 操作、L1 机械验证、目录结构审计",
+      "source": "docs/PRD.md"
+    },
+    {
+      "name": "chi",
+      "cn": "持",
+      "mode": "subagent · 兼任独立 Judge",
+      "desc": "投资与评审：持仓/财务分析 + 独立 Judge（fresh-context 语义复核）",
+      "source": "docs/PRD.md"
+    },
+    {
+      "name": "yi",
+      "cn": "艺",
+      "mode": "subagent",
+      "desc": "视觉设计：设计决策、Logo 概念、生图（SenseNova 仅 yi 挂载）",
+      "source": "docs/PRD.md"
+    },
+    {
+      "name": "xun",
+      "cn": "寻",
+      "mode": "subagent",
+      "desc": "搜索与研究：网页搜索、事实核查、RSS 扫描、来源验证",
+      "source": "docs/PRD.md"
+    }
+  ],
+  "mechanisms": [
+    {
+      "title": "9 步编排协议",
+      "desc": "CERTAINTY → TRIAGE → PLAN → DISPATCH → COLLECT → EVALUATE → VERIFY → REPORT → LOOP，每一步都有明确的输入和输出，任务从一句话变成可交付产物",
+      "source": "docs/architecture.md"
+    },
+    {
+      "title": "意图门路由（IntentGate）",
+      "desc": "四类意图：search（查信息）/ analyze（产出+评审）/ team（多角色协作）/ hyperplan（复杂项目规划），低置信时向用户确认，绝不猜",
+      "source": "docs/PRD.md"
+    },
+    {
+      "title": "Wave 并行调度",
+      "desc": "Wave 1 无依赖任务同时开工，Wave N 依赖 Wave N-1 产物；并行上限 ≤4；每个子任务 prompt 完整自洽，子 agent 无法追问",
+      "source": "docs/PRD.md"
+    },
+    {
+      "title": "双层机械验证",
+      "desc": "verify.mjs 五项机械检查（退出码/文件存在性/secrets/TODO/structure）全 PASS 后，chi 以 fresh-context 独立 Judge 语义复核，只信产物不信任自述",
+      "source": "docs/architecture.md"
+    },
+    {
+      "title": "事件审计（9 种 kind）",
+      "desc": "events.jsonl 记录 session.created/ended、boundary、workflow.phase、gate.passed/failed、blocker.raised、decision.made/missing，append-only 可回放",
+      "source": "docs/PRD.md"
+    },
+    {
+      "title": "自主学习回路（M7）",
+      "desc": "learn.mjs 从事件流提取经验写入 knowledge/errors 与 knowledge/patterns；eval-metrics.mjs 计算 8 项 KPI（通过率/回归率/平均耗时等）",
+      "source": "docs/architecture.md"
+    }
+  ],
+  "commands": [
+    {
+      "name": "/ultrawork",
+      "usage": "/ultrawork <任务>",
+      "desc": "一键编排：men 自动完成意图分诊→拆分→分发→验证→汇总，日常绝大多数任务",
+      "agent": "men（唯一 spawner）",
+      "source": "docs/guide/quickstart.md",
+      "example": "例：/ultrawork 写一份行业研究报告"
+    },
+    {
+      "name": "/verify",
+      "usage": "/verify <角色或路径>",
+      "desc": "双层验证：机械检查（verify.mjs）+ 语义复核（chi），用于独立验收某个角色的产物",
+      "agent": "chi（fresh-context Judge）",
+      "source": "docs/guide/quickstart.md",
+      "example": "例：/verify ji -- 验证 ji 的代码产物"
+    },
+    {
+      "name": "/hyperplan",
+      "usage": "/hyperplan <项目>",
+      "desc": "访谈式规划：逐层拆解复杂项目为可执行计划，产出 plan envelope（只规划不执行）",
+      "agent": "men → si",
+      "source": "docs/guide/quickstart.md",
+      "example": "例：/hyperplan 设计一个多 Agent 协作系统"
+    }
+  ],
+  "principles": [
+    {
+      "title": "不猜需求",
+      "desc": "意图置信度低时，先向用户追问，绝不脑补。低置信确认是避免返工的第一道防线。"
+    },
+    {
+      "title": "机械优先",
+      "desc": "验证判定以退出码、文件存在性、JSON 可解析性等机械证据为准，拒绝 LLM 自评——脚本说 PASS 才是 PASS。"
+    },
+    {
+      "title": "不信自述",
+      "desc": "chi judge 只核对实际产物文件，不接受任何「我完成了」作为完成证据。声称完成但文件不存在 = 识破假完成。"
+    },
+    {
+      "title": "事件可回溯",
+      "desc": "所有关键决策写入 events.jsonl，可用 node scripts/event.mjs replay 回放。事后可以回答：当时为什么这么分发？"
+    },
+    {
+      "title": "超限诚实",
+      "desc": "重试上限 5 次，超限立即报卡住，把已完成中间产物和失败原因交给用户，不假装继续。"
+    },
+    {
+      "title": "best-effort",
+      "desc": "事件审计和学习回路均 best-effort——命令失败不阻塞主流程，但不丢弃关键字段。"
+    }
+  ],
+  "protocol": {
+    "steps": [
+      {
+        "step": "01",
+        "name": "CERTAINTY",
+        "cn": "需求确认",
+        "desc": "任务模糊、有歧义、缺少关键信息时，先向用户追问，直到 100% 明确才开工。你的 Clarification level 是 HIGH——低置信时必须确认，不猜。",
+        "why": "避免返工。猜错方向比慢 5 秒要命。"
+      },
+      {
+        "step": "02",
+        "name": "TRIAGE",
+        "cn": "意图分诊",
+        "desc": "四类意图判定：search / analyze / team / hyperplan。判定后把意图写入事件日志。",
+        "why": "不同意图走不同执行策略，分类正确是后续一切的基础。"
+      },
+      {
+        "step": "03",
+        "name": "PLAN",
+        "cn": "si 规划",
+        "desc": "team 和 hyperplan 类必须 spawn si 产出 plan envelope：依赖图 + 并行波次 + 验收标准表。",
+        "why": "规划先行，避免无序执行。search 类跳过此步。"
+      },
+      {
+        "step": "04",
+        "name": "DISPATCH",
+        "cn": "Wave 调度",
+        "desc": "按 plan 的波次执行，并行上限 ≤4。每个 prompt 必须完整自洽：上下文、skill、产出路径、验收标准缺一不可。",
+        "why": "波次保障依赖关系，≤4 避免资源争用，完整 prompt 保障子 agent 不问也能干。"
+      },
+      {
+        "step": "05",
+        "name": "COLLECT",
+        "cn": "收集产物",
+        "desc": "收集所有子 agent 返回结果和落盘产物，检查文件是否存在、退出码是否为 0。汇总为结构化清单。",
+        "why": "产物是后续验证的输入，缺一个就卡住。"
+      },
+      {
+        "step": "06",
+        "name": "EVALUATE",
+        "cn": "si 回评",
+        "desc": "把 ji/yi 等产出角色的结果回传给 si 做质量评估。si 只评不改，标注哪些达标、哪些不达标。",
+        "why": "第二双眼睛，防止子 agent 自己骗自己。"
+      },
+      {
+        "step": "07",
+        "name": "VERIFY",
+        "cn": "双层验证",
+        "desc": "机械门禁（verify.mjs 五项检查）全 PASS 后，chi 做 fresh-context 语义复核。两层都过才算完成。",
+        "why": "机械识破假文件，语义识破假内容。"
+      },
+      {
+        "step": "08",
+        "name": "REPORT",
+        "cn": "汇总汇报",
+        "desc": "四段模板：结论 → 关键信息 → 来源/证据 → 未决问题。每个子任务标注完成/部分/失败。",
+        "why": "用户拿到的是结构化可决策的报告，不是碎片。"
+      },
+      {
+        "step": "09",
+        "name": "LOOP",
+        "cn": "循环重试",
+        "desc": "验证失败回到失败点重试（不从头），上限 5 次。超限报卡住，交中间产物给用户。",
+        "why": "不浪费已完成的中间产物，5 次是耐心与诚实的平衡。"
+      },
+      {
+        "step": "10",
+        "name": "LEARN",
+        "cn": "自主学习",
+        "desc": "REPORT 后立即触发 learn.mjs，从事件流提取经验写入 knowledge/errors 与 knowledge/patterns。不阻塞流程。",
+        "why": "经验不会自然消失，写入知识库供下次任务读取。"
+      }
+    ]
+  },
+  "events": [
+    {
+      "kind": "session.created",
+      "when": "任务开始时",
+      "who": "men"
+    },
+    {
+      "kind": "session.ended",
+      "when": "任务结束时",
+      "who": "men"
+    },
+    {
+      "kind": "boundary",
+      "when": "跨角色交互时",
+      "who": "任一角色"
+    },
+    {
+      "kind": "workflow.phase",
+      "when": "9 步协议每步完成",
+      "who": "men"
+    },
+    {
+      "kind": "gate.passed",
+      "when": "机械门禁通过",
+      "who": "gate.mjs（自动）"
+    },
+    {
+      "kind": "gate.failed",
+      "when": "机械门禁失败",
+      "who": "gate.mjs（自动）"
+    },
+    {
+      "kind": "blocker.raised",
+      "when": "卡住/超限/阻塞",
+      "who": "men 或 chi"
+    },
+    {
+      "kind": "decision.made",
+      "when": "意图分类、任务分发、LEARN 触发",
+      "who": "men"
+    },
+    {
+      "kind": "decision.missing",
+      "when": "低置信决策未做",
+      "who": "men"
+    }
+  ],
+  "checks": [
+    {
+      "id": "output-exists",
+      "name": "产物存在",
+      "severity": "FAIL",
+      "desc": "产物文件存在且非空（>0 字节），声称完成但文件不存在 = 识破假完成"
+    },
+    {
+      "id": "secrets",
+      "name": "密钥扫描",
+      "severity": "FAIL",
+      "desc": "扫描 password/secret/api_key/token 等硬编码密钥"
+    },
+    {
+      "id": "todo-scan",
+      "name": "TODO 计数",
+      "severity": "WARN",
+      "desc": "扫描 TODO/FIXME/HACK/XXX 标记，仅警告不阻止"
+    },
+    {
+      "id": "structure",
+      "name": "结构合法",
+      "severity": "FAIL",
+      "desc": ".md frontmatter 合法性、.json 可解析性"
+    },
+    {
+      "id": "gate-exit-code",
+      "name": "脚本退出码",
+      "severity": "FAIL",
+      "desc": "typecheck/test/lint 脚本退出码必须为 0"
+    }
+  ],
+  "milestones": [
+    {
+      "m": "M0",
+      "name": "调研",
+      "status": "完成",
+      "detail": "docs/research/ 三份调研（OmO + oma + 合成决策）",
+      "source": "docs/PRD.md"
+    },
+    {
+      "m": "M1",
+      "name": "骨架",
+      "status": "完成",
+      "detail": "6 角色 agent 定义 + 13 个 skill + 3 个 command + 3 个脚本",
+      "source": "docs/PRD.md"
+    },
+    {
+      "m": "M2",
+      "name": "单兵",
+      "status": "完成",
+      "detail": "5 角色独立任务验收 5/5 通过",
+      "source": "docs/PRD.md"
+    },
+    {
+      "m": "M3",
+      "name": "编排",
+      "status": "完成",
+      "detail": "ultrawork 三路并行汇总跑通（写文章+查新闻+查金价混合任务）",
+      "source": "docs/PRD.md"
+    },
+    {
+      "m": "M4",
+      "name": "机械验证",
+      "status": "完成",
+      "detail": "verify/gate/event 三脚本 + chi 双层复核，识破「假完成」",
+      "source": "docs/PRD.md"
+    },
+    {
+      "m": "M5",
+      "name": "文档",
+      "status": "完成",
+      "detail": "PRD / architecture / quickstart / milestones / governance / learning-architecture 六份文档",
+      "source": "docs/PRD.md"
+    },
+    {
+      "m": "M6",
+      "name": "GitHub 基础设施",
+      "status": "完成",
+      "detail": "LICENSE (MIT) / CONTRIBUTING / SECURITY / 模板 / CODEOWNERS / CI workflow",
+      "source": "docs/PRD.md"
+    },
+    {
+      "m": "M7",
+      "name": "自主学习回路",
+      "status": "完成",
+      "detail": "learn.mjs + eval-metrics.mjs + knowledge 知识库，已验证 8 项 KPI 可计算",
+      "source": "docs/PRD.md"
+    }
+  ],
+  "docs": [
+    {
+      "title": "项目首页",
+      "path": "README.md",
+      "desc": "徽章 / 特性 / 安装 / 角色 / 命令",
+      "source": "README.md"
+    },
+    {
+      "title": "产品需求 PRD",
+      "path": "docs/PRD.md",
+      "desc": "项目定位、角色定义、核心机制、里程碑、验收标准",
+      "source": "README.md"
+    },
+    {
+      "title": "架构说明",
+      "path": "docs/architecture.md",
+      "desc": "系统架构、编排流程、验证体系，含决策记录 D1–D17",
+      "source": "README.md"
+    },
+    {
+      "title": "项目治理",
+      "path": "docs/governance.md",
+      "desc": "决策机制、角色权限、变更流程、发布策略",
+      "source": "README.md"
+    },
+    {
+      "title": "快速上手",
+      "path": "docs/guide/quickstart.md",
+      "desc": "新用户入门指南，从安装到第一个 ultrawork 任务",
+      "source": "README.md"
+    },
+    {
+      "title": "里程碑进度",
+      "path": "docs/guide/milestones.md",
+      "desc": "里程碑验收、已知问题",
+      "source": "README.md"
+    },
+    {
+      "title": "变更日志",
+      "path": "CHANGELOG.md",
+      "desc": "Keep a Changelog 风格变更记录",
+      "source": "README.md"
+    }
+  ],
+  "philosophy": [
+    {
+      "title": "机械验证优先",
+      "desc": "验证判定以退出码、文件存在性、JSON 可解析性等机械证据为准，拒绝 LLM 自评",
+      "source": "docs/PRD.md"
+    },
+    {
+      "title": "不信自述",
+      "desc": "chi judge 只核对实际产物文件，不接受任何「我完成了」作为完成证据",
+      "source": "docs/PRD.md"
+    },
+    {
+      "title": "低置信确认",
+      "desc": "意图判定低置信时向用户确认，不猜需求",
+      "source": "docs/PRD.md"
+    },
+    {
+      "title": "事件可回溯",
+      "desc": "所有关键决策写入 events.jsonl，可用 node scripts/event.mjs replay 回放",
+      "source": "docs/PRD.md"
+    },
+    {
+      "title": "本地优先",
+      "desc": "内网数据源 + free 模型通道，SenseNova 生图仅艺角色挂载",
+      "source": "README.md"
+    },
+    {
+      "title": "决策留痕",
+      "desc": "重要决策写入 docs/architecture.md 决策记录表，状态枚举：已采纳 / 已回滚 / 待验证",
+      "source": "docs/governance.md"
+    }
+  ],
+  "about": {
+    "brand": "CG 艺术实验室",
+    "domain": "cgartlab.com",
+    "tagline": "探索数字创作的边界",
+    "author": "陈阳",
+    "authorRole": "动态视觉设计师 · 产品工程师",
+    "since": "2021 年上线",
+    "totalWords": "累计发表 181,790+ 字",
+    "intro": "CG 艺术实验室是动态视觉设计师陈阳的个人创作空间。写作、设计、编程、AI 工具探索——四种身份在同一个屋檐下工作，用文字记录每一次与工具、与思想、与时代的正面相遇。",
+    "story": [
+      "最早关注 AI 是从电影《雨果》开始的——片中那台会写字画画的蒸汽朋克机器人。当时觉得那只是噱头。到了 2023 年 Stable Diffusion 本地部署出现，才意识到那个「全能时刻」正在加速到来。",
+      "从 2026 年 1 月起，体验 OpenClaw 一个月，从零到一部署、设计、开发、协作之后，写下一篇长文：《世界尽管让它去转，不用担心你学的东西会过时》。这篇文章后来引出了 men（门）的诞生——如果 AI 团队本身就是工具，而不是被工具管理，会怎样？",
+      "从搭建私人服务器、DIY NAS，到配置本地 LLM 环境，把 AI Agent 工具融入日常创作流程——用自然语言驱动电脑完成复杂任务，和最初用键盘敲命令的简洁优雅一脉相承。"
+    ],
+    "philosophy": [
+      {
+        "title": "工具即延伸",
+        "desc": "工具是人类肢体的延伸，电脑是大脑的延伸，轮子是腿脚的延伸。从铅笔到键盘，从钢铁蒸气到人工智能——技术飞速演变，人的创作冲动从未改变：用更好的工具，创造更多价值。"
+      },
+      {
+        "title": "写作即思考",
+        "desc": "技巧和方法是「术」，但记录本身就是「道」。很多领域之间的方法论是通用的，联系是通过积累和沉淀发现的——写作就是建立思维标本的过程。"
+      },
+      {
+        "title": "慢一点比较快",
+        "desc": "AI 是个放大器，人类的优势和劣势在它的加持下都会被快速放大。面对革命性的放大器，反而应该更加谨慎——识别长期价值，做正确的事。"
+      },
+      {
+        "title": "从规则执行者到规则设计师",
+        "desc": "上班时我们大多是规则的执行者。用好 AI 的第二步，就是学习亲自设计规则——向 AI 提出一个高质量的问题，本身就是一次微型的规则设计。"
+      }
+    ],
+    "projects": [
+      {
+        "name": "Inkard",
+        "type": "在线卡片生成器",
+        "year": "2026/06",
+        "desc": "4 套模板，6 种配色，本地处理即时导出。专为小红书、公众号、Instagram 设计。"
+      },
+      {
+        "name": "Argus",
+        "type": "前端设计代码审查 Agent",
+        "year": "2026/06",
+        "desc": "作为 GitHub App 运行，自动审查 PR 中的设计令牌违规、无障碍问题、暗色模式覆盖。"
+      },
+      {
+        "name": "Go To GitHub",
+        "type": "访问加速工具",
+        "year": "2026/06",
+        "desc": "实时从社区维护的 hosts 源获取 GitHub 域名映射，写入本地 hosts 文件。全平台支持。"
+      },
+      {
+        "name": "EDIC",
+        "type": "设计系统",
+        "year": "2026/05",
+        "desc": "同时面向人类与 Agent 的编辑主义设计系统。基于 OKLch 色彩与设计令牌构建。"
+      },
+      {
+        "name": "LayerRenamer",
+        "type": "PS 图层批量重命名",
+        "year": "2024/09",
+        "desc": "Photoshop / After Effects 批量重命名图层脚本，支持自定义命名规则与冲突策略。"
+      },
+      {
+        "name": "men（门）",
+        "type": "6+1 Agent 团队系统",
+        "year": "2026/08",
+        "desc": "围绕一人内容创作与工程协作的 Agent 协作框架，机械验证优先。"
+      }
+    ],
+    "weekly": {
+      "name": "玄光周刊",
+      "since": "2025/01/03",
+      "latest": "No.18",
+      "desc": "一份公开的创作笔记，分享一周里的所思、所用、所见、所闻。已发布 18 期。"
+    },
+    "openSource": "CG 艺术实验室的所有代码采用 MIT License 发布，文章与设计作品采用 CC BY-NC-SA 4.0 许可。men 项目基于相同理念，完全开源，欢迎 fork、贡献、批评。",
+    "links": [
+      {
+        "label": "个人网站",
+        "href": "https://cgartlab.com"
+      },
+      {
+        "label": "GitHub",
+        "href": "https://github.com/cgartlab"
+      },
+      {
+        "label": "GitHub 组织",
+        "href": "https://github.com/cgartlab"
+      },
+      {
+        "label": "玄光周刊",
+        "href": "https://cgartlab.com/weekly/"
+      },
+      {
+        "label": "X / Twitter",
+        "href": "https://x.com/cgartlab"
+      },
+      {
+        "label": "sspai",
+        "href": "https://sspai.com/u/cgartlab/updates"
+      },
+      {
+        "label": "Bilibili",
+        "href": "https://space.bilibili.com/38043072"
+      },
+      {
+        "label": "Telegram",
+        "href": "https://t.me/cg_artlab"
+      }
+    ],
+    "stack": "Astro · OKLch 色彩系统 · Cloudflare Workers · Node.js · CC BY-NC-SA 4.0 / MIT",
+    "team": [
+      {
+        "role": "编排",
+        "name": "men（门）",
+        "desc": "入口与调度核心"
+      },
+      {
+        "role": "规划与写作",
+        "name": "si（思）",
+        "desc": "需求拆解与内容产出"
+      },
+      {
+        "role": "代码与工程",
+        "name": "ji（记）",
+        "desc": "前端实现与 GitHub 操作"
+      },
+      {
+        "role": "投资评审/Judge",
+        "name": "chi（持）",
+        "desc": "独立复核与机械验证"
+      },
+      {
+        "role": "视觉设计",
+        "name": "yi（艺）",
+        "desc": "设计决策与图像生成"
+      },
+      {
+        "role": "搜索研究",
+        "name": "xun（寻）",
+        "desc": "信息检索与事实核查"
+      }
+    ],
+    "quote": "工具是人类肢体的延伸，电脑是大脑的延伸，写作是思考本身。",
+    "quoteAttr": "— 陈阳 · CG 艺术实验室"
+  },
+  "install": {
+    "platforms": [
+      {
+        "id": "bash",
+        "label": "macOS / Linux"
+      },
+      {
+        "id": "windows",
+        "label": "Windows (WSL)"
+      },
+      {
+        "id": "package",
+        "label": "包管理器"
+      },
+      {
+        "id": "docker",
+        "label": "Docker"
+      }
+    ],
+    "commands": {
+      "bash": [
+        {
+          "label": "克隆仓库",
+          "cmd": "git clone https://github.com/cgartlab/men.git"
+        },
+        {
+          "label": "进入目录",
+          "cmd": "cd men"
+        },
+        {
+          "label": "同步配置",
+          "cmd": "powershell -ExecutionPolicy Bypass -File scripts/sync-to-opencode.ps1"
+        },
+        {
+          "label": "启动预览",
+          "cmd": "npx astro dev --config site/astro.config.mjs"
+        }
+      ],
+      "windows": [
+        {
+          "label": "安装 WSL2",
+          "cmd": "wsl --install"
+        },
+        {
+          "label": "克隆仓库",
+          "cmd": "git clone https://github.com/cgartlab/men.git"
+        },
+        {
+          "label": "启动预览",
+          "cmd": "cd men && npx astro dev --config site/astro.config.mjs"
+        }
+      ],
+      "package": [
+        {
+          "label": "npm",
+          "cmd": "npx astro dev --config site/astro.config.mjs"
+        },
+        {
+          "label": "bun",
+          "cmd": "bun astro dev --config site/astro.config.mjs"
+        },
+        {
+          "label": "pnpm",
+          "cmd": "pnpm astro dev --config site/astro.config.mjs"
+        }
+      ],
+      "docker": [
+        {
+          "label": "启动预览",
+          "cmd": "docker run -it -p 4399:4399 ghcr.io/cgartlab/men:latest"
+        }
+      ]
+    },
+    "faq": [
+      {
+        "q": "men 是什么？",
+        "a": "men（门）是一个 6+1 角色的 Agent 编排系统，围绕一人内容创作与工程协作设计。所有 agent 定义、脚本、知识库都托管在 GitHub 仓库中。"
+      },
+      {
+        "q": "如何使用？",
+        "a": "克隆仓库后运行 <code>npx astro dev --config site/astro.config.mjs</code> 即可在 <code>http://localhost:4399/</code> 预览。完整流程见 <a href=\"/docs/quickstart\">快速上手</a>。"
+      },
+      {
+        "q": "可以自定义角色吗？",
+        "a": "可以。编辑 <code>.opencode/agent/*.md</code> 中的 agent 定义，修改 <code>opencode.json</code> 中的配置，然后重新同步。详见 <a href=\"/docs/configure\">配置指南</a>。"
+      },
+      {
+        "q": "如何验证配置？",
+        "a": "运行 <code>node scripts/verify.mjs</code> 执行完整验证，包括语法检查、门禁验证、dry-run 测试。详见 <a href=\"/docs/protocols\">运行手册</a>。"
+      },
+      {
+        "q": "如何部署到 GitHub Pages？",
+        "a": "仓库已配置 <code>deploy.yml</code>，只需在 GitHub 仓库 Settings → Pages → Source 选择 GitHub Actions 即可自动部署。"
+      },
+      {
+        "q": "如何新增 agent？",
+        "a": "在 <code>.opencode/agent/</code> 目录创建新的 .md 文件，遵循现有 agent 定义模板，包含 YAML frontmatter 和 CHARTER_CHECK 字段，然后运行同步脚本。"
+      }
+    ]
+  },
+  "footer": {
+    "copyright": "© 2026 CG 艺术实验室 · cgartlab.com",
+    "stack": "OpenCode 原生 Agent · Node ≥ 18 · 纯 Node 零依赖脚本"
+  }
+}

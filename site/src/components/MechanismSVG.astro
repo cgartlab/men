@@ -1,0 +1,246 @@
+---
+// 机制示意图 SVG 组件
+// type: intent-gate | wave-schedule | dual-gate | event-audit | nine-steps | learn-loop
+interface Props {
+  type: 'intent-gate' | 'wave-schedule' | 'dual-gate' | 'event-audit' | 'nine-steps' | 'learn-loop';
+  size?: number;
+}
+
+const { type, size = 320 } = Astro.props;
+---
+
+{type === 'intent-gate' && (
+  <svg viewBox="0 0 320 240" width={size} height={size * 0.75} class="mech-svg" role="img" aria-label="意图门路由示意图">
+    {/* 入口 */}
+    <circle cx="160" cy="220" r="6" class="mech-svg__dot-accent" />
+    {/* 中轴 */}
+    <line x1="160" y1="214" x2="160" y2="140" class="mech-svg__line" />
+    {/* 4 个扇形分支 */}
+    <path d="M 160 140 Q 60 130 40 40" class="mech-svg__line-faint" />
+    <path d="M 160 140 Q 110 120 90 30" class="mech-svg__line-faint" />
+    <path d="M 160 140 Q 210 120 230 30" class="mech-svg__line-faint" />
+    <path d="M 160 140 Q 260 130 280 40" class="mech-svg__line-faint" />
+    {/* 端点 */}
+    <circle cx="40" cy="40" r="5" class="mech-svg__dot-accent" />
+    <circle cx="90" cy="30" r="5" class="mech-svg__dot" />
+    <circle cx="230" cy="30" r="5" class="mech-svg__dot" />
+    <circle cx="280" cy="40" r="5" class="mech-svg__dot-accent" />
+    {/* 标签 */}
+    <text x="40" y="18" class="mech-svg__label">search</text>
+    <text x="90" y="18" class="mech-svg__label">analyze</text>
+    <text x="205" y="18" class="mech-svg__label">team</text>
+    <text x="260" y="18" class="mech-svg__label">hyperplan</text>
+    <text x="172" y="224" class="mech-svg__label mech-svg__label--mono">intent</text>
+  </svg>
+)}
+
+{type === 'wave-schedule' && (
+  <svg viewBox="0 0 320 240" width={size} height={size * 0.75} class="mech-svg" role="img" aria-label="Wave 并行调度示意图">
+    {/* Wave 标题 */}
+    <text x="16" y="30" class="mech-svg__label mech-svg__label--mono">WAVE 0</text>
+    <text x="16" y="90" class="mech-svg__label mech-svg__label--mono">WAVE 1</text>
+    <text x="16" y="150" class="mech-svg__label mech-svg__label--mono">WAVE 2</text>
+    <text x="16" y="210" class="mech-svg__label mech-svg__label--mono">WAVE 3</text>
+    {/* 层级树 */}
+    {/* Wave 0: 1 节点 */}
+    <circle cx="200" cy="26" r="6" class="mech-svg__dot-accent" />
+    {/* Wave 1: 2 节点 */}
+    <line x1="200" y1="32" x2="140" y2="80" class="mech-svg__line" />
+    <line x1="200" y1="32" x2="260" y2="80" class="mech-svg__line" />
+    <circle cx="140" cy="86" r="6" class="mech-svg__dot" />
+    <circle cx="260" cy="86" r="6" class="mech-svg__dot" />
+    {/* Wave 2: 4 节点 */}
+    <line x1="140" y1="92" x2="100" y2="140" class="mech-svg__line" />
+    <line x1="140" y1="92" x2="180" y2="140" class="mech-svg__line" />
+    <line x1="260" y1="92" x2="220" y2="140" class="mech-svg__line" />
+    <line x1="260" y1="92" x2="300" y2="140" class="mech-svg__line" />
+    <circle cx="100" cy="146" r="6" class="mech-svg__dot" />
+    <circle cx="180" cy="146" r="6" class="mech-svg__dot" />
+    <circle cx="220" cy="146" r="6" class="mech-svg__dot" />
+    <circle cx="300" cy="146" r="6" class="mech-svg__dot" />
+    {/* Wave 3: 汇总 */}
+    <line x1="140" y1="152" x2="200" y2="200" class="mech-svg__line-faint" />
+    <line x1="260" y1="152" x2="200" y2="200" class="mech-svg__line-faint" />
+    <circle cx="200" cy="206" r="6" class="mech-svg__dot-accent" />
+  </svg>
+)}
+
+{type === 'dual-gate' && (
+  <svg viewBox="0 0 320 240" width={size} height={size * 0.75} class="mech-svg" role="img" aria-label="双层机械验证示意图">
+    {/* 第一道闸：L1 verify */}
+    <rect x="60" y="60" width="80" height="120" class="mech-svg__rect" rx="4" />
+    <text x="100" y="110" class="mech-svg__label mech-svg__label--mono mech-svg__label--center">L1</text>
+    <text x="100" y="132" class="mech-svg__label mech-svg__label--center">verify</text>
+    {/* 箭头 */}
+    <path d="M 140 120 L 180 120" class="mech-svg__line" />
+    <path d="M 176 116 L 180 120 L 176 124" class="mech-svg__line" fill="none" />
+    {/* 第二道闸：L2 judge */}
+    <rect x="180" y="60" width="80" height="120" class="mech-svg__rect-accent" rx="4" />
+    <text x="220" y="110" class="mech-svg__label mech-svg__label--mono mech-svg__label--center">L2</text>
+    <text x="220" y="132" class="mech-svg__label mech-svg__label--center">judge</text>
+    {/* 输入输出 */}
+    <text x="40" y="124" class="mech-svg__label mech-svg__label--mono">in</text>
+    <text x="272" y="124" class="mech-svg__label mech-svg__label--mono">out</text>
+  </svg>
+)}
+
+{type === 'event-audit' && (
+  <svg viewBox="0 0 320 240" width={size} height={size * 0.75} class="mech-svg" role="img" aria-label="事件审计时间线示意图">
+    {/* 时间轴 */}
+    <line x1="40" y1="120" x2="280" y2="120" class="mech-svg__line-dashed" />
+    {/* 8 个事件散点 */}
+    <circle cx="60" cy="100" r="4" class="mech-svg__dot-accent" />
+    <circle cx="90" cy="140" r="4" class="mech-svg__dot" />
+    <circle cx="120" cy="80" r="4" class="mech-svg__dot" />
+    <circle cx="150" cy="130" r="4" class="mech-svg__dot-accent" />
+    <circle cx="180" cy="110" r="4" class="mech-svg__dot" />
+    <circle cx="210" cy="150" r="4" class="mech-svg__dot" />
+    <circle cx="240" cy="90" r="4" class="mech-svg__dot" />
+    <circle cx="270" cy="120" r="4" class="mech-svg__dot-accent" />
+    {/* 连接虚线 */}
+    <path d="M 60 100 L 90 140 L 120 80 L 150 130 L 180 110 L 210 150 L 240 90 L 270 120"
+      class="mech-svg__line-faint" fill="none" stroke-dasharray="2 4" />
+    {/* 标签 */}
+    <text x="160" y="200" class="mech-svg__label mech-svg__label--center mech-svg__label--mono">events · 9 kinds</text>
+  </svg>
+)}
+
+{type === 'nine-steps' && (
+  <svg viewBox="0 0 320 240" width={size} height={size * 0.75} class="mech-svg" role="img" aria-label="9 步编排协议示意图">
+    {/* 9 个序号圆点，两行排列 */}
+    {[0,1,2,3,4,5,6,7,8].map((i) => {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const x = 40 + col * 56;
+      const y = row === 0 ? 80 : 160;
+      return (
+        <g key={i}>
+          <circle cx={x} cy={y} r="18" class={i === 0 || i === 8 ? 'mech-svg__circle-accent' : 'mech-svg__circle'} />
+          <text x={x} y={y + 4} class="mech-svg__num">{String(i + 1).padStart(2, '0')}</text>
+          {i < 4 && (
+            <line x1={x + 18} y1={y} x2={x + 38} y2={y} class="mech-svg__line-faint" />
+          )}
+          {i === 4 && (
+            <path d={`M ${x + 18} ${y} Q ${x + 28} ${y + 30} ${x + 28} ${y + 40}`} class="mech-svg__line-faint" fill="none" />
+          )}
+          {i > 4 && i < 8 && (
+            <line x1={x - 18} y1={y} x2={x - 38} y2={y} class="mech-svg__line-faint" />
+          )}
+        </g>
+      );
+    })}
+  </svg>
+)}
+
+{type === 'learn-loop' && (
+  <svg viewBox="0 0 320 240" width={size} height={size * 0.75} class="mech-svg" role="img" aria-label="自主学习回路示意图">
+    {/* 两个节点 */}
+    <circle cx="100" cy="120" r="36" class="mech-svg__circle" />
+    <text x="100" y="110" class="mech-svg__label mech-svg__label--mono mech-svg__label--center">learn</text>
+    <text x="100" y="132" class="mech-svg__label mech-svg__label--center">提取</text>
+
+    <circle cx="220" cy="120" r="36" class="mech-svg__circle-accent" />
+    <text x="220" y="110" class="mech-svg__label mech-svg__label--mono mech-svg__label--center">eval</text>
+    <text x="220" y="132" class="mech-svg__label mech-svg__label--center">评估</text>
+
+    {/* 上弧形箭头 learn → eval */}
+    <path d="M 128 90 Q 160 50 192 90" class="mech-svg__line" fill="none" />
+    <path d="M 188 86 L 194 92 L 186 94" class="mech-svg__line" fill="none" />
+
+    {/* 下弧形箭头 eval → learn */}
+    <path d="M 192 150 Q 160 190 128 150" class="mech-svg__line-faint" fill="none" />
+    <path d="M 132 146 L 126 152 L 134 154" class="mech-svg__line-faint" fill="none" />
+
+    {/* 中心文字 */}
+    <text x="160" y="210" class="mech-svg__label mech-svg__label--center mech-svg__label--mono">self-evolving loop</text>
+  </svg>
+)}
+
+<style>
+  .mech-svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .mech-svg__line {
+    stroke: var(--color-accent);
+    stroke-width: 1.5;
+    fill: none;
+  }
+
+  .mech-svg__line-faint {
+    stroke: var(--color-line);
+    stroke-width: 1;
+    fill: none;
+  }
+
+  .mech-svg__line-dashed {
+    stroke: var(--color-line);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    fill: none;
+  }
+
+  .mech-svg__dot {
+    fill: var(--color-surface);
+    stroke: var(--color-line);
+    stroke-width: 1.5;
+  }
+
+  .mech-svg__dot-accent {
+    fill: var(--color-accent);
+    stroke: none;
+  }
+
+  .mech-svg__circle {
+    fill: var(--color-surface);
+    stroke: var(--color-line);
+    stroke-width: 1.5;
+  }
+
+  .mech-svg__circle-accent {
+    fill: var(--color-surface);
+    stroke: var(--color-accent);
+    stroke-width: 2;
+  }
+
+  .mech-svg__rect {
+    fill: var(--color-surface);
+    stroke: var(--color-line);
+    stroke-width: 1.5;
+  }
+
+  .mech-svg__rect-accent {
+    fill: var(--color-surface);
+    stroke: var(--color-accent);
+    stroke-width: 2;
+  }
+
+  .mech-svg__label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    fill: var(--color-fg-tertiary);
+    text-anchor: start;
+  }
+
+  .mech-svg__label--mono {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .mech-svg__label--center {
+    text-anchor: middle;
+  }
+
+  .mech-svg__num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-semi);
+    fill: var(--color-fg);
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+</style>

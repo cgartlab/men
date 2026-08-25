@@ -1,0 +1,81 @@
+---
+import WikiDoc from './WikiDoc.astro';
+import { MANUAL } from '../data/manual.js';
+
+interface InfoboxRow { k: string; v: string }
+interface TocItem { id: string; label: string }
+interface SeeAlsoItem { href: string; label: string; desc?: string }
+
+interface Props {
+  crumb: string;
+  title: string;
+  lead: string;
+  infoboxTitle?: string;
+  infobox?: InfoboxRow[];
+  toc?: TocItem[];
+  seealso?: SeeAlsoItem[];
+}
+
+const props = Astro.props;
+const base = '/';
+const path = Astro.url.pathname;
+
+/* 由 URL 自动定位当前章节（兼容带 base 前缀的路径） */
+const idx = MANUAL.chapters.findIndex((c) => path.includes('/docs/' + c.slug));
+const cur = idx >= 0 ? MANUAL.chapters[idx] : null;
+const prev = idx > 0 ? MANUAL.chapters[idx - 1] : null;
+const next = idx >= 0 && idx < MANUAL.chapters.length - 1 ? MANUAL.chapters[idx + 1] : null;
+const groups = [...new Set(MANUAL.chapters.map((c) => c.group))];
+---
+
+<div class="manual">
+  <aside class="manual__sidebar">
+    <nav class="manual__nav" aria-label="手册目录">
+      <a class={cur ? 'manual__cover' : 'manual__cover is-active'} href={base + 'docs'}>
+        <span class="manual__cover-title">手册封面</span>
+      </a>
+      {groups.map((g) => (
+        <div class="manual__group">
+          <p class="manual__group-title">{g}</p>
+          <ul>
+            {MANUAL.chapters.filter((c) => c.group === g).map((c) => (
+              <li>
+                <a
+                  href={base + 'docs/' + c.slug}
+                  class:list={[{ 'is-active': cur?.slug === c.slug }]}
+                  aria-current={cur?.slug === c.slug ? 'page' : undefined}
+                >
+                  {c.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      <p class="manual__url">{MANUAL.url.replace('https://', '')}</p>
+    </nav>
+  </aside>
+
+  <div class="manual__content">
+    <WikiDoc {...props}>
+      <slot />
+    </WikiDoc>
+
+    {(prev || next) && (
+      <nav class="manual__pager" aria-label="章节翻页">
+        {prev ? (
+          <a class="manual__pager-item" href={base + 'docs/' + prev.slug}>
+            <small>← 上一章</small>
+            <span>{prev.title}</span>
+          </a>
+        ) : <span />}
+        {next ? (
+          <a class="manual__pager-item manual__pager-item--next" href={base + 'docs/' + next.slug}>
+            <small>下一章 →</small>
+            <span>{next.title}</span>
+          </a>
+        ) : <span />}
+      </nav>
+    )}
+  </div>
+</div>

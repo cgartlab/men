@@ -1,0 +1,64 @@
+---
+interface Props {
+  direction?: 'up' | 'down' | 'left' | 'right';
+  stagger?: 1 | 2 | 3 | 4;
+  as?: string; // 渲染的元素 tag，默认 div
+  class?: string;
+}
+
+const { direction = 'up', stagger = 1, as = 'div', class: className = '' } = Astro.props;
+const Tag = as as any;
+---
+
+<Tag
+  class={`reveal reveal--${direction} ${className}`}
+  data-stagger={stagger}
+  data-reveal
+>
+  <slot />
+</Tag>
+
+<script>
+  // IntersectionObserver 驱动入场
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (prefersReduced) {
+    // 直接显示，不做动画
+    document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
+      el.classList.add('in-view');
+      el.classList.add('is-visible');
+    });
+  } else {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.12,
+        rootMargin: '0px 0px -8% 0px',
+      },
+    );
+
+    document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
+      // 如果元素已经在视口中（首屏），延迟一帧后加 in-view
+      requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          // 首屏元素用 class 显示（会有 transition）
+          requestAnimationFrame(() => {
+            el.classList.add('in-view');
+            el.classList.add('is-visible');
+          });
+        } else {
+          observer.observe(el);
+        }
+      });
+    });
+  }
+</script>

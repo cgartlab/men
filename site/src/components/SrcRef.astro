@@ -1,0 +1,6 @@
+---
+interface Props { files: string[] }
+const { files } = Astro.props;
+const B = 'https://github.com/cgartlab/men/blob/main/';
+---
+<p class="src-ref">来源：{files.map((f, i) => (<>{i > 0 && ' · '}<a href={B + f} target="_blank" rel="noopener"><code>{f}</code></a></>))}</p>

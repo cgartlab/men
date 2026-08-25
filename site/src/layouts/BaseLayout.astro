@@ -1,0 +1,109 @@
+---
+import '../styles/global.css';
+import BackgroundCanvas from '../components/BackgroundCanvas.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import content from '../data/content.json';
+import { SITE } from '../data/site';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'men（门）Agent 团队 — 围绕一人内容创作与工程协作的 6+1 Agent 团队系统' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#fafafa" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">跳至主内容</a>
+
+    <!-- 全局背景动画（Layer A 静态点阵 + Layer B 60s 漂移） -->
+    <BackgroundCanvas />
+
+    <!-- 左侧栏竖排小字 -->
+    <div class="side-rail side-rail--left" aria-hidden="true">
+      <span class="side-rail__text">men · {SITE.version} · cgartlab</span>
+    </div>
+
+    <!-- 右侧栏竖排小字 -->
+    <div class="side-rail side-rail--right" aria-hidden="true">
+      <span class="side-rail__text">gate · triage · verify · audit</span>
+    </div>
+
+    <Header />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // 导航滚动隐藏
+      const header = document.querySelector('.site-header');
+      if (header) {
+        let lastY = window.scrollY;
+        let ticking = false;
+
+        window.addEventListener('scroll', () => {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              const currentY = window.scrollY;
+              if (currentY > lastY && currentY > 80) {
+                header.classList.add('is-hidden');
+              } else {
+                header.classList.remove('is-hidden');
+              }
+              lastY = currentY;
+              ticking = false;
+            });
+            ticking = true;
+          }
+        }, { passive: true });
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: var(--space-4);
+    background: var(--color-accent);
+    color: var(--color-accent-on-accent);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption);
+    z-index: 100;
+    transition: top var(--duration-normal) ease;
+  }
+
+  .skip-link:focus {
+    top: var(--space-4);
+    outline: none;
+    text-decoration: none;
+  }
+
+  main {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: var(--space-12) var(--container-padding-x);
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 768px) {
+    main {
+      padding: var(--space-8) var(--space-6);
+    }
+  }
+</style>

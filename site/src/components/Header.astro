@@ -1,0 +1,199 @@
+---
+import content from '../data/content.json';
+import { SITE } from '../data/site';
+import GateLogo from './GateLogo.astro';
+
+const { pathname } = Astro.url;
+const base = '/';
+
+const navItems = [
+  { label: '首页', href: base },
+  { label: '角色', href: base + 'roles' },
+  { label: '机制', href: base + 'mechanisms' },
+  { label: '文档', href: base + 'docs' },
+  { label: '关于', href: base + 'about' },
+];
+
+function isActive(href: string): boolean {
+  if (href === base) return pathname === base || pathname === base + 'index';
+  return pathname.startsWith(href);
+}
+---
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href={base} class="site-header__brand" aria-label="men（门）首页">
+      <span class="site-header__logo" style="color: var(--color-fg)">
+        <GateLogo size={22} />
+      </span>
+      <span class="site-header__title">men <span class="site-header__cn">（门）</span></span>
+    </a>
+    <nav class="site-header__nav" aria-label="主导航">
+      <ul>
+        {navItems.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class={`site-header__link ${isActive(item.href) ? 'is-active' : ''}`}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+        <li class="site-header__nav-sep" aria-hidden="true"></li>
+        <li>
+          <a
+            href={SITE.repo}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="site-header__gh"
+            aria-label="GitHub 仓库（新窗口打开）"
+          >
+            GitHub ↗
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: color-mix(in oklab, var(--color-bg) 80%, transparent);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: var(--border-width) solid var(--color-line-soft);
+    transition: transform var(--duration-slow) var(--ease-nav);
+  }
+
+  .site-header.is-hidden {
+    transform: translateY(-100%);
+  }
+
+  .site-header__inner {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: var(--space-3) var(--container-padding-x);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+
+  .site-header__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--font-weight-semi);
+    font-size: var(--font-size-body);
+    color: var(--color-fg);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    border-bottom: none;
+  }
+
+  .site-header__brand:hover {
+    color: var(--color-fg);
+    border-bottom: none;
+  }
+
+  .site-header__logo {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .site-header__cn {
+    color: var(--color-fg-muted);
+    font-weight: var(--font-weight-regular);
+  }
+
+  .site-header__nav ul {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .site-header__nav-sep {
+    width: 1px;
+    height: var(--space-3);
+    background: var(--color-line-soft);
+  }
+
+  .site-header__link {
+    font-size: var(--font-size-eyebrow-nav);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: var(--letter-spacing-nav);
+    text-transform: uppercase;
+    color: var(--color-fg-tertiary);
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition:
+      color var(--duration-normal) ease,
+      border-color var(--duration-normal) ease;
+    text-decoration: none;
+  }
+
+  .site-header__link:hover {
+    color: var(--color-fg);
+    border-bottom-color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .site-header__link.is-active {
+    color: var(--color-fg);
+    border-bottom-color: var(--color-accent);
+  }
+
+  .site-header__gh {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow-nav);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-fg-tertiary);
+    padding: var(--space-2) var(--space-3);
+    border: var(--border-width) solid var(--color-line-soft);
+    border-radius: var(--radius-sm);
+    transition:
+      color var(--duration-normal) ease,
+      border-color var(--duration-normal) ease;
+    text-decoration: none;
+  }
+
+  .site-header__gh:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent-on-accent);
+    text-decoration: none;
+  }
+
+  @media (max-width: 900px) {
+    .site-header__inner {
+      padding: var(--space-3) var(--space-6);
+    }
+  }
+
+  @media (max-width: 780px) {
+    .site-header__title {
+      display: none;
+    }
+
+    .site-header__nav ul {
+      gap: var(--space-4);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .site-header__nav li:nth-child(4),
+    .site-header__nav li:nth-child(5),
+    .site-header__nav li:nth-child(6),
+    .site-header__nav li:nth-child(7) {
+      display: none;
+    }
+  }
+</style>

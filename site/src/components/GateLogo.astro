@@ -1,0 +1,49 @@
+---
+interface Props {
+  size?: number;
+  minimal?: boolean;
+}
+
+const { size = 32, minimal = false } = Astro.props;
+---
+
+<svg
+  class="gate-logo"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 32 32"
+  width={size}
+  height={size}
+  aria-hidden="true"
+>
+  <g
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <!-- 外框顶横线 -->
+    <path d="M6 4 H 26" />
+    <!-- 外框左竖线 -->
+    <path d="M6 4 V 22" />
+    <!-- 外框右竖线 -->
+    <path d="M26 4 V 22" />
+    <!-- 左门扇（微斜，半开） -->
+    <path d="M12 4 L 14 22" />
+    <!-- 右门扇（垂直） -->
+    <path d="M20 4 V 22" />
+    <!-- 门把手：极简版省略 -->
+    {!minimal && (
+      <circle cx="13.5" cy="13" r="1.2" fill="currentColor" stroke="none" />
+    )}
+    <!-- 底部开口：不画横线，形成门槛缺口意象 -->
+  </g>
+</svg>
+
+<style>
+  .gate-logo {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+</style>

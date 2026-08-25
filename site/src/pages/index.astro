@@ -1,0 +1,912 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import content from '../data/content.json';
+import { SITE } from '../data/site';
+import GateLogo from '../components/GateLogo.astro';
+import HeroArt from '../components/HeroArt.astro';
+import { Icon } from 'astro-icon/components';
+
+const base = '/';
+const pageTitle = content.hero.title + ' — ' + content.hero.subtitle;
+const install = content.install || {};
+
+/* ---------- Agent tab：一条完整可复制指令 ---------- */
+const agentPrompt =
+  '帮我安装并启动 men：git clone https://github.com/cgartlab/men.git && cd men && node scripts/install.mjs && npx astro dev --config site/astro.config.mjs';
+
+/* ---------- 手动安装（仓库一键安装脚本）---------- */
+const platformTabs = [
+  { id: 'agent', label: '面向 Agent' },
+  { id: 'bash', label: 'macOS / Linux' },
+  { id: 'windows', label: 'Windows' },
+];
+const manualCmds: Record<string, { label: string; cmd: string }[]> = {
+  bash: [
+    { label: '一键安装（管道）', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/main/install.sh)' },
+    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
+  ],
+  windows: [
+    { label: '一键安装（管道）', cmd: 'irm https://raw.githubusercontent.com/cgartlab/main/install.ps1 | iex' },
+    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
+  ],
+};
+
+/* ---------- 滚动展示：Agent 数据 ---------- */
+const showcaseAgents = [
+  {
+    id: 'men',
+    cn: '门',
+    role: '编排与路由核心',
+    color: '#e85d04',
+    icon: 'lucide:door-open',
+    desc: '唯一接收用户指令的角色。意图分诊、任务路由、多 Agent 编排、结果汇总。所有指令从这扇门进入。',
+    skills: ['意图判定 (IntentGate)', '混合任务拆分', '多 Wave 调度', '结果汇总与去冲突', '事件审计写入'],
+    constraint: '本身不执行具体产出，不写代码、不写作、不设计',
+  },
+  {
+    id: 'si',
+    cn: '思',
+    role: '规划与写作',
+    color: '#4a90d9',
+    icon: 'lucide:pen-tool',
+    desc: '需求访谈式拆解，产出 plan envelope（依赖图 + 并行波次 + 验收标准）。内容写作与知识管理。',
+    skills: ['Plan Envelope 产出', '需求访谈拆解', '内容写作 (博客/文档)', '知识库沉淀', '回评子 Agent 产物'],
+    constraint: '只规划不执行代码，写作产出需经 chi 验证',
+  },
+  {
+    id: 'ji',
+    cn: '记',
+    role: '代码与工程',
+    color: '#2ea043',
+    icon: 'lucide:code-2',
+    desc: '按 plan 实现代码，前端开发优先。GitHub 操作、L1 机械验证、目录结构审计。',
+    skills: ['前端实现 (HTML/CSS/JS)', 'GitHub PR/Issue 操作', 'L1 验证 (typecheck/lint)', '写作 (技术文档/周报)', '目录结构审计'],
+    constraint: '本地 gate 验证通过后才交付，自我审查后再交 chi',
+  },
+  {
+    id: 'chi',
+    cn: '持',
+    role: '投资评审 / Judge',
+    color: '#bf8700',
+    icon: 'lucide:scale',
+    desc: '双重身份：投资持仓分析 + 独立 Judge。作为 judge 时用 fresh context 机械验证，只信产物不信自述。',
+    skills: ['持仓分析与收益计算', '独立 Judge (fresh-context)', '机械验证复核', '质量门禁判定', '投资数据分析'],
+    constraint: 'judge spawn 时用全新 context，不复用被验证者的上下文',
+  },
+  {
+    id: 'yi',
+    cn: '艺',
+    role: '视觉设计',
+    color: '#a371f7',
+    icon: 'lucide:palette',
+    desc: '处理像素与矢量构成的一切影像。设计决策、配色、版式、生图（SenseNova）、审美分析。',
+    skills: ['设计决策与 Token 定义', '生图 (SenseNova U1)', '配色与版式', '审美分析', 'Logo 概念'],
+    constraint: '生图能力仅 yi 挂载，设计产出需附设计决策说明',
+  },
+  {
+    id: 'xun',
+    cn: '寻',
+    role: '搜索与研究',
+    color: '#8b5cf6',
+    icon: 'lucide:search',
+    desc: '网络搜索、RSS 聚合、知识库检索、事实核查。只读约束，不修改源数据。',
+    skills: ['网页搜索 (Exa)', 'RSS 聚合扫描', '事实核查 (多源交叉)', '知识库检索', '来源验证与可信度评分'],
+    constraint: '只读约束，不修改源数据，搜索结果附来源链接',
+  },
+];
+
+/* ---------- 机制数据 ---------- */
+const mechanisms = content.mechanisms || [];
+const faq = install.faq || [];
+---
+
+<BaseLayout title={pageTitle}>
+  <!-- ===== Hero ===== -->
+  <header class="hero" aria-labelledby="hero-title">
+    <HeroArt />
+    <div class="hero-content">
+      <div class="hero-logo"><GateLogo size={56} /></div>
+      <p class="hero-eyebrow">{content.hero.brandLine}</p>
+      <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
+      <p class="hero-desc">{content.hero.subtitle}</p>
+      <div class="hero-actions">
+        <a href={base + 'docs'} class="hero-cta hero-cta--primary">
+          <Icon name="lucide:book-open" width="16" height="16" />阅读文档
+        </a>
+        <a href="https://github.com/cgartlab/men" class="hero-cta hero-cta--ghost" target="_blank" rel="noopener">
+          <Icon name="lucide:github" width="16" height="16" />GitHub
+          <Icon name="lucide:arrow-up-right" width="12" height="12" />
+        </a>
+      </div>
+      <div class="hero-version">
+        <span class="hero-version-badge">{SITE.version}</span>
+        <span>{content.hero.version.topic}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== 快速开始 ===== -->
+  <section class="install" aria-labelledby="install-title">
+    <div class="install__header">
+      <h2 id="install-title" class="install__title">快速开始</h2>
+      <a href={base + 'docs/install'} class="install__guide">完整安装指南 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal__chrome">
+        <div class="terminal__dots">
+          <span class="terminal__dot terminal__dot--red"></span>
+          <span class="terminal__dot terminal__dot--yellow"></span>
+          <span class="terminal__dot terminal__dot--green"></span>
+        </div>
+        <div class="terminal__tabs" role="tablist" aria-label="平台选择">
+          {platformTabs.map((p, i) => (
+            <button class="terminal__tab" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-platform={p.id}>{p.label}</button>
+          ))}
+        </div>
+      </div>
+      <div class="terminal__body">
+        <!-- Agent tab -->
+        <div class="terminal__panel" id="term-panel-agent" role="tabpanel">
+          <p class="terminal__intro">把这句话发给任何 AI 助手（OpenCode / Claude / Cursor），一键复制全文：</p>
+          <div class="terminal__cmd">
+            <div class="terminal__cmd-line">
+              <span class="terminal__ps1 terminal__ps1--agent">{'>'}</span>
+              <code>{agentPrompt}</code>
+              <button class="terminal__copy" aria-label="复制完整提示词" data-cmd={agentPrompt}>
+                <Icon name="lucide:copy" width="14" height="14" />
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- macOS / Linux -->
+        <div class="terminal__panel" id="term-panel-bash" role="tabpanel" hidden>
+          {(manualCmds.bash || []).map((c) => (
+            <div class="terminal__cmd">
+              <span class="terminal__cmd-label">{c.label}</span>
+              <div class="terminal__cmd-line">
+                <span class="terminal__ps1">$</span>
+                <code>{c.cmd}</code>
+                <button class="terminal__copy" aria-label={'复制 ' + c.label} data-cmd={c.cmd}>
+                  <Icon name="lucide:copy" width="14" height="14" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <!-- Windows -->
+        <div class="terminal__panel" id="term-panel-windows" role="tabpanel" hidden>
+          {(manualCmds.windows || []).map((c) => (
+            <div class="terminal__cmd">
+              <span class="terminal__cmd-label">{c.label}</span>
+              <div class="terminal__cmd-line">
+                <span class="terminal__ps1">$</span>
+                <code>{c.cmd}</code>
+                <button class="terminal__copy" aria-label={'复制 ' + c.label} data-cmd={c.cmd}>
+                  <Icon name="lucide:copy" width="14" height="14" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Agent 滚动展示 ===== -->
+  <section class="showcase" aria-labelledby="showcase-title">
+    <h2 id="showcase-title" class="sr-only">Agent 团队</h2>
+    <div class="showcase__header">
+      <p class="showcase__label">THE TEAM</p>
+      <h3 class="showcase__heading">六个角色，一个核心</h3>
+      <p class="showcase__sub">各司其职，机械验证优先，假完成必识破。</p>
+    </div>
+    <div class="showcase__track">
+      {showcaseAgents.map((a) => (
+        <article class="showcase__card" data-agent={a.id} style={`--card-accent: ${a.color}`}>
+          <div class="showcase__card-icon">
+            <Icon name={a.icon} width="32" height="32" />
+          </div>
+          <div class="showcase__card-head">
+            <span class="showcase__card-cn">{a.cn}</span>
+            <span class="showcase__card-id">{a.id}</span>
+          </div>
+          <p class="showcase__card-role">{a.role}</p>
+          <p class="showcase__card-desc">{a.desc}</p>
+          <div class="showcase__card-skills">
+            {a.skills.map((s) => (
+              <span class="showcase__skill">{s}</span>
+            ))}
+          </div>
+          <p class="showcase__card-constraint">
+            <Icon name="lucide:shield" width="13" height="13" />
+            {a.constraint}
+          </p>
+        </article>
+      ))}
+      <!-- 团队特性卡片 -->
+      <article class="showcase__card showcase__card--team" style={`--card-accent: #e85d04`}>
+        <div class="showcase__card-icon">
+          <Icon name="lucide:users" width="32" height="32" />
+        </div>
+        <p class="showcase__card-role" style="font-size: var(--font-size-h4);">团队特性</p>
+        <div class="showcase__team-traits">
+          <div class="showcase__trait">
+            <Icon name="lucide:git-branch" width="16" height="16" />
+            <div>
+              <strong>Wave 并行调度</strong>
+              <span>无依赖任务同时开工，依赖关系自动保障</span>
+            </div>
+          </div>
+          <div class="showcase__trait">
+            <Icon name="lucide:shield-check" width="16" height="16" />
+            <div>
+              <strong>双层机械验证</strong>
+              <span>verify.mjs 五项检查 + chi 独立 Judge 语义复核</span>
+            </div>
+          </div>
+          <div class="showcase__trait">
+            <Icon name="lucide:activity" width="16" height="16" />
+            <div>
+              <strong>全量事件审计</strong>
+              <span>events.jsonl 记录 9 种事件，所有决策可追溯</span>
+            </div>
+          </div>
+          <div class="showcase__trait">
+            <Icon name="lucide:brain" width="16" height="16" />
+            <div>
+              <strong>自主学习回路</strong>
+              <span>learn.mjs 自动提取经验，eval-metrics 计算 KPI</span>
+            </div>
+          </div>
+          <div class="showcase__trait">
+            <Icon name="lucide:lock" width="16" height="16" />
+            <div>
+              <strong>安全门禁</strong>
+              <span>gate.mjs 白名单防注入，上限 5 次防死循环</span>
+            </div>
+          </div>
+          <div class="showcase__trait">
+            <Icon name="lucide:file-code" width="16" height="16" />
+            <div>
+              <strong>零依赖脚本</strong>
+              <span>纯 Node 运行，验证/门禁/审计三件套无第三方依赖</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+    <div class="showcase__nav">
+      <button class="showcase__arrow" id="showcase-prev" aria-label="上一个">
+        <Icon name="lucide:chevron-left" width="20" height="20" />
+      </button>
+      <div class="showcase__dots" id="showcase-dots"></div>
+      <button class="showcase__arrow" id="showcase-next" aria-label="下一个">
+        <Icon name="lucide:chevron-right" width="20" height="20" />
+      </button>
+    </div>
+  </section>
+  <section class="topo" aria-labelledby="topo-title">
+    <div class="topo__header">
+      <h2 id="topo-title" class="topo__title">团队拓扑</h2>
+      <a href={base + 'roles'} class="topo__all">查看全部角色 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+    </div>
+    <p class="topo__desc">用户指令 → IntentGate 分诊 → Wave 并发 spawn → verify.mjs 机械门禁 → chi fresh-context 复核 → 四段汇报回传；失败回到失败点重试 ≤5 次</p>
+
+    <div class="topo-diagram">
+      <svg viewBox="0 0 1200 560" class="topo-svg" aria-hidden="true">
+        <defs>
+          <!-- Arrowheads -->
+          <marker id="mk-fg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8b949e" /></marker>
+          <marker id="mk-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#e85d04" /></marker>
+          <marker id="mk-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#2ea043" /></marker>
+          <marker id="mk-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#bf8700" /></marker>
+          <marker id="mk-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8b5cf6" /></marker>
+
+          <!-- Forward paths -->
+          <path id="tz-in" d="M200,282 L276,282" />
+          <path id="tz-br-1" d="M500,282 C565,282 555,97 616,97" />
+          <path id="tz-br-2" d="M500,282 C565,282 555,165 616,165" />
+          <path id="tz-br-3" d="M500,282 C565,282 555,233 616,233" />
+          <path id="tz-br-4" d="M500,282 C565,282 555,301 616,301" />
+          <path id="tz-br-5" d="M500,282 C565,282 555,369 616,369" />
+
+          <!-- Products → mechanical gate -->
+          <path id="tz-out-1" d="M750,97 C798,97 786,286 826,286" />
+          <path id="tz-out-2" d="M750,165 C796,165 788,286 826,286" />
+          <path id="tz-out-3" d="M750,233 C792,233 792,286 826,286" />
+          <path id="tz-out-4" d="M750,301 C792,301 792,286 826,286" />
+          <path id="tz-out-5" d="M750,369 C798,369 786,286 826,286" />
+
+          <!-- Gate → Judge (all PASS) -->
+          <path id="tz-verdict" d="M980,286 L1036,286" />
+
+          <!-- FAIL loops back to dispatch -->
+          <path id="tz-fail-1" d="M905,252 C905,44 390,44 390,228" />
+          <path id="tz-fail-2" d="M1110,252 C1110,16 390,16 390,228" />
+
+          <!-- REPORT back to user -->
+          <path id="tz-report" d="M1110,320 C1110,452 120,452 120,322" />
+
+          <!-- LEARN sink -->
+          <path id="tz-learn" d="M650,452 L650,488" />
+        </defs>
+
+        <!-- Edges -->
+        <use href="#tz-in" class="topo-bezier topo-bezier--input" marker-end="url(#mk-fg)" />
+        <use href="#tz-br-1" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-2" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-3" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-4" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-5" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-1" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-2" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-3" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-4" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-5" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-verdict" class="topo-bezier topo-bezier--verdict" marker-end="url(#mk-green)" />
+        <use href="#tz-fail-1" class="topo-bezier topo-bezier--fail" marker-end="url(#mk-amber)" />
+        <use href="#tz-fail-2" class="topo-bezier topo-bezier--fail" marker-end="url(#mk-amber)" />
+        <use href="#tz-report" class="topo-bezier topo-bezier--report" marker-end="url(#mk-green)" />
+        <use href="#tz-learn" class="topo-bezier topo-bezier--learn" marker-end="url(#mk-purple)" />
+
+        <!-- Edge labels -->
+        <text x="1010" y="274" text-anchor="middle" class="topo-elabel topo-elabel--pass">全 PASS</text>
+        <text x="650" y="34" text-anchor="middle" class="topo-elabel topo-elabel--fail">FAIL · LOOP 重试 ≤5 次</text>
+        <text x="615" y="442" text-anchor="middle" class="topo-elabel topo-elabel--report">REPORT · 四段结构化汇报</text>
+
+        <!-- Flow dots -->
+        <circle r="3.5" class="topo-dot topo-dot--input"><animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#tz-in" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#tz-br-1" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.15s"><mpath href="#tz-br-2" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.3s"><mpath href="#tz-br-3" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.45s"><mpath href="#tz-br-4" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.6s"><mpath href="#tz-br-5" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="0.4s"><mpath href="#tz-out-1" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="0.6s"><mpath href="#tz-out-2" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="0.8s"><mpath href="#tz-out-3" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="1.0s"><mpath href="#tz-out-4" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="1.2s"><mpath href="#tz-out-5" /></animateMotion></circle>
+        <circle r="3" class="topo-dot topo-dot--verdict"><animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#tz-verdict" /></animateMotion></circle>
+        <circle r="2.6" class="topo-dot topo-dot--fail"><animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#tz-fail-1" /></animateMotion></circle>
+        <circle r="2.6" class="topo-dot topo-dot--fail"><animateMotion dur="3.2s" repeatCount="indefinite" begin="0.8s"><mpath href="#tz-fail-2" /></animateMotion></circle>
+        <circle r="3.5" class="topo-dot topo-dot--report"><animateMotion dur="3.5s" repeatCount="indefinite"><mpath href="#tz-report" /></animateMotion></circle>
+        <circle r="2.6" class="topo-dot topo-dot--learn"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#tz-learn" /></animateMotion></circle>
+
+        <!-- User -->
+        <g>
+          <rect x="40" y="250" width="160" height="64" class="topo-node topo-node--input" />
+          <text x="120" y="278" text-anchor="middle" class="topo-label topo-label--input">用户</text>
+          <text x="120" y="298" text-anchor="middle" class="topo-label topo-label--sub">自然语言指令</text>
+        </g>
+
+        <!-- men hub -->
+        <g>
+          <rect x="280" y="232" width="220" height="100" rx="16" class="topo-node topo-node--hub" />
+          <text x="390" y="268" text-anchor="middle" class="topo-label topo-label--hub-cn">men 门</text>
+          <text x="390" y="292" text-anchor="middle" class="topo-label topo-label--hub-sub">IntentGate · 唯一 spawner</text>
+          <text x="390" y="312" text-anchor="middle" class="topo-label topo-label--hub-sub2">Wave ≤4 并行 · COLLECT</text>
+          <rect x="280" y="232" width="220" height="100" rx="16" class="topo-pulse" />
+        </g>
+
+        <!-- Agents column -->
+        <g>
+          <rect x="620" y="70" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="668" y="94" text-anchor="middle" class="topo-label topo-label--agent-cn">思</text>
+          <text x="668" y="112" text-anchor="middle" class="topo-label topo-label--agent-id">si · 规划写作</text>
+          <circle cx="740" cy="78" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="138" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="668" y="162" text-anchor="middle" class="topo-label topo-label--agent-cn">记</text>
+          <text x="668" y="180" text-anchor="middle" class="topo-label topo-label--agent-id">ji · 工程</text>
+          <circle cx="740" cy="146" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="206" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="668" y="230" text-anchor="middle" class="topo-label topo-label--agent-cn">寻</text>
+          <text x="668" y="248" text-anchor="middle" class="topo-label topo-label--agent-id">xun · 搜索</text>
+          <circle cx="740" cy="214" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="274" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="668" y="298" text-anchor="middle" class="topo-label topo-label--agent-cn">艺</text>
+          <text x="668" y="316" text-anchor="middle" class="topo-label topo-label--agent-id">yi · 设计</text>
+          <circle cx="740" cy="282" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="342" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="668" y="366" text-anchor="middle" class="topo-label topo-label--agent-cn">持</text>
+          <text x="668" y="384" text-anchor="middle" class="topo-label topo-label--agent-id">chi · 投资</text>
+          <circle cx="740" cy="350" r="4" class="topo-status topo-status--verify" />
+          <rect x="700" y="330" width="62" height="18" rx="9" class="topo-badge" />
+          <text x="731" y="343" text-anchor="middle" class="topo-label topo-label--badge">兼 Judge</text>
+        </g>
+
+        <!-- Mechanical gate -->
+        <g>
+          <rect x="830" y="256" width="150" height="60" rx="10" class="topo-node topo-node--verify" />
+          <text x="905" y="280" text-anchor="middle" class="topo-label topo-label--node-title">verify.mjs</text>
+          <text x="905" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">五项机械检查</text>
+          <text x="905" y="310" text-anchor="middle" class="topo-label topo-label--node-micro">产物·密钥·TODO·结构·退出码</text>
+          <circle cx="968" cy="264" r="4" class="topo-status topo-status--active" />
+        </g>
+
+        <!-- Judge -->
+        <g>
+          <rect x="1040" y="256" width="140" height="60" rx="10" class="topo-node topo-node--judge" />
+          <text x="1110" y="280" text-anchor="middle" class="topo-label topo-label--node-title">chi · Judge</text>
+          <text x="1110" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">fresh-context 语义复核</text>
+          <text x="1110" y="310" text-anchor="middle" class="topo-label topo-label--node-micro">只信产物 · 不信自述</text>
+          <circle cx="1168" cy="264" r="4" class="topo-status topo-status--verify" />
+        </g>
+
+        <!-- Knowledge sink -->
+        <g>
+          <rect x="540" y="492" width="220" height="48" rx="10" class="topo-node topo-node--knowledge" />
+          <text x="650" y="512" text-anchor="middle" class="topo-label topo-label--node-title">knowledge/</text>
+          <text x="650" y="528" text-anchor="middle" class="topo-label topo-label--node-sub">LEARN 自主学习沉淀</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="topo-legend">
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--input"></span>用户输入</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--hub"></span>编排核心</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--agent"></span>子 Agent</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--verify"></span>机械门禁</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--judge"></span>Judge 复核</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--report"></span>结果回传</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--fail"></span>FAIL 重试</span>
+    </div>
+
+  </section>
+
+  <!-- ===== 核心机制 ===== -->
+  <section class="mechanisms" aria-labelledby="mech-title">
+    <div class="mechanisms__header">
+      <h2 id="mech-title" class="mechanisms__title">核心机制</h2>
+      <a href={base + 'mechanisms'} class="mechanisms__all">了解全部 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+    </div>
+    <div class="mechanisms__list">
+      {mechanisms.map((m, i) => (
+        <div class="mechanisms__item">
+          <span class="mechanisms__idx">{String(i + 1).padStart(2, '0')}</span>
+          <div class="mechanisms__item-body">
+            <h3 class="mechanisms__item-title">{m.title}</h3>
+            <p class="mechanisms__item-desc">{m.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="faq" aria-labelledby="faq-title">
+    <h2 id="faq-title" class="faq__title">常见问题</h2>
+    <div class="faq__list">
+      {(faq.length > 0 ? faq : [
+        { q: 'men 是什么？', a: '6+1 角色的 Agent 编排系统，围绕一人内容创作与工程协作设计。所有定义、脚本、知识库托管在 GitHub。' },
+        { q: '如何使用？', a: '克隆仓库，运行 <code>npx astro dev --config site/astro.config.mjs</code>，浏览器打开 <code>localhost:4399/</code>。' },
+        { q: '可以自定义角色吗？', a: '编辑 <code>.opencode/agent/*.md</code>，修改 <code>opencode.json</code>，重新同步。详见配置指南。' },
+        { q: '如何验证？', a: '运行 <code>node scripts/verify.mjs</code>，五项机械检查全 PASS 即可。' },
+      ]).map((item) => (
+        <details class="faq__item">
+          <summary class="faq__q">{item.q}</summary>
+          <p class="faq__a" set:html={item.a}></p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="cta" aria-label="开始使用">
+    <div class="cta__inner">
+      <h2 class="cta__title">现在就<em>推门而入</em></h2>
+      <p class="cta__desc">认识角色，了解机制，开始协作。</p>
+      <div class="cta__actions">
+        <a href={base + 'roles'} class="hero-cta hero-cta--primary">认识角色 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+        <a href={base + 'mechanisms'} class="hero-cta hero-cta--ghost">核心机制 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  :root { --page-max: 720px; }
+
+  /* ===== Hero ===== */
+  .hero { text-align: center; padding: var(--space-12) 0 var(--space-8); position: relative; overflow: hidden; }
+  .hero-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 0 var(--space-6); }
+  .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
+  .hero-title { font-size: var(--font-size-display); font-weight: var(--font-weight-semi); line-height: 1.1; letter-spacing: -0.03em; color: var(--color-fg); text-wrap: balance; max-width: 18ch; margin: 0 auto var(--space-3); }
+  .hero-desc { font-size: var(--font-size-body); color: var(--color-fg-secondary); max-width: 520px; line-height: var(--line-height-body); margin: 0 auto; }
+  .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
+  .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
+  .hero-cta--primary { background: var(--color-accent); color: #fff; }
+  .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent) 85%, #fff); border-color: color-mix(in srgb, var(--color-accent) 85%, #fff); text-decoration: none; }
+  .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
+  .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent); background: var(--color-accent-tint); text-decoration: none; }
+  .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
+  .hero-version-badge { font-weight: var(--font-weight-semi); color: #fff; background: var(--color-accent); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
+
+  /* ===== Install / Terminal (Light Theme) ===== */
+  .install { padding: var(--space-8) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .install__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-4); }
+  .install__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .install__guide { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
+  .install__guide:hover { color: var(--color-accent); text-decoration: none; }
+
+  .terminal { background: #f6f8fa; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid #d0d7de; }
+  .terminal__chrome { display: flex; align-items: center; gap: var(--space-4); padding: 10px var(--space-4); background: #eaeef2; border-bottom: 1px solid #d0d7de; }
+  .terminal__dots { display: flex; gap: 8px; flex-shrink: 0; }
+  .terminal__dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal__dot--red { background: #ff5f57; }
+  .terminal__dot--yellow { background: #febc2e; }
+  .terminal__dot--green { background: #28c840; }
+  .terminal__tabs { display: flex; gap: 0; flex: 1; overflow-x: auto; }
+  .terminal__tab {
+    font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi);
+    color: #656d76; background: none; border: none; border-bottom: 2px solid transparent;
+    padding: 6px var(--space-4); cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
+  }
+  .terminal__tab[aria-selected="true"] { color: #1f2328; border-bottom-color: #e85d04; }
+  .terminal__tab:hover { color: #1f2328; }
+
+  .terminal__body { padding: var(--space-5) var(--space-6); min-height: 120px; }
+  .terminal__intro { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: #656d76; margin-bottom: var(--space-4); line-height: 1.6; }
+  .terminal__hint { font-family: var(--font-mono); font-size: 0.68rem; color: #8b949e; margin-top: var(--space-3); line-height: 1.5; }
+  .terminal__cmd { margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid #d8dee4; }
+  .terminal__cmd:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+  .terminal__cmd-meta { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: 6px; flex-wrap: wrap; }
+  .terminal__cmd-label { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: #1f2328; }
+  .terminal__cmd-desc { font-family: var(--font-mono); font-size: 0.68rem; color: #8b949e; }
+  .terminal__cmd-line {
+    display: flex; align-items: flex-start; gap: var(--space-2);
+    background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 10px var(--space-3);
+  }
+  .terminal__ps1 { font-family: var(--font-mono); font-size: var(--font-size-body); color: #e85d04; flex-shrink: 0; font-weight: var(--font-weight-bold); line-height: 1.5; }
+  .terminal__ps1--agent { color: #0969da; }
+  .terminal__cmd-line code {
+    font-family: var(--font-mono); font-size: var(--font-size-body); color: #1f2328;
+    flex: 1; min-width: 0; word-break: break-word; line-height: 1.5; white-space: pre-wrap;
+  }
+  .terminal__copy {
+    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border: 1px solid #d0d7de; border-radius: 6px;
+    background: #f6f8fa; color: #656d76; cursor: pointer; transition: all 0.2s;
+  }
+  .terminal__copy:hover { color: #e85d04; border-color: #e85d04; background: #fff; }
+  .terminal__panel { display: block; }
+  .terminal__panel[hidden] { display: none; }
+
+  /* ===== Showcase (scroll-driven agent cards) ===== */
+  .showcase { padding: var(--space-12) 0 var(--space-8); overflow: hidden; }
+  .showcase__header { text-align: center; padding: 0 var(--space-6); margin-bottom: var(--space-8); }
+  .showcase__label { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-3); }
+  .showcase__heading { font-family: var(--font-serif); font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: var(--font-weight-semi); color: var(--color-fg); line-height: 1.15; margin-bottom: var(--space-3); }
+  .showcase__sub { font-size: var(--font-size-body); color: var(--color-fg-tertiary); }
+
+  .showcase__track {
+    position: relative;
+    display: flex; gap: var(--space-5);
+    padding: var(--space-4) var(--space-6);
+    overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .showcase__track::-webkit-scrollbar { display: none; }
+
+  .showcase__card {
+    flex: 0 0 320px; scroll-snap-align: start;
+    background: var(--color-surface); border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-lg); padding: var(--space-6);
+    display: flex; flex-direction: column; gap: var(--space-3);
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .showcase__card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--card-accent); opacity: 0; transition: opacity 0.3s;
+  }
+  .showcase__card:hover { border-color: var(--card-accent); box-shadow: 0 8px 32px rgba(0,0,0,0.06); transform: translateY(-2px); }
+  .showcase__card:hover::before { opacity: 1; }
+  .showcase__card.is-visible { opacity: 1; transform: translateY(0); }
+  .showcase__card:not(.is-visible) { opacity: 0; transform: translateY(24px); }
+
+  .showcase__card-icon { color: var(--card-accent); }
+  .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); }
+  .showcase__card-cn { font-family: var(--font-serif); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--card-accent); }
+  .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
+  .showcase__card-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .showcase__skill {
+    font-family: var(--font-mono); font-size: 0.68rem; color: var(--color-fg-tertiary);
+    background: var(--color-bg-warm); padding: 2px 8px; border-radius: var(--radius-xs);
+    border: 1px solid var(--color-line-soft);
+  }
+  .showcase__card-constraint {
+    font-size: 0.72rem; color: var(--color-fg-muted); font-style: italic;
+    display: flex; align-items: center; gap: var(--space-1); margin-top: auto;
+    padding-top: var(--space-2); border-top: 1px solid var(--color-line-soft);
+  }
+
+  /* Team traits card */
+  .showcase__card--team { flex: 0 0 360px; background: var(--color-bg-warm); }
+  .showcase__team-traits { display: flex; flex-direction: column; gap: var(--space-3); }
+  .showcase__trait { display: flex; gap: var(--space-3); align-items: flex-start; }
+  .showcase__trait svg { color: var(--color-accent); flex-shrink: 0; margin-top: 2px; }
+  .showcase__trait strong { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 1px; }
+  .showcase__trait span { font-size: 0.72rem; color: var(--color-fg-tertiary); line-height: 1.4; }
+
+  /* Showcase nav */
+  .showcase__nav { display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-top: var(--space-5); }
+  .showcase__arrow {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--color-line); background: var(--color-surface);
+    color: var(--color-fg-secondary); cursor: pointer;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .showcase__arrow:hover { border-color: var(--color-accent); color: var(--color-accent); background: var(--color-accent-tint); }
+  .showcase__arrow:active { transform: scale(0.92); }
+  .showcase__dots { display: flex; gap: 8px; align-items: center; }
+  .showcase__dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--color-line); border: none; padding: 0; cursor: pointer;
+    transition: all 0.25s;
+  }
+  .showcase__dot--active { background: var(--color-accent); width: 24px; border-radius: 4px; }
+
+  /* ===== Topology ===== */
+  .topo { padding: var(--space-10) 0 var(--space-12); max-width: 1000px; margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .topo__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-3); }
+  .topo__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .topo__all { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
+  .topo__all:hover { color: var(--color-accent); text-decoration: none; }
+  .topo__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-6); }
+  .topo-diagram { overflow-x: auto; }
+  .topo-svg { width: 100%; height: auto; min-width: 860px; }
+
+  /* Bézier lines */
+  .topo-bezier { fill: none; stroke-width: 1.5; }
+  .topo-bezier--input { stroke: #8b949e; }
+  .topo-bezier--branch { stroke: #e85d04; stroke-opacity: 0.45; }
+  .topo-bezier--return { stroke: #2ea043; stroke-opacity: 0.6; stroke-dasharray: 6 4; }
+  .topo-bezier--verdict { stroke: #2ea043; stroke-width: 1.8; }
+  .topo-bezier--fail { stroke: #bf8700; stroke-opacity: 0.7; stroke-dasharray: 5 4; }
+  .topo-bezier--report { stroke: #2ea043; stroke-opacity: 0.7; stroke-width: 1.8; }
+  .topo-bezier--learn { stroke: #8b5cf6; stroke-opacity: 0.85; stroke-dasharray: 2 4; }
+  .topo-bezier--judge { stroke: #bf8700; stroke-opacity: 0.7; stroke-dasharray: 4 3; stroke-width: 1.2; }
+
+  /* Animated dots */
+  .topo-dot { fill: #e85d04; }
+  .topo-dot--input { fill: #8b949e; }
+  .topo-dot--return { fill: #2ea043; }
+  .topo-dot--verdict { fill: #2ea043; }
+  .topo-dot--fail { fill: #bf8700; }
+  .topo-dot--report { fill: #2ea043; }
+  .topo-dot--learn { fill: #8b5cf6; }
+  .topo-dot--judge { fill: #bf8700; }
+
+  /* Nodes */
+  .topo-node { rx: 10; ry: 10; }
+  .topo-node--input { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
+  .topo-node--hub { fill: #e85d04; stroke: none; }
+  .topo-node--agent { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
+  .topo-node--judge { fill: #f6f8fa; stroke: #bf8700; stroke-width: 1.5; }
+  .topo-node--output { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
+  .topo-node--verify { fill: #f6f8fa; stroke: #2ea043; stroke-width: 1.5; }
+  .topo-node--knowledge { fill: #fafafa; stroke: #8b5cf6; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .topo-badge { fill: #bf8700; fill-opacity: 0.14; stroke: #bf8700; stroke-opacity: 0.5; stroke-width: 1; }
+
+  /* Labels */
+  .topo-label { font-family: var(--font-mono); }
+  .topo-label--input { fill: #1f2328; font-size: 16px; font-weight: 600; }
+  .topo-label--sub { fill: #656d76; font-size: 11px; font-weight: 400; }
+  .topo-label--hub-cn { fill: #fff; font-size: 20px; font-weight: 700; }
+  .topo-label--hub-sub { fill: rgba(255,255,255,0.85); font-size: 12px; }
+  .topo-label--agent-cn { fill: #1f2328; font-size: 16px; font-weight: 700; }
+  .topo-label--agent-id { fill: #656d76; font-size: 11px; }
+  .topo-label--judge-cn { fill: #1f2328; font-size: 15px; font-weight: 600; }
+  .topo-label--judge-sub { fill: #656d76; font-size: 11px; }
+  .topo-label--judge-tag { fill: #bf8700; font-size: 11px; font-weight: 600; font-style: italic; }
+  .topo-label--badge { fill: #bf8700; font-size: 9px; font-weight: 600; }
+  .topo-label--hub-sub2 { fill: rgba(255,255,255,0.75); font-size: 10px; }
+  .topo-label--node-title { fill: #1f2328; font-size: 13px; font-weight: 600; }
+  .topo-label--node-sub { fill: #656d76; font-size: 10px; }
+  .topo-label--node-micro { fill: #8b949e; font-size: 8.5px; }
+  .topo-elabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .topo-elabel--pass { fill: #2ea043; }
+  .topo-elabel--fail { fill: #bf8700; }
+  .topo-elabel--report { fill: #2ea043; }
+  .topo-label--output { fill: #1f2328; font-size: 16px; font-weight: 600; }
+
+  /* Pulse animation on hub */
+  .topo-pulse {
+    fill: none; stroke: #e85d04; stroke-width: 2; opacity: 0;
+    animation: topo-pulse 3s ease-out infinite;
+  }
+  @keyframes topo-pulse {
+    0% { opacity: 0.6; stroke-width: 2; }
+    100% { opacity: 0; stroke-width: 8; }
+  }
+
+  /* Status dots on nodes */
+  .topo-status { fill: #2ea043; }
+  .topo-status--active { animation: topo-blink 2s ease-in-out infinite; }
+  .topo-status--verify { fill: #bf8700; animation: topo-blink 1.5s ease-in-out infinite; }
+  @keyframes topo-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .topo-legend { display: flex; gap: var(--space-5); justify-content: center; padding-top: var(--space-5); flex-wrap: wrap; }
+  .topo-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
+  .topo-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
+  .topo-legend__dot--input { background: #8b949e; }
+  .topo-legend__dot--hub { background: #e85d04; }
+  .topo-legend__dot--agent { background: #f6f8fa; border: 1px solid #d0d7de; }
+  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid #bf8700; }
+  .topo-legend__dot--verify { background: #f6f8fa; border: 1.5px solid #2ea043; }
+  .topo-legend__dot--report { background: #2ea043; }
+  .topo-legend__dot--fail { background: #bf8700; }
+
+  /* ===== Mechanisms ===== */
+  .mechanisms { padding: var(--space-10) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
+  .mechanisms__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .mechanisms__all { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
+  .mechanisms__all:hover { color: var(--color-accent); text-decoration: none; }
+  .mechanisms__list { display: flex; flex-direction: column; }
+  .mechanisms__item { display: flex; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-line-soft); transition: background 0.2s; }
+  .mechanisms__item:last-child { border-bottom: none; }
+  .mechanisms__idx { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); flex-shrink: 0; padding-top: 2px; letter-spacing: 0.05em; }
+  .mechanisms__item-body { flex: 1; }
+  .mechanisms__item-title { font-size: var(--font-size-body); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 2px; }
+  .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); }
+
+  /* ===== FAQ ===== */
+  .faq { padding: var(--space-10) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .faq__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-5); }
+  .faq__item { border-bottom: 1px solid var(--color-line-soft); }
+  .faq__q { font-size: var(--font-size-body); font-weight: var(--font-weight-semi); color: var(--color-fg); padding: var(--space-3) 0; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .faq__q::-webkit-details-marker { display: none; }
+  .faq__q::after { content: '+'; font-family: var(--font-mono); font-size: var(--font-size-h4); color: var(--color-fg-muted); transition: transform 0.2s; }
+  .faq__item[open] .faq__q::after { transform: rotate(45deg); }
+  .faq__a { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); padding-bottom: var(--space-3); }
+  .faq__a code { font-family: var(--font-mono); background: var(--color-bg-warm); padding: 1px var(--space-1); border-radius: var(--radius-xs); color: var(--color-fg); font-size: 0.85em; }
+
+  /* ===== CTA ===== */
+  .cta { padding: var(--space-12) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .cta__inner { text-align: center; padding: var(--space-10) 0; border-top: 1px solid var(--color-line-soft); }
+  .cta__title { font-family: var(--font-serif); font-size: clamp(1.6rem, 3.5vw, 2.2rem); font-weight: var(--font-weight-semi); line-height: 1.12; letter-spacing: -0.025em; color: var(--color-fg); margin-bottom: var(--space-3); }
+  .cta__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-5); }
+  .cta__actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .terminal__tabs { gap: 0; }
+    .terminal__tab { padding: var(--space-2) var(--space-2); font-size: 0.65rem; }
+    .terminal__body { padding: var(--space-4); }
+    .topo__header { flex-direction: column; gap: var(--space-2); }
+    .showcase__card { flex: 0 0 280px; }
+    .showcase__card--team { flex: 0 0 300px; }
+  }
+  @media (max-width: 480px) {
+    .hero-title { font-size: clamp(1.8rem, 8vw, 2.2rem); }
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .hero-cta { justify-content: center; }
+    .terminal__tab { padding: var(--space-2); }
+    .topo-svg { min-width: 600px; }
+  }
+</style>
+
+<script>
+  /* Tab switching */
+  document.querySelectorAll('[role="tablist"]').forEach(tablist => {
+    tablist.querySelectorAll('[role="tab"]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const platform = (tab as HTMLElement).dataset.platform;
+        tablist.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', 'false'));
+        tab.setAttribute('aria-selected', 'true');
+        const panelContainer = tablist.closest('.terminal')?.querySelector('.terminal__body');
+        if (panelContainer) {
+          panelContainer.querySelectorAll('[role="tabpanel"]').forEach(p => (p as HTMLElement).hidden = true);
+          const target = panelContainer.querySelector('#term-panel-' + platform);
+          if (target) (target as HTMLElement).hidden = false;
+        }
+      });
+    });
+  });
+
+  /* Copy buttons */
+  document.querySelectorAll('.terminal__copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const cmd = (btn as HTMLElement).dataset.cmd;
+      if (!cmd) return;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
+        (btn as HTMLElement).style.color = '#28c840';
+        setTimeout(() => {
+          btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          (btn as HTMLElement).style.color = '';
+        }, 1500);
+      } catch {}
+    });
+  });
+
+  /* Scroll-driven showcase cards */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px -40px 0px' });
+
+  document.querySelectorAll('.showcase__card').forEach(card => observer.observe(card));
+
+  /* Showcase arrow navigation */
+  (() => {
+    const track = document.querySelector<HTMLElement>('.showcase__track');
+    const cards = document.querySelectorAll('.showcase__card');
+    const prevBtn = document.getElementById('showcase-prev');
+    const nextBtn = document.getElementById('showcase-next');
+    const dotsContainer = document.getElementById('showcase-dots');
+    if (!track || !cards.length || !prevBtn || !nextBtn || !dotsContainer) return;
+
+    const cardCount = cards.length;
+    let current = 0;
+    let animating = false;
+
+    // Build dots
+    for (let i = 0; i < cardCount; i++) {
+      const dot = document.createElement('button');
+      dot.className = 'showcase__dot' + (i === 0 ? ' showcase__dot--active' : '');
+      dot.setAttribute('aria-label', '卡片 ' + (i + 1));
+      dot.addEventListener('click', () => scrollToCard(i));
+      dotsContainer.appendChild(dot);
+    }
+    const dots = dotsContainer.querySelectorAll('.showcase__dot');
+
+    function centerOf(idx: number): number {
+      const card = cards[idx] as HTMLElement;
+      return card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
+    }
+
+    function scrollToCard(idx: number) {
+      // 环绕：首卡向左 → 末卡；末卡向右 → 首卡
+      const next = ((idx % cardCount) + cardCount) % cardCount;
+      current = next;
+      animating = true;
+      track.scrollTo({ left: centerOf(next), behavior: 'smooth' });
+      updateDots();
+      setTimeout(() => { animating = false; }, 500);
+    }
+
+    function updateDots() {
+      dots.forEach((d, i) => d.classList.toggle('showcase__dot--active', i === current));
+    }
+
+    prevBtn.addEventListener('click', () => scrollToCard(current - 1));
+    nextBtn.addEventListener('click', () => scrollToCard(current + 1));
+
+    // 手动拖动/触摸滚动时同步指示点
+    track.addEventListener('scroll', () => {
+      if (animating) return;
+      const trackRect = track.getBoundingClientRect();
+      const center = trackRect.left + trackRect.width / 2;
+      let closest = 0, minDist = Infinity;
+      cards.forEach((card, i) => {
+        const r = (card as HTMLElement).getBoundingClientRect();
+        const dist = Math.abs(r.left + r.width / 2 - center);
+        if (dist < minDist) { minDist = dist; closest = i; }
+      });
+      if (closest !== current) { current = closest; updateDots(); }
+    }, { passive: true });
+  })();
+</script>

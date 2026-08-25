@@ -1,0 +1,94 @@
+---
+// BackgroundCanvas — R8 · 全局点阵背景（Layer A 静态 + Layer B 20s 无限漂移 + Layer C 网格流动）
+// 性能：纯 CSS 三层 background-image，零 JS，GPU 合成
+// 关键修复：z-index 从 -1 改为 0，配合 body { background: transparent }
+//   - z-index: -1 + position: fixed 在 <body> 内会被 body 背景色 (#fafafa) 覆盖
+//   - 改为 z-index: 0，body::before 纸纹保留 z-index: 3，覆盖顺序：
+//       0: BackgroundCanvas (color+dots) → 1: main 内容 → 3: body::before 纸纹
+// ================================================================
+const props = Astro.props;
+---
+
+<!-- Layer A + B + C 三层合并：颜色底 + 静态点阵 + 20s 漂移点阵 + 60s 网格流动 -->
+<div class="bg-layer bg-layer-main" aria-hidden="true"></div>
+
+<style>
+  /* 三层背景合并到单个 div，避免 z-index 冲突 */
+  .bg-layer-main {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: var(--color-bg);
+    background-image:
+      /* Layer B：漂移点阵（20s，可见的运动感） */
+      radial-gradient(
+        circle,
+        color-mix(in srgb, var(--color-accent) 16%, transparent) 1.2px,
+        transparent 2px
+      ),
+      /* Layer C：缓慢网格流动（60s，大范围低频） */
+      radial-gradient(
+        circle,
+        color-mix(in srgb, var(--color-accent) 10%, transparent) 0.8px,
+        transparent 1.5px
+      ),
+      /* Layer A：静态极淡点阵基底 */
+      radial-gradient(
+        circle,
+        color-mix(in srgb, var(--color-accent) 6%, transparent) 0.5px,
+        transparent 1px
+      );
+    background-size:
+      78px 78px,
+      180px 180px,
+      26px 26px;
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+    animation:
+      bg-drift-a 20s linear infinite,
+      bg-drift-c 60s linear infinite;
+    will-change: background-position;
+  }
+
+  /* 关键帧：Layer B 偏移（20s 一个完整循环） */
+  @keyframes bg-drift-a {
+    from {
+      background-position:
+        0 0,
+        0 0,
+        0 0;
+    }
+    to {
+      background-position:
+        78px 78px,
+        0 0,
+        0 0;
+    }
+  }
+
+  /* 关键帧：Layer C 反向偏移（60s，与 Layer B 错相位） */
+  @keyframes bg-drift-c {
+    from {
+      background-position:
+        0 0,
+        0 0,
+        0 0;
+    }
+    to {
+      background-position:
+        0 0,
+        -180px 180px,
+        0 0;
+    }
+  }
+
+  /* prefers-reduced-motion: 关闭所有漂移 */
+  @media (prefers-reduced-motion: reduce) {
+    .bg-layer-main {
+      animation: none;
+    }
+  }
+</style>

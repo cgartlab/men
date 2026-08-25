@@ -1,0 +1,154 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WikiManual from '../../components/WikiManual.astro';
+import SrcRef from '../../components/SrcRef.astro';
+import content from '../../data/content.json';
+
+const pageTitle = '安装 — ' + content.hero.title;
+const base = '/';
+const rawBase = 'https://raw.githubusercontent.com/cgartlab/main';
+
+const infobox = [
+  { k: '分发方式', v: '<strong>Git 仓库</strong>分发（非独立 npm 包）' },
+  { k: '前置依赖', v: '<code>Node ≥ 18</code> / <code>npm</code> / <code>git</code>' },
+  { k: 'Linux·macOS', v: '<code>bash &lt;(curl -fsSL …/install.sh)</code>' },
+  { k: 'Windows', v: '<code>irm …/install.ps1 | iex</code>' },
+  { k: '就地安装', v: '<code>./install.sh</code> / <code>./install.ps1</code>' },
+  { k: '端到端验证', v: '<code>node scripts/verify.mjs men --json</code>' },
+];
+
+const toc = [
+  { id: 'prereq', label: '前置要求' },
+  { id: 'linux-macos', label: '一键安装（Linux·macOS）' },
+  { id: 'windows', label: '一键安装（Windows）' },
+  { id: 'inplace', label: '就地安装' },
+  { id: 'options', label: '选项说明' },
+  { id: 'verify', label: '验证安装' },
+];
+
+const seealso = [
+  { href: base + 'docs/quickstart', label: '快速上手', desc: '安装后跑通第一个任务' },
+  { href: base + 'docs/configure', label: '配置', desc: '模型连接与配置' },
+  { href: base + 'docs/protocols', label: '协议规范', desc: '验证与审计' },
+  { href: base + 'docs/architecture', label: '架构设计', desc: '拓扑与流程' },
+  { href: base + 'docs/overview', label: '概览', desc: '项目定位与角色' },
+];
+---
+
+<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 安装">
+  <WikiManual
+    crumb="安装"
+    title="安装"
+    lead={`<strong>men（门）</strong>不打包为独立 npm 包，而是通过 <strong>Git 仓库</strong>与配套的一键安装脚本分发：脚本负责检测依赖、拉取仓库，并调用共享核心 <code>scripts/install.mjs</code> 完成依赖安装、环境配置与端到端验证。`}
+    infoboxTitle="安装概要"
+    infobox={infobox}
+    toc={toc}
+    seealso={seealso}
+  >
+    <section id="prereq" class="doc-section">
+      <h2>前置要求</h2>
+      <p>安装器会检测以下三个命令是否存在，任一缺失即报错退出（提示先安装 <code>Node ≥ 18</code> 与 <code>git</code>）：</p>
+      <ul>
+        <li><strong>Node.js ≥ 18</strong> — 运行 <code>scripts/install.mjs</code> 与机械验证脚本（<code>node --version</code> 检查）</li>
+        <li><strong>npm</strong> — 安装 <code>.opencode/</code> 依赖</li>
+        <li><strong>git</strong> — 拉取 / 克隆仓库（一键安装时自动执行）</li>
+      </ul>
+      <div class="wiki-note">
+        <code>install.mjs</code> 会在流程最前做 <strong>Node 版本检查</strong>，主版本低于 <code>18</code> 时直接报错并以非 0 退出码结束。
+      </div>
+      <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
+    </section>
+
+    <section id="linux-macos" class="doc-section">
+      <h2>一键安装（Linux·macOS）</h2>
+      <p>在支持 <code>bash</code> 的 Linux / macOS 终端中，直接运行一键命令（使用 <code>curl</code> 拉取 <code>install.sh</code> 并交给 <code>bash</code> 执行），脚本会检测依赖、<code>git clone</code> 到默认目录 <code>men/</code>，再调用共享核心完成安装：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>bash <(curl -fsSL {rawBase}/install.sh)</code></pre>
+      </div>
+      <p>可追加选项控制安装行为，例如指定安装目录：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>bash <(curl -fsSL {rawBase}/install.sh) --dir ~/men</code></pre>
+      </div>
+      <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\scripts\install.mjs']} />
+    </section>
+
+    <section id="windows" class="doc-section">
+      <h2>一键安装（Windows）</h2>
+      <p>在 <strong>PowerShell 7+</strong> 中运行一键命令（使用 <code>irm</code> 拉取 <code>install.ps1</code> 并交给 <code>iex</code> 执行），脚本同样会检测依赖并 <code>git clone</code> 到默认目录 <code>men/</code>：</p>
+      <div class="code-block">
+        <span class="code-block__lang">powershell</span>
+        <pre><code>irm {rawBase}/install.ps1 | iex</code></pre>
+      </div>
+      <p>PowerShell 参数使用大写开关形式，例如指定目录：</p>
+      <div class="code-block">
+        <span class="code-block__lang">powershell</span>
+        <pre><code>irm {rawBase}/install.ps1 | iex -Dir C:\men</code></pre>
+      </div>
+      <SrcRef files={['D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
+    </section>
+
+    <section id="inplace" class="doc-section">
+      <h2>就地安装</h2>
+      <p>如果已克隆 / 已拥有仓库源码，可在仓库根目录就地执行引导脚本——脚本检测到 <code>scripts/install.mjs</code> 存在时，直接以当前目录为安装目标，不再重复拉取。</p>
+      <p>Linux / macOS（先赋予执行权限）：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>chmod +x install.sh
+./install.sh [选项]</code></pre>
+      </div>
+      <p>Windows / PowerShell：</p>
+      <div class="code-block">
+        <span class="code-block__lang">powershell</span>
+        <pre><code>./install.ps1 [-Dir &lt;path&gt;] [-SkipDeps] [-SkipVerify] [-Json] [-Help]</code></pre>
+      </div>
+      <p>也可绕过平台引导，直接调用共享核心安装器：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>node scripts/install.mjs [--dir &lt;path&gt;] [--skip-deps] [--skip-verify] [--json] [--help]</code></pre>
+      </div>
+      <div class="wiki-note">
+        分发脚本中的 <code>INSTALL_URL</code> 与 <code>REPO_URL</code> 为<strong>发布时替换的占位符</strong>：前者指向安装脚本的原始 URL（即 <code>raw.githubusercontent.com/cgartlab/main/&lt;install.sh|install.ps1&gt;</code>），后者是 <code>git clone</code> 使用的仓库地址。
+      </div>
+      <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
+    </section>
+
+    <section id="options" class="doc-section">
+      <h2>选项说明</h2>
+      <p>共享核心 <code>install.mjs</code> 定义了三平台一致的选项；<code>install.sh</code>（<code>--</code> 前缀）与 <code>install.ps1</code>（大写开关）只是语法上的平台差异，透传给核心后行为相同：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>选项</th><th>PowerShell</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>--dir &lt;path&gt;</code></td><td><code>-Dir &lt;path&gt;</code></td><td>安装目标目录。默认当前目录；指向不存在的目录时从当前仓库根复制源码（排除 <code>node_modules</code>、<code>.env</code> 等运行态路径）。</td></tr>
+            <tr><td><code>--skip-deps</code></td><td><code>-SkipDeps</code></td><td>跳过 <code>.opencode/</code> 依赖安装（<code>npm install --prefix .opencode</code>）。</td></tr>
+            <tr><td><code>--skip-verify</code></td><td><code>-SkipVerify</code></td><td>跳过端到端验证（<code>scripts/verify.mjs men --json</code>）。</td></tr>
+            <tr><td><code>--json</code></td><td><code>-Json</code></td><td>以 JSON 格式输出安装摘要。</td></tr>
+            <tr><td><code>--help</code> / <code>-h</code></td><td><code>-Help</code></td><td>显示帮助信息后退出。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="wiki-note">
+        安装流程共 6 步：<strong>1.</strong> Node 版本检查 → <strong>2.</strong> 确定目标目录（就地或复制）→ <strong>3.</strong> 安装 <code>.opencode/</code> 依赖 → <strong>4.</strong> 环境配置（<code>.env</code> 不存在时从 <code>.env.example</code> 复制）→ <strong>5.</strong> 端到端验证 → <strong>6.</strong> 输出摘要。第 3、5 步分别由 <code>--skip-deps</code>、<code>--skip-verify</code> 跳过。
+      </div>
+      <SrcRef files={['D:\github-repos\men\scripts\install.mjs']} />
+    </section>
+
+    <section id="verify" class="doc-section">
+      <h2>验证安装</h2>
+      <p>安装器默认会在末尾执行端到端验证 <code>scripts/verify.mjs men --json</code>，<strong>退出码为 0</strong> 才打印「安装成功」；验证失败则以非 0 退出码终止。如需手动复核环境，可运行：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code># 1. 检查 Node 版本（要求 ≥ 18）
+node --version
+
+# 2. 运行端到端机械验证（JSON 输出）
+node scripts/verify.mjs men --json</code></pre>
+      </div>
+      <p>若输出中验证项全部 <code>PASS</code> 且退出码为 0，说明安装正确；安装完成后，在项目目录运行 <code>opencode</code> 即可进入 TUI 使用。</p>
+      <SrcRef files={['D:\github-repos\men\scripts\install.mjs']} />
+      <div class="wiki-note"><strong>线上地址</strong>：站点正式环境部署于 <a href="https://men.cgartlab.com" target="_blank" rel="noopener">men.cgartlab.com</a>；本地预览仅用于开发验证，内容与线上一致。</div>
+    </section>
+  </WikiManual>
+</BaseLayout>

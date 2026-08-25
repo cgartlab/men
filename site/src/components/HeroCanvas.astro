@@ -1,0 +1,184 @@
+---
+// 门扇开合 Canvas 动画组件（首页 hero 背景）
+// 荧光绿描边 + 浅灰横线，12s 周期缓慢开合
+---
+
+<canvas class="hero-canvas" aria-hidden="true"></canvas>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>('.hero-canvas');
+  if (!canvas) {
+    // 无操作
+  } else {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      // 不支持
+    } else {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // 从 CSS 变量读取颜色
+      const cs = getComputedStyle(document.documentElement);
+      const accentColor = cs.getPropertyValue('--color-accent').trim() || '#63fe13';
+      const faintColor = cs.getPropertyValue('--color-line').trim() || '#d9d9d9';
+      const bgColor = cs.getPropertyValue('--color-bg').trim() || '#fafafa';
+      const doorLines = parseInt(cs.getPropertyValue('--gate-door-lines').trim() || '5', 10);
+      const cycleMs = 12000;
+      const maxAngleRad = (20 * Math.PI) / 180; // 20deg → rad
+
+      let width = 0;
+      let height = 0;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+      let rafId = 0;
+      let startTime = 0;
+
+      function resize() {
+        const parent = canvas.parentElement;
+        if (!parent) return;
+        width = parent.clientWidth;
+        height = parent.clientHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function drawDoor(
+        cx: number,
+        cy: number,
+        doorHalfWidth: number,
+        doorHeight: number,
+        angle: number,
+        side: 1 | -1, // 1 = 右扇，-1 = 左扇
+      ) {
+        ctx.save();
+        // 以门的竖直中缝为轴（左扇的轴在门右侧，右扇的轴在门左侧）
+        const hingeX = cx + side * doorHalfWidth;
+        ctx.translate(hingeX, cy);
+        ctx.rotate(side * angle);
+
+        // 门扇外框（荧光绿描边，仅外边缘）
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const w = doorHalfWidth * 2;
+        ctx.rect(-side * w, -doorHeight / 2, w, doorHeight);
+        ctx.stroke();
+
+        // 内部横线（浅灰，等距）
+        ctx.strokeStyle = faintColor;
+        ctx.lineWidth = 1;
+        const lines = doorLines;
+        for (let i = 1; i <= lines; i++) {
+          const y = -doorHeight / 2 + (doorHeight * i) / (lines + 1);
+          ctx.beginPath();
+          ctx.moveTo(-side * w + 4, y);
+          ctx.lineTo(-side * w + w - 4, y);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function draw(t: number) {
+        if (!startTime) startTime = t;
+        const elapsed = t - startTime;
+
+        // 清屏
+        ctx.clearRect(0, 0, width, height);
+
+        // 计算门扇开合角度：sin 函数，周期 12s
+        const angle = prefersReduced
+          ? maxAngleRad * 0.5
+          : Math.sin((elapsed / cycleMs) * Math.PI * 2) * maxAngleRad;
+
+        const cx = width / 2;
+        const cy = height / 2;
+        const doorHalfWidth = Math.min(width * 0.18, 140);
+        const doorHeight = Math.min(height * 0.7, 420);
+
+        // 左扇门
+        drawDoor(cx - doorHalfWidth, cy, doorHalfWidth, doorHeight, Math.abs(angle), -1);
+        // 右扇门
+        drawDoor(cx + doorHalfWidth, cy, doorHalfWidth, doorHeight, Math.abs(angle), 1);
+
+        // 中间门缝的荧光绿竖线（开合时可见）
+        const gap = Math.abs(Math.sin((elapsed / cycleMs) * Math.PI * 2)) * doorHalfWidth * 0.6;
+        if (gap > 1) {
+          ctx.strokeStyle = accentColor;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - doorHeight / 2);
+          ctx.lineTo(cx, cy + doorHeight / 2);
+          ctx.stroke();
+        }
+
+        if (!prefersReduced) {
+          rafId = requestAnimationFrame(draw);
+        }
+      }
+
+      function start() {
+        resize();
+        startTime = 0;
+        if (prefersReduced) {
+          // 静态渲染一次
+          rafId = requestAnimationFrame(draw);
+        } else {
+          rafId = requestAnimationFrame(draw);
+        }
+      }
+
+      let resizeRaf = 0;
+      window.addEventListener('resize', () => {
+        cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(() => {
+          resize();
+        });
+      });
+
+      // 页面不可见时暂停，节省性能
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          cancelAnimationFrame(rafId);
+        } else {
+          startTime = 0;
+          if (!prefersReduced) {
+            rafId = requestAnimationFrame(draw);
+          }
+        }
+      });
+
+      // 组件卸载时清理（Astro 组件挂载在 DOM，通过 MutationObserver 检测移除）
+      const mo = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          for (const removed of m.removedNodes) {
+            if (removed === canvas || (removed as HTMLElement).contains?.(canvas)) {
+              cancelAnimationFrame(rafId);
+              mo.disconnect();
+              return;
+            }
+          }
+        }
+      });
+      if (canvas.parentElement?.parentElement) {
+        mo.observe(canvas.parentElement.parentElement, { childList: true, subtree: true });
+      }
+
+      start();
+    }
+  }
+</script>
+
+<style>
+  .hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: var(--gate-canvas-opacity);
+    z-index: 0;
+    pointer-events: none;
+  }
+</style>

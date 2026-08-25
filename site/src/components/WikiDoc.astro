@@ -1,0 +1,82 @@
+---
+interface InfoboxRow { k: string; v: string }
+interface TocItem { id: string; label: string }
+interface SeeAlsoItem { href: string; label: string; desc?: string }
+
+interface Props {
+  crumb: string;
+  title: string;
+  lead: string;
+  infoboxTitle?: string;
+  infobox?: InfoboxRow[];
+  toc?: TocItem[];
+  seealso?: SeeAlsoItem[];
+}
+
+const {
+  crumb,
+  title,
+  lead,
+  infoboxTitle = '基本信息',
+  infobox = [],
+  toc = [],
+  seealso = [],
+} = Astro.props;
+const base = '/';
+---
+
+<section class="doc-page" aria-labelledby="page-title">
+  <header class="doc-header">
+    <nav class="doc-breadcrumb" aria-label="面包屑导航">
+      <a href={base + 'docs'}>文档</a>
+      <span>›</span>
+      <span aria-current="page">{crumb}</span>
+    </nav>
+    <h1 id="page-title" class="doc-title">{title}</h1>
+    <p class="doc-lead" set:html={lead}></p>
+  </header>
+
+  <div class="wiki-top">
+    {infobox.length > 0 && (
+      <aside class="wiki-infobox" aria-label={infoboxTitle}>
+        <p class="wiki-infobox__title">{infoboxTitle}</p>
+        <dl>
+          {infobox.map((r) => (
+            <div class="wiki-infobox__row">
+              <dt>{r.k}</dt>
+              <dd set:html={r.v}></dd>
+            </div>
+          ))}
+        </dl>
+      </aside>
+    )}
+
+    {toc.length > 0 && (
+      <nav class="wiki-toc" aria-label="目录">
+        <p class="wiki-toc__title">目录</p>
+        <ol>
+          {toc.map((t) => (
+            <li><a href={'#' + t.id}>{t.label}</a></li>
+          ))}
+        </ol>
+      </nav>
+    )}
+  </div>
+
+  <div class="doc-body">
+    <slot />
+  </div>
+
+  {seealso.length > 0 && (
+    <section class="wiki-seealso" aria-labelledby="seealso-title">
+      <h2 id="seealso-title">参见</h2>
+      <ul>
+        {seealso.map((s) => (
+          <li>
+            <a href={s.href}>{s.label}</a>{s.desc && <span class="wiki-seealso__desc"> — {s.desc}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</section>

@@ -1,0 +1,140 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WikiManual from '../../components/WikiManual.astro';
+import SrcRef from '../../components/SrcRef.astro';
+import content from '../../data/content.json';
+
+const pageTitle = '协议规范 — ' + content.hero.title;
+const base = '/';
+
+const infobox = [
+  { k: '编排协议', v: '<strong>10 步</strong>（CERTAINTY → LEARN）' },
+  { k: '机械验证', v: '<strong>5 项</strong>检查（<code>verify.mjs</code>）' },
+  { k: '事件类型', v: '<strong>14 种</strong> kind（<code>events.jsonl</code>）' },
+  { k: '重试上限', v: '单任务 ≤ <strong>5 次</strong>' },
+  { k: '事件回放', v: '<code>node scripts/event.mjs replay</code>' },
+  { k: '学习触发', v: '<code>node scripts/learn.mjs --sid &lt;sid&gt;</code>' },
+];
+
+const toc = [
+  { id: 'protocol', label: '10 步编排协议' },
+  { id: 'checks', label: '5 项机械验证' },
+  { id: 'events', label: '14 种事件类型' },
+  { id: 'learn', label: '自主学习回路' },
+  { id: 'gate', label: '验证门禁' },
+];
+
+const seealso = [
+  { href: base + 'docs/architecture', label: '架构设计', desc: '编排流程与验证体系全景' },
+  { href: base + 'docs/agents', label: '角色说明', desc: '各角色在协议中的分工' },
+];
+---
+
+<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 协议规范">
+  <WikiManual
+    crumb="协议规范"
+    title="协议规范"
+    lead="men 通过<strong>10 步编排协议</strong>、<strong>5 项机械验证</strong>、<strong>14 种事件类型</strong>和<strong>自主学习回路</strong>，保障每次任务从分诊到交付的完整质量。"
+    infoboxTitle="协议概要"
+    infobox={infobox}
+    toc={toc}
+    seealso={seealso}
+  >
+    <section id="protocol" class="doc-section">
+      <h2>10 步编排协议</h2>
+      <p>每次 <code>/ultrawork</code> 任务按以下步骤自动执行：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>步</th><th>名称</th><th>说明</th><th>设计动机</th></tr></thead>
+          <tbody>
+            {content.protocol.steps.map((s) => (
+              <tr>
+                <td><code>{s.step}</code></td>
+                <td><strong>{s.name}</strong><br /><span class="proto-cn">{s.cn}</span></td>
+                <td>{s.desc}</td>
+                <td>{s.why}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <SrcRef files={['docs/architecture.md','.opencode/command/ultrawork.md']} />
+    </section>
+
+    <section id="checks" class="doc-section">
+      <h2>5 项机械验证</h2>
+      <p><code>verify.mjs</code> 在 chi judge 之前执行，五项检查全部 PASS 才进入语义复核：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>ID</th><th>检查项</th><th>severity</th><th>说明</th></tr></thead>
+          <tbody>
+            {content.checks.map((c) => (
+              <tr>
+                <td><code>{c.id}</code></td>
+                <td><strong>{c.name}</strong></td>
+                <td><code>{c.severity}</code></td>
+                <td>{c.desc}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="wiki-note">
+        <strong>severity 含义</strong>：<code>FAIL</code> = 立即终止并回到失败点重试；<code>WARN</code> = 仅警告不阻止流程。
+      </div>
+      <SrcRef files={['scripts/verify.mjs']} />
+    </section>
+
+    <section id="events" class="doc-section">
+      <h2>14 种事件类型</h2>
+      <p>所有关键节点写入 <code>events.jsonl</code>（append-only），支持命令行回放：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>事件 Kind</th><th>触发时机</th><th>记录者</th></tr></thead>
+          <tbody>
+            {content.events.map((ev) => (
+              <tr><td><code>{ev.kind}</code></td><td>{ev.when}</td><td>{ev.who}</td></tr>
+            ))}
+            <tr><td><code>dispatch</code></td><td>men 分发子任务给子 agent</td><td>men</td></tr>
+            <tr><td><code>handoff</code></td><td>任务完成后交接</td><td>men</td></tr>
+            <tr><td><code>judge</code></td><td>chi 独立评审</td><td>chi</td></tr>
+            <tr><td><code>verify</code></td><td>verify.mjs 验证</td><td>verify.mjs（自动）</td></tr>
+            <tr><td><code>error</code></td><td>错误模式写入知识库</td><td>learn.mjs（自动）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <SrcRef files={['scripts/event.mjs','scripts/learn-rules.mjs']} />
+    </section>
+
+    <section id="learn" class="doc-section">
+      <h2>自主学习回路</h2>
+      <p>任务完成（REPORT）后，<code>learn.mjs</code> 自动触发，依次执行：</p>
+      <ol>
+        <li><strong>读取事件流</strong> — 从 events.jsonl 读取本任务所有事件，按 type 分类统计</li>
+        <li><strong>提取错误模式</strong> — 识别 gate.failed / blocker.raised 等失败事件，写入 <code>knowledge/errors/</code></li>
+        <li><strong>提取协作模式</strong> — 识别成功路径（dispatch + gate.passed + handoff），写入 <code>knowledge/patterns/</code></li>
+        <li><strong>下次读取</strong> — men 路由前自动读取 knowledge/patterns/ 与 knowledge/errors/，避免重复踩坑</li>
+      </ol>
+      <div class="wiki-note">
+        学习操作为 <strong>best-effort</strong>：命令失败不阻塞主流程，但不丢弃关键字段。
+        配套的 <code>eval-metrics.mjs</code> 从 events.jsonl 计算 8 项 KPI（通过率、回归率、平均耗时等）。
+      </div>
+      <SrcRef files={['scripts/learn.mjs','scripts/eval-metrics.mjs']} />
+    </section>
+
+    <section id="gate" class="doc-section">
+      <h2>验证门禁</h2>
+      <p><code>gate.mjs</code> 执行白名单防护和死循环保护：</p>
+      <ul>
+        <li><strong>白名单检查</strong>：禁止 agent 定义中的 prompt 注入 / 越权指令</li>
+        <li><strong>重试上限</strong>：单次任务最多重试 5 次，超限报卡住</li>
+        <li><strong>事件完整性</strong>：events.jsonl 必须包含 eventId/ts/sid/type 四个必填字段</li>
+      </ul>
+      <SrcRef files={['scripts/gate.mjs']} />
+    </section>
+  </WikiManual>
+</BaseLayout>
+
+<style is:global>
+  .proto-cn { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
+</style>

@@ -1,0 +1,121 @@
+---
+interface Props {
+  role: {
+    name: string;
+    cn: string;
+    emoji: string;
+    mode: string;
+    desc: string;
+  };
+  index: number;
+}
+
+const { role, index } = Astro.props;
+const num = String(index + 1).padStart(2, '0');
+---
+
+<article class="gate-card">
+  <div class="gate-card__header">
+    <span class="gate-card__number">{num}</span>
+    <span class="gate-card__emoji" aria-hidden="true">{role.emoji}</span>
+  </div>
+  <h3 class="gate-card__title">
+    <span class="gate-card__cn">{role.cn}</span>
+    <span class="gate-card__en">{role.name}</span>
+  </h3>
+  <div class="gate-card__threshold" aria-hidden="true"></div>
+  <p class="gate-card__desc">{role.desc}</p>
+  <span class="gate-card__mode">{role.mode}</span>
+</article>
+
+<style>
+  .gate-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    transition:
+      border-color var(--duration-normal) ease,
+      border-width var(--duration-normal) ease;
+    position: relative;
+  }
+
+  .gate-card:hover {
+    border-color: var(--color-accent);
+    border-width: var(--border-width-strong);
+    padding: calc(var(--space-4) - 1px); /* 补偿边框加粗导致的尺寸变化 */
+  }
+
+  .gate-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+  }
+
+  .gate-card__number {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .gate-card__emoji {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .gate-card__title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--space-3);
+  }
+
+  .gate-card__cn {
+    color: var(--color-fg);
+  }
+
+  .gate-card__en {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .gate-card__threshold {
+    width: 24px;
+    height: 2px;
+    background: var(--color-accent);
+    border-radius: var(--radius-pill);
+    margin-bottom: var(--space-3);
+  }
+
+  .gate-card__desc {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-body);
+    flex: 1;
+    margin-bottom: var(--space-3);
+  }
+
+  .gate-card__mode {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: var(--space-1) var(--space-3);
+    background: var(--color-accent-tint);
+    color: var(--color-accent-on-accent);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    line-height: 1.4;
+  }
+</style>

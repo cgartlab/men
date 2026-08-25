@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { MANUAL } from '../../data/manual.js';
+import content from '../../data/content.json';
+
+const base = '/';
+const pageTitle = 'Wiki 手册 — ' + content.hero.title;
+const groups = [...new Set(MANUAL.chapters.map((c) => c.group))];
+let counter = 0;
+---
+
+<BaseLayout title={pageTitle} description="men（门）Agent 团队 — Wiki 手册">
+  <section class="docs-page" aria-labelledby="docs-title">
+    <header class="docs-header">
+      <nav class="doc-breadcrumb" aria-label="面包屑导航">
+        <span aria-current="page">文档</span>
+      </nav>
+      <h1 id="docs-title" class="docs-title">{MANUAL.title}</h1>
+      <p class="docs-subtitle">
+        从入门到精通：安装、配置、角色、协议、架构、治理、发布。
+        九章连续编排，左侧目录随时切换，章末可翻页连读——像读一本手册，而不是九篇散页。
+        <br />
+        <code>{MANUAL.url}</code>
+      </p>
+    </header>
+
+    {groups.map((g) => (
+      <section class="docs-category">
+        <h2 class="docs-category__title">{g}</h2>
+        <div class="docs-grid">
+          {MANUAL.chapters.filter((c) => c.group === g).map((c) => {
+            counter += 1;
+            return (
+              <a href={base + 'docs/' + c.slug} class="doc-card" aria-label={'第 ' + counter + ' 章 · ' + c.title}>
+                <div class="doc-card__header">
+                  <span class="doc-card__num">第 {String(counter).padStart(2, '0')} 章</span>
+                  <span class="doc-card__badge">{c.slug}</span>
+                </div>
+                <h3 class="doc-card__title">{c.title}</h3>
+                <p class="doc-card__desc">{c.desc}</p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+
+    <div class="wiki-note" style="margin-top: var(--space-8);">
+      <strong>阅读建议</strong>：首次使用请按章顺序阅读（概览 → 安装 → 配置 → 快速上手）；
+      日常查阅可直接用侧栏目录跳转。手册内容与仓库源码逐节对应，每节末尾附来源文件，
+      如发现不一致，以 <a href="https://github.com/cgartlab/men" target="_blank" rel="noopener">仓库</a>为准并欢迎<a href="https://github.com/cgartlab/men/issues" target="_blank" rel="noopener">提 Issue</a>。
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .docs-page {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: var(--space-4) var(--container-padding-x) var(--space-16);
+    position: relative;
+    z-index: 1;
+  }
+  .docs-header {
+    padding: var(--space-8) 0 var(--space-6);
+    border-bottom: 1px solid var(--color-line);
+    margin-bottom: var(--space-8);
+  }
+  .docs-title {
+    font-family: var(--font-serif);
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: var(--font-weight-semi);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--color-fg);
+    margin-bottom: var(--space-3);
+  }
+  .docs-subtitle {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-secondary);
+    max-width: 700px;
+    line-height: var(--line-height-body);
+  }
+  .docs-subtitle code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--color-bg-warm);
+    padding: 1px var(--space-1);
+    border-radius: var(--radius-xs);
+    color: var(--color-accent-dark);
+  }
+  .docs-category { margin-bottom: var(--space-10); }
+  .docs-category__title {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-h5);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-accent-dark);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 2px solid var(--color-accent);
+    display: inline-block;
+  }
+  .docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-3);
+  }
+  .doc-card {
+    display: block;
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--color-fg);
+    transition: border-color var(--duration-normal) ease, box-shadow var(--duration-normal) ease, transform var(--duration-normal) ease;
+  }
+  .doc-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--color-accent) 10%, transparent);
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+  .doc-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+  }
+  .doc-card__num {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.05em;
+  }
+  .doc-card__badge {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    background: var(--color-accent-tint);
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-xs);
+  }
+  .doc-card__title {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semi);
+    margin-bottom: var(--space-1);
+  }
+  .doc-card__desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-body);
+  }
+  @media (max-width: 768px) {
+    .docs-page { padding: var(--space-4) var(--space-6) var(--space-8); }
+    .docs-grid { grid-template-columns: 1fr; }
+  }
+</style>

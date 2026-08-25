@@ -1,0 +1,76 @@
+---
+// 整屏 slide 容器
+interface Props {
+  direction?: 'y' | 'x';
+  index?: number;
+  total?: number;
+  class?: string;
+}
+
+const { direction = 'y', index, total, class: className = '' } = Astro.props;
+---
+
+<section class={`slide-section slide-section--${direction} ${className}`} data-slide>
+  {index !== undefined && total !== undefined && (
+    <span class="slide-section__index" aria-hidden="true">
+      {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+    </span>
+  )}
+  <div class="slide-section__content">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .slide-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .slide-section--x {
+    min-width: 100vw;
+    flex: 0 0 100vw;
+    height: auto;
+    min-height: 70vh;
+    padding: var(--space-12) 0;
+  }
+
+  .slide-section__content {
+    width: 100%;
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: var(--space-16) var(--container-padding-x);
+  }
+
+  .slide-section__index {
+    position: absolute;
+    top: var(--space-6);
+    left: var(--container-padding-x);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 900px) {
+    .slide-section__content {
+      padding: var(--space-12) var(--space-6);
+    }
+
+    .slide-section__index {
+      left: var(--space-6);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .slide-section--x {
+      min-height: auto;
+      flex: 0 0 90vw;
+    }
+  }
+</style>

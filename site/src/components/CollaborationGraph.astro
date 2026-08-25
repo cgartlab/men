@@ -1,0 +1,377 @@
+---
+/*
+ * CollaborationGraph.astro — 交互式协作拓扑
+ * 中心节点 men（门），周围 5 个 Agent；SVG 流动连线展示
+ * 分发 / 规划 / 研究 / 验收 四种协作关系。
+ * 交互：hover 节点高亮其连线 + 浮现角色一句话；
+ *       「演示协作」按钮播放一次 /ultrawork 流程。
+ */
+const nodes = [
+  { id: 'men', cn: '门', en: 'men', x: 400, y: 300, r: 44, kind: 'hub',
+    role: '编排与路由核心 · 用户唯一对话入口' },
+  { id: 'si', cn: '思', en: 'si', x: 175, y: 135, r: 34, kind: 'agent',
+    role: '规划与知识管理 · 团队的「大脑」' },
+  { id: 'ji', cn: '记', en: 'ji', x: 625, y: 135, r: 34, kind: 'agent',
+    role: '代码与工程执行者 + 写作者' },
+  { id: 'yi', cn: '艺', en: 'yi', x: 690, y: 445, r: 34, kind: 'agent',
+    role: '视觉专家与设计师 · 审美素养大师' },
+  { id: 'chi', cn: '持', en: 'chi', x: 110, y: 445, r: 34, kind: 'agent',
+    role: '投资分析师 + 独立 Judge' },
+  { id: 'xun', cn: '寻', en: 'xun', x: 400, y: 545, r: 34, kind: 'agent',
+    role: '研究助理 · 只读的信息检索与核查' },
+];
+
+// type: dispatch(分发) | plan(规划驱动) | research(研究支持) | verify(验收)
+const edges = [
+  { from: 'men', to: 'si', type: 'dispatch' },
+  { from: 'men', to: 'ji', type: 'dispatch' },
+  { from: 'men', to: 'yi', type: 'dispatch' },
+  { from: 'men', to: 'chi', type: 'dispatch' },
+  { from: 'men', to: 'xun', type: 'dispatch' },
+  { from: 'si', to: 'ji', type: 'plan' },
+  { from: 'si', to: 'yi', type: 'plan' },
+  { from: 'xun', to: 'si', type: 'research' },
+  { from: 'xun', to: 'yi', type: 'research' },
+  { from: 'si', to: 'chi', type: 'verify' },
+  { from: 'ji', to: 'chi', type: 'verify' },
+  { from: 'yi', to: 'chi', type: 'verify' },
+  { from: 'xun', to: 'chi', type: 'verify' },
+];
+
+const pos = Object.fromEntries(nodes.map((n) => [n.id, n]));
+function edgePath(e: { from: string; to: string }) {
+  const a = pos[e.from];
+  const b = pos[e.to];
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  // 轻微弯曲，让连线更像「流动」
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const cx = mx - dy * 0.12;
+  const cy = my + dx * 0.12;
+  return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+}
+---
+
+<div class="cg" id="cg">
+  <div class="cg__head">
+    <p class="eyebrow">协作拓扑 · collaboration</p>
+    <h2 class="cg__title">六扇门，如何一起工作</h2>
+    <p class="cg__desc">
+      悬停任一角色查看其协作关系；或点按下方按钮，观看一次 <code>/ultrawork</code> 任务的完整流转。
+    </p>
+    <button class="btn btn--primary cg__play" type="button" id="cg-play">
+      <span class="btn__arrow">▶</span> 演示一次协作流程
+    </button>
+  </div>
+
+  <div class="cg__stage">
+    <svg
+      class="cg__svg"
+      viewBox="0 0 800 600"
+      role="img"
+      aria-label="men 与五个 Agent 的协作拓扑图"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <g class="cg__edges">
+        {edges.map((e) => (
+          <path
+            class={`cg__edge cg__edge--${e.type}`}
+            data-from={e.from}
+            data-to={e.to}
+            d={edgePath(e)}
+          />
+        ))}
+      </g>
+      <g class="cg__nodes">
+        {nodes.map((n) => (
+          <g
+            class={`cg__node cg__node--${n.kind}`}
+            data-id={n.id}
+            data-role={n.role}
+            tabindex="0"
+            role="button"
+            aria-label={`${n.cn} ${n.en}：${n.role}`}
+          >
+            <circle class="cg__node-bg" cx={n.x} cy={n.y} r={n.r} />
+            <text class="cg__node-emoji" x={n.x} y={n.y + 7} text-anchor="middle">{n.cn}</text>
+            <text class="cg__node-label" x={n.x} y={n.y + n.r + 18} text-anchor="middle">
+              {n.cn} {n.en}
+            </text>
+          </g>
+        ))}
+      </g>
+    </svg>
+    <div class="cg__tip" id="cg-tip" aria-hidden="true"></div>
+  </div>
+</div>
+
+<style>
+  .cg {
+    padding: var(--space-16) 0;
+  }
+
+  .cg__head {
+    max-width: 560px;
+    margin: 0 auto var(--space-8);
+    text-align: center;
+  }
+
+  .cg__title {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-bold);
+    margin: var(--space-3) 0;
+    letter-spacing: -0.01em;
+  }
+
+  .cg__desc {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-body);
+    margin-bottom: var(--space-6);
+  }
+
+  .cg__play {
+    margin: 0 auto;
+  }
+
+  .cg__stage {
+    position: relative;
+    max-width: var(--container-max);
+    margin: 0 auto;
+  }
+
+  .cg__svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  /* ---------- 连线 ---------- */
+  .cg__edge {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 5 7;
+    animation: cg-flow 1.1s linear infinite;
+    transition: opacity var(--duration-normal) ease, stroke-width var(--duration-normal) ease;
+  }
+
+  .cg__edge--dispatch { stroke: var(--color-accent); opacity: 0.55; }
+  .cg__edge--plan { stroke: var(--color-fg-muted); opacity: 0.4; }
+  .cg__edge--research { stroke: var(--color-fg-muted); opacity: 0.35; stroke-dasharray: 3 9; }
+  .cg__edge--verify { stroke: var(--color-fg-tertiary); opacity: 0.4; }
+
+  @keyframes cg-flow {
+    to { stroke-dashoffset: -24; }
+  }
+
+  /* 高亮态 */
+  .cg__edge.is-lit {
+    opacity: 1;
+    stroke-width: 2.5;
+  }
+  .cg__edge.is-faded { opacity: 0.08; }
+
+  /* 演示播放态 */
+  .cg__edge.is-playing {
+    opacity: 1;
+    stroke-width: 3;
+    animation-duration: 0.5s;
+  }
+
+  /* ---------- 节点 ---------- */
+  .cg__node { cursor: pointer; outline: none; }
+  .cg__node-bg {
+    fill: var(--color-surface);
+    stroke: var(--color-line);
+    stroke-width: 1.5;
+    transition:
+      stroke var(--duration-normal) ease,
+      stroke-width var(--duration-normal) ease,
+      fill var(--duration-normal) ease;
+  }
+  .cg__node--hub .cg__node-bg {
+    fill: var(--color-accent-tint);
+    stroke: var(--color-accent);
+    stroke-width: 2;
+  }
+  .cg__node-emoji {
+    font-size: 1.2rem;
+    font-weight: 600;
+    fill: currentColor;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .cg__node--hub .cg__node-emoji { font-size: 2rem; }
+  .cg__node-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-weight-semi);
+    fill: var(--color-fg-secondary);
+    letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+
+  .cg__node:hover .cg__node-bg,
+  .cg__node:focus-visible .cg__node-bg,
+  .cg__node.is-active .cg__node-bg {
+    stroke: var(--color-accent);
+    stroke-width: 2.5;
+  }
+  .cg__node.is-dim { opacity: 0.35; }
+  .cg__node.is-active .cg__node-bg { fill: var(--color-accent-tint); }
+
+  /* ---------- 悬浮提示 ---------- */
+  .cg__tip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--color-fg);
+    color: var(--color-bg);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption);
+    line-height: 1.4;
+    max-width: 220px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity var(--duration-fast) ease, transform var(--duration-fast) ease;
+    z-index: 6;
+  }
+  .cg__tip.is-on { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 640px) {
+    .cg__node-label { font-size: 0.62rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cg__edge { animation: none; }
+  }
+</style>
+
+<script>
+  const root = document.getElementById('cg');
+  if (root) {
+    const svg = root.querySelector('.cg__svg');
+    const tip = root.querySelector('#cg-tip');
+    const nodes = Array.from(root.querySelectorAll('.cg__node'));
+    const edges = Array.from(root.querySelectorAll('.cg__edge'));
+
+    function neighbors(id: string) {
+      const set = new Set<string>([id]);
+      edges.forEach((e) => {
+        const f = e.getAttribute('data-from');
+        const t = e.getAttribute('data-to');
+        if (f === id) set.add(t);
+        if (t === id) set.add(f);
+      });
+      return set;
+    }
+
+    function highlight(id: string | null) {
+      if (!id) {
+        nodes.forEach((n) => n.classList.remove('is-dim', 'is-active'));
+        edges.forEach((e) => e.classList.remove('is-lit', 'is-faded'));
+        return;
+      }
+      const nb = neighbors(id);
+      nodes.forEach((n) => {
+        const nid = n.getAttribute('data-id');
+        n.classList.toggle('is-active', nid === id);
+        n.classList.toggle('is-dim', !nb.has(nid!));
+      });
+      edges.forEach((e) => {
+        const f = e.getAttribute('data-from');
+        const t = e.getAttribute('data-to');
+        const lit = f === id || t === id;
+        e.classList.toggle('is-lit', lit);
+        e.classList.toggle('is-faded', !lit);
+      });
+    }
+
+    function showTip(node: Element, ev: MouseEvent) {
+      const role = node.getAttribute('data-role') || '';
+      tip!.textContent = role;
+      const stage = root!.querySelector('.cg__stage') as HTMLElement;
+      const rect = stage!.getBoundingClientRect();
+      let x = ev.clientX - rect.left + 14;
+      let y = ev.clientY - rect.top + 14;
+      tip!.style.left = x + 'px';
+      tip!.style.top = y + 'px';
+      tip!.classList.add('is-on');
+    }
+    function hideTip() {
+      tip!.classList.remove('is-on');
+    }
+
+    nodes.forEach((n) => {
+      n.addEventListener('mouseenter', (ev) => {
+        highlight(n.getAttribute('data-id'));
+        showTip(n, ev as MouseEvent);
+      });
+      n.addEventListener('mousemove', (ev) => showTip(n, ev as MouseEvent));
+      n.addEventListener('mouseleave', () => {
+        highlight(null);
+        hideTip();
+      });
+      n.addEventListener('focus', () => highlight(n.getAttribute('data-id')));
+      n.addEventListener('blur', () => highlight(null));
+      n.addEventListener('keydown', (ev) => {
+        if ((ev as KeyboardEvent).key === 'Enter' || (ev as KeyboardEvent).key === ' ') {
+          ev.preventDefault();
+          const id = n.getAttribute('data-id');
+          highlight(id);
+          tip!.textContent = n.getAttribute('data-role') || '';
+          const stage = root!.querySelector('.cg__stage') as HTMLElement;
+          tip!.style.left = '50%';
+          tip!.style.top = '12px';
+          tip!.classList.add('is-on');
+          window.setTimeout(hideTip, 1600);
+        }
+      });
+    });
+
+    // ---------- 演示协作流程 ----------
+    const playBtn = root.querySelector('#cg-play') as HTMLButtonElement;
+    let playing = false;
+    const flow = [
+      ['men', 'si', 700],
+      ['si', 'ji', 650],
+      ['si', 'yi', 650],
+      ['ji', 'chi', 650],
+      ['yi', 'chi', 650],
+      ['men', null, 800],
+    ];
+    function edgeBetween(a: string, b: string | null) {
+      return edges.filter((e) => {
+        const f = e.getAttribute('data-from');
+        const t = e.getAttribute('data-to');
+        return b ? ((f === a && t === b) || (f === b && t === a)) : false;
+      });
+    }
+    function play() {
+      if (playing) return;
+      playing = true;
+      playBtn!.setAttribute('disabled', 'true');
+      let delay = 0;
+      const timers: number[] = [];
+      flow.forEach(([from, to, wait]) => {
+        timers.push(window.setTimeout(() => {
+          highlight(from as string);
+          if (to) {
+            edgeBetween(from as string, to as string | null).forEach((e) => e.classList.add('is-playing'));
+          }
+        }, delay));
+        delay += wait as number;
+      });
+      timers.push(window.setTimeout(() => {
+        highlight(null);
+        edges.forEach((e) => e.classList.remove('is-playing'));
+        playing = false;
+        playBtn!.removeAttribute('disabled');
+      }, delay + 400));
+    }
+    playBtn?.addEventListener('click', play);
+  }
+</script>

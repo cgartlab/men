@@ -1,0 +1,844 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import content from '../data/content.json';
+import { Icon } from 'astro-icon/components';
+
+const base = '/';
+const pageTitle = '核心机制 — ' + content.hero.title;
+const steps = content.protocol.steps;
+const mechanisms = content.mechanisms;
+const commands = content.commands;
+const checks = content.checks;
+
+const pipeline = [
+  { n: '01', en: 'CERTAINTY', cn: '需求确认', icon: 'lucide:circle-check' },
+  { n: '02', en: 'TRIAGE', cn: '意图分诊', icon: 'lucide:git-branch' },
+  { n: '03', en: 'PLAN', cn: 'si 规划', icon: 'lucide:file-text' },
+  { n: '04', en: 'DISPATCH', cn: 'Wave 调度', icon: 'lucide:zap' },
+  { n: '05', en: 'COLLECT', cn: '收集产物', icon: 'lucide:download' },
+  { n: '06', en: 'EVALUATE', cn: 'si 回评', icon: 'lucide:bar-chart-3' },
+  { n: '07', en: 'VERIFY', cn: '双层验证', icon: 'lucide:shield-check' },
+  { n: '08', en: 'REPORT', cn: '汇总汇报', icon: 'lucide:file-text' },
+  { n: '09', en: 'LOOP', cn: '循环重试', icon: 'lucide:refresh-cw' },
+  { n: '10', en: 'LEARN', cn: '自主学习', icon: 'lucide:brain' },
+];
+---
+
+<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 核心机制">
+  <section class="mech-page" aria-labelledby="page-title">
+
+    <header class="mech-header">
+      <h1 id="page-title" class="mech-title">
+        核心机制
+      </h1>
+      <p class="mech-subtitle">
+        10 步编排协议 · 双层验证 · 事件系统 · 自主学习回路 —
+        从任务到交付的完整运行体系。
+      </p>
+    </header>
+
+    <!-- ======== 10-Step Pipeline (Animated) ======== -->
+    <section class="mech-pipeline" aria-labelledby="pipeline-title">
+      <h2 id="pipeline-title" class="mech-pipeline__title">
+        <span class="mech-pipeline__num">01</span>
+        10 步编排协议
+      </h2>
+      <p class="mech-pipeline__desc">每次 /ultrawork 任务自动执行以下步骤</p>
+
+      <div class="pipeline-diagram" aria-hidden="true">
+        <div class="pipeline-track">
+          <div class="pipeline-line"></div>
+          <div class="pipeline-cursor"></div>
+        </div>
+        <div class="pipeline-nodes">
+          {pipeline.map((s, i) => (
+            <div class="pipeline-node" style="--delay: " + (i * 0.3) + "s">
+              <div class="pipeline-node__circle">
+                <span class="pipeline-node__icon"><Icon name={s.icon} width="18" height="18" /></span>
+              </div>
+              <div class="pipeline-node__label">
+                <span class="pipeline-node__step">{s.n}</span>
+                <span class="pipeline-node__en">{s.en}</span>
+                <span class="pipeline-node__cn">{s.cn}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== Step Details ======== -->
+    <section class="mech-steps" aria-labelledby="steps-title">
+      <h2 id="steps-title" class="mech-steps__title">
+        <span class="mech-steps__num">02</span>
+        协议详情
+      </h2>
+      <div class="steps-grid">
+        {steps.map((step) => (
+          <div class="step-card">
+            <div class="step-card__header">
+              <span class="step-card__num">{step.step}</span>
+              <h3><code>{step.name}</code> <span>{step.cn}</span></h3>
+            </div>
+            <p class="step-card__desc">{step.desc}</p>
+            <p class="step-card__why"><em>{step.why}</em></p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ======== Wave Dispatch (Animated) ======== -->
+    <section class="mech-wave" aria-labelledby="wave-title">
+      <h2 id="wave-title" class="mech-wave__title">
+        <span class="mech-wave__num">03</span>
+        Wave 并行调度
+      </h2>
+      <p class="mech-wave__desc">无依赖任务同时开工，依赖 Wave N-1 产物的后续波次串行执行</p>
+
+      <div class="wave-diagram" aria-hidden="true">
+        <div class="wave-lane">
+          <span class="wave-lane__label">WAVE 1</span>
+          <div class="wave-task" style="--wave-delay: 0s"><span>si · 规划</span></div>
+          <div class="wave-task" style="--wave-delay: 0.2s"><span>xun · 搜索</span></div>
+          <div class="wave-task" style="--wave-delay: 0.4s"><span>chi · 分析</span></div>
+        </div>
+        <div class="wave-connector">
+          <span class="wave-connector__dot"></span>
+          <span class="wave-connector__dot"></span>
+          <span class="wave-connector__dot"></span>
+        </div>
+        <div class="wave-lane">
+          <span class="wave-lane__label">WAVE 2</span>
+          <div class="wave-task wave-task--depends" style="--wave-delay: 0.8s"><span>ji · 实现</span></div>
+          <div class="wave-task wave-task--depends" style="--wave-delay: 1.0s"><span>yi · 设计</span></div>
+        </div>
+        <div class="wave-connector">
+          <span class="wave-connector__dot"></span>
+          <span class="wave-connector__dot"></span>
+        </div>
+        <div class="wave-lane">
+          <span class="wave-lane__label">WAVE 3</span>
+          <div class="wave-task" style="--wave-delay: 1.4s"><span>si · 回评</span></div>
+          <div class="wave-task" style="--wave-delay: 1.6s"><span>chi · 验证</span></div>
+        </div>
+      </div>
+      <p class="src-ref">并行上限 ≤ 4 · 每 prompt 完整自洽 · 子 agent 无法追问</p>
+    </section>
+
+    <!-- ======== Commands Structure ======== -->
+    <section class="mech-commands" aria-labelledby="commands-title">
+      <h2 id="commands-title" class="mech-commands__title">
+        <span class="mech-commands__num">04</span>
+        3 个命令
+      </h2>
+      <div class="commands-grid">
+        {commands.map((cmd) => (
+          <div class="cmd-card">
+            <div class="cmd-card__header">
+              <code>{cmd.name}</code>
+              <span class="cmd-card__agent">{cmd.agent}</span>
+            </div>
+            <p class="cmd-card__desc">{cmd.desc}</p>
+            <div class="cmd-card__usage">
+              <span class="cmd-card__usage-label">用法</span>
+              <code>{cmd.usage}</code>
+            </div>
+            <p class="cmd-card__example">{cmd.example}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ======== Verify System (Animated) ======== -->
+    <section class="mech-verify" aria-labelledby="verify-title">
+      <h2 id="verify-title" class="mech-verify__title">
+        <span class="mech-verify__num">05</span>
+        双层验证
+      </h2>
+      <p class="mech-verify__desc">机械验证全 PASS 后，chi 做 fresh-context 语义复核</p>
+
+      <div class="verify-flow" aria-hidden="true">
+        <div class="verify-layer verify-layer--mech">
+          <span class="verify-layer__label">第一层 · 机械</span>
+          <div class="verify-checks">
+            {checks.map((c) => (
+              <div class="verify-check">
+                <span class="verify-check__badge">{c.severity}</span>
+                <span class="verify-check__name">{c.name}</span>
+              </div>
+            ))}
+          </div>
+          <span class="verify-layer__status">→ 全 PASS</span>
+        </div>
+        <div class="verify-arrow">
+          <span>→</span>
+          <span>chi Judge</span>
+        </div>
+        <div class="verify-layer verify-layer--semantic">
+          <span class="verify-layer__label">第二层 · 语义</span>
+          <div class="verify-checks">
+            <div class="verify-check"><span class="verify-check__name">内容质量</span></div>
+            <div class="verify-check"><span class="verify-check__name">需求满足度</span></div>
+            <div class="verify-check"><span class="verify-check__name">逻辑一致性</span></div>
+            <div class="verify-check"><span class="verify-check__name">可信度核查</span></div>
+          </div>
+          <span class="verify-layer__status verify-layer__status--ok">✅ 两层都过 = 完成</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== Event System ======== -->
+    <section class="mech-events" aria-labelledby="events-title">
+      <h2 id="events-title" class="mech-events__title">
+        <span class="mech-events__num">06</span>
+        事件审计
+      </h2>
+      <p class="mech-events__desc">14 种事件写入 events.jsonl，支持命令行回放</p>
+      <div class="events-grid">
+        {content.events.map((ev) => (
+          <div class="event-item">
+            <code>{ev.kind}</code>
+            <span>{ev.when}</span>
+          </div>
+        ))}
+        <div class="event-item">
+          <code>dispatch</code>
+          <span>分发子任务</span>
+        </div>
+        <div class="event-item">
+          <code>handoff</code>
+          <span>任务完成交接</span>
+        </div>
+        <div class="event-item">
+          <code>judge</code>
+          <span>chi 独立评审</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== Learn Loop (Animated) ======== -->
+    <section class="mech-learn" aria-labelledby="learn-title">
+      <h2 id="learn-title" class="mech-learn__title">
+        <span class="mech-learn__num">07</span>
+        自主学习回路
+      </h2>
+      <p class="mech-learn__desc">REPORT 后自动触发，从事件流提取经验写入知识库</p>
+
+      <div class="learn-loop" aria-hidden="true">
+        <div class="learn-node">
+          <span class="learn-node__icon"><Icon name="lucide:bar-chart-3" width="20" height="20" /></span>
+          <span class="learn-node__label">读取 events.jsonl</span>
+        </div>
+        <div class="learn-arrow"></div>
+        <div class="learn-node">
+          <span class="learn-node__icon"><Icon name="lucide:search" width="20" height="20" /></span>
+          <span class="learn-node__label">提取错误模式</span>
+        </div>
+        <div class="learn-arrow"></div>
+        <div class="learn-node">
+          <span class="learn-node__icon"><Icon name="lucide:file-text" width="20" height="20" /></span>
+          <span class="learn-node__label">写入 knowledge/errors</span>
+        </div>
+        <div class="learn-arrow learn-arrow--loop"></div>
+        <div class="learn-node">
+          <span class="learn-node__icon"><Icon name="lucide:book-open" width="20" height="20" /></span>
+          <span class="learn-node__label">下次任务前读取</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="mech-nav">
+      <a href={base + 'roles'} class="mech-nav__link">
+        ← 角色 <span>6 个 Agent 详情</span>
+      </a>
+      <a href={base + 'docs'} class="mech-nav__link mech-nav__link--next">
+        文档 → <span>技术细节与完整文档</span>
+      </a>
+    </section>
+  </section>
+</BaseLayout>
+
+<style>
+  .mech-page {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: var(--space-4) var(--container-padding-x) var(--space-16);
+    position: relative;
+    z-index: 1;
+  }
+
+  .mech-header {
+    padding: var(--space-8) 0 var(--space-6);
+    border-bottom: 1px solid var(--color-line);
+    margin-bottom: var(--space-8);
+  }
+  .mech-title {
+    font-family: var(--font-serif);
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: var(--font-weight-semi);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--color-fg);
+    margin-bottom: var(--space-3);
+  }
+  .mech-subtitle {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-secondary);
+    max-width: 700px;
+    line-height: var(--line-height-body);
+  }
+
+  .mech-pipeline__title,
+  .mech-steps__title,
+  .mech-wave__title,
+  .mech-commands__title,
+  .mech-verify__title,
+  .mech-events__title,
+  .mech-learn__title {
+    font-family: var(--font-serif);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semi);
+    line-height: 1.2;
+    color: var(--color-fg);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-line-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .mech-pipeline__num,
+  .mech-steps__num,
+  .mech-wave__num,
+  .mech-commands__num,
+  .mech-verify__num,
+  .mech-events__num,
+  .mech-learn__num {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.08em;
+    background: var(--color-accent-tint);
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-xs);
+  }
+  .mech-pipeline, .mech-steps, .mech-wave, .mech-commands, .mech-verify, .mech-events, .mech-learn {
+    margin-bottom: var(--space-12);
+  }
+  .mech-pipeline__desc, .mech-wave__desc, .mech-verify__desc, .mech-events__desc, .mech-learn__desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    margin-bottom: var(--space-4);
+    line-height: var(--line-height-body);
+  }
+  .src-ref {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    margin-top: var(--space-2);
+  }
+
+  /* ===== Pipeline Diagram ===== */
+  .pipeline-diagram {
+    padding: var(--space-4) 0;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .pipeline-track {
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 0;
+  }
+  .pipeline-line {
+    height: 2px;
+    background: linear-gradient(to right, var(--color-accent) 0%, var(--color-accent) 50%, var(--color-line) 50%, var(--color-line) 100%);
+    border-radius: 1px;
+  }
+  .pipeline-cursor {
+    position: absolute;
+    top: -4px;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    background: var(--color-accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 60%, transparent);
+    animation: cursor-move 12s linear infinite;
+  }
+  @keyframes cursor-move {
+    0% { left: 0%; opacity: 1; }
+    45% { left: 45%; opacity: 1; }
+    48% { left: 48%; opacity: 0; }
+    49% { left: 0%; opacity: 0; }
+    50% { left: 0%; opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+  .pipeline-nodes {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .pipeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-1);
+    opacity: 0;
+    animation: node-appear 0.6s ease-out forwards;
+    animation-delay: var(--delay);
+  }
+  @keyframes node-appear {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .pipeline-node__circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 2px solid var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--duration-normal) ease;
+  }
+  .pipeline-node:hover .pipeline-node__circle {
+    transform: scale(1.15);
+    background: var(--color-accent-tint);
+  }
+  .pipeline-node__icon { display: inline-flex; }
+  .pipeline-node__label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    text-align: center;
+    padding: 0 var(--space-1);
+  }
+  .pipeline-node__step {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+  }
+  .pipeline-node__en {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.05em;
+  }
+  .pipeline-node__cn {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg);
+    font-weight: var(--font-weight-semi);
+  }
+
+  /* ===== Steps Grid ===== */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-2);
+  }
+  .step-card {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-accent);
+  }
+  .step-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .step-card__num {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.08em;
+  }
+  .step-card__header h3 {
+    font-size: var(--font-size-h5);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+  }
+  .step-card__header h3 code {
+    font-family: var(--font-mono);
+    color: var(--color-accent-dark);
+  }
+  .step-card__header h3 span { color: var(--color-fg-tertiary); font-weight: var(--font-weight-regular); }
+  .step-card__desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-body);
+    margin-bottom: var(--space-1);
+  }
+  .step-card__why {
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    font-style: italic;
+    margin: 0;
+  }
+
+  /* ===== Wave Diagram ===== */
+  .wave-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .wave-lane {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+  }
+  .wave-lane__label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+    background: var(--color-accent-tint);
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-xs);
+    flex-shrink: 0;
+    letter-spacing: 0.08em;
+  }
+  .wave-task {
+    flex-shrink: 0;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-warm);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-fg);
+    animation: wave-slide 3s ease-in-out infinite;
+    animation-delay: var(--wave-delay);
+  }
+  .wave-task--depends {
+    background: var(--color-accent-tint);
+    border-color: var(--color-accent);
+    color: var(--color-accent-on-accent);
+  }
+  @keyframes wave-slide {
+    0%, 100% { transform: translateX(0); opacity: 0.85; }
+    50% { transform: translateX(4px); opacity: 1; }
+  }
+  .wave-connector {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: 0 var(--space-2);
+  }
+  .wave-connector__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    animation: dot-pulse 1.5s ease-in-out infinite;
+  }
+  .wave-connector__dot:nth-child(2) { animation-delay: 0.3s; }
+  .wave-connector__dot:nth-child(3) { animation-delay: 0.6s; }
+  @keyframes dot-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* ===== Commands Grid ===== */
+  .commands-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-3);
+  }
+  .cmd-card {
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    border-top: 3px solid var(--color-accent);
+    transition: border-color var(--duration-normal) ease;
+  }
+  .cmd-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .cmd-card__header code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+  }
+  .cmd-card__agent {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+  }
+  .cmd-card__desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-body);
+    margin-bottom: var(--space-2);
+  }
+  .cmd-card__usage {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--color-bg-warm);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-2);
+  }
+  .cmd-card__usage-label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .cmd-card__usage code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-fg);
+    word-break: break-all;
+  }
+  .cmd-card__example {
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  /* ===== Verify Flow ===== */
+  .verify-flow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: stretch;
+  }
+  .verify-layer {
+    padding: var(--space-4);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+  .verify-layer--mech {
+    border-color: var(--color-line);
+  }
+  .verify-layer--semantic {
+    border: 2px solid var(--color-accent-dark);
+  }
+  .verify-layer__label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-3);
+  }
+  .verify-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
+  }
+  .verify-check {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px var(--space-2);
+    background: var(--color-bg-warm);
+    border-radius: var(--radius-xs);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg);
+  }
+  .verify-check__badge {
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+  }
+  .verify-layer__status {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    text-align: right;
+  }
+  .verify-layer__status--ok {
+    color: var(--color-accent-dark);
+    font-weight: var(--font-weight-semi);
+  }
+  .verify-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-dark);
+  }
+  .verify-arrow span:first-child { font-size: 1.2rem; }
+
+  /* ===== Events Grid ===== */
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-1);
+  }
+  .event-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-sm);
+  }
+  .event-item code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    flex-shrink: 0;
+  }
+  .event-item span {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+  }
+
+  /* ===== Learn Loop ===== */
+  .learn-loop {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: var(--space-4) 0;
+  }
+  .learn-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    min-width: 120px;
+    transition: border-color var(--duration-normal) ease;
+  }
+  .learn-node:hover { border-color: var(--color-accent); }
+  .learn-node__icon { display: inline-flex; }
+  .learn-node__label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg);
+    text-align: center;
+  }
+  .learn-arrow {
+    width: 24px;
+    height: 2px;
+    background: var(--color-accent);
+    position: relative;
+    animation: arrow-pulse 2s ease-in-out infinite;
+  }
+  .learn-arrow::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: -4px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid var(--color-accent);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+  .learn-arrow--loop {
+    width: 36px;
+    animation: arrow-loop 2s ease-in-out infinite;
+  }
+  @keyframes arrow-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes arrow-loop {
+    0% { transform: scaleX(1); }
+    50% { transform: scaleX(-1); }
+    100% { transform: scaleX(1); }
+  }
+
+  /* ===== Nav ===== */
+  .mech-nav {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-6) 0;
+    border-top: 1px solid var(--color-line);
+    flex-wrap: wrap;
+  }
+  .mech-nav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-fg);
+    transition: border-color var(--duration-normal) ease, background var(--duration-normal) ease;
+    flex: 1;
+  }
+  .mech-nav__link:hover {
+    border-color: var(--color-accent);
+    background: var(--color-surface-warm);
+    text-decoration: none;
+  }
+  .mech-nav__link--next {
+    border-color: var(--color-accent);
+  }
+  .mech-nav__link--next:hover {
+    background: var(--color-accent-tint);
+  }
+  .mech-nav__link span {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-muted);
+    margin-left: auto;
+  }
+
+  @media (max-width: 768px) {
+    .mech-page { padding: var(--space-4) var(--space-6) var(--space-8); }
+    .pipeline-nodes { grid-template-columns: repeat(5, 1fr); }
+    .steps-grid { grid-template-columns: 1fr; }
+    .commands-grid { grid-template-columns: 1fr; }
+    .events-grid { grid-template-columns: 1fr; }
+    .verify-flow { flex-direction: column; }
+    .learn-loop { flex-direction: column; }
+    .learn-arrow { width: 2px; height: 16px; }
+    .learn-arrow::after {
+      right: -4px;
+      top: auto;
+      bottom: -4px;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 8px solid var(--color-accent);
+      border-bottom: 0;
+    }
+  }
+</style>

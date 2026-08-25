@@ -1,0 +1,142 @@
+---
+interface Milestone {
+  m: string;
+  name: string;
+  status: string;
+  detail: string;
+  source: string;
+}
+
+interface Props {
+  items: Milestone[];
+}
+
+const { items } = Astro.props;
+---
+
+<ol class="timeline" aria-label="项目里程碑时间线">
+  {items.map((item, i) => (
+    <li class="timeline__item">
+      <div class="timeline__marker" aria-hidden="true">
+        <span class="timeline__dot"></span>
+      </div>
+      <div class="timeline__content">
+        <div class="timeline__header">
+          <span class="timeline__code">{item.m}</span>
+          <h3 class="timeline__title">{item.name}</h3>
+          <span class={`timeline__status timeline__status--${item.status}`}>{item.status}</span>
+        </div>
+        <p class="timeline__detail">{item.detail}</p>
+      </div>
+      {i < items.length - 1 && (
+        <span class="timeline__connector" aria-hidden="true"></span>
+      )}
+    </li>
+  ))}
+</ol>
+
+<style>
+  .timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .timeline__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--space-6) 1fr;
+    gap: var(--space-4);
+    padding: var(--space-4) 0;
+  }
+
+  .timeline__marker {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: 3px;
+  }
+
+  .timeline__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow:
+      0 0 0 3px var(--color-bg),
+      0 0 0 4px var(--color-line-soft);
+    z-index: 1;
+  }
+
+  .timeline__connector {
+    position: absolute;
+    left: calc(var(--space-3) - 1px);
+    top: calc(var(--space-4) + 12px);
+    bottom: calc(var(--space-4) * -1);
+    width: 1px;
+    background: var(--color-line-soft);
+  }
+
+  .timeline__content {
+    padding-bottom: var(--space-2);
+  }
+
+  .timeline__header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+
+  .timeline__code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-on-accent);
+    background: var(--color-accent-tint);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-xs);
+    letter-spacing: 0.03em;
+  }
+
+  .timeline__title {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    line-height: var(--line-height-tight);
+  }
+
+  .timeline__status {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+
+  .timeline__status--完成 {
+    background: var(--color-done-bg);
+    color: var(--color-done-fg);
+  }
+
+  .timeline__detail {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-body);
+  }
+
+  @media (max-width: 640px) {
+    .timeline__item {
+      grid-template-columns: var(--space-4) 1fr;
+      gap: var(--space-3);
+    }
+
+    .timeline__connector {
+      left: calc(var(--space-2) - 1px);
+    }
+  }
+</style>

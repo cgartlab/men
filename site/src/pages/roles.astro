@@ -1,0 +1,1093 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import content from '../data/content.json';
+import { Icon } from 'astro-icon/components';
+
+const base = '/';
+const pageTitle = '团队角色 — ' + content.hero.title;
+const roles = content.roles;
+
+// Enhanced role details for agent cards
+const roleDetails: Record<string, {
+  responsibilities: string[];
+  skills: string[];
+  input: string;
+  output: string;
+  redlines: string[];
+  charter: string;
+}> = {
+  men: {
+    responsibilities: [
+      '意图分诊：接收用户自然语言指令，按 IntentGate 判定表分类为 search / analyze / team / hyperplan',
+      '任务路由：根据意图类型选择目标 agent 或并行组合，低置信时向用户确认绝不猜',
+      'Wave 编排：按 plan 的波次执行，并行上限 ≤4，每个子任务 prompt 必须完整自洽',
+      '结果汇总：收集所有子 agent 产物，去冲突、质量检查，按四段模板输出结构化报告',
+      '事件审计：关键决策写入 events.jsonl（session.created / decision.made / gate.passed 等 14 种事件）',
+      '学习触发：任务完成后自动运行 learn.mjs 提取经验写入 knowledge/ 知识库',
+    ],
+    skills: ['si-plan-compose（规划拆解）', 'chi-judge（独立评审）'],
+    input: '用户自然语言指令（一句话到一段话）',
+    output: '四段汇总报告：结论 → 关键信息 → 来源/证据 → 未决问题',
+    redlines: ['不执行具体产出（不写代码、不写作、不设计）', '不做低置信度猜路由', '不绕过机械门禁直接合并', '重试上限 5 次，超限诚实报卡住'],
+    charter: 'Clarification level: HIGH — 需求模糊必须追问，不脑补',
+  },
+  si: {
+    responsibilities: [
+      '访谈式规划：接收 men 分派的 team / hyperplan 任务，通过逐层追问产出 plan envelope',
+      'Plan Envelope：依赖图 + 并行波次 + 每项验收标准表，是后续所有 agent 执行的蓝图',
+      '内容写作：博客、技术文档、周报等结构化内容创作（skill: content-write）',
+      '知识管理：PKM 复盘、知识沉淀、决策归档（skill: knowledge）',
+      '回评：把 ji/yi 等产出角色的结果回传做质量评估，只评不改，标注达标/不达标',
+    ],
+    skills: ['si-plan-compose（规划拆解）', 'si-content-write（内容写作）', 'si-knowledge（知识管理）'],
+    input: 'men 分派的子任务描述 + 上下文约束',
+    output: 'plan envelope / Markdown 文章 / 知识沉淀文档 / 回评报告',
+    redlines: ['只评不改——评估其他 agent 产物时只标注不修改', '规划先行——team/hyperplan 类必须先产出 plan 再执行', '不直接执行代码或生图'],
+    charter: 'Clarification level: HIGH — 规划阶段必须追问清楚，不假设',
+  },
+  ji: {
+    responsibilities: [
+      '代码实现：按 plan 实现前端/后端代码，前端开发优先（skill: frontend-design）',
+      'GitHub 操作：创建 PR、Review 代码、管理 Issue、分支管理（skill: github）',
+      '内容写作：技术博客、文档、周报等结构化内容（skill: content-write）',
+      'L1 机械验证：代码完成后跑 typecheck / lint / test，通过后自我审查再交付（skill: l1-verify）',
+      '目录结构审计：确保文件组织符合项目规范',
+    ],
+    skills: ['ji-frontend-design（前端实现）', 'ji-github（GitHub 操作）', 'ji-content-write（内容写作）', 'ji-l1-verify（机械验证）'],
+    input: 'plan envelope 中分配的子任务 + 代码/文档规范',
+    output: '代码文件 / PR / Issue / Markdown 文档',
+    redlines: ['先 gate 验证再交付——typecheck/lint/test 必须全 PASS', '不伪造输出——声称完成前必须有机械证据', '不泄露密钥——扫描硬编码 password/secret/api_key'],
+    charter: 'Clarification level: MEDIUM — 代码实现阶段可自主决策，歧义时回传 men',
+  },
+  chi: {
+    responsibilities: [
+      '投资分析：AU9999 / 纳斯达克 / 港股通 / 中证红利持仓分析与收益追踪（skill: invest）',
+      '独立 Judge：以 fresh-context 对其他 agent 产物做语义复核，只信产物不信自述（skill: judge）',
+      '机械验证复核：verify.mjs 五项检查全 PASS 后，再做语义层验证',
+      '质量门禁：声称完成但文件不存在 = 识破假完成，只核对实际产物文件',
+    ],
+    skills: ['chi-invest（投资分析）', 'chi-judge（独立评审）'],
+    input: '子 agent 产物文件路径 + 验收标准表',
+    output: '持仓分析报告 / 评审结论（PASS/FAIL + 具体问题清单）',
+    redlines: ['只信产物不信任自述——不接受「我完成了」作为完成证据', 'fresh-context——不继承被评审 agent 的上下文，独立判断', '机械证据优先——退出码/文件存在性/JSON 可解析性为准'],
+    charter: 'Clarification level: LOW — Judge 阶段按验收标准机械判定，不追问',
+  },
+  yi: {
+    responsibilities: [
+      '设计决策：配色方案、字体选型、间距体系、布局结构（skill: design）',
+      '图像生成：通过 SenseNova U1 Fast 生成概念图/插画/视觉素材（skill: imagegen）',
+      'Token 定义：设计令牌（Design Token）体系构建与维护',
+      '审美分析：视觉风格评估、品牌一致性检查',
+      'WCAG 无障碍：确保设计满足 WCAG 2.2 AA 对比度标准',
+    ],
+    skills: ['yi-design（设计决策）', 'yi-imagegen（图像生成）'],
+    input: '设计需求描述 + 品牌约束 + 技术规范',
+    output: '设计稿 / 生图文件 / Token 定义 / 配色方案',
+    redlines: ['SenseNova 仅 yi 挂载——其他 agent 无法直接生图', 'WCAG 对比度必须达标——小文字 ≥ 4.5:1，大文字 ≥ 3:1', '不伪造输出——生图文件必须实际存在'],
+    charter: 'Clarification level: HIGH — 设计需求必须追问风格/调性/用途，不脑补审美',
+  },
+  xun: {
+    responsibilities: [
+      '网页搜索：通过 Exa / Context7 / grep_app 等 MCP 工具搜索最新信息（skill: search）',
+      'RSS 扫描：聚合多源 RSS 订阅，批量收集新闻/素材（skill: rss-scan）',
+      '事实核查：交叉验证多来源，确认信息真实性（skill: factcheck）',
+      '来源验证：标注所有信息的一手来源，拒绝无来源信息',
+    ],
+    skills: ['xun-search（网页搜索）', 'xun-rss-scan（RSS 扫描）', 'xun-factcheck（事实核查）'],
+    input: '搜索关键词 / 事实核查请求 / RSS 源列表',
+    output: '事实清单 / 调研报告 / 核查结论（含来源链接）',
+    redlines: ['只读约束——不修改源数据，不写入外部系统', '来源必须标注——无来源信息 = 无效产出', '不伪造搜索结果——搜索无结果时诚实报告'],
+    charter: 'Clarification level: MEDIUM — 搜索范围可自主扩展，关键事实需交叉验证',
+  },
+};
+
+// Flow states: sample task "写一份行业研究报告"
+const flowSteps = [
+  {
+    id: 'input',
+    icon: 'lucide:message-square',
+    label: '用户下达指令',
+    example: '「写一份 2026 年 AI Agent 行业研究报告」',
+    detail: '用户以自然语言输入任务。men 是唯一接收指令的角色，所有用户输入先经 men 分诊。',
+  },
+  {
+    id: 'receive',
+    icon: 'lucide:door-open',
+    label: 'men 接收并记录',
+    example: 'session.created → events.jsonl',
+    detail: 'men 接收指令后，立即在 events.jsonl 写入 session.created 事件，记录任务起点。这是全量事件审计的第一步。',
+  },
+  {
+    id: 'triage',
+    icon: 'lucide:git-branch',
+    label: 'IntentGate 意图分诊',
+    example: '判定为 team 类（跨领域综合任务）',
+    detail: 'men 读取 knowledge/patterns/index.md 获取历史经验，然后按意图门判定表分类：search / analyze / team / hyperplan。置信度低时向用户确认，绝不猜。',
+  },
+  {
+    id: 'plan',
+    icon: 'lucide:file-text',
+    label: 'si 规划拆解',
+    example: '产出 plan envelope：依赖图 + Wave + 验收标准',
+    detail: 'team / hyperplan 类任务必须 spawn si 做访谈式拆解，产出 plan envelope：子任务依赖关系、并行波次、每项验收标准。规划先行，避免无序执行。',
+  },
+  {
+    id: 'dispatch',
+    icon: 'lucide:zap',
+    label: 'Wave 并行调度',
+    example: 'Wave 1: xun 查数据 + yi 设计配图（并行）',
+    detail: '按 plan 波次执行。Wave 1 同时 spawn 所有无依赖子任务（并行上限 ≤4）。每个子任务 prompt 必须完整自洽——上下文、skill、产出路径、验收标准缺一不可。',
+  },
+  {
+    id: 'execute',
+    icon: 'lucide:play',
+    label: '子 Agent 执行',
+    example: 'xun 搜索行业数据 / yi 生成配图 / si 撰写正文',
+    detail: '各子 agent 独立执行，互不干扰。xun 负责搜索数据，yi 负责视觉设计，si 负责写作，ji 负责代码。每个 agent 只做自己擅长的事。',
+  },
+  {
+    id: 'verify',
+    icon: 'lucide:shield-check',
+    label: '双层验证',
+    example: 'verify.mjs 5 项 PASS → chi Judge 语义复核',
+    detail: '所有产物收集完毕后，先跑 verify.mjs 五项机械检查（退出码/文件存在/secrets/TODO/结构），全 PASS 后再由 chi 以 fresh-context 做独立语义复核。两层都过才算完成。',
+  },
+  {
+    id: 'report',
+    icon: 'lucide:bar-chart-3',
+    label: '汇总汇报',
+    example: '四段模板：结论 → 关键信息 → 来源 → 未决问题',
+    detail: '四段结构化报告：结论（一句话）→ 关键信息（要点列表）→ 来源/证据（链接）→ 未决问题（需用户决策）。每个子任务标注完成/部分/失败。learn.mjs 自动触发学习回路。',
+  },
+];
+
+// Routing table data
+const routingRows = [
+  { keyword: '查信息 / 新闻 / 资料 / 事实核查 / 调研', intent: 'search', target: 'xun（寻）', path: 'xun 单路研究', verify: '来源交叉验证 + factcheck skill', output: '事实清单 / 调研报告' },
+  { keyword: '代码 / GitHub / 工程 / 前端', intent: 'code → team', target: 'ji（记）', path: 'ji 实现 + gate 验证', verify: 'typecheck / lint / test + verify.mjs', output: '代码文件 / PR / Issue' },
+  { keyword: '写作 / 博客 / 文档 / 周报 / 内容', intent: 'content → team', target: 'ji（记）', path: 'ji 内容写作（skill: content-write）', verify: '结构检查 + 字数统计', output: 'Markdown 文章 / 文档' },
+  { keyword: '写作 / PKM / 知识 / 规划 / 需求', intent: 'team / hyperplan', target: 'si（思）', path: 'si 规划 + 产出 plan envelope', verify: 'chi judge 验收标准表', output: 'plan envelope / 知识沉淀' },
+  { keyword: '投资 / 财务 / 持仓 / 收益', intent: 'analyze', target: 'chi（持）', path: 'chi 投资分析', verify: '数据来源交叉验证', output: '持仓分析 / 投资建议' },
+  { keyword: 'CG / 设计 / 审美 / 生图 / 配色', intent: 'team', target: 'yi（艺）', path: 'yi 设计决策 + SenseNova 生图', verify: 'WCAG 对比度检查', output: '设计稿 / 生图 / Token 定义' },
+  { keyword: '分析 / 评估 / 诊断 / 评审 / 判断', intent: 'analyze', target: 'chi（持）', path: '相关专家产出 + chi judge 复核', verify: 'chi fresh-context 语义复核', output: '评审报告 / 诊断结论' },
+  { keyword: '混合 / 模糊 / 跨领域 / 综合', intent: 'team', target: 'men → 多路并行', path: 'men 按混合任务拆分规则编排', verify: '每个子任务独立验证 + 汇总', output: '结构化汇总报告' },
+];
+---
+
+<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 角色说明">
+  <section class="roles-page" aria-labelledby="page-title">
+
+    <header class="roles-header">
+      <h1 id="page-title" class="roles-title">
+        团队角色
+      </h1>
+      <p class="roles-subtitle">
+        6 个 agent 各司其职，men 统一编排。向下滚动，跟随一个示例任务走完全流程。
+      </p>
+    </header>
+
+    <!-- ======== SECTION 1: Task Flow with Scroll Animation ======== -->
+    <section class="flow-section" aria-labelledby="flow-title">
+      <h2 id="flow-title" class="section-title">
+        <span class="section-num">01</span>
+        任务分诊流程
+      </h2>
+      <p class="section-desc">示例任务：「写一份 2026 年 AI Agent 行业研究报告」</p>
+
+      <div class="flow-timeline">
+        <div class="flow-timeline__line" aria-hidden="true"></div>
+        <div class="flow-timeline__cursor" aria-hidden="true"></div>
+
+        {flowSteps.map((step, i) => (
+          <div class="flow-step" data-step={step.id} data-index={String(i)}>
+            <div class="flow-step__marker" aria-hidden="true">
+              <div class="flow-step__dot"></div>
+              <span class="flow-step__icon"><Icon name={step.icon} width="20" height="20" /></span>
+            </div>
+            <div class="flow-step__content">
+              <div class="flow-step__header">
+                <span class="flow-step__num">{'0' + (i + 1)}</span>
+                <h3 class="flow-step__label">{step.label}</h3>
+              </div>
+              <div class="flow-step__example">
+                <span class="flow-step__example-tag">示例</span>
+                <code>{step.example}</code>
+              </div>
+              <p class="flow-step__detail">{step.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ======== SECTION 2: Routing Table ======== -->
+    <section class="routing-section" aria-labelledby="routing-title">
+      <h2 id="routing-title" class="section-title">
+        <span class="section-num">02</span>
+        路由判定表
+      </h2>
+      <p class="section-desc">关键词判定 + 意图门分类，低置信时向用户确认，不猜</p>
+
+      <div class="routing-table-wrap">
+        <table class="routing-table">
+          <thead>
+            <tr>
+              <th>触发关键词</th>
+              <th>意图类型</th>
+              <th>目标 Agent</th>
+              <th>执行路径</th>
+              <th>验证方式</th>
+              <th>产出格式</th>
+            </tr>
+          </thead>
+          <tbody>
+            {routingRows.map((row) => (
+              <tr>
+                <td class="routing-table__keyword">{row.keyword}</td>
+                <td><span class="routing-table__tag">{row.intent}</span></td>
+                <td class="routing-table__target">{row.target}</td>
+                <td>{row.path}</td>
+                <td class="routing-table__verify">{row.verify}</td>
+                <td class="routing-table__output">{row.output}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======== SECTION 3: Agent Cards with Scroll ======== -->
+    <section class="agents-section" aria-labelledby="agents-title">
+      <h2 id="agents-title" class="section-title">
+        <span class="section-num">03</span>
+        6 个 Agent 详解
+      </h2>
+      <p class="section-desc">滚动查看每个角色的职责、技能、输入输出与约束</p>
+
+      <div class="agents-stage">
+        {roles.map((role, i) => {
+          const detail = roleDetails[role.name];
+          return (
+            <article
+              id={'agent-' + role.name}
+              class="agent-card"
+              data-index={String(i)}
+              style={'--delay: ' + (i * 0.12) + 's'}
+            >
+              <div class="agent-card__inner">
+              <div class="agent-card__left">
+                <span class="agent-card__icon" aria-hidden="true"><Icon name={role.name === 'men' ? 'lucide:door-open' : role.name === 'si' ? 'lucide:brain' : role.name === 'ji' ? 'lucide:code' : role.name === 'chi' ? 'lucide:shield-check' : role.name === 'yi' ? 'lucide:palette' : 'lucide:search'} width="24" height="24" /></span>
+                <span class="agent-card__num">{'0' + (i + 1)}</span>
+              </div>
+                <div class="agent-card__body">
+                  <div class="agent-card__header">
+                    <h3 class="agent-card__name">{role.cn}</h3>
+                    <code class="agent-card__id">{role.name}</code>
+                    <span class="agent-card__badge">{role.mode}</span>
+                  </div>
+                  <p class="agent-card__desc">{role.desc}</p>
+
+                  {detail && (
+                    <div class="agent-card__detail">
+                      <div class="agent-card__section">
+                        <h4 class="agent-card__section-title">职责</h4>
+                        <ul class="agent-card__list">
+                          {detail.responsibilities.map((r) => (
+                            <li>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div class="agent-card__row">
+                        <div class="agent-card__section">
+                          <h4 class="agent-card__section-title">技能</h4>
+                          <div class="agent-card__tags">
+                            {detail.skills.map((s) => (
+                              <span class="agent-card__tag">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <div class="agent-card__section">
+                          <h4 class="agent-card__section-title">约束</h4>
+                          <ul class="agent-card__list agent-card__list--compact">
+                            {detail.redlines.map((r) => (
+                              <li>{r}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div class="agent-card__row">
+                        <div class="agent-card__section">
+                          <h4 class="agent-card__section-title">输入</h4>
+                          <p class="agent-card__io">{detail.input}</p>
+                        </div>
+                        <div class="agent-card__section">
+                          <h4 class="agent-card__section-title">输出</h4>
+                          <p class="agent-card__io">{detail.output}</p>
+                        </div>
+                      </div>
+
+                      <div class="agent-card__charter">
+                        <span class="agent-card__charter-label">CHARTER_CHECK</span>
+                        {detail.charter}
+                      </div>
+                    </div>
+                  )}
+
+                  <div class="agent-card__meta">
+                    <span class="agent-card__source">来源: {role.source}</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+
+    <!-- ======== SECTION 4: Intent ======== -->
+    <section class="intent-section" aria-labelledby="intent-title">
+      <h2 id="intent-title" class="section-title">
+        <span class="section-num">04</span>
+        意图门（IntentGate）
+      </h2>
+      <div class="intent-text">
+        <p>
+          men 通过 <strong>IntentGate</strong> 将用户指令分为四类意图：<strong>search</strong>（查信息，路由到 xun）、
+          <strong>analyze</strong>（分析评审，路由到 chi + 专家）、<strong>team</strong>（多领域协作，men 编排多路并行）、
+          <strong>hyperplan</strong>（复杂项目启动，路由到 si 规划式访谈）。
+        </p>
+        <p>
+          分类依据是关键词判定表 + 历史经验（knowledge/patterns/index.md）。当置信度低于阈值时，
+          men <strong>必须向用户确认</strong>，绝不猜测——这是避免返工的第一道防线。
+        </p>
+        <p class="intent-link">
+          完整意图门判定表与路由规则 → <a href={base + 'docs/agents'}>角色说明文档</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- ======== SECTION 5: Principles ======== -->
+    <section class="principles-section" aria-labelledby="principles-title">
+      <h2 id="principles-title" class="section-title">
+        <span class="section-num">05</span>
+        核心原则
+      </h2>
+      <div class="principles-text">
+        <p>
+          <strong>机械优先</strong>——验证判定以退出码、文件存在性、JSON 可解析性等机械证据为准，拒绝 LLM 自评。
+          脚本说 PASS 才是 PASS。
+        </p>
+        <p>
+          <strong>不信自述</strong>——chi judge 只核对实际产物文件，不接受任何「我完成了」作为完成证据。
+          声称完成但文件不存在 = 识破假完成。
+        </p>
+        <p>
+          <strong>事件可回溯</strong>——所有关键决策写入 events.jsonl，可用 <code>node scripts/event.mjs replay</code> 回放。
+          事后可以回答：当时为什么这么分发？
+        </p>
+        <p>
+          <strong>超限诚实</strong>——重试上限 5 次，超限立即报卡住，把已完成中间产物和失败原因交给用户，不假装继续。
+        </p>
+        <p class="principles-link">
+          完整 6 条原则与全员红线 → <a href={base + 'docs/governance'}>治理文档</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="roles-nav">
+      <a href={base + 'mechanisms'} class="roles-nav__link">
+        下一步 → 机制 <span>运行手册 · 验证体系 · 事件系统</span>
+      </a>
+    </section>
+  </section>
+</BaseLayout>
+
+<script>
+  // Scroll-triggered flow animation
+  function initFlowAnimation() {
+    const steps = document.querySelectorAll('.flow-step');
+    const cursor = document.querySelector('.flow-timeline__cursor');
+    if (!steps.length || !cursor) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-active');
+            // Move cursor to this step
+            const dot = entry.target.querySelector('.flow-step__dot');
+            if (dot) {
+              const rect = dot.getBoundingClientRect();
+              const lineRect = document.querySelector('.flow-timeline__line')?.getBoundingClientRect();
+              if (lineRect) {
+                const top = rect.top - lineRect.top + rect.height / 2;
+                (cursor as HTMLElement).style.top = top + 'px';
+              }
+            }
+          } else {
+            entry.target.classList.remove('is-active');
+          }
+        });
+      },
+      { threshold: 0.5, rootMargin: '-10% 0px -30% 0px' }
+    );
+
+    steps.forEach((step) => observer.observe(step));
+  }
+
+  // Scroll-triggered agent cards: slide in one by one
+  function initAgentAnimation() {
+    const cards = document.querySelectorAll('.agent-card');
+    if (!cards.length) return;
+
+    const cardObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '-5% 0px -5% 0px' }
+    );
+
+    cards.forEach((card) => cardObserver.observe(card));
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initFlowAnimation();
+    initAgentAnimation();
+  });
+</script>
+
+<style>
+  /* ===== Page Layout ===== */
+  .roles-page {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: var(--space-4) var(--container-padding-x) var(--space-16);
+    position: relative;
+    z-index: 1;
+  }
+
+  .roles-header {
+    padding: var(--space-8) 0 var(--space-6);
+    border-bottom: 1px solid var(--color-line);
+    margin-bottom: var(--space-12);
+  }
+  .roles-title {
+    font-family: var(--font-serif);
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: var(--font-weight-semi);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--color-fg);
+    margin-bottom: var(--space-3);
+  }
+  .roles-subtitle {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-secondary);
+    max-width: 680px;
+    line-height: var(--line-height-body);
+  }
+
+  /* ===== Section Headers ===== */
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semi);
+    line-height: 1.2;
+    color: var(--color-fg);
+    margin-bottom: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.08em;
+    background: var(--color-accent-tint);
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-xs);
+  }
+  .section-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    margin-bottom: var(--space-8);
+    line-height: var(--line-height-body);
+  }
+
+  /* ===== Flow Timeline ===== */
+  .flow-section {
+    margin-bottom: var(--space-16);
+  }
+  .flow-timeline {
+    position: relative;
+    padding-left: 60px;
+  }
+  .flow-timeline__line {
+    position: absolute;
+    left: 23px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--color-line-soft);
+  }
+  .flow-timeline__cursor {
+    position: absolute;
+    left: 18px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    background: var(--color-accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 50%, transparent);
+    transition: top 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 2;
+  }
+
+  .flow-step {
+    position: relative;
+    padding: var(--space-5) 0 var(--space-5) var(--space-5);
+    opacity: 0.35;
+    transform: translateY(8px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .flow-step.is-active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .flow-step__marker {
+    position: absolute;
+    left: -60px;
+    top: var(--space-5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+  }
+  .flow-step__dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-line-soft);
+    border: 2px solid var(--color-bg);
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .flow-step.is-active .flow-step__dot {
+    background: var(--color-accent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--color-accent) 40%, transparent);
+  }
+  .flow-step__icon {
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.4s ease 0.15s, transform 0.4s ease 0.15s;
+    display: inline-flex;
+  }
+  .flow-step.is-active .flow-step__icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .flow-step__content {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-4) var(--space-5);
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .flow-step.is-active .flow-step__content {
+    border-color: var(--color-accent);
+    box-shadow: 0 2px 16px color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  .flow-step__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .flow-step__num {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.05em;
+  }
+  .flow-step__label {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    margin: 0;
+  }
+
+  .flow-step__example {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-warm);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-accent);
+  }
+  .flow-step__example-tag {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    background: var(--color-accent-tint);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-xs);
+    flex-shrink: 0;
+  }
+  .flow-step__example code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-secondary);
+  }
+
+  .flow-step__detail {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-relaxed);
+    margin: 0;
+  }
+
+  /* ===== Routing Table ===== */
+  .routing-section {
+    margin-bottom: var(--space-16);
+  }
+  .routing-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+  .routing-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-caption);
+    line-height: var(--line-height-body);
+  }
+  .routing-table thead {
+    background: var(--color-bg-warm);
+    border-bottom: 2px solid var(--color-accent);
+  }
+  .routing-table th {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    text-align: left;
+    padding: var(--space-3) var(--space-3);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .routing-table td {
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--color-line-soft);
+    color: var(--color-fg-secondary);
+    vertical-align: top;
+  }
+  .routing-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .routing-table tbody tr:hover {
+    background: var(--color-bg-warm);
+  }
+  .routing-table__keyword {
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    min-width: 180px;
+  }
+  .routing-table__tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    background: var(--color-accent-tint);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-xs);
+    white-space: nowrap;
+  }
+  .routing-table__target {
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    white-space: nowrap;
+  }
+  .routing-table__verify {
+    color: var(--color-fg-tertiary);
+    font-size: var(--font-size-small);
+  }
+  .routing-table__output {
+    color: var(--color-fg-tertiary);
+    font-size: var(--font-size-small);
+    white-space: nowrap;
+  }
+
+  /* ===== Agent Cards ===== */
+  .agents-section {
+    margin-bottom: var(--space-16);
+  }
+  .agents-stage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+  }
+
+  .agent-card {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.3s ease;
+    transition-delay: var(--delay);
+  }
+  .agent-card:nth-child(even) {
+    transform: translateX(40px);
+  }
+  .agent-card.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .agent-card__inner {
+    display: flex;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-left: 4px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .agent-card:hover .agent-card__inner {
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+
+  .agent-card__left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    flex-shrink: 0;
+    padding-right: var(--space-4);
+    border-right: 1px solid var(--color-line-soft);
+  }
+  .agent-card__icon {
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+  .agent-card__num {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+  }
+
+  .agent-card__body {
+    flex: 1;
+    min-width: 0;
+  }
+  .agent-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .agent-card__name {
+    font-family: var(--font-serif);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    margin: 0;
+  }
+  .agent-card__id {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-dark);
+    background: var(--color-accent-tint);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-xs);
+  }
+  .agent-card__badge {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    margin-left: auto;
+  }
+  .agent-card__desc {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--space-2);
+  }
+  .agent-card__meta {
+    font-size: var(--font-size-small);
+    color: var(--color-fg-muted);
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-line-soft);
+  }
+
+  /* Agent card detail sections */
+  .agent-card__detail {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-line-soft);
+  }
+  .agent-card__section {
+    margin-bottom: var(--space-3);
+  }
+  .agent-card__section-title {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-2);
+  }
+  .agent-card__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .agent-card__list li {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-relaxed);
+    padding: var(--space-1) 0;
+    padding-left: var(--space-3);
+    position: relative;
+  }
+  .agent-card__list li::before {
+    content: '·';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+    font-weight: bold;
+  }
+  .agent-card__list--compact li {
+    font-size: var(--font-size-small);
+    padding: 2px 0 2px var(--space-3);
+  }
+  .agent-card__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+  .agent-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .agent-card__tag {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    color: var(--color-accent-dark);
+    background: var(--color-accent-tint);
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-xs);
+  }
+  .agent-card__io {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-body);
+    margin: 0;
+  }
+  .agent-card__charter {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    color: var(--color-fg-muted);
+    background: var(--color-bg-warm);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-accent);
+    margin-top: var(--space-3);
+  }
+  .agent-card__charter-label {
+    font-weight: var(--font-weight-semi);
+    color: var(--color-accent-dark);
+    margin-right: var(--space-2);
+  }
+
+  /* ===== Intent Section ===== */
+  .intent-section {
+    margin-bottom: var(--space-12);
+  }
+  .intent-text {
+    max-width: 720px;
+  }
+  .intent-text p {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--space-4);
+  }
+  .intent-text strong {
+    color: var(--color-fg);
+  }
+  .intent-text code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    background: var(--color-bg-warm);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-xs);
+    color: var(--color-accent-dark);
+  }
+  .intent-link {
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-dark);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-line-soft);
+  }
+  .intent-link a {
+    color: var(--color-accent-dark);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .intent-link a:hover {
+    color: var(--color-accent);
+  }
+
+  /* ===== Principles Section ===== */
+  .principles-section {
+    margin-bottom: var(--space-12);
+  }
+  .principles-text {
+    max-width: 720px;
+  }
+  .principles-text p {
+    font-size: var(--font-size-body);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--space-4);
+  }
+  .principles-text strong {
+    color: var(--color-fg);
+  }
+  .principles-text code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    background: var(--color-bg-warm);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-xs);
+    color: var(--color-accent-dark);
+  }
+  .principles-link {
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-dark);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-line-soft);
+  }
+  .principles-link a {
+    color: var(--color-accent-dark);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .principles-link a:hover {
+    color: var(--color-accent);
+  }
+
+  /* ===== Nav ===== */
+  .roles-nav {
+    padding: var(--space-6) 0;
+    border-top: 1px solid var(--color-line);
+  }
+  .roles-nav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-fg);
+    transition: background var(--duration-normal) ease;
+  }
+  .roles-nav__link:hover {
+    background: var(--color-accent-tint);
+    text-decoration: none;
+  }
+  .roles-nav__link span {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-muted);
+    margin-left: auto;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .roles-page {
+      padding: var(--space-4) var(--space-6) var(--space-8);
+    }
+    .flow-timeline {
+      padding-left: 48px;
+    }
+    .flow-timeline__line {
+      left: 17px;
+    }
+    .flow-timeline__cursor {
+      left: 12px;
+    }
+    .flow-step__marker {
+      left: -48px;
+      width: 36px;
+      height: 36px;
+    }
+    .flow-step__icon {
+      font-size: 1.2rem;
+    }
+    .routing-table-wrap {
+      margin: 0 calc(-1 * var(--space-6));
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+    .agent-card__left {
+      display: none;
+    }
+    .agent-card__badge {
+      margin-left: 0;
+    }
+    .agent-card__row {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .flow-timeline {
+      padding-left: 36px;
+    }
+    .flow-timeline__line {
+      left: 11px;
+    }
+    .flow-timeline__cursor {
+      left: 6px;
+    }
+    .flow-step__marker {
+      left: -36px;
+      width: 28px;
+      height: 28px;
+    }
+    .flow-step__icon {
+      font-size: 1rem;
+    }
+    .agent-card__detail {
+      font-size: var(--font-size-small);
+    }
+  }
+</style>

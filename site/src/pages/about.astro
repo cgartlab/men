@@ -1,0 +1,546 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import content from '../data/content.json';
+import { SITE } from '../data/site';
+
+const PROJECTS = [
+  ...content.about.projects.filter((p) => ['EDIC','Argus'].includes(p.name)).map((p) => ({ ...p, href: p.name === 'EDIC' ? 'https://github.com/cgartlab/edic-design-system' : 'https://github.com/cgartlab/argus' })),
+  { name: '作品集', type: '官方站点 · 全部作品', year: '持续更新', desc: '视觉、工程与 AI 实验的完整作品档案。', href: 'https://cgartlab.com' },
+  { name: '冥想系列', type: '创作企划', year: '策划中', desc: '以动态影像与声音为媒介的冥想视觉实验系列。', href: 'https://cgartlab.com' },
+];
+
+---
+
+  <BaseLayout title="关于 · men（门）" description="men（门）— CG 艺术实验室出品的开源 Agent 编排系统">
+<article class="about-article">
+
+    <header class="about-header">
+      <div class="about-brand-block">
+        <div class="about-brand-mark" aria-hidden="true">
+          <span class="about-brand-mark__dot"></span>
+          <span class="about-brand-mark__dot"></span>
+          <span class="about-brand-mark__dot"></span>
+        </div>
+        <div>
+          <p class="about-brand-meta">
+            <span>开源项目</span>
+            <span class="about-brand-meta__sep">·</span>
+            <span>{SITE.version}</span>
+            <span class="about-brand-meta__sep">·</span>
+            <span>出品 {content.about.brand}</span>
+          </p>
+          <h1 class="about-brand-name">men（门）</h1>
+          <p class="about-brand-tagline">围绕一人内容创作与工程协作的 6+1 Agent 团队系统</p>
+        </div>
+      </div>
+    </header>
+
+    <hr class="threshold-divider" aria-hidden="true" />
+
+    <!-- 一、men 项目 -->
+    <section class="about-section" aria-labelledby="intro-title">
+      <h2 class="about-h2" id="intro-title">men 是什么</h2>
+      <p class="about-lede">
+        <strong>men（门）</strong>是 {content.about.brand} 推出的开源 Agent 编排系统：
+        门（编排）· 思（规划）· 记（工程）· 持（评审）· 艺（设计）· 寻（搜索），
+        机械验证优先，假完成必识破。采用 {SITE.license} 许可，仓库
+        <a href={SITE.repo} target="_blank" rel="noopener">{SITE.repoLabel}</a>。
+      </p>
+    </section>
+
+    <hr class="threshold-divider" aria-hidden="true" />
+
+    <!-- 二、出品机构 -->
+    <section class="about-section" aria-labelledby="org-title">
+      <h2 class="about-h2" id="org-title">01 · 出品机构 · {content.about.brand}</h2>
+      <p class="about-lede">{content.about.intro}</p>
+      <p class="about-lede"><strong>使命</strong>：以设计思维驱动 AI 工程实践，让个人创作者拥有组织级的生产力。</p>
+      <p class="about-p"><strong>品牌理念</strong>：{content.about.tagline}。</p><p class="about-p"><a href="https://cgartlab.com/weekly/" target="_blank" rel="noopener"><strong>{content.about.weekly.name}</strong></a>：{content.about.weekly.desc}</p>
+    </section>
+
+        <hr class="threshold-divider" aria-hidden="true" />
+
+    <!-- 创作哲学 -->
+    <section class="about-section" aria-labelledby="phil-title">
+      <h2 class="about-h2" id="phil-title">02 · 品牌方法论</h2>
+
+      <div>
+        {content.about.philosophy.map((item, i) => (
+          <p class="about-p"><strong>{item.title}</strong>——{item.desc}</p>
+        ))}
+      </div>
+    </section>
+
+    <hr class="threshold-divider" aria-hidden="true" />
+
+    <!-- 项目 -->
+    <section class="about-section" aria-labelledby="projects-title">
+      <h2 class="about-h2" id="projects-title">03 · 作品矩阵</h2>
+      <p class="about-p">从设计工具到 AI Agent——这些年做的东西，都是为了解决一个具体的问题。</p>
+
+      <div class="about-projects">
+        {PROJECTS.map((proj) => (
+          <div class="about-project">
+            <div class="about-project__head">
+              <h3 class="about-project__name">{proj.name}</h3>
+              <span class="about-project__year">{proj.year}</span>
+            </div>
+            <p class="about-project__type">{proj.type}{proj.href && (<> · <a href={proj.href} target="_blank" rel="noopener">访问 ↗</a></>)}</p>
+            <p class="about-project__desc">{proj.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <hr class="threshold-divider" aria-hidden="true" />
+
+    <!-- 开源与许可 -->
+    <section class="about-section" aria-labelledby="open-title">
+      <h2 class="about-h2" id="open-title">04 · 开源与许可</h2>
+      <p class="about-p">{content.about.openSource}</p>
+
+      <div class="about-licenses">
+        <div class="about-license-card">
+          <span class="about-license-tag">内容</span>
+          <span class="about-license-name">CC BY-NC-SA 4.0</span>
+          <p>文章、设计作品、图片等创意内容采用知识共享署名-非商业性使用-相同方式共享 4.0 许可。</p>
+        </div>
+        <div class="about-license-card">
+          <span class="about-license-tag">代码</span>
+          <span class="about-license-name">MIT License</span>
+          <p>主题代码、脚本、配置等软件部分采用 MIT 许可证，完全自由使用。</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="threshold-divider" aria-hidden="true" />
+
+    <!-- 连接 -->
+    <section class="about-section" aria-labelledby="links-title">
+      <h2 class="about-h2" id="links-title">05 · 联系</h2>
+
+      <div class="about-links">
+        {content.about.links.filter((l,i,arr) => arr.findIndex(x => x.href === l.href) === i).map((link) => (
+          <a href={link.href} target="_blank" rel="noopener" class="about-link">
+            <span>{link.label}</span>
+            <span class="about-link__arrow" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </div>
+
+      <p class="about-stack">技术栈：{content.about.stack}</p>
+    </section>
+
+    <hr class="threshold-divider" aria-hidden="true" />
+
+    <footer class="about-footer">
+      <div class="about-footer__inner">
+        <div>
+          <p class="about-footer__brand">{content.about.brand}</p>
+          <p class="about-footer__domain">{content.about.domain} · © {content.footer.copyright}</p>
+        </div>
+        <div>
+          <p class="about-footer__license">MIT / CC BY-NC-SA 4.0</p>
+        </div>
+      </div>
+    </footer>
+
+  </article>
+</BaseLayout>
+
+<style>
+  .about-article {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+  }
+
+  .about-header {
+    padding: var(--space-20) 0 var(--space-8);
+  }
+
+  .about-brand-block {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    margin-bottom: var(--space-8);
+  }
+
+  .about-brand-mark {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex-shrink: 0;
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+  }
+  .about-brand-mark__dot {
+    width: 4px;
+    height: 4px;
+    background: var(--color-accent);
+    border-radius: var(--radius-pill);
+    display: block;
+  }
+
+  .about-brand-meta {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  .about-brand-meta__sep {
+    color: var(--color-line);
+  }
+
+  .about-brand-name {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--color-fg);
+    margin-bottom: var(--space-2);
+  }
+
+  .about-brand-tagline {
+    font-size: var(--font-size-h4);
+    color: var(--color-fg-secondary);
+    font-weight: var(--font-weight-semi);
+    line-height: 1.4;
+    margin-bottom: var(--space-3);
+  }
+
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+  }
+    color: var(--color-fg-tertiary);
+  }
+
+  .about-quote {
+    margin: var(--space-6) 0 0;
+    padding: var(--space-4) var(--space-5);
+    border-left: 2px solid var(--color-accent);
+    background: var(--color-surface-warm);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semi);
+    font-style: italic;
+    color: var(--color-fg);
+    line-height: var(--line-height-relaxed);
+  }
+  .about-quote__attr {
+    display: block;
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.03em;
+  }
+
+  .about-section {
+    padding: var(--space-10) 0;
+  }
+
+  .about-h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    color: var(--color-fg);
+    margin-bottom: var(--space-4);
+    letter-spacing: -0.01em;
+  }
+
+  .about-lede {
+    font-size: var(--font-size-h4);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .about-p {
+    font-size: var(--font-size-body);
+    color: var(--color-fg);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--space-4);
+    max-width: 68ch;
+  }
+
+  /* 创作哲学网格 */
+  .about-philosophy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+  .about-phil-card {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-top: 2px solid var(--color-accent);
+    border-radius: var(--radius-md);
+  }
+  .about-phil-num {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-on-accent);
+    background: var(--color-accent-tint);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-xs);
+    margin-bottom: var(--space-2);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: 0.02em;
+  }
+  .about-phil-title {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-fg);
+    margin-bottom: var(--space-2);
+    line-height: var(--line-height-tight);
+  }
+  .about-phil-desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* 项目列表 */
+  .about-projects {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+  .about-project {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-left: 2px solid var(--color-accent);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+  .about-project__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .about-project__name {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-fg);
+  }
+  .about-project__year {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.02em;
+  }
+  .about-project__type {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .about-project__desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* 许可 */
+  .about-licenses {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+  }
+  .about-license-card {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+  }
+  .about-license-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-on-accent);
+    background: var(--color-accent-tint);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-xs);
+    margin-bottom: var(--space-2);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .about-license-name {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    margin-bottom: var(--space-2);
+  }
+  .about-license-card p {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* 链接 */
+  .about-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+  .about-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-fg);
+    text-decoration: none;
+    transition: border-color var(--duration-normal) ease, color var(--duration-normal) ease;
+  }
+  .about-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent-on-accent);
+    text-decoration: none;
+  }
+  .about-link__arrow {
+    color: var(--color-fg-muted);
+    transition: color var(--duration-normal) ease;
+  }
+  .about-link:hover .about-link__arrow {
+    color: var(--color-accent-on-accent);
+  }
+
+  .about-stack {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    margin-top: var(--space-5);
+    letter-spacing: 0.03em;
+  }
+
+  /* 团队 */
+  .about-team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+  .about-member {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-md);
+  }
+  .about-member__emoji {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    padding-top: var(--space-1);
+  }
+  .about-member__name {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-fg);
+    margin-bottom: var(--space-1);
+  }
+  .about-member__role {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-accent-dark);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: var(--space-1);
+  }
+  .about-member__desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* 底部 */
+  .about-footer {
+    padding: var(--space-12) 0 var(--space-4);
+  }
+  .about-footer__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-8);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--color-line-soft);
+  }
+  .about-footer__brand {
+    font-weight: var(--font-weight-semi);
+    font-size: var(--font-size-body);
+    color: var(--color-fg);
+    margin-bottom: var(--space-1);
+  }
+  .about-footer__domain {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    letter-spacing: 0.03em;
+  }
+  .about-footer__license {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-muted);
+    text-align: right;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    .about-brand-block {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-3);
+    }
+    .about-brand-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-1);
+    }
+    .about-brand-meta__sep { display: none; }
+    .about-team-grid {
+      grid-template-columns: 1fr;
+    }
+    .about-footer__inner {
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+    .about-footer__license { text-align: left; }
+  }
+</style>
