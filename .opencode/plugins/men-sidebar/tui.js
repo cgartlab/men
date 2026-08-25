@@ -12,12 +12,22 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// 版本号变量：从同目录 package.json 动态读取（单一事实来源）
+// 版本号统一变量：跟随项目根 package.json 的真实发布版本；
+// 从插件目录向上遍历找最近的祖先 package.json（跳过插件自身），找不到才兜底用插件本地版本。
 const __dirname = dirname(fileURLToPath(import.meta.url));
-let VERSION = "";
-try {
-  VERSION = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf8")).version ?? "";
-} catch {}
+function readPkg(p) { try { return JSON.parse(readFileSync(p, "utf8")); } catch { return null; } }
+const PKG = (() => {
+  let d = dirname(__dirname);
+  for (let i = 0; i < 10 && d !== dirname(d); i++) {
+    const pkg = existsSync(join(d, "package.json")) ? readPkg(join(d, "package.json")) : null;
+    if (pkg && pkg.version) return { version: String(pkg.version), name: pkg.name || "", source: d };
+    d = dirname(d);
+  }
+  const self = readPkg(join(__dirname, "package.json"));
+  return { version: String(self?.version ?? ""), name: self?.name || "", source: "(plugin self)" };
+})();
+const VERSION = PKG.version;
+console.log(`[men-sidebar] version source: ${PKG.source} -> ${PKG.name || "?"}@v${VERSION || "?"}`);
 
 function readAgents(dir) {
   // 兜底链：项目级 opencode.json 优先；为空时合并全局 ~/.config/opencode/opencode.json
