@@ -20,18 +20,27 @@ try {
 } catch {}
 
 function readAgents(dir) {
-  const p = join(dir, "opencode.json");
-  try {
-    if (!existsSync(p)) { console.log("[men-sidebar] opencode.json NOT FOUND:", p); return {}; }
-    const raw = readFileSync(p, "utf8");
-    const cfg = JSON.parse(raw);
-    const a = cfg.agent ?? {};
-    console.log("[men-sidebar] readAgents OK:", Object.keys(a).join(", "));
-    return a;
-  } catch (e) {
-    console.error("[men-sidebar] readAgents ERROR:", e && e.message ? e.message : String(e));
-    return {};
+  // 兜底链：项目级 opencode.json 优先；为空时合并全局 ~/.config/opencode/opencode.json
+  const home = process.env.USERPROFILE || process.env.HOME || "";
+  const candidates = [join(dir, "opencode.json")];
+  if (home) candidates.push(join(home, ".config", "opencode", "opencode.json"));
+  let merged = {};
+  for (const p of candidates) {
+    try {
+      if (!existsSync(p)) { console.log("[men-sidebar] opencode.json NOT FOUND:", p); continue; }
+      const cfg = JSON.parse(readFileSync(p, "utf8"));
+      const a = cfg.agent ?? {};
+      const keys = Object.keys(a);
+      if (keys.length) {
+        console.log("[men-sidebar] readAgents from " + p + ":", keys.join(", "));
+        merged = Object.assign({}, merged, a); // 后读的覆盖先读的 → 全局在前、项目在后（项目优先）
+      }
+    } catch (e) {
+      console.error("[men-sidebar] readAgents ERROR:", e && e.message ? e.message : String(e));
+    }
   }
+  if (!Object.keys(merged).length) console.log("[men-sidebar] WARN: no agents found in any candidate path");
+  return merged;
 }
 
 function modelStr(m) {
@@ -70,14 +79,15 @@ function renderSidebar(dir, theme, el_fn, box_fn, txt_fn) {
       [txt_fn({ fg: muted, width: 10 }, [n]), txt_fn({ fg: muted }, [modelStr(agents[n] && agents[n].model)])]
     )
   );
-  // 标题行：MEN AGENTS 高亮徽章 + 版本号
+  // 标题行：MEN AGENTS 高亮徽章（固定橘黄）+ 版本号
+  const badgeBg = "#ff8c00";
   const header = box_fn(
     { width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 1 },
     [
-      box_fn({ paddingLeft: 1, paddingRight: 1, backgroundColor: accent }, [
-        txt_fn({ fg: contrastOn(accent) }, ["MEN AGENTS"]),
+      box_fn({ paddingLeft: 1, paddingRight: 1, backgroundColor: badgeBg }, [
+        txt_fn({ fg: contrastOn(badgeBg) }, ["MEN AGENTS"]),
       ]),
-      txt_fn({ fg: muted }, [VERSION ? `v${VERSION}` : ""]),
+      txt_fn({ fg: muted }, [`v${VERSION || "?"}`]),
     ]
   );
   return box_fn(
