@@ -164,7 +164,7 @@ men/
 │   ├── eval-metrics.mjs        ← 评估指标计算
 │   ├── eval-report.mjs         ← 评估报告生成
 │   ├── fix-port-4096.ps1       ← 端口修复
-│   └── sync-to-opencode.ps1    ← OpenCode 全局同步
+
 │
 ├── docs/
 │   ├── PRD.md

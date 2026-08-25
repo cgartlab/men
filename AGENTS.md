@@ -27,7 +27,7 @@
 | `knowledge/patterns/` | 协作模式库（3 条初始条目） |
 | `knowledge/decisions/` | 决策记录（3 条：M0/M6/M7） |
 | `scripts/fix-port-4096.ps1` | 修复 OpenCode 端口 4096 占用 |
-| `scripts/sync-to-opencode.ps1` | 同步 agent/skills/commands 到 OpenCode 全局 |
+
 | `.github/workflows/ci.yml` | CI 工作流（validate/triage） |
 | `.github/` | PR/Issue 模板、CODEOWNERS、FUNDING、dependabot |
 | `docs/governance.md` | 团队治理（角色/决策/变更/审查/发布） |
@@ -60,7 +60,7 @@
 2. **YAML frontmatter** 必须保留：`description`, `mode`, `model`
 3. **`CHARTER_CHECK` 字段**：每个 agent 必须有，含 Clarification level / Task domain / Must NOT do / Success criteria
 4. **`全员红线` 段落**：6 个 agent 必须逐字一致（复制粘贴，不修改）
-5. **model**：按角色分配不同模型，运行时权威配置以 `opencode.json` 的 `agent` 字段为准：
+5. **model**：按角色分配不同模型，运行时权威配置以 CC Switch 管理的 `~/.config/opencode/opencode.json` 的 `agent` 字段为准（仓库 `opencode.json` 仅作为参考模板，不参与运行时同步）：
     - men: `opencode-go/hy3`
     - si: `sensenova/deepseek-v4-flash`
     - ji: `opencode-go/deepseek-v4-flash`
@@ -126,3 +126,12 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - **事件审计**：9 种 kind 枚举，events.jsonl 可回放
 - **依赖管理**：.opencode/node_modules/ 本地安装，不共享根目录
 - **事件类型**：统一使用 event.mjs 标准格式（ts/event/subject/detail/payload）
+
+## 进程管理红线（Windows · 2026-08-24 事故后新增）
+
+> 事故背景：跨 session 存活的僵尸 `astro preview` 占用 4399 端口并按旧 base 路由，导致站点访问异常；OpenCode 在 Windows 上存在已知的 child process leak / orphan 问题。
+
+1. **常驻服务仅限受管形态**：只允许 `astro preview` 守护进程（自带 stop/status/logs 生命周期）。必须使用仓库配置端口（4399），并向用户报告 pid 与停止命令；禁止裸 `Start-Process` / detached / 管道截流等不可追踪形态。
+2. **静态站验证走产物级检查**：一律使用 `node scripts/check-site.mjs`（扫描 dist：UTF-8 解码 / charset / mojibake / 空 slot 守卫 / base 回归 / 路由锚点），不依赖任何活服务器。
+3. **确需 HTTP 冒烟时的唯一合法形态**：单个 Node 脚本内 `spawn` 子进程 + `finally { kill }` 自终止包装，超时上限 60s，禁止脱离本次命令的进程树存活。
+4. **会话收尾自查**：结束前运行 `Get-CimInstance Win32_Process -Filter "Name='node.exe'"` 过滤本仓库路径残留并清理；确认 4399/4399 无监听。

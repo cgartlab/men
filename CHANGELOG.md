@@ -14,6 +14,10 @@
 
 _下一版本的新增内容将记录在此。_（当前为占位，保持空）
 
+### 🗑️ Removed
+
+- **scripts/sync-to-opencode.ps1** — 删除 OpenCode 全局同步脚本。原因：全局配置由 CC Switch 统一管理，脚本写入会与 CC Switch 冲突（`provider`/`mcp`/`instructions` 等字段被覆盖后又被 CC Switch 回滚）。替代方案：通过 CC Switch UI 手动管理 agent / skills / commands 的全局配置。
+
 ## [v0.2.0] - 2026-08-21
 
 > 🏷️ **发布主题：「从代码仓库到可协作团队」**
@@ -76,7 +80,7 @@ _下一版本的新增内容将记录在此。_（当前为占位，保持空）
 ### 🧰 工具脚本补充
 
 - **scripts/fix-port-4096.ps1** — **是什么**：一键修复 OpenCode 端口 4096 被占用的脚本。**为什么重要**：端口被占是开发常见问题，手动杀进程易误伤，脚本安全修复。**怎么用**：OpenCode 报端口错误时运行它。
-- **scripts/sync-to-opencode.ps1** — **是什么**：把 agent/skills/commands 同步到 OpenCode 全局配置的脚本。**为什么重要**：本地改配置后一键同步到全局生效，不用手动复制。**怎么用**：修改团队 agent/skill 后运行它。
+- **scripts/sync-to-opencode.ps1**（已废弃）— **背景**：早期用于把 agent/skills/commands 同步到 OpenCode 全局配置的脚本。**现状**：已删除，因为全局配置由 CC Switch 统一管理，脚本写入会与 CC Switch 冲突。**替代方案**：通过 CC Switch UI 手动管理 agent / skills / commands 的全局配置。
 
 ### 📋 验证结果（实际运行数据）
 
