@@ -10,12 +10,25 @@
  * 零第三方依赖，用 Node 原生 API。
  */
 
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const VERSION = "0.3.0";
+
+// 版本号：从根 package.json 动态读取（与 plugin.ts 同一机制）
+let VERSION = "0.0.0";
+try {
+  let d = __dirname;
+  for (let i = 0; i < 10 && d !== dirname(d); i++) {
+    const p = join(d, "package.json");
+    if (existsSync(p)) {
+      const pkg = JSON.parse(readFileSync(p, "utf8"));
+      if (pkg.version) { VERSION = pkg.version; break; }
+    }
+    d = dirname(d);
+  }
+} catch {}
 
 function printHelp(): void {
   console.log(`
