@@ -32,7 +32,7 @@
     },
     {
       "title": "全量事件审计",
-      "desc": "events.jsonl 记录 9 种事件，支持命令行回放，所有决策可追溯",
+      "desc": "events.jsonl 记录 14 种事件，支持命令行回放，所有决策可追溯",
       "source": "README.md"
     },
     {
@@ -122,7 +122,7 @@
       "source": "docs/architecture.md"
     },
     {
-      "title": "事件审计（9 种 kind）",
+      "title": "事件审计（14 种 kind）",
       "desc": "events.jsonl 记录 session.created/ended、boundary、workflow.phase、gate.passed/failed、blocker.raised、decision.made/missing，append-only 可回放",
       "source": "docs/PRD.md"
     },
@@ -349,7 +349,7 @@
       "m": "M1",
       "name": "骨架",
       "status": "完成",
-      "detail": "6 角色 agent 定义 + 13 个 skill + 3 个 command + 3 个脚本",
+      "detail": "6 角色 agent 定义 + 14 个 skill + 3 个 command + 15 个脚本",
       "source": "docs/PRD.md"
     },
     {

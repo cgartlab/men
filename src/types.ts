@@ -32,7 +32,7 @@ export interface SkillDef {
 }
 
 /** 意图类型 */
-export type IntentType = "search" | "analyze" | "team" | "hyperplan";
+export type IntentType = "search" | "analyze" | "team" | "hyperplan" | "unknown";
 
 /** 意图门判定结果 */
 export interface TriageResult {

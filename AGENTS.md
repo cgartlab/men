@@ -18,15 +18,18 @@
 | `.opencode/agent/*.md` | **6 个 agent 定义**（唯一源代码）。每次编辑必须先 read 再 edit |
 | `.opencode/skills/*/SKILL.md` | 13 个技能包（ji×3/si×3/xun×3/chi×2/yi×2） |
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
+| `.opencode/plugins/men-sidebar/` | **TUI 侧边栏插件**：橘黄徽章 + 版本号统一变量 + agents 兜底链（V8） |
 | `scripts/*.mjs` | 机械验证三件套：`verify.mjs`（check battery）/ `gate.mjs`（门禁）/ `event.mjs`（事件审计），纯 Node 零依赖 |
 | `scripts/learn.mjs` / `scripts/eval-metrics.mjs` | 自主学习回路（L0/L1 经验提取与评估） |
 | `scripts/learn-rules.mjs` | 学习规则判定表（L1 机械，men.* 类型归一化） |
 | `scripts/learn-budget.mjs` | 学习预算控制 |
 | `scripts/eval-report.mjs` | 评估报告生成 |
+| `scripts/core-test.mjs` | Core Engine 状态机验证脚本（Phase 2） |
 | `errors/` | 学习回路自动生成的错误模式（error-*.md） |
 | `knowledge/patterns/` | 协作模式库（3 条初始条目） |
 | `knowledge/decisions/` | 决策记录（3 条：M0/M6/M7） |
 | `scripts/fix-port-4096.ps1` | 修复 OpenCode 端口 4096 占用 |
+| `src/core/` | **Core Engine 状态机**：`orchestrator.ts`（编排器）/ `triage.ts`（意图门判定）/ `intent.ts`（意图判定表） |
 
 | `.github/workflows/ci.yml` | CI 工作流（validate/triage） |
 | `.github/` | PR/Issue 模板、CODEOWNERS、FUNDING、dependabot |
