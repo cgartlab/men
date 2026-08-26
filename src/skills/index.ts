@@ -1,7 +1,7 @@
 /**
  * opencode-men — 技能加载器
  *
- * 从 src/skills 下各子目录的 SKILL.md 加载技能定义。
+ * 从 .opencode/skills 下各子目录的 SKILL.md 加载技能定义。
  * 技能保持 .md 格式（社区贡献门槛低），代码只负责加载和注册。
  */
 
@@ -11,7 +11,9 @@ import { fileURLToPath } from "node:url";
 import type { SkillDef } from "../types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SKILLS_DIR = join(__dirname);
+// dist/skills/index.js → 向上两级到项目根，再进 .opencode/skills/
+// （源码形态 src/skills/ 同样向上两级命中项目根，路径在编译前后一致）
+const SKILLS_DIR = join(__dirname, "..", "..", ".opencode", "skills");
 
 /**
  * 扫描 skills 目录，加载所有 SKILL.md
@@ -56,7 +58,7 @@ function parseSkillMeta(raw: string): { name: string; description: string } {
   let description = "";
 
   // Try YAML frontmatter
-  const fmMatch = raw.match(/^---\n([\s\S]*?)\n---/);
+  const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (fmMatch) {
     const fm = fmMatch[1];
     const nameMatch = fm.match(/^name:\s*(.+)$/m);
