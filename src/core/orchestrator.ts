@@ -144,13 +144,40 @@ export class Orchestrator {
     this.hooks.onEvent(event);
   }
 
-  /** 主流程 */
+  /** 主流程：while 循环驱动重试，直到 PASS / BLOCKED */
   async run(task: string): Promise<OrchestratorResult> {
     this._task = task;
     this._taskResults = [];
     this._retryCount = 0;
     this._lastGate = null;
 
+    while (true) {
+      const { verdict, report } = await this.executeOnce();
+
+      if (verdict === "PASS") {
+        return this.finish("PASS", report);
+      }
+
+      if (verdict === "BLOCKED") {
+        return this.finish("BLOCKED", report);
+      }
+
+      // verdict === "PARTIAL" → 重试
+      this._retryCount++;
+      if (!this.canRetry()) {
+        this.emit("blocker.raised", "men.blocked", `retry exhausted (${this._retryCount}/${this._maxRetries})`);
+        return this.finish("BLOCKED", `重试已达上限 ${this._maxRetries} 次`);
+      }
+
+      this.emit("dispatch", "men.retry", `retry=${this._retryCount}/${this._maxRetries}`);
+      // 重置部分状态，保留 _task 和 _retryCount
+      this._taskResults = [];
+      this._lastGate = null;
+    }
+  }
+
+  /** 单次执行：certainty→triage→plan→dispatch→collect→evaluate→verify→report→loop→learn，返回 verdict + report */
+  private async executeOnce(): Promise<{ verdict: OrchestratorResult["verdict"]; report: string }> {
     // 1. certainty —— 确认任务可用
     this.transitionTo("certainty");
     this.emit("session.created", "men.session", `task_length=${this._task.length}`);
@@ -159,7 +186,7 @@ export class Orchestrator {
       if (!clarified.trim()) {
         this.emit("blocker.raised", "men.blocked", "empty task after clarification");
         this.transitionTo("blocked");
-        return this.finish("BLOCKED", "任务为空，无法执行。");
+        return { verdict: "BLOCKED", report: "任务为空，无法执行。" };
       }
       this._task = clarified;
     }
@@ -239,11 +266,9 @@ export class Orchestrator {
         tr.verifyPassed = gate.pass;
       }
       if (!gate.pass) {
-        this._retryCount += 1;
         this.emit("gate.failed", "men.gate", `keyword=typecheck exit=${gate.exitCode}`, {
           keyword: "typecheck",
           exitCode: gate.exitCode,
-          retryCount: this._retryCount,
         });
       } else {
         this.emit("gate.passed", "men.gate", "keyword=typecheck pass");
@@ -254,32 +279,20 @@ export class Orchestrator {
     this.transitionTo("report");
     const report = this.buildReport();
 
-    // 9. loop —— 判定是否需要重试
+    // 9. loop —— 判定本轮是否需重试（重试次数由 run() 循环统一管理）
     this.transitionTo("loop");
     let verdict: OrchestratorResult["verdict"] = "PASS";
     const hasFailingVerify = this._taskResults.some((tr) => !tr.verifyPassed);
     if (hasCodeOutput && hasFailingVerify) {
-      if (this.canRetry()) {
-        verdict = "PARTIAL";
-        this.emit("dispatch", "men.retry", `retry=${this._retryCount}/${this._maxRetries}`);
-        // 简化：本轮先记 retry，不再真实重分发生成新结果
-        this.transitionTo("dispatch");
-      } else {
-        verdict = "BLOCKED";
-        this.emit("blocker.raised", "men.blocked", `retry exhausted (${this._retryCount}/${this._maxRetries})`);
-      }
+      verdict = "PARTIAL";
     }
 
-    // 10. learn —— 学习事件并收尾
+    // 10. learn —— 学习事件并收尾（BLOCKED 由 run() 在重试耗尽时处理）
     this.transitionTo("learn");
-    if (verdict === "BLOCKED") {
-      this.emit("boundary", "ultrawork.blocked", `verdict=${verdict}`);
-    } else {
-      this.emit("boundary", "ultrawork.completed", `verdict=${verdict}`);
-    }
+    this.emit("boundary", "ultrawork.completed", `verdict=${verdict}`);
     this.transitionTo("done");
 
-    return this.finish(verdict, report);
+    return { verdict, report };
   }
 
   private canRetry(): boolean {
@@ -292,7 +305,7 @@ export class Orchestrator {
       return [1];
     }
     const waves = new Set<number>();
-    const re = /wave\s*[#:：]?\s*(\d+)/gi;
+    const re = /(?:wave|波次|第)\s*(?:[#:：]?\s*)?(\d+)(?:\s*波)?/gi;
     let m: RegExpExecArray | null;
     while ((m = re.exec(planOutput)) !== null) {
       const n = Number(m[1]);
