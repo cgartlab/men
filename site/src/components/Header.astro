@@ -179,21 +179,22 @@ function isActive(href: string): boolean {
   }
 
   @media (max-width: 780px) {
-    .site-header__title {
-      display: none;
+    .site-header__inner {
+      flex-wrap: wrap;
+      padding: var(--space-2) var(--space-4);
+      gap: 0 var(--space-3);
     }
-
+    .site-header__brand { flex: 1; min-width: 0; }
+    .site-header__title { font-size: 0.95rem; }
+    .site-header__nav { width: 100%; }
     .site-header__nav ul {
-      gap: var(--space-4);
+      justify-content: space-between;
+      gap: var(--space-1);
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
+    .site-header__nav ul::-webkit-scrollbar { display: none; }
+    .site-header__link { display: inline-block; padding: 10px 2px; }
+    .site-header__gh { padding: 5px 9px; white-space: nowrap; }
   }
-
-  @media (max-width: 560px) {
-    .site-header__nav li:nth-child(4),
-    .site-header__nav li:nth-child(5),
-    .site-header__nav li:nth-child(6),
-    .site-header__nav li:nth-child(7) {
-      display: none;
-    }
-  }
-</style>
