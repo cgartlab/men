@@ -7,7 +7,7 @@ agent: men
 
 用户任务：$ARGUMENTS
 
-## 编排协议（9 步）
+## 编排协议（10 步）
 
 ### 1. CERTAINTY —— 需求确认
 - 任务模糊、有歧义、缺少关键信息时，**先向用户追问**，不要猜测（你的 Clarification level 是 HIGH）
@@ -143,7 +143,7 @@ node scripts/gate.mjs typecheck --dir <产物所在目录> --sid <sid>
 
 ### 10. LEARN —— 自主学习触发（M7）
 
-任务完成（第 9 步 LOOP 结束，无论成功还是卡住）后，men 作为编排者触发自主学习回路：
+任务完成（第 10 步 LOOP 结束，无论成功还是卡住）后，men 作为编排者触发自主学习回路：
 
 ```bash
 node scripts/learn.mjs --sid <sid> --json

@@ -1320,3 +1320,21 @@ main {
   .manual__pager { flex-direction: column; }
   .manual__pager-item--next { margin-left: 0; text-align: left; }
 }
+
+/* ===== Mobile responsive hardening ===== */
+@media (max-width:720px){
+  html{-webkit-text-size-adjust:100%}
+  body{font-size:15px}
+  .wiki-table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  svg.topo-svg{min-width:840px;height:auto}
+  section:has(svg.topo-svg),div:has(svg.topo-svg){overflow-x:auto;-webkit-overflow-scrolling:touch}
+  pre{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  pre code{white-space:pre}
+  code{word-break:break-word}
+  img,svg,video{max-width:100%}
+  .site-header nav a,.site-nav a{padding:10px 10px}
+  details summary,button,a.btn{min-height:44px}
+}
+@media (max-width:480px){
+  h1{font-size:1.65rem}h2{font-size:1.3rem}
+}

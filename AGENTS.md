@@ -16,7 +16,7 @@
 |------|------|
 | `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking） |
 | `.opencode/agent/*.md` | **6 个 agent 定义**（唯一源代码）。每次编辑必须先 read 再 edit |
-| `.opencode/skills/*/SKILL.md` | 13 个技能包（ji×3/si×3/xun×3/chi×2/yi×2） |
+| `.opencode/skills/*/SKILL.md` | 14 个技能包（ji×4/si×3/xun×3/chi×2/yi×2） |
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
 | `.opencode/plugins/men-sidebar/` | **TUI 侧边栏插件**：橘黄徽章 + 版本号统一变量 + agents 兜底链（V8） |
 | `scripts/*.mjs` | 机械验证三件套：`verify.mjs`（check battery）/ `gate.mjs`（门禁）/ `event.mjs`（事件审计），纯 Node 零依赖 |
@@ -126,7 +126,7 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - **远程仓库**：https://github.com/cgartlab/men
 - **CI 状态**：GitHub Actions validate/triage 自动运行
 - **学习回路**：learn.mjs + eval-metrics.mjs 均已验证运行正常
-- **事件审计**：9 种 kind 枚举，events.jsonl 可回放
+- **事件审计**：14 种 kind 枚举，events.jsonl 可回放
 - **依赖管理**：.opencode/node_modules/ 本地安装，不共享根目录
 - **事件类型**：统一使用 event.mjs 标准格式（ts/event/subject/detail/payload）
 

@@ -17,7 +17,7 @@
     },
     {
       "title": "一键编排",
-      "desc": "/ultrawork 9 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话",
+      "desc": "/ultrawork 10 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话",
       "source": "README.md"
     },
     {
@@ -102,7 +102,7 @@
   ],
   "mechanisms": [
     {
-      "title": "9 步编排协议",
+      "title": "10 步编排协议",
       "desc": "CERTAINTY → TRIAGE → PLAN → DISPATCH → COLLECT → EVALUATE → VERIFY → REPORT → LOOP，每一步都有明确的输入和输出，任务从一句话变成可交付产物",
       "source": "docs/architecture.md"
     },
@@ -276,7 +276,7 @@
     },
     {
       "kind": "workflow.phase",
-      "when": "9 步协议每步完成",
+      "when": "10 步协议每步完成",
       "who": "men"
     },
     {

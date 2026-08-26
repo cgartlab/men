@@ -11,7 +11,7 @@ const base = '/';
 const infobox = [
   { k: '前置条件', v: '<code>Node.js ≥ 18</code> + 已安装 OpenCode' },
   { k: '核心命令', v: '<code>/ultrawork</code> · <code>/verify</code> · <code>/hyperplan</code>' },
-  { k: '编排协议', v: '<strong>9 步</strong>核心（CERTAINTY → LOOP）+ 第 10 步 LEARN（M7）' },
+  { k: '编排协议', v: '<strong>10 步</strong>闭环（第 10 步 LEARN，M7 新增）' },
   { k: '验证机制', v: '<strong>双层验证</strong>：verify.mjs 五项机械检查 + chi 语义复核' },
   { k: '预计耗时', v: '约 <strong>30 分钟</strong>跑通第一个任务（模型配置约 2–3 分钟）' },
   { k: '模型配置', v: '<code>node scripts/setup.mjs</code> 交互式引导' },
@@ -48,46 +48,7 @@ const seealso = [
   >
     <section id="prerequisites" class="doc-section">
       <h2>前置条件</h2>
-      <p>开始前需要满足以下运行环境：</p>
-      <ul>
-        <li><strong>Node.js ≥ 18</strong> — <code>@opencode-ai/plugin</code> 的 engines 要求，脚本依赖在此版本上运行。</li>
-        <li><strong>OpenCode</strong> — 已安装并准备进入 men 项目目录；启动后自动读取 <code>opencode.json</code>，将 men 设为默认 agent。</li>
-        <li><strong>模型 API Key</strong> — 通过引导脚本 <code>node scripts/setup.mjs</code> 交互式配置（约 2–3 分钟），脚本会根据订阅情况推荐模型组合并写入 <code>opencode.json</code>。</li>
-      </ul>
-      <SrcRef files={['AGENTS.md','docs/guide/quickstart.md']} />
-    </section>
-
-    <section id="clone" class="doc-section">
-      <h2>克隆与启动</h2>
-      <p>克隆仓库并启动本地站点：</p>
-      <div class="code-block">
-        <span class="code-block__lang">bash</span>
-        <pre><code>git clone https://github.com/cgartlab/men.git
-cd men
-npx astro dev --config site/astro.config.mjs</code></pre>
-      </div>
-      <p>打开 <a href="http://localhost:4399/">http://localhost:4399/</a> 即可预览站点。</p>
-      <p>正式环境地址为 <strong><code>https://men.cgartlab.com</code></strong>（上线后生效），本地开发与线上站点内容一致。</p>
-      <p>如需将 agent / skills / commands 同步到 OpenCode 全局，可执行：</p>
-      <div class="code-block">
-        <span class="code-block__lang">powershell</span>
-        <pre><code>powershell -ExecutionPolicy Bypass -File scripts/sync-to-opencode.ps1</code></pre>
-      </div>
-      <p class="src-ref">来源：<code>site/src/data/content.json</code>（install 区块）· <code>site/src/pages/docs/overview.astro</code></p>
-    </section>
-
-    <section id="first-task" class="doc-section">
-      <h2>第一个任务</h2>
-      <p>在项目目录执行 <code>opencode</code> 进入 TUI，然后使用 <code>/ultrawork</code> 提交任务：</p>
-      <div class="code-block">
-        <span class="code-block__lang">text</span>
-        <pre><code>/ultrawork 写一份行业研究报告</code></pre>
-      </div>
-      <p><code>/ultrawork &lt;任务&gt;</code> 是一键编排命令：men 自动完成意图分诊、拆解、分发、验证、汇总，适合日常绝大多数任务。men 是唯一能 spawn 子 agent 的角色（si / ji / yi / xun / chi 均为 subagent，不能嵌套 spawn）。</p>
-      <div class="wiki-note">
-        <strong>协议计数说明</strong>：<code>ultrawork.md</code> 章节标题标注「9 步」，编号为 1–10。其中第 1–9 步为编排闭环（CERTAINTY → TRIAGE → PLAN → DISPATCH → COLLECT → EVALUATE → VERIFY → REPORT → LOOP），第 10 步 LEARN（自主学习触发，M7）在 REPORT 后追加，不阻塞主流程。
-      </div>
-      <p class="src-ref">来源：<code>.opencode/command/ultrawork.md</code> · <code>site/src/data/content.json</code>（commands）· <code>AGENTS.md</code></p>
+      <p><strong>协议计数说明</strong>：<code>ultrawork.md</code> 共 <strong>10 步</strong>：第 1–9 步为编排闭环，第 10 步 LEARN 触发学习回路（M7 加入）。</p>
     </section>
 
     <section id="verify" class="doc-section">
