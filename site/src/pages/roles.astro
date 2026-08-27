@@ -33,23 +33,22 @@ const roleDetails: Record<string, {
   },
   si: {
     responsibilities: [
-      '访谈式规划：接收 men 分派的 team / hyperplan 任务，通过逐层追问产出 plan envelope',
+      '深度思考与多角度方案：接收 men 分派的 team / hyperplan 任务，从多角度提出解决方案，思考细致全面',
       'Plan Envelope：依赖图 + 并行波次 + 每项验收标准表，是后续所有 agent 执行的蓝图',
-      '内容写作：博客、技术文档、周报等结构化内容创作（skill: content-write）',
       '知识管理：PKM 复盘、知识沉淀、决策归档（skill: knowledge）',
       '回评：把 ji/yi 等产出角色的结果回传做质量评估，只评不改，标注达标/不达标',
     ],
-    skills: ['si-plan-compose（规划拆解）', 'si-content-write（内容写作）', 'si-knowledge（知识管理）'],
+    skills: ['si-plan-compose（方案拆解）', 'si-knowledge（知识管理）'],
     input: 'men 分派的子任务描述 + 上下文约束',
     output: 'plan envelope / Markdown 文章 / 知识沉淀文档 / 回评报告',
     redlines: ['只评不改——评估其他 agent 产物时只标注不修改', '规划先行——team/hyperplan 类必须先产出 plan 再执行', '不直接执行代码或生图'],
-    charter: 'Clarification level: HIGH — 规划阶段必须追问清楚，不假设',
+    charter: 'Clarification level: HIGH — 深度思考阶段必须追问清楚，不假设',
   },
   ji: {
     responsibilities: [
       '代码实现：按 plan 实现前端/后端代码，前端开发优先（skill: frontend-design）',
       'GitHub 操作：创建 PR、Review 代码、管理 Issue、分支管理（skill: github）',
-      '内容写作：技术博客、文档、周报等结构化内容（skill: content-write）',
+      '内容写作：技术博客、文档、周报等结构化内容（skill: ji-content-write）',
       'L1 机械验证：代码完成后跑 typecheck / lint / test，通过后自我审查再交付（skill: l1-verify）',
       '目录结构审计：确保文件组织符合项目规范',
     ],
@@ -127,9 +126,9 @@ const flowSteps = [
   {
     id: 'plan',
     icon: 'lucide:file-text',
-    label: 'si 规划拆解',
+    label: 'si 深度思考',
     example: '产出 plan envelope：依赖图 + Wave + 验收标准',
-    detail: 'team / hyperplan 类任务必须 spawn si 做访谈式拆解，产出 plan envelope：子任务依赖关系、并行波次、每项验收标准。规划先行，避免无序执行。',
+    detail: 'team / hyperplan 类任务必须 spawn si 做深度思考与方案拆解，产出 plan envelope：子任务依赖关系、并行波次、每项验收标准。方案先行，避免无序执行。',
   },
   {
     id: 'dispatch',
@@ -143,7 +142,7 @@ const flowSteps = [
     icon: 'lucide:play',
     label: '子 Agent 执行',
     example: 'xun 搜索行业数据 / yi 生成配图 / si 撰写正文',
-    detail: '各子 agent 独立执行，互不干扰。xun 负责搜索数据，yi 负责视觉设计，si 负责写作，ji 负责代码。每个 agent 只做自己擅长的事。',
+    detail: '各子 agent 独立执行，互不干扰。xun 负责信息收集，yi 负责文生图提示词与出图，si 负责方案思考，ji 负责写作与代码。每个 agent 只做自己擅长的事。',
   },
   {
     id: 'verify',
@@ -163,12 +162,12 @@ const flowSteps = [
 
 // Routing table data
 const routingRows = [
-  { keyword: '查信息 / 新闻 / 资料 / 事实核查 / 调研', intent: 'search', target: 'xun（寻）', path: 'xun 单路研究', verify: '来源交叉验证 + factcheck skill', output: '事实清单 / 调研报告' },
+  { keyword: '信息收集 / 查信息 / 新闻 / 资料 / 事实核查 / 调研', intent: 'search', target: 'xun（寻）', path: 'xun 单路研究', verify: '来源交叉验证 + factcheck skill', output: '事实清单 / 调研报告' },
   { keyword: '代码 / GitHub / 工程 / 前端', intent: 'code → team', target: 'ji（记）', path: 'ji 实现 + gate 验证', verify: 'typecheck / lint / test + verify.mjs', output: '代码文件 / PR / Issue' },
-  { keyword: '写作 / 博客 / 文档 / 周报 / 内容', intent: 'content → team', target: 'ji（记）', path: 'ji 内容写作（skill: content-write）', verify: '结构检查 + 字数统计', output: 'Markdown 文章 / 文档' },
-  { keyword: '写作 / PKM / 知识 / 规划 / 需求', intent: 'team / hyperplan', target: 'si（思）', path: 'si 规划 + 产出 plan envelope', verify: 'chi judge 验收标准表', output: 'plan envelope / 知识沉淀' },
-  { keyword: '投资 / 财务 / 持仓 / 收益', intent: 'analyze', target: 'chi（持）', path: 'chi 投资分析', verify: '数据来源交叉验证', output: '持仓分析 / 投资建议' },
-  { keyword: 'CG / 设计 / 审美 / 生图 / 配色', intent: 'team', target: 'yi（艺）', path: 'yi 设计决策 + SenseNova 生图', verify: 'WCAG 对比度检查', output: '设计稿 / 生图 / Token 定义' },
+  { keyword: '写作 / 博客 / 文档 / 周报 / 内容', intent: 'content → team', target: 'ji（记）', path: 'ji 内容写作（skill: ji-content-write）', verify: '结构检查 + 字数统计', output: 'Markdown 文章 / 文档' },
+  { keyword: '方案思考 / 知识管理 / 深度研究 / 规划 / 需求', intent: 'team / hyperplan', target: 'si（思）', path: 'si 深度思考 + 产出 plan envelope', verify: 'chi judge 验收标准表', output: 'plan envelope / 知识沉淀' },
+  { keyword: '投资 / 财务 / 市场分析 / 数据统计 / 持仓 / 收益', intent: 'analyze', target: 'chi（持）', path: 'chi 投资分析', verify: '数据来源交叉验证', output: '持仓分析 / 投资建议' },
+  { keyword: '审美 / 文生图提示词 / 生图 / 配色 / 视觉', intent: 'team', target: 'yi（艺）', path: 'yi 多方案提示词工程 + SenseNova 生图', verify: 'WCAG 对比度检查', output: '设计稿 / 生图 / Token 定义' },
   { keyword: '分析 / 评估 / 诊断 / 评审 / 判断', intent: 'analyze', target: 'chi（持）', path: '相关专家产出 + chi judge 复核', verify: 'chi fresh-context 语义复核', output: '评审报告 / 诊断结论' },
   { keyword: '混合 / 模糊 / 跨领域 / 综合', intent: 'team', target: 'men → 多路并行', path: 'men 按混合任务拆分规则编排', verify: '每个子任务独立验证 + 汇总', output: '结构化汇总报告' },
 ];
@@ -356,7 +355,7 @@ const routingRows = [
         <p>
           men 通过 <strong>IntentGate</strong> 将用户指令分为四类意图：<strong>search</strong>（查信息，路由到 xun）、
           <strong>analyze</strong>（分析评审，路由到 chi + 专家）、<strong>team</strong>（多领域协作，men 编排多路并行）、
-          <strong>hyperplan</strong>（复杂项目启动，路由到 si 规划式访谈）。
+          <strong>hyperplan</strong>（复杂项目启动，路由到 si 深度思考与方案拆解）。
         </p>
         <p>
           分类依据是关键词判定表 + 历史经验（knowledge/patterns/index.md）。当置信度低于阈值时，

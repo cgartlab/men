@@ -12,7 +12,7 @@
   "traits": [
     {
       "title": "6+1 角色分工",
-      "desc": "门（编排）· 思（规划/写作）· 记（代码/工程）· 持（投资评审/Judge）· 艺（视觉设计）· 寻（搜索研究），各司其职",
+      "desc": "门（编排）· 思（思考/知识管理）· 记（代码/写作）· 持（数据/投资评审/Judge）· 艺（文生图/审美）· 寻（搜索/核查），各司其职",
       "source": "README.md"
     },
     {
@@ -68,35 +68,35 @@
       "name": "si",
       "cn": "思",
       "mode": "subagent",
-      "desc": "规划与写作：需求访谈、plan envelope、内容写作、回评",
+      "desc": "思考与知识管理：深度思考、多角度方案、plan envelope、知识库沉淀",
       "source": "docs/PRD.md"
     },
     {
       "name": "ji",
       "cn": "记",
       "mode": "subagent",
-      "desc": "代码与工程：前端实现、GitHub 操作、L1 机械验证、目录结构审计",
+      "desc": "代码与写作：前端实现、精准内容写作、GitHub 操作、L1 机械验证",
       "source": "docs/PRD.md"
     },
     {
       "name": "chi",
       "cn": "持",
       "mode": "subagent · 兼任独立 Judge",
-      "desc": "投资与评审：持仓/财务分析 + 独立 Judge（fresh-context 语义复核）",
+      "desc": "投资与评审：数据记录、统计、市场分析 + 独立 Judge（fresh-context 语义复核）",
       "source": "docs/PRD.md"
     },
     {
       "name": "yi",
       "cn": "艺",
       "mode": "subagent",
-      "desc": "视觉设计：设计决策、Logo 概念、生图（SenseNova 仅 yi 挂载）",
+      "desc": "文生图与审美：多方案提示词工程、设计决策、生图（SenseNova 仅 yi 挂载）",
       "source": "docs/PRD.md"
     },
     {
       "name": "xun",
       "cn": "寻",
       "mode": "subagent",
-      "desc": "搜索与研究：网页搜索、事实核查、RSS 扫描、来源验证",
+      "desc": "搜索与研究：信息全面收集、事实核查（不核实不输出）、RSS 扫描、来源验证",
       "source": "docs/PRD.md"
     }
   ],
@@ -152,7 +152,7 @@
     {
       "name": "/hyperplan",
       "usage": "/hyperplan <项目>",
-      "desc": "访谈式规划：逐层拆解复杂项目为可执行计划，产出 plan envelope（只规划不执行）",
+      "desc": "深度思考与方案拆解：多角度提出方案，产出 plan envelope（只规划不执行）",
       "agent": "men → si",
       "source": "docs/guide/quickstart.md",
       "example": "例：/hyperplan 设计一个多 Agent 协作系统"
@@ -590,29 +590,29 @@
         "desc": "入口与调度核心"
       },
       {
-        "role": "规划与写作",
+        "role": "思考与知识管理",
         "name": "si（思）",
-        "desc": "需求拆解与内容产出"
+        "desc": "深度思考与方案拆解"
       },
       {
-        "role": "代码与工程",
+        "role": "代码与写作",
         "name": "ji（记）",
-        "desc": "前端实现与 GitHub 操作"
+        "desc": "前端实现、精准写作与 GitHub 操作"
       },
       {
-        "role": "投资评审/Judge",
+        "role": "数据/投资评审/Judge",
         "name": "chi（持）",
-        "desc": "独立复核与机械验证"
+        "desc": "数据记录、市场分析与独立复核"
       },
       {
-        "role": "视觉设计",
+        "role": "文生图与审美",
         "name": "yi（艺）",
-        "desc": "设计决策与图像生成"
+        "desc": "多方案提示词工程与图像生成"
       },
       {
         "role": "搜索研究",
         "name": "xun（寻）",
-        "desc": "信息检索与事实核查"
+        "desc": "信息全面收集与事实核查（不核实不输出）"
       }
     ],
     "quote": "工具是人类肢体的延伸，电脑是大脑的延伸，写作是思考本身。",

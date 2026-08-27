@@ -9,11 +9,11 @@ const base = '/';
 /* 每个角色的准确标签（来源：AGENTS.md / .opencode/agent/*.md） */
 const roleTags: Record<string, string[]> = {
   men: ['primary', 'router', 'auditor'],
-  si: ['subagent', 'planner', 'writer'],
+  si: ['subagent', 'thinker', 'knowledge'],
   ji: ['subagent', 'engineer', 'l1-verify'],
-  chi: ['subagent', 'investor', 'judge'],
-  yi: ['subagent', 'designer', 'imagegen'],
-  xun: ['subagent', 'researcher', 'readonly'],
+  chi: ['subagent', 'data', 'investor', 'judge'],
+  yi: ['subagent', 'aesthetic', 'prompt-engine'],
+  xun: ['subagent', 'researcher', 'verify-first'],
 };
 
 const infobox = [
@@ -75,10 +75,10 @@ const seealso = [
           <tbody>
             <tr><td>代码 / GitHub / 工程</td><td><strong>ji</strong>（记）</td><td><code>team</code></td></tr>
             <tr><td>写作 / 内容 / 博客 / 周报</td><td><strong>ji</strong>（记）</td><td><code>team</code></td></tr>
-            <tr><td>写作 / PKM / 知识 / 规划</td><td><strong>si</strong>（思）</td><td><code>team</code></td></tr>
-            <tr><td>搜索 / 新闻 / 核查</td><td><strong>xun</strong>（寻）</td><td><code>search</code></td></tr>
-            <tr><td>投资 / 财务</td><td><strong>chi</strong>（持）</td><td><code>team</code></td></tr>
-            <tr><td>CG / 设计 / 审美 / 生图</td><td><strong>yi</strong>（艺）</td><td><code>team</code></td></tr>
+            <tr><td>方案思考 / 知识管理 / 深度研究 / 规划</td><td><strong>si</strong>（思）</td><td><code>team</code></td></tr>
+            <tr><td>信息收集 / 搜索 / 新闻 / 事实核查</td><td><strong>xun</strong>（寻）</td><td><code>search</code></td></tr>
+            <tr><td>投资 / 财务 / 市场分析 / 数据统计</td><td><strong>chi</strong>（持）</td><td><code>team</code></td></tr>
+            <tr><td>审美 / 文生图提示词 / 生图</td><td><strong>yi</strong>（艺）</td><td><code>team</code></td></tr>
             <tr><td>混合 / 模糊</td><td><strong>men</strong> → 多路并行 + 汇总</td><td><code>team / hyperplan</code></td></tr>
             <tr><td>分析 / 验证 / 评审</td><td><strong>相关专家 + chi</strong>（judge）</td><td><code>analyze</code></td></tr>
           </tbody>
@@ -97,7 +97,7 @@ const seealso = [
             <tr><td><code>search</code></td><td>查信息 / 新闻 / 资料 / 核查</td><td>xun 单路研究</td><td>xun</td></tr>
             <tr><td><code>analyze</code></td><td>分析 / 评估 / 诊断 / 评审</td><td>专家产出 + judge 复核</td><td>si/ji/chi + chi（judge）</td></tr>
             <tr><td><code>team</code></td><td>多领域 / 跨领域综合</td><td>多路并行 + si 规划（必要时）</td><td>任意组合</td></tr>
-            <tr><td><code>hyperplan</code></td><td>复杂项目启动 / 从零规划</td><td>访谈式规划 → 拆解 → 执行</td><td>si + 后续各角色</td></tr>
+            <tr><td><code>hyperplan</code></td><td>复杂项目启动 / 从零规划</td><td>深度思考多角度方案 → 拆解 → 执行</td><td>si + 后续各角色</td></tr>
           </tbody>
         </table>
       </div>

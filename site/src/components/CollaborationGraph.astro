@@ -2,34 +2,33 @@
 /*
  * CollaborationGraph.astro — 交互式协作拓扑
  * 中心节点 men（门），周围 5 个 Agent；SVG 流动连线展示
- * 分发 / 规划 / 研究 / 验收 四种协作关系。
+ * 分发 / 研究 / 验收 三种协作关系（si 产出经 men 分发）。
  * 交互：hover 节点高亮其连线 + 浮现角色一句话；
  *       「演示协作」按钮播放一次 /ultrawork 流程。
  */
 const nodes = [
   { id: 'men', cn: '门', en: 'men', x: 400, y: 300, r: 44, kind: 'hub',
-    role: '编排与路由核心 · 用户唯一对话入口' },
+    role: '唯一编排核心 · 用户唯一对话入口' },
   { id: 'si', cn: '思', en: 'si', x: 175, y: 135, r: 34, kind: 'agent',
-    role: '规划与知识管理 · 团队的「大脑」' },
+    role: '思考与知识管理 · 团队的「大脑」' },
   { id: 'ji', cn: '记', en: 'ji', x: 625, y: 135, r: 34, kind: 'agent',
-    role: '代码与工程执行者 + 写作者' },
+    role: '代码与写作执行者 · 文本绝对精准' },
   { id: 'yi', cn: '艺', en: 'yi', x: 690, y: 445, r: 34, kind: 'agent',
-    role: '视觉专家与设计师 · 审美素养大师' },
+    role: '文生图提示词专家 · 审美素养大师' },
   { id: 'chi', cn: '持', en: 'chi', x: 110, y: 445, r: 34, kind: 'agent',
-    role: '投资分析师 + 独立 Judge' },
+    role: '数据/投资分析师 + 独立 Judge' },
   { id: 'xun', cn: '寻', en: 'xun', x: 400, y: 545, r: 34, kind: 'agent',
-    role: '研究助理 · 只读的信息检索与核查' },
+    role: '研究助理 · 全面收集，不核实不输出' },
 ];
 
-// type: dispatch(分发) | plan(规划驱动) | research(研究支持) | verify(验收)
+// type: dispatch(分发) | research(研究支持) | verify(验收)
+// plan(规划驱动) 已无连线：si 产出经 men 分发，不直接驱动子 agent
 const edges = [
   { from: 'men', to: 'si', type: 'dispatch' },
   { from: 'men', to: 'ji', type: 'dispatch' },
   { from: 'men', to: 'yi', type: 'dispatch' },
   { from: 'men', to: 'chi', type: 'dispatch' },
   { from: 'men', to: 'xun', type: 'dispatch' },
-  { from: 'si', to: 'ji', type: 'plan' },
-  { from: 'si', to: 'yi', type: 'plan' },
   { from: 'xun', to: 'si', type: 'research' },
   { from: 'xun', to: 'yi', type: 'research' },
   { from: 'si', to: 'chi', type: 'verify' },
@@ -337,8 +336,8 @@ function edgePath(e: { from: string; to: string }) {
     let playing = false;
     const flow = [
       ['men', 'si', 700],
-      ['si', 'ji', 650],
-      ['si', 'yi', 650],
+      ['men', 'ji', 650],
+      ['men', 'yi', 650],
       ['ji', 'chi', 650],
       ['yi', 'chi', 650],
       ['men', null, 800],
