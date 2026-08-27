@@ -80,11 +80,12 @@ model: <model-id>
           <thead><tr><th>字段</th><th>值</th><th>用途</th></tr></thead>
           <tbody>
             <tr><td><code>$schema</code></td><td><code>https://opencode.ai/config.json</code></td><td>配置校验 schema</td></tr>
-            <tr><td><code>version</code></td><td><code>0.3.0</code></td><td>配置版本号</td></tr>
+            <tr><td><code>version</code></td><td><code>0.3.1</code></td><td>配置版本号</td></tr>
             <tr><td><code>default_agent</code></td><td><code>men</code></td><td>默认（primary）对话 Agent</td></tr>
             <tr><td><code>instructions</code></td><td><code>AGENTS.md</code></td><td>注入的全局说明文件</td></tr>
             <tr><td><code>agent</code></td><td>6 个角色模型映射</td><td>每个 Agent 的运行时模型（见下节）</td></tr>
-            <tr><td><code>plugin</code></td><td><code>.opencode/plugins/men-sidebar</code></td><td>本地插件</td></tr>
+            <tr><td><code>plugin</code></td><td><code>.opencode/plugins/men-sidebar</code></td><td>本地 server 插件（TUI 侧边栏见 <code>tui.json</code>）</td></tr>
+            <tr><td><code>tui.json</code></td><td><code>.opencode/tui.json</code></td><td>TUI 插件声明：<code>./plugins/men-sidebar/tui.js</code>（侧边栏徽章 + agents 列表）</td></tr>
             <tr><td><code>skills.paths</code></td><td><code>.opencode/skills</code></td><td>技能包搜索路径</td></tr>
             <tr><td><code>mcp</code></td><td>7 个服务</td><td>外部工具服务（见 MCP 节）</td></tr>
           </tbody>

@@ -16,6 +16,16 @@
 
 ### Fixed
 
+## [v0.3.1] - 2026-08-27
+
+### Added
+
+### Changed
+
+### Fixed
+
+- 修复 OpenCode 侧边栏不显示 Men 配置：新增 `.opencode/tui.json` 声明 TUI 插件入口（TUI 插件无目录自动发现，必须在 `tui.json` 显式列出），并补 `@opentui/*` 依赖（`@opencode-ai/plugin` 的 peer deps），安装器 `npm install --prefix .opencode` 自动安装
+
 ## [v0.3.0] - 2026-08-27
 
 ### Added
