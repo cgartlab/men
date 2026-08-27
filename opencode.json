@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "default_agent": "men",
   "instructions": [
     "AGENTS.md"
@@ -51,7 +51,11 @@
     },
     "fetch": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-fetch"],
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ],
       "enabled": true
     },
     "github-mcp-server": {
@@ -65,12 +69,20 @@
     },
     "memory": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
       "enabled": true
     },
     "sequential-thinking": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
       "enabled": true
     }
   }

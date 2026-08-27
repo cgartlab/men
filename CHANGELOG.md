@@ -12,6 +12,14 @@
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [v0.3.0] - 2026-08-27
+
+### Added
+
 - men 插件启动自动检查版本更新（弹窗提示 + men-update / men-status 内置 skill）
 - npm 一行安装：发布 `@cgartlab/men`，任意目录 `npx @cgartlab/men` 即完成脚手架+依赖+环境+端到端验证（package.json 加 `bin`/`publishConfig`，install.mjs 新增 scaffold 模式）
 - men-status / men-update 内置 skill 纳入文档与技能计数（15 个技能包：ji×4/si×2/xun×3/chi×2/yi×2/men×2）
