@@ -14,6 +14,14 @@
 
 _下一版本的新增内容将记录在此。_（当前为占位，保持空）
 
+### 🔄 Changed
+
+- **6 个 agent 角色定位重构**（`.opencode/agent/*.md`）— **是什么**：men 确立为**唯一任务编排与分工核心**（子角色不直接互编、协作经 men 分发）；si 从"规划器"转向**思考者与知识管理者**（深度思考、多角度方案，写作移交 ji）；ji 强化代码与写作执行、**文本绝对精准**；yi 核心转为**文生图提示词工程**（多方案提示词 → 出图，视频列为开发计划）；chi 补充**数据记录/统计/市场分析**；xun 强化**不核实不输出**。**为什么重要**：角色边界与调用关系更清晰，路由不再歧义。**怎么用**：任务分派直接按新定位执行。
+- **网站角色信息同步**（`site/`）— **是什么**：9 个站点文件 + README 的角色描述、路由表、协作拓扑图全部同步新定位；协作图**删除 si→ji/yi 直接连线**（协作经 men 分发）。**为什么重要**：站点展示与 agent 定义一致，避免误导。**怎么用**：访问站点角色页即可看到新定位。
+- **换行符规范化**：新增 `.gitattributes`（`* text=auto`），Git 自动统一 CRLF/LF，无需手动维护。
+- **技能计数修正**：14 → 13 个技能包（`si-content-write` 为历史空壳，移除；实际 si×2 / ji×4 / xun×3 / chi×2 / yi×2），AGENTS.md 与站点配置同步。
+- **hyperplan 术语同步**：`.opencode/command/hyperplan.md`、README、men 意图门表的"访谈式规划"统一为"深度思考与方案规划"。
+
 ### 🗑️ Removed
 
 - **scripts/sync-to-opencode.ps1** — 删除 OpenCode 全局同步脚本。原因：全局配置由 CC Switch 统一管理，脚本写入会与 CC Switch 冲突（`provider`/`mcp`/`instructions` 等字段被覆盖后又被 CC Switch 回滚）。替代方案：通过 CC Switch UI 手动管理 agent / skills / commands 的全局配置。

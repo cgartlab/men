@@ -16,7 +16,7 @@
 |------|------|
 | `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking） |
 | `.opencode/agent/*.md` | **6 个 agent 定义**（唯一源代码）。每次编辑必须先 read 再 edit |
-| `.opencode/skills/*/SKILL.md` | 14 个技能包（ji×4/si×3/xun×3/chi×2/yi×2） |
+| `.opencode/skills/*/SKILL.md` | 13 个技能包（ji×4/si×2/xun×3/chi×2/yi×2） |
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
 | `.opencode/plugins/men-sidebar/` | **TUI 侧边栏插件**：橘黄徽章 + 版本号统一变量 + agents 兜底链（V8） |
 | `scripts/*.mjs` | 机械验证三件套：`verify.mjs`（check battery）/ `gate.mjs`（门禁）/ `event.mjs`（事件审计），纯 Node 零依赖 |

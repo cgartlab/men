@@ -46,12 +46,12 @@ const showcaseAgents = [
   {
     id: 'si',
     cn: '思',
-    role: '规划与写作',
+    role: '思考与知识管理',
     color: '#4a90d9',
     icon: 'lucide:pen-tool',
-    desc: '需求访谈式拆解，产出 plan envelope（依赖图 + 并行波次 + 验收标准）。内容写作与知识管理。',
-    skills: ['Plan Envelope 产出', '需求访谈拆解', '内容写作 (博客/文档)', '知识库沉淀', '回评子 Agent 产物'],
-    constraint: '只规划不执行代码，写作产出需经 chi 验证',
+    desc: '深度思考与多角度方案，产出 plan envelope（依赖图 + 并行波次 + 验收标准）。知识库管理与沉淀。',
+    skills: ['Plan Envelope 产出', '需求访谈拆解', '知识库沉淀', '回评子 Agent 产物'],
+    constraint: '只规划不执行代码，方案与计划需经 chi 验证',
   },
   {
     id: 'ji',
@@ -66,7 +66,7 @@ const showcaseAgents = [
   {
     id: 'chi',
     cn: '持',
-    role: '投资评审 / Judge',
+    role: '数据/投资评审 / Judge',
     color: '#bf8700',
     icon: 'lucide:scale',
     desc: '双重身份：投资持仓分析 + 独立 Judge。作为 judge 时用 fresh context 机械验证，只信产物不信自述。',
@@ -76,10 +76,10 @@ const showcaseAgents = [
   {
     id: 'yi',
     cn: '艺',
-    role: '视觉设计',
+    role: '文生图与审美',
     color: '#a371f7',
     icon: 'lucide:palette',
-    desc: '处理像素与矢量构成的一切影像。设计决策、配色、版式、生图（SenseNova）、审美分析。',
+    desc: '文生图提示词专家：思考中生成多方案提示词，经 SenseNova 出图。审美分析、设计决策、配色与版式。',
     skills: ['设计决策与 Token 定义', '生图 (SenseNova U1)', '配色与版式', '审美分析', 'Logo 概念'],
     constraint: '生图能力仅 yi 挂载，设计产出需附设计决策说明',
   },
@@ -393,31 +393,31 @@ const faq = install.faq || [];
         <g>
           <rect x="620" y="70" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="94" text-anchor="middle" class="topo-label topo-label--agent-cn">思</text>
-          <text x="668" y="112" text-anchor="middle" class="topo-label topo-label--agent-id">si · 规划写作</text>
+          <text x="668" y="112" text-anchor="middle" class="topo-label topo-label--agent-id">si · 思考/知识管理</text>
           <circle cx="740" cy="78" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="138" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="162" text-anchor="middle" class="topo-label topo-label--agent-cn">记</text>
-          <text x="668" y="180" text-anchor="middle" class="topo-label topo-label--agent-id">ji · 工程</text>
+          <text x="668" y="180" text-anchor="middle" class="topo-label topo-label--agent-id">ji · 代码/写作</text>
           <circle cx="740" cy="146" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="206" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="230" text-anchor="middle" class="topo-label topo-label--agent-cn">寻</text>
-          <text x="668" y="248" text-anchor="middle" class="topo-label topo-label--agent-id">xun · 搜索</text>
+          <text x="668" y="248" text-anchor="middle" class="topo-label topo-label--agent-id">xun · 搜索/核查</text>
           <circle cx="740" cy="214" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="274" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="298" text-anchor="middle" class="topo-label topo-label--agent-cn">艺</text>
-          <text x="668" y="316" text-anchor="middle" class="topo-label topo-label--agent-id">yi · 设计</text>
+          <text x="668" y="316" text-anchor="middle" class="topo-label topo-label--agent-id">yi · 文生图/审美</text>
           <circle cx="740" cy="282" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="342" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="366" text-anchor="middle" class="topo-label topo-label--agent-cn">持</text>
-          <text x="668" y="384" text-anchor="middle" class="topo-label topo-label--agent-id">chi · 投资</text>
+          <text x="668" y="384" text-anchor="middle" class="topo-label topo-label--agent-id">chi · 数据/投资</text>
           <circle cx="740" cy="350" r="4" class="topo-status topo-status--verify" />
           <rect x="700" y="330" width="62" height="18" rx="9" class="topo-badge" />
           <text x="731" y="343" text-anchor="middle" class="topo-label topo-label--badge">兼 Judge</text>

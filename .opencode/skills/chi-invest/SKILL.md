@@ -12,7 +12,7 @@ description: "Use when analyzing portfolio holdings, calculating investment retu
 ## 不要触发
 
 - 用户要求一般市场资讯搜索（用 xun-search）
-- 用户要求撰写财经文章（用 si-content-write）
+- 用户要求撰写财经文章（用 ji-content-write）
 - 用户要求产品投资决策（决策权永远在用户）
 
 ## 投资分析工作流（step-by-step）

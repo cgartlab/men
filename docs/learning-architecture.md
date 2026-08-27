@@ -125,7 +125,7 @@ Step 3: 经验落盘（L0/L1 机械）
 **技能文件结构**（当前）：
 ```yaml
 ---
-name: si-content-write
+name: ji-content-write
 description: "Use when writing blog posts..."
 license: Apache-2.0
 ---
@@ -134,7 +134,7 @@ license: Apache-2.0
 **进化后的技能文件结构**（新增字段，纯增量）：
 ```yaml
 ---
-name: si-content-write
+name: ji-content-write
 description: "Use when writing blog posts..."
 license: Apache-2.0
 stats:
@@ -768,7 +768,7 @@ auto 条件（全部满足才 auto）：
 ├── skills/
 │   ├── stats.json           # 技能统计汇总
 │   └── backups/             # 技能版本备份
-│       ├── si-content-write/
+│       ├── ji-content-write/
 │       │   ├── 2026-08-21T10-00-00.md
 │       │   └── ...
 │       └── ...

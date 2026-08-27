@@ -49,10 +49,10 @@ const seealso = [
           <thead><tr><th>源</th><th>关系</th><th>目标</th><th>说明</th></tr></thead>
           <tbody>
             <tr><td><strong>用户</strong></td><td>唯一指令入口</td><td><strong>men</strong>（门 / primary）</td><td>用户只与 men 对话，所有输入先经 men 分诊</td></tr>
-            <tr><td><strong>men</strong></td><td>spawn task</td><td>si（思 / planner-writer）</td><td>规划与写作</td></tr>
+            <tr><td><strong>men</strong></td><td>spawn task</td><td>si（思 / thinker）</td><td>思考与知识管理</td></tr>
             <tr><td><strong>men</strong></td><td>spawn task</td><td>ji（记 / engineer）</td><td>代码与工程</td></tr>
             <tr><td><strong>men</strong></td><td>spawn task</td><td>chi（持 / investor + judge）</td><td>投资分析与独立评审</td></tr>
-            <tr><td><strong>men</strong></td><td>spawn task</td><td>yi（艺 / designer）</td><td>视觉设计</td></tr>
+            <tr><td><strong>men</strong></td><td>spawn task</td><td>yi（艺 / prompt-engine）</td><td>文生图与审美</td></tr>
             <tr><td><strong>men</strong></td><td>spawn task</td><td>xun（寻 / researcher）</td><td>搜索与研究</td></tr>
             <tr><td><strong>chi</strong></td><td>fresh-context judge</td><td>ji（记）</td><td>独立语义复核（虚线关系）</td></tr>
             <tr><td><strong>chi</strong></td><td>fresh-context judge</td><td>yi（艺）</td><td>独立语义复核（虚线关系）</td></tr>
@@ -77,7 +77,7 @@ const seealso = [
           <tbody>
             <tr><td><code>01</code></td><td><strong>CERTAINTY</strong> 需求确认</td><td>任务模糊时先向用户追问，直到明确才开工</td></tr>
             <tr><td><code>02</code></td><td><strong>TRIAGE</strong> 意图分诊</td><td>四类意图判定：search / analyze / team / hyperplan</td></tr>
-            <tr><td><code>03</code></td><td><strong>PLAN</strong> si 规划</td><td>team 类 spawn si 产出 plan envelope；hyperplan 类先访谈式规划再交 si</td></tr>
+            <tr><td><code>03</code></td><td><strong>PLAN</strong> si 规划</td><td>team 类 spawn si 产出 plan envelope；hyperplan 类先深度思考多角度方案再交 si</td></tr>
             <tr><td><code>04</code></td><td><strong>DISPATCH</strong> Wave 调度</td><td>≤4 并行 / 依赖串行；search 类直接分发 xun，analyze 类单专家 + chi judge</td></tr>
             <tr><td><code>05</code></td><td><strong>COLLECT</strong> 收集产物</td><td>收集子 agent 返回结果与落盘产物</td></tr>
             <tr><td><code>06</code></td><td><strong>EVALUATE</strong> si 回评</td><td>产出回传 si 做质量评估，si 只评不改</td></tr>
