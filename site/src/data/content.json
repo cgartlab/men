@@ -123,7 +123,7 @@
     },
     {
       "title": "事件审计（14 种 kind）",
-      "desc": "events.jsonl 记录 session.created/ended、boundary、workflow.phase、gate.passed/failed、blocker.raised、decision.made/missing，append-only 可回放",
+      "desc": "events.jsonl 记录 session.created/ended、boundary、workflow.phase、gate.passed/failed、blocker.raised、decision.made/missing、verify、judge、error、dispatch、handoff（共 14 种），append-only 可回放",
       "source": "docs/PRD.md"
     },
     {
