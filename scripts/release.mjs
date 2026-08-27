@@ -31,6 +31,18 @@ const SEMVER_RE = /^\d+\.\d+\.\d+$/;
 // bump 子命令 → 递增的版本段下标（0=major, 1=minor, 2=patch）
 const BUMP_SEGMENTS = { major: 0, minor: 1, patch: 2 };
 
+// 发布时需同步版本号的 JSON 文件（相对仓库根）
+const VERSION_JSON_FILES = [
+  "package-lock.json",          // 顶层 version + packages[""].version 两处
+  "opencode.json",
+  "site/package.json",
+  ".opencode/plugins/men-sidebar/package.json",
+];
+// 发布时需同步版本号的文本文件（用 oldVersion → newVersion 文本替换）
+const VERSION_TEXT_FILES = [
+  "site/src/pages/docs/configure.astro",  // 配置版本号展示
+];
+
 // ─────────────────────────── 工具函数 ───────────────────────────
 
 function eprintf(...args) {
@@ -123,6 +135,68 @@ function bumpChangelog(text, version, date) {
     .trimEnd() + "\n";
 }
 
+/**
+ * 同步其他文件的版本号：JSON 文件更新顶层 version 字段（package-lock.json 额外更新
+ * packages[""].version）；文本文件做 oldVersion → newVersion 文本替换。
+ * dryRun 时不写盘。返回每文件处理结果 [{ file, ok, changed, note }]。
+ */
+function syncVersionFiles(newVersion, oldVersion, dryRun) {
+  const results = [];
+
+  for (const f of VERSION_JSON_FILES) {
+    const fullPath = path.join(ROOT, f);
+    if (!fs.existsSync(fullPath)) {
+      results.push({ file: f, ok: false, changed: false, note: "文件不存在" });
+      continue;
+    }
+    try {
+      const obj = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
+      let changed = false;
+      if (obj.version !== undefined && obj.version !== newVersion) {
+        obj.version = newVersion;
+        changed = true;
+      }
+      if (
+        f === "package-lock.json" &&
+        obj.packages &&
+        typeof obj.packages[""] === "object" &&
+        obj.packages[""].version !== undefined &&
+        obj.packages[""].version !== newVersion
+      ) {
+        obj.packages[""].version = newVersion;
+        changed = true;
+      }
+      if (changed && !dryRun) {
+        fs.writeFileSync(fullPath, JSON.stringify(obj, null, 2) + "\n");
+      }
+      results.push({ file: f, ok: true, changed, note: changed ? `version → ${newVersion}` : "无需变更" });
+    } catch (err) {
+      results.push({ file: f, ok: false, changed: false, note: `解析/写入失败: ${err.message}` });
+    }
+  }
+
+  for (const f of VERSION_TEXT_FILES) {
+    const fullPath = path.join(ROOT, f);
+    if (!fs.existsSync(fullPath)) {
+      results.push({ file: f, ok: false, changed: false, note: "文件不存在" });
+      continue;
+    }
+    try {
+      const text = fs.readFileSync(fullPath, "utf-8");
+      const next = text.split(oldVersion).join(newVersion);
+      const changed = next !== text;
+      if (changed && !dryRun) {
+        fs.writeFileSync(fullPath, next);
+      }
+      results.push({ file: f, ok: true, changed, note: changed ? `version → ${newVersion}` : "无需变更" });
+    } catch (err) {
+      results.push({ file: f, ok: false, changed: false, note: `读取/写入失败: ${err.message}` });
+    }
+  }
+
+  return results;
+}
+
 function isGitRepo(dir) {
   return fs.existsSync(path.join(dir, ".git"));
 }
@@ -154,12 +228,19 @@ function main() {
   const actions = [];
   const gitResults = [];
 
+  // 需随发布同步版本号的文件（仅计入实际存在的；git add 不存在文件会报错）
+  const syncFiles = [...VERSION_JSON_FILES, ...VERSION_TEXT_FILES].filter((f) =>
+    fs.existsSync(path.join(ROOT, f))
+  );
+  const addFiles = ["package.json", "CHANGELOG.md", ...syncFiles];
+
   if (cfg.dryRun) {
     // ── dry-run：只报告将做什么 ──
     actions.push(`package.json version → ${newVersion}`);
     actions.push(`CHANGELOG.md 插入 [v${newVersion}] - ${date}`);
+    actions.push(`同步版本文件 → ${newVersion}（${VERSION_JSON_FILES.length} JSON + ${VERSION_TEXT_FILES.length} 文本）`);
     if (gitOk) {
-      actions.push("git add package.json CHANGELOG.md");
+      actions.push(`git add ${addFiles.join(" ")}`);
       actions.push(`git commit -m "chore(release): v${newVersion}"`);
       actions.push(`git tag v${newVersion}`);
     } else {
@@ -178,10 +259,16 @@ function main() {
     actions.push(`package.json version → ${newVersion}`);
     actions.push(`CHANGELOG.md 插入 [v${newVersion}] - ${date}`);
 
+    // ── 同步其余文件的版本号 ──
+    const syncResults = syncVersionFiles(newVersion, oldVersion, false);
+    for (const r of syncResults) {
+      if (r.changed) actions.push(`同步 version → ${newVersion}: ${r.file}`);
+    }
+
     // ── git 操作（仅 git 仓库存在时）──
     if (gitOk) {
       const steps = [
-        ["add", ["add", "package.json", "CHANGELOG.md"]],
+        ["add", ["add", ...addFiles]],
         ["commit", ["commit", "-m", `chore(release): v${newVersion}`]],
         ["tag", ["tag", `v${newVersion}`]],
       ];
