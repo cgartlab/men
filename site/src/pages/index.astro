@@ -12,7 +12,7 @@ const install = content.install || {};
 
 /* ---------- Agent tab：一条完整可复制指令 ---------- */
 const agentPrompt =
-  '帮我安装并启动 men：git clone https://github.com/cgartlab/men.git && cd men && node scripts/install.mjs && npx astro dev --config site/astro.config.mjs';
+  '帮我安装并启动 men：npx @cgartlab/men && opencode';
 
 /* ---------- 手动安装（仓库一键安装脚本）---------- */
 const platformTabs = [
@@ -22,11 +22,13 @@ const platformTabs = [
 ];
 const manualCmds: Record<string, { label: string; cmd: string }[]> = {
   bash: [
-    { label: '一键安装（管道）', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/main/install.sh)' },
+    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
+    { label: '一键安装（管道）', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)' },
     { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
   ],
   windows: [
-    { label: '一键安装（管道）', cmd: 'irm https://raw.githubusercontent.com/cgartlab/main/install.ps1 | iex' },
+    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
+    { label: '一键安装（管道）', cmd: 'irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex' },
     { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
   ],
 };

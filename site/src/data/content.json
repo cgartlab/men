@@ -5,7 +5,7 @@
     "tagline": "门 = gate = 入口 / 编排 / 分诊",
     "brandLine": "OpenCode 首发 · CG 艺术实验室出品",
     "version": {
-      "topic": "从代码仓库到可协作团队"
+      "topic": "一行命令安装"
     },
     "source": "README.md"
   },
@@ -640,16 +640,12 @@
     "commands": {
       "bash": [
         {
-          "label": "克隆仓库",
-          "cmd": "git clone https://github.com/cgartlab/men.git"
+          "label": "npm 一行安装",
+          "cmd": "npx @cgartlab/men"
         },
         {
-          "label": "进入目录",
-          "cmd": "cd men"
-        },
-        {
-          "label": "同步配置",
-          "cmd": "powershell -ExecutionPolicy Bypass -File scripts/sync-to-opencode.ps1"
+          "label": "克隆仓库（备选）",
+          "cmd": "git clone https://github.com/cgartlab/men.git && cd men"
         },
         {
           "label": "启动预览",
@@ -657,6 +653,10 @@
         }
       ],
       "windows": [
+        {
+          "label": "npm 一行安装",
+          "cmd": "npx @cgartlab/men"
+        },
         {
           "label": "安装 WSL2",
           "cmd": "wsl --install"
@@ -671,6 +671,10 @@
         }
       ],
       "package": [
+        {
+          "label": "npm 安装",
+          "cmd": "npx @cgartlab/men"
+        },
         {
           "label": "npm",
           "cmd": "npx astro dev --config site/astro.config.mjs"
@@ -698,7 +702,7 @@
       },
       {
         "q": "如何使用？",
-        "a": "克隆仓库后运行 <code>npx astro dev --config site/astro.config.mjs</code> 即可在 <code>http://localhost:4399/</code> 预览。完整流程见 <a href=\"/docs/quickstart\">快速上手</a>。"
+        "a": "运行 <code>npx @cgartlab/men</code> 即可在任意目录完成安装（脚手架+依赖+环境+验证），然后 <code>opencode</code> 启动 TUI；站点预览见 <a href=\"/docs/quickstart\">快速上手</a>。"
       },
       {
         "q": "可以自定义角色吗？",

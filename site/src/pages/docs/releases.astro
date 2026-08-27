@@ -9,7 +9,7 @@ const pageTitle = '路线图 — ' + content.hero.title;
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-08-21 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-08-27 发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -55,6 +55,11 @@ const seealso = [
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
             <tr>
+              <td><strong>v0.3.0</strong></td>
+              <td>2026-08-27</td>
+              <td>发布主题「一行命令安装」：发布 npm 包 <code>@cgartlab/men</code>，任意目录 <code>npx @cgartlab/men</code> 一步安装；安装指令准确性修复（URL 硬编码、install.astro 修复、<code>.opencode/package.json</code> 纳入版本控制、4 个 MCP 补齐 transport）；文档一致性同步；明确 Men=OpenCode 插件、模型密钥由 CC Switch 本地托管。</td>
+            </tr>
+            <tr>
               <td><strong>v0.2.0</strong></td>
               <td>2026-08-21</td>
               <td>发布主题「从代码仓库到可协作团队」：M5 文档完善、M6 GitHub 开源基础设施（含 MIT 许可证与 CI）、M7 自主学习回路；修复文档与元数据不一致；许可证由 Apache-2.0 改为 MIT。</td>
@@ -73,7 +78,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-08-24，共发布 <strong>2 个正式版本</strong>（v0.1.0、v0.2.0）。
+        截至 2026-08-27，共发布 <strong>3 个正式版本</strong>（v0.1.0、v0.2.0、v0.3.0）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -82,8 +87,17 @@ const seealso = [
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
       <p>
-        当前版本 <code>v0.2.0</code> 于 2026-08-21 发布，主题为「从代码仓库到可协作团队」，
-        将 men 从「一个能跑的仓库」升级为「有标准、有流程、能自我学习的团队」。
+        当前版本 <code>v0.3.0</code> 于 2026-08-27 发布，主题为「一行命令安装」，将 men 从「Git 仓库分发」升级为「npm 一行安装」的产品化形态。
+      </p>
+      <h3>v0.3.0「一行命令安装」</h3>
+      <ul>
+        <li><strong>npm 包发布与 npx 一行安装</strong>：任意目录执行 <code>npx @cgartlab/men</code>，自动完成 scaffold + 依赖 + <code>.env</code> + 端到端验证</li>
+        <li><strong>安装指令准确性修复</strong>：一键脚本 URL 硬编码、install.astro 标签修复、<code>.opencode/package.json</code> 纳入版本控制、4 个 MCP 服务器补齐 transport 全部可加载</li>
+        <li><strong>文档与站点全面同步</strong>：事件 14 种、技能 15 个、MCP×7、版本引用 v0.3.0</li>
+        <li><strong>定位澄清</strong>：Men 是 OpenCode 插件，模型与密钥由 CC Switch 本地托管，安装无需密钥</li>
+      </ul>
+      <p class="wiki-note">
+        以下内容为 <strong>v0.2.0（历史）</strong>版本的发布亮点回顾。
       </p>
       <h3>M5 文档完善</h3>
       <p>
@@ -142,7 +156,7 @@ const seealso = [
       <div class="wiki-note">
         时间线：M0–M4 于 2026-08-15 完成（调研 / 骨架 / 单兵 / 编排 / 机械验证），
         M5–M7 于 2026-08-21 完成（文档 / GitHub 基础设施 / 自主学习回路），
-        与 v0.1.0、v0.2.0 两个版本的发布时间对应。
+        与 v0.1.0、v0.2.0、v0.3.0 版本的发布时间对应。
       </div>
       <p class="src-ref">来源：<code>site/src/data/content.json</code>（milestones）· <code>docs/guide/milestones.md</code></p>
     </section>
@@ -167,7 +181,7 @@ const seealso = [
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>npm run release            # patch（默认）
-npm run release:minor      # 0.1.0 → 0.2.0
+npm run release:minor      # 0.2.1 → 0.3.0
 npm run release:major      # 0.1.0 → 1.0.0</code></pre>
       </div>
       <p><code>scripts/release.mjs</code> 自动完成以下步骤：</p>

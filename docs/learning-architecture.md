@@ -30,7 +30,7 @@
 
 ```
 任务完成（chi judge PASS / FAIL）
-  → 事件已写入 events.jsonl（9 种 kind）
+  → 事件已写入 events.jsonl（14 种 kind）
     → 学习触发器（L0 机械 / L1 cheap / L2 limited LLM）
       → 三类输出：
         1. 技能描述微调（L0，自动）
@@ -721,7 +721,7 @@ auto 条件（全部满足才 auto）：
 
 | 现有机制 | 覆盖范围 | 本设计中的使用 |
 |----------|---------|---------------|
-| `events.jsonl`（9 种 kind） | 事件审计 | 学习循环的原始数据源 |
+| `events.jsonl`（14 种 kind） | 事件审计 | 学习循环的原始数据源 |
 | `verify.mjs` 五项检查 | 机械验证 | L0 学习触发器的输入 |
 | `gate.mjs` 门禁 | 强化次数上限 | 漂移检测的输入之一 |
 | `chi judge` 独立评审 | 语义复核 | 学习循环的触发条件 |

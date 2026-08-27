@@ -12,8 +12,8 @@ const infobox = [
   { k: '默认 Agent', v: '<strong>men</strong>（primary）' },
   { k: '模型数', v: '6 个（men / si / ji / chi / yi / xun）' },
   { k: 'MCP 服务', v: '<strong>7 个</strong>（3 remote + 4 本地）' },
-  { k: '插件', v: '<code>@opencode-ai/plugin</code> 1.18.18（本地安装）' },
-  { k: '技能包', v: '13 个（<code>.opencode/skills</code>）' },
+  { k: '插件', v: '<code>@opencode-ai/plugin</code> 1.18.23（本地安装）' },
+  { k: '技能包', v: '15 个（<code>.opencode/skills</code>）' },
   { k: '自定义命令', v: '3 个（<code>ultrawork</code> / <code>verify</code> / <code>hyperplan</code>）' },
 ];
 
@@ -23,7 +23,7 @@ const toc = [
   { id: 'mcp', label: 'MCP 服务' },
   { id: 'skills-commands', label: '技能与命令路径' },
   { id: 'agent-rules', label: '编辑 Agent 定义规则' },
-  { id: 'sync', label: '同步到全局' },
+  { id: 'sync', label: '全局配置' },
 ];
 
 const seealso = [
@@ -62,7 +62,7 @@ model: <model-id>
   <WikiManual
     crumb="配置"
     title="配置"
-    lead={`men（门）的运行时配置以 <strong>opencode.json</strong> 为唯一入口：它定义默认 Agent、六个角色的模型分配、七个 MCP 服务与技能搜索路径，角色行为则由 <code>.opencode/agent/*.md</code> 承载，并通过 <code>sync-to-opencode.ps1</code> 同步到 OpenCode 全局。`}
+    lead={`men（门）的运行时配置以 <strong>opencode.json</strong> 为唯一入口：它定义默认 Agent、六个角色的模型分配、七个 MCP 服务与技能搜索路径，角色行为则由 <code>.opencode/agent/*.md</code> 承载。仓库 <code>opencode.json</code> 在仓库目录内启动 OpenCode 即生效；模型与密钥由 CC Switch 在本地统一托管。`}
     infoboxTitle="配置概要"
     infobox={infobox}
     toc={toc}
@@ -84,7 +84,7 @@ model: <model-id>
             <tr><td><code>default_agent</code></td><td><code>men</code></td><td>默认（primary）对话 Agent</td></tr>
             <tr><td><code>instructions</code></td><td><code>AGENTS.md</code></td><td>注入的全局说明文件</td></tr>
             <tr><td><code>agent</code></td><td>6 个角色模型映射</td><td>每个 Agent 的运行时模型（见下节）</td></tr>
-            <tr><td><code>plugin</code></td><td><code>file:./.opencode/plugins/men-sidebar</code></td><td>本地插件</td></tr>
+            <tr><td><code>plugin</code></td><td><code>.opencode/plugins/men-sidebar</code></td><td>本地插件</td></tr>
             <tr><td><code>skills.paths</code></td><td><code>.opencode/skills</code></td><td>技能包搜索路径</td></tr>
             <tr><td><code>mcp</code></td><td>7 个服务</td><td>外部工具服务（见 MCP 节）</td></tr>
           </tbody>
@@ -121,7 +121,7 @@ model: <model-id>
       <p>
         <code>opencode.json</code> 的 <code>mcp</code> 字段启用了 <strong>7 个 MCP 服务</strong>。
         其中 exa / context7 / grep_app 为 <strong>remote</strong>（配置远程 URL），
-        fetch / github-mcp-server / memory / sequential-thinking 为<strong>本地</strong>（仅 <code>enabled</code>）。
+        fetch / memory / sequential-thinking 为<strong>本地</strong>（<code>type: local</code> + npx 命令），github-mcp-server 为<strong>remote</strong>（GitHub MCP 端点 + Bearer token）。
       </p>
       <div class="wiki-table">
         <table>
@@ -130,10 +130,10 @@ model: <model-id>
             <tr><td><code>exa</code></td><td><strong>remote</strong></td><td><code>https://mcp.exa.ai/mcp</code></td><td>网页搜索</td></tr>
             <tr><td><code>context7</code></td><td><strong>remote</strong></td><td><code>https://mcp.context7.com/mcp</code></td><td>库 / 框架文档查询</td></tr>
             <tr><td><code>grep_app</code></td><td><strong>remote</strong></td><td><code>https://mcp.grep.app</code></td><td>GitHub 代码搜索</td></tr>
-            <tr><td><code>fetch</code></td><td>本地</td><td><code>enabled: true</code></td><td>URL 内容抓取</td></tr>
-            <tr><td><code>github-mcp-server</code></td><td>本地</td><td><code>enabled: true</code></td><td>GitHub 仓库操作</td></tr>
-            <tr><td><code>memory</code></td><td>本地</td><td><code>enabled: true</code></td><td>持久化记忆</td></tr>
-            <tr><td><code>sequential-thinking</code></td><td>本地</td><td><code>enabled: true</code></td><td>推理链</td></tr>
+            <tr><td><code>fetch</code></td><td>本地</td><td><code>type: local · npx @modelcontextprotocol/server-fetch</code></td><td>URL 内容抓取</td></tr>
+            <tr><td><code>github-mcp-server</code></td><td><strong>remote</strong></td><td><code>type: remote · https://api.githubcopilot.com/mcp/ · Bearer {'{env:GITHUB_TOKEN}'}</code></td><td>GitHub 仓库操作</td></tr>
+            <tr><td><code>memory</code></td><td>本地</td><td><code>type: local · npx @modelcontextprotocol/server-memory</code></td><td>持久化记忆</td></tr>
+            <tr><td><code>sequential-thinking</code></td><td>本地</td><td><code>type: local · npx @modelcontextprotocol/server-sequential-thinking</code></td><td>推理链</td></tr>
           </tbody>
         </table>
       </div>
@@ -143,7 +143,7 @@ model: <model-id>
     <section id="skills-commands" class="doc-section">
       <h2>技能与命令路径</h2>
       <p>
-        <code>skills.paths</code> 指向 <code>.opencode/skills</code>（<strong>13 个技能包</strong>），
+        <code>skills.paths</code> 指向 <code>.opencode/skills</code>（<strong>15 个技能包</strong>），
         自定义命令位于 <code>.opencode/command/</code>（<strong>3 个命令</strong>）。技能按角色分配，对应专项工作流：
       </p>
       <div class="wiki-table">
@@ -153,8 +153,8 @@ model: <model-id>
             <tr>
               <td>技能包</td>
               <td><code>.opencode/skills/</code></td>
-              <td>13</td>
-              <td>ji ×4（frontend-design / github / l1-verify / content-write）、si ×2（knowledge / plan-compose）、xun ×3（search / factcheck / rss-scan）、chi ×2（invest / judge）、yi ×2（design / imagegen）</td>
+              <td>15</td>
+              <td>ji ×4（frontend-design / github / l1-verify / content-write）、si ×2（knowledge / plan-compose）、xun ×3（search / factcheck / rss-scan）、chi ×2（invest / judge）、yi ×2（design / imagegen）、men ×2（status / update）</td>
             </tr>
             <tr>
               <td>自定义命令</td>
@@ -190,22 +190,13 @@ model: <model-id>
     </section>
 
     <section id="sync" class="doc-section">
-      <h2>同步到全局</h2>
+      <h2>全局配置</h2>
       <p>
-        修改 agent 定义、技能包或命令后，运行 <code>scripts/sync-to-opencode.ps1</code> 将
-        <code>.opencode/agent</code>、<code>.opencode/skills</code>、<code>.opencode/command</code> 同步到
-        OpenCode 全局配置（<code>%USERPROFILE%\.config\opencode</code> 对应目录），并同步根目录的 <code>opencode.json</code>。
-        同步完成后需<strong>重启 OpenCode</strong> 生效，可用 <code>opencode agent list</code> 与 <code>opencode debug skill</code> 验证。
+        全局模型与密钥由 <strong>CC Switch</strong>（或本机 <code>~/.config/opencode/opencode.json</code>）统一管理；
+        仓库 <code>opencode.json</code> 在仓库目录内启动即自动加载。
+        若要在任意目录使用整支团队，运行 <code>npx @cgartlab/men</code> 一键安装。
       </p>
-      <div class="code-block">
-        <span class="code-block__lang">powershell</span>
-        <pre><code>powershell -ExecutionPolicy Bypass -File scripts/sync-to-opencode.ps1
-
-# 验证
-opencode agent list
-opencode debug skill</code></pre>
-      </div>
-      <SrcRef files={['scripts/sync-to-opencode.ps1']} />
+      <SrcRef files={['opencode.json']} />
     </section>
   </WikiManual>
 </BaseLayout>

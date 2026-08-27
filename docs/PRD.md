@@ -56,7 +56,7 @@ chi fresh-context 独立 Judge 语义复核（只信自己的检查结果，不�
 
 - 每次 `/ultrawork` 用独立 sid（`ultrawork-<时间戳>`）
 - 通过 `scripts/event.mjs append` 追加到 `.agents/state/sessions/<sid>/events.jsonl`
-- 9 种 kind 枚举（session.created/ended、boundary、workflow.phase、gate.passed/failed、blocker.raised、decision.made/missing）
+- 14 种 kind 枚举（session.created/ended、boundary、workflow.phase、gate.passed/failed、blocker.raised、decision.made/missing、verify、judge、error、dispatch、handoff）
 - 全部 best-effort，命令失败不阻塞主流程
 
 ## 四、里程碑

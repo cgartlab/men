@@ -8,7 +8,7 @@ export const MANUAL = {
   url: 'https://men.cgartlab.com',
   chapters: [
     { slug: 'overview',     title: '概览',     group: '入门', desc: '系统定义、设计原则与团队组成' },
-    { slug: 'install',      title: '安装',     group: '入门', desc: '一键安装脚本与前置要求' },
+    { slug: 'install',      title: '安装',     group: '入门', desc: 'npm 一行安装（npx @cgartlab/men）与前置要求' },
     { slug: 'configure',    title: '配置',     group: '入门', desc: 'opencode.json、模型分配与 MCP 服务' },
     { slug: 'quickstart',   title: '快速上手', group: '入门', desc: '30 分钟跑通第一个任务' },
     { slug: 'agents',       title: '角色说明', group: '参考', desc: '六个角色的职责边界与路由判定' },
