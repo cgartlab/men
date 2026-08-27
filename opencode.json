@@ -1,24 +1,36 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "default_agent": "men",
-  "instructions": ["AGENTS.md"],
-
+  "instructions": [
+    "AGENTS.md"
+  ],
   "agent": {
-    "men": { "model": "opencode-go/hy3" },
-    "si": { "model": "sensenova/deepseek-v4-flash" },
-    "ji": { "model": "opencode-go/deepseek-v4-flash" },
-    "chi": { "model": "sensenova/glm-5.2" },
-    "yi": { "model": "sensenova/sensenova-6.8-flash-lite" },
-    "xun": { "model": "sensenova/sensenova-6.8-flash-lite" }
+    "men": {
+      "model": "opencode-go/hy3"
+    },
+    "si": {
+      "model": "sensenova/deepseek-v4-flash"
+    },
+    "ji": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "chi": {
+      "model": "sensenova/glm-5.2"
+    },
+    "yi": {
+      "model": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "xun": {
+      "model": "sensenova/sensenova-6.8-flash-lite"
+    }
   },
-
   "plugin": [],
-
   "skills": {
-    "paths": [".opencode/skills"]
+    "paths": [
+      ".opencode/skills"
+    ]
   },
-
   "mcp": {
     "exa": {
       "type": "remote",
@@ -35,9 +47,17 @@
       "url": "https://mcp.grep.app",
       "enabled": true
     },
-    "fetch": { "enabled": true },
-    "github-mcp-server": { "enabled": true },
-    "memory": { "enabled": true },
-    "sequential-thinking": { "enabled": true }
+    "fetch": {
+      "enabled": true
+    },
+    "github-mcp-server": {
+      "enabled": true
+    },
+    "memory": {
+      "enabled": true
+    },
+    "sequential-thinking": {
+      "enabled": true
+    }
   }
 }
