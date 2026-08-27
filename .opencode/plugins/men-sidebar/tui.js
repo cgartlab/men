@@ -1,5 +1,5 @@
 /**
- * men-sidebar — TUI entry (V7)
+ * men-sidebar — TUI entry (V8)
  *
  * 修复：
  *   1. 所有 static import 放文件顶部（ESM 规范）
@@ -11,6 +11,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runUpdateCheck } from "./update-check.mjs";
 
 // 版本号统一变量：跟随项目根 package.json 的真实发布版本；
 // 从插件目录向上遍历找最近的祖先 package.json（跳过插件自身），找不到才兜底用插件本地版本。
@@ -106,11 +107,11 @@ function renderSidebar(dir, theme, el_fn, box_fn, txt_fn) {
   );
 }
 
-console.log("[men-sidebar] === ① TUI ENTRY LOADED (V7) ===");
+console.log("[men-sidebar] === ① TUI ENTRY LOADED (V8) ===");
 
 export default {
   id: "men-sidebar:tui",
-  tui: async (api) => {
+  tui: async (api, _options, meta) => {
     console.log("[men-sidebar] === ④ TUI PLUGIN CALLED ===");
 
     let createElement, setProp, insert;
@@ -153,6 +154,9 @@ export default {
         },
       });
       console.log("[men-sidebar] ⑤ SLOT REGISTERED OK");
+
+      // 自动版本检查：fire-and-forget，不 await，避免阻塞 UI 启动
+      runUpdateCheck(api, meta, VERSION).catch(() => {});
     } catch (e) {
       console.error("[men-sidebar] SLOT REGISTER FAILED:", e && e.message ? e.message : String(e));
     }

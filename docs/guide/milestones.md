@@ -58,7 +58,7 @@ M4 验收过程中，用 verify.mjs 对"声称完成但未产出文件"的场景
 |------|------|----------|
 | `scripts/verify.mjs` | 五项机械检查 | output-exists / secrets / todo-scan / structure / gate-exit-code；`--json` / `--sid` 参数；纯 Node 零依赖 |
 | `scripts/gate.mjs` | stop-hook 门禁 | 白名单 typecheck/test/lint；60s 超时；强化次数上限 5；`GATE_SKIP` / `GATE_EXHAUSTED` 状态 |
-| `scripts/event.mjs` | events.jsonl 读写 | append / list / replay / validate 四子命令；9 种 kind 枚举；`eventId` uuid |
+| `scripts/event.mjs` | events.jsonl 读写 | append / list / replay / validate 四子命令；14 种 kind 枚举；`eventId` uuid |
 
 ## 已知决策记录
 

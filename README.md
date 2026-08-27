@@ -14,7 +14,7 @@
 | **一键编排** | `/ultrawork` 9 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话 |
 | **双层机械验证** | `verify.mjs` 五项机械检查 + chi 独立 Judge 语义复核，假完成必识破 |
 | **安全门禁** | `gate.mjs` 白名单防注入，强化上限 5 次防死循环 |
-| **全量事件审计** | `events.jsonl` 记录 9 种事件，支持命令行回放，所有决策可追溯 |
+| **全量事件审计** | `events.jsonl` 记录 14 种事件，支持命令行回放，所有决策可追溯 |
 | **零依赖脚本** | 纯 Node 运行，验证/门禁/审计三件套无第三方依赖 |
 | **本地优先** | 内网数据源 + free 模型通道，SenseNova 生图仅艺角色挂载 |
 | **单字命名** | 门·思·记·持·艺·寻，古典文人气质，易记好读 |
@@ -29,7 +29,21 @@
 - **Node.js ≥ 18**（`@opencode-ai/plugin` engines 要求）
 - 已安装 [OpenCode](https://opencode.ai/) CLI
 
+> **环境要求**：Men 是 OpenCode 插件；模型与密钥由 CC Switch 在本地统一托管，安装无需提供密钥。环境细节见《快速上手》"使用环境"。
+
 ### 一键安装（推荐）
+
+**方式 A：npm 一步安装（首选）**
+
+在任意目录运行（Node ≥ 18 已装 OpenCode 即可）：
+
+```bash
+npx @cgartlab/men
+```
+
+安装器自动完成：scaffold 运行时资产（`opencode.json` / `.opencode/` / `scripts/` / `config/` / `knowledge/`）→ 安装 `.opencode/` 依赖 → 从 `.env.example` 生成 `.env` → 端到端验证。完成后**在当前目录**运行 `opencode` 即可。
+
+**方式 B：Git 一键脚本（备选）**
 
 **Linux / macOS**
 
@@ -45,7 +59,13 @@ irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex
 
 安装器会自动完成：检测 Node ≥ 18 → 拉取仓库 → 安装 `.opencode/` 依赖 → 从 `.env.example` 生成 `.env` → 运行端到端验证。
 
-### 手动三步（备选）
+（可选，仅当未使用 CC Switch、需手动把模型写入 opencode.json 时）运行引导式模型配置：
+
+```bash
+node scripts/setup.mjs
+```
+
+### 手动安装（备选）
 
 1. **克隆仓库**
    ```bash
@@ -53,12 +73,21 @@ irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex
    cd men
    ```
 
-2. **安装依赖** — OpenCode 插件在 `.opencode/` 目录下本地安装
+2. **安装依赖** — 两种方式任选（`.opencode/package.json` 已纳入版本控制，依赖可正常解析）
    ```bash
+   # 方式 A（推荐）：复用共享核心安装器，自动安装依赖 + 端到端验证
+   node scripts/install.mjs
+
+   # 方式 B：手动在 .opencode/ 下安装
    cd .opencode && npm install && cd ..
    ```
 
-3. **启动使用** — 在项目目录运行 opencode，默认 agent 即为 men（门）
+3. **（可选）引导式模型配置** — 仅当未使用 CC Switch、需手动把模型写入 `opencode.json` 时执行
+   ```bash
+   node scripts/setup.mjs
+   ```
+
+4. **启动使用** — 在项目目录运行 opencode，默认 agent 即为 men（门）
    ```bash
    opencode
    ```
@@ -147,7 +176,7 @@ flowchart LR
 
 ```
 men/
-├── opencode.json              # OpenCode 根配置（default_agent: men, MCP×3）
+├── opencode.json              # OpenCode 根配置（default_agent: men, MCP×7）
 ├── AGENTS.md                  # 项目级共享规则（角色表/拓扑/红线/验证体系）
 ├── package.json               # 根配置（name/version/scripts，npm 发布载体）
 ├── README.md                  # 项目说明（本文件）
@@ -168,7 +197,7 @@ men/
 │
 ├── .opencode/
 │   ├── agent/                 # 6 个 agent 定义（唯一源代码）
-│   ├── skills/                # 13 个技能包
+│   ├── skills/                # 15 个技能包
 │   ├── command/               # 自定义命令（ultrawork / verify / hyperplan）
 │   ├── package.json           # @opencode-ai/plugin 本地依赖
 │   └── node_modules/          # 本地依赖（不纳入版本控制）
@@ -181,7 +210,7 @@ men/
 │   └── release.mjs            # 版本发布（SemVer + CHANGELOG + tag）
 │
 ├── config/
-│   └── mcporter.json          # MCP 配置（Exa 搜索）
+│   └── models.json            # 模型知识基（setup.mjs 数据源）
 │
 └── docs/
     ├── PRD.md                 # 产品需求文档（M0–M5 全量）
@@ -228,7 +257,7 @@ men/
 | Agent 框架 | [OpenCode](https://opencode.ai/) 原生 agent 定义 + 自定义 command |
 | 运行时 | Node.js ≥ 18 |
 | 验证体系 | 纯 Node 脚本（`verify.mjs` / `gate.mjs` / `event.mjs`），零第三方依赖 |
-| MCP 工具 | Exa 搜索、Context7、grep.app |
+| MCP 工具 | Exa / Context7 / grep.app / fetch / GitHub / memory / sequential-thinking（MCP×7，均在 `opencode.json` 声明） |
 | 设计理念 | 机械验证优先 · 不信自述 · 低置信确认 · 事件可回溯 |
 
 ---

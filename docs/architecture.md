@@ -119,7 +119,7 @@ men/
 │
 ├── opencode.json               ← default_agent: men + MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking）
 ├── config/
-│   └── mcporter.json           ← MCP 配置（Exa 搜索）
+│   └── models.json            ← 模型知识基（setup.mjs 数据源）
 │
 ├── .opencode/
 │   ├── agent/                  ← 6 个 agent 定义
@@ -129,12 +129,13 @@ men/
 │   │   ├── chi.md              ← 持 — 投资与评审
 │   │   ├── yi.md               ← 艺 — 视觉设计
 │   │   └── xun.md              ← 寻 — 搜索与研究
-│   ├── skills/                 ← 13 个 skill
+│   ├── skills/                 ← 15 个 skill
 │   │   ├── chi-invest / chi-judge
 │   │   ├── ji-frontend-design / ji-github / ji-l1-verify
 │   │   ├── ji-content-write / si-knowledge / si-plan-compose
 │   │   ├── xun-factcheck / xun-rss-scan / xun-search
-│   │   └── yi-design / yi-imagegen
+│   │   ├── yi-design / yi-imagegen
+│   │   └── men-status / men-update
 │   ├── command/                ← 3 个自定义命令
 │   │   ├── ultrawork.md        ← 一键编排
 │   │   ├── verify.md           ← 验证命令

@@ -9,7 +9,7 @@
 
 | 角色 | 中文名 | 模式 | 核心职责 | 负责维护的文件范围 |
 |------|--------|------|----------|--------------------|
-| men | 门 | primary | 意图分诊、任务分发、并行编排、汇总报告 | README.md、CHANGELOG.md、docs/PRD.md、docs/architecture.md、docs/governance.md、docs/guide/milestones.md、opencode.json、config/mcporter.json |
+| men | 门 | primary | 意图分诊、任务分发、并行编排、汇总报告 | README.md、CHANGELOG.md、docs/PRD.md、docs/architecture.md、docs/governance.md、docs/guide/milestones.md、opencode.json |
 | si | 思 | subagent | 访谈式规划、产出 plan envelope、知识管理 | docs/guide/quickstart.md、docs/drafts/、docs/knowledge/（沉淀与归档） |
 | ji | 记 | subagent | 代码实现、前端开发、内容写作、本地 gate 验证 | scripts/*.mjs、.opencode/skills/*/、.opencode/command/*.md、docs/drafts/ |
 | chi | 持 | subagent | 投资分析、独立 Judge 评审、验收标准消费 | 评审报告（如 docs/m2-acceptance/chi-*.md） |
@@ -91,7 +91,7 @@
 
 ### 3.4 配置变更
 
-修改 `opencode.json` 或 `config/mcporter.json` 后必须：
+修改 `opencode.json` 后必须：
 
 1. 验证 JSON 格式（`node -e "JSON.parse(...)"`）
 2. 同步更新 README.md 和 architecture.md 中对应的描述

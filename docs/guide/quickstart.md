@@ -5,11 +5,43 @@
 
 ---
 
+## 〇、使用环境（重要）
+
+**Men（门）Agent 团队是 OpenCode 的一个插件（plugin），不是独立应用。** 所谓"安装"，就是把本仓库作为 OpenCode 项目配置载入——OpenCode 在仓库目录启动时自动读取 `opencode.json`，加载 6 个 agent、15 个技能包、命令与 MCP 服务器。
+
+**前置环境：**
+- 已安装 **OpenCode**（插件运行宿主）
+- **Node.js ≥ 18** / **npm** / **git**（安装脚本依赖）
+- 模型与密钥由 **CC Switch**（或你本机的 OpenCode 全局配置 `~/.config/opencode/opencode.json`）在本地统一托管
+
+**关于模型密钥与联网（澄清）：**
+- 插件仓库的 `opencode.json` 只声明各 agent 使用的模型 ID（如 `opencode-go/hy3`、`sensenova/glm-5.2`），**不内置任何 API 密钥**。
+- 模型推理所需的密钥与端点，全部由你的 OpenCode 运行环境（CC Switch）在本机提供；**安装流程不需要你提供任何密钥**。
+- 因此仓库自带的 `node scripts/setup.mjs` 只是"未使用 CC Switch、需手动把模型分配到 opencode.json"时的可选辅助，**并非必选步骤**。
+- 网络方面：插件本体安装（git clone + `npm install`）需一次性联网；MCP 工具服务器中，`exa`/`context7`/`grep_app`/`github-mcp-server` 为远程 MCP（需对应服务可达），`fetch`/`memory`/`sequential-thinking` 为 stdio 服务器（首次启动 OpenCode 时由 `npx` 拉取，需联网一次）。模型调用流量走 CC Switch 本地托管，插件本身不直连外网密钥。
+
+---
+
 ## 一、安装与启动
+
+**方式 A：npm 一步安装（首选）** — 前置：Node ≥ 18、已装 OpenCode；模型密钥由 CC Switch 在本地托管，无需提供。
+
+1. 打开终端，在**任意目录**运行：
+   ```bash
+   npx @cgartlab/men
+   ```
+   - 自动完成：scaffold 运行时资产到当前目录（`opencode.json` / `.opencode/` / `scripts/` / `config/` / `knowledge/`）→ 安装 `.opencode/` 依赖 → 从 `.env.example` 生成 `.env` → 端到端验证。
+   - 若当前目录已是 men 仓库根，则幂等跳过复制，直接就地安装。
+2. 启动 OpenCode（会自动读取 `opencode.json`，将 `men` 设为默认 agent）：
+   ```
+   opencode
+   ```
+
+**方式 B：Git 仓库（备选）** — 打开终端，进入 `men` 项目目录：
 
 1. 打开终端，进入 `men` 项目目录：
    ```powershell
-   cd D:\github-repos\men
+   cd <men 仓库目录>
    ```
 2. 启动 OpenCode（会自动读取 `opencode.json`，将 `men` 设为默认 agent）：
    ```
@@ -19,9 +51,11 @@
    - 输入 `/quit` 退出，再重新执行 `opencode`
    - 或关闭终端重开
 
-## 二、引导式模型配置
+## 二、引导式模型配置（可选，仅未使用 CC Switch 时）
 
-安装完成后，运行引导脚本让 men 帮你配置好所有模型：
+> **跳过条件**：若你的模型与密钥已由 CC Switch（或本机 OpenCode 全局配置 `~/.config/opencode/opencode.json`）统一托管，请**跳过本节**，直接进入「三、三个命令用法表」。
+
+仅当**未使用 CC Switch**、且希望本仓库的 `opencode.json` 自行管理各 agent 的模型分配时，才需要运行引导脚本。以下命令均为"未使用 CC Switch"路径下的**可选**操作：
 
 ```bash
 node scripts/setup.mjs
@@ -175,6 +209,8 @@ npm run eval -- --sid verify-1787295186835 --json
 | `ji-l1-verify` | ji | L1 机械验证（文件结构/退出码） |
 | `yi-design` | yi | 设计决策、设计文档 |
 | `yi-imagegen` | yi | SenseNova U1 Fast 生图 |
+| `men-status` | men | 查看团队当前状态 / 版本 / 配置健康 |
+| `men-update` | men | 更新 men 仓库到最新版本 |
 
 ## 七、事件审计查看
 

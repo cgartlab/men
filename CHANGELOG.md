@@ -12,9 +12,23 @@
 
 ### Added
 
+- men 插件启动自动检查版本更新（弹窗提示 + men-update / men-status 内置 skill）
+- npm 一行安装：发布 `@cgartlab/men`，任意目录 `npx @cgartlab/men` 即完成脚手架+依赖+环境+端到端验证（package.json 加 `bin`/`publishConfig`，install.mjs 新增 scaffold 模式）
+- men-status / men-update 内置 skill 纳入文档与技能计数（15 个技能包：ji×4/si×2/xun×3/chi×2/yi×2/men×2）
+
 ### Changed
 
+- 文档一致性修正：事件数 9→14、MCP×3→×7、技能 13→15、plugin 版本 1.18.18→1.18.23、配置来源澄清（仓库 opencode.json 即运行时配置，全局仅显式存在时覆盖）、quickstart 硬编码路径通用化
+
 ### Fixed
+
+- 安装指令准确性：install.sh/install.ps1 的 `<REPO_URL>`/`<INSTALL_URL>` 占位符硬编码为真实地址；install.astro 的 `rawBase` 由 `cgartlab/main` 修正为 `cgartlab/men/main`
+- `.opencode/package.json` 纳入版本控制（移出 .gitignore），手动 `cd .opencode && npm install` 不再因缺 manifest 报错
+- MCP 服务器补齐 transport：`fetch`/`memory`/`sequential-thinking` 补 `type:local`+npx 命令；`github-mcp-server` 补 `type:remote`+GitHub MCP 端点+token 头。7 个 MCP 全部可加载（原 4 个仅 `enabled:true` 被 OpenCode 静默忽略）
+
+### Removed
+
+- config/mcporter.json：未被 opencode.json 引用的孤儿配置（exa 已由 opencode.json 原生声明），删除并清理全部残留引用
 
 ## [v0.2.1] - 2026-08-27
 

@@ -1,11 +1,17 @@
 {
-  "name": "@fakevis/men",
+  "name": "@cgartlab/men",
   "version": "0.2.1",
   "description": "6+1 Agent 团队系统 —— OpenCode 首发，假维斯（fakevis）出品",
   "type": "module",
   "license": "MIT",
   "engines": {
     "node": ">=18"
+  },
+  "bin": {
+    "men": "scripts/install.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
@@ -16,7 +22,6 @@
   },
   "homepage": "https://github.com/cgartlab/men#readme",
   "scripts": {
-    "install": "node scripts/install.mjs",
     "verify": "node scripts/verify.mjs men",
     "release": "node scripts/release.mjs",
     "release:patch": "node scripts/release.mjs patch",
@@ -33,19 +38,13 @@
     "AGENTS.md",
     "README.md",
     "LICENSE",
-    "CONTRIBUTING.md",
-    "SECURITY.md",
-    "CODE_OF_CONDUCT.md",
-    "CHANGELOG.md",
     ".env.example",
     "install.sh",
     "install.ps1",
     ".opencode/",
     "scripts/",
     "config/",
-    "docs/",
-    "knowledge/",
-    ".github/"
+    "knowledge/"
   ],
   "keywords": [
     "opencode",

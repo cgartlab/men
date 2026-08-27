@@ -16,7 +16,7 @@
 |------|------|
 | `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking） |
 | `.opencode/agent/*.md` | **6 个 agent 定义**（唯一源代码）。每次编辑必须先 read 再 edit |
-| `.opencode/skills/*/SKILL.md` | 13 个技能包（ji×4/si×2/xun×3/chi×2/yi×2） |
+| `.opencode/skills/*/SKILL.md` | 15 个技能包（ji×4/si×2/xun×3/chi×2/yi×2/men×2） |
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
 | `.opencode/plugins/men-sidebar/` | **TUI 侧边栏插件**：橘黄徽章 + 版本号统一变量 + agents 兜底链（V8） |
 | `scripts/*.mjs` | 机械验证三件套：`verify.mjs`（check battery）/ `gate.mjs`（门禁）/ `event.mjs`（事件审计），纯 Node 零依赖 |
@@ -36,8 +36,8 @@
 | `docs/governance.md` | 团队治理（角色/决策/变更/审查/发布） |
 | `docs/learning-architecture.md` | 自主学习与进化架构（四层认知模型） |
 | `knowledge/` | 团队知识库（errors/、patterns/、decisions/） |
-| `.opencode/package.json` | `@opencode-ai/plugin` 1.18.18，本地安装 |
-| `config/mcporter.json` | MCP 配置（Exa 搜索） |
+| `.opencode/package.json` | `@opencode-ai/plugin` 1.18.23，本地安装 |
+| `config/models.json` | 模型知识基（providers/roleDefaults/presets），`setup.mjs` 引导式模型配置的数据源 |
 | `docs/PRD.md` | 正式 PRD（里程碑 M0–M5） |
 | `docs/architecture.md` | 架构说明（拓扑/编排流程/验证体系 mermaid） |
 | `docs/guide/` | 使用指南（quickstart / milestones / release） |
@@ -63,7 +63,7 @@
 2. **YAML frontmatter** 必须保留：`description`, `mode`, `model`
 3. **`CHARTER_CHECK` 字段**：每个 agent 必须有，含 Clarification level / Task domain / Must NOT do / Success criteria
 4. **`全员红线` 段落**：6 个 agent 必须逐字一致（复制粘贴，不修改）
-5. **model**：按角色分配不同模型，运行时权威配置以 CC Switch 管理的 `~/.config/opencode/opencode.json` 的 `agent` 字段为准（仓库 `opencode.json` 仅作为参考模板，不参与运行时同步）：
+5. **model**：按角色分配不同模型。在仓库目录内启动 `opencode` 时，OpenCode 自动加载仓库 `opencode.json`（对终端用户而言这就是运行时配置，与 README/quickstart 一致）；若用户或 CC Switch 管理的 `~/.config/opencode/opencode.json` 显式存在，其 `agent` 字段会覆盖仓库配置：
     - men: `opencode-go/hy3`
     - si: `sensenova/deepseek-v4-flash`
     - ji: `opencode-go/deepseek-v4-flash`
@@ -116,7 +116,7 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 
 - **Node >= 18**（`@opencode-ai/plugin` engines 要求）
 - 依赖在 `.opencode/node_modules/` 下本地安装，不共享根目录
-- `.opencode/.gitignore` 排除了 `node_modules`, `package.json`, `package-lock.json`
+- `.opencode/.gitignore` 排除了 `node_modules`, `package-lock.json`, `bun.lock`（`package.json` 已纳入版本控制）
 - **事件类型归一化**：learn-rules.mjs 和 eval-metrics.mjs 均支持 men.* 前缀 → 标准类型映射（subject-first 策略）
 
 ## CHARTER_CHECK

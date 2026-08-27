@@ -6,7 +6,7 @@
   逻辑集中在 install.mjs，本脚本只做平台引导，避免双份安装逻辑。
 
   用法:
-    irm <INSTALL_URL> | iex                          # 管道一键安装（PowerShell 7+）
+    irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex     # 管道一键安装（PowerShell 7+）
     ./install.ps1 [-Dir <path>] [-SkipDeps] [-SkipVerify] [-Json] [-Help]
 
   选项:
@@ -16,7 +16,7 @@
     -Json            输出 JSON 摘要
     -Help            显示帮助
 
-  发布时替换以下占位 URL:
+  URL 已硬编码为 cgartlab/men 真实地址（发布时无需再替换占位）:
     INSTALL_URL — install.ps1 的原始 URL（用于管道安装，与 README 一键命令一致）
     REPO_URL    — 仓库 git clone 地址（用于拉取完整仓库）
 #>
@@ -29,8 +29,8 @@ param(
   [switch]$Help
 )
 
-$INSTALL_URL = "<INSTALL_URL>"
-$REPO_URL = "<REPO_URL>"
+$INSTALL_URL = "https://raw.githubusercontent.com/cgartlab/men/main/install.ps1"
+$REPO_URL = "https://github.com/cgartlab/men.git"
 $DEFAULT_DIR = "men"
 
 function Show-Help {

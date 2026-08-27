@@ -82,8 +82,8 @@ gh release create vX.Y.Z --title "vX.Y.Z — <主题>" --notes-file /tmp/release
 - [ ] `git push` + `git push --tags`
 - [ ] GitHub Releases 已发布 `vX.Y.Z`
 - [ ] Release notes 只含当前版本内容（用 release-notes.mjs 提取，不含历史版本）
-- [ ] README「快速开始」与 `install.sh` / `install.ps1` 中的 `<INSTALL_URL>` / `<REPO_URL>` 占位已替换为真实 URL
-- [ ] （可选）`npm publish` 发布 `@fakevis/men` —— 发布前确认 `files` 白名单覆盖 `.opencode/`、`scripts/`、`docs/` 等路径，且 `.opencode/package.json` 已包含在发布包内
+- [ ] README「快速开始」与 `install.sh` / `install.ps1` 中的 URL 已是真实地址（`INSTALL_URL` / `REPO_URL` 占位符已硬编码，无需再替换）
+- [ ] （可选）`npm publish` 发布 `@cgartlab/men` —— 发布前确认 `files` 白名单覆盖运行资产（`opencode.json` / `AGENTS.md` / `.opencode/` / `scripts/` / `config/` / `knowledge/` 等；`docs/`、`.github/` 不打包），且 `.opencode/package.json` 已包含在发布包内；发布后用户可通过 `npx @cgartlab/men` 一键安装
 - [ ] 新增文件已同步到 `docs/guide/quickstart.md`（如需）
 
 ## 六、开源发布准备（重要）
@@ -91,10 +91,10 @@ gh release create vX.Y.Z --title "vX.Y.Z — <主题>" --notes-file /tmp/release
 1. **必须先 `git init`**：非 git 仓库时 `release.mjs` 会跳过 tag，版本发布不完整。`git init` → `git add` → 首次 commit → 关联 remote
 2. **内网 IP / 密钥必须走 `.env`**：
    - 内网数据源（192.168.31.x）、Embedding 服务地址、API key 一律放 `.env`（由 `.env.example` 模板生成，已被 `.gitignore` 排除）
-   - 仓库中禁止出现真实密钥（`verify.mjs` 的 secrets 扫描会拦截）
-   - `config/mcporter.json` 中不得写死内网地址与密钥
-3. **占位 URL 替换清单**（发布时）：
-   - `install.sh` / `install.ps1` 中的 `<INSTALL_URL>` 与 `<REPO_URL>`
-   - README「快速开始」中的 `<INSTALL_URL>`
+- 仓库中禁止出现真实密钥（`verify.mjs` 的 secrets 扫描会拦截）
+    - MCP 服务器一律在 `opencode.json` 中声明（`fetch` / `github-mcp-server` / `memory` / `sequential-thinking` 等），禁止写死内网地址与密钥
+3. **占位 URL 替换清单**（已过时）：`<INSTALL_URL>` / `<REPO_URL>` 占位符已在代码与文档中硬编码为真实地址，发布时无需再替换——
+   - `install.sh` / `install.ps1` 中的 `INSTALL_URL` 已写死为 `https://raw.githubusercontent.com/cgartlab/men/main/install.sh`（或 `install.ps1`），`REPO_URL` 已写死为 `https://github.com/cgartlab/men.git`
+   - README「快速开始」的一键命令已直接使用真实 URL
    - `package.json` 的 `repository`（若启用 npm publish 则必填）
 4. **License 与署名**：MIT LICENSE 已在根目录，确认 `package.json` 的 `"license": "MIT"` 一致

@@ -5,7 +5,7 @@
 # 逻辑集中在 install.mjs，本脚本只做平台引导，避免双份安装逻辑。
 #
 # 用法:
-#   bash <(curl -fsSL <INSTALL_URL>) [选项]      # 管道一键安装
+#   bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh) [选项]      # 管道一键安装
 #   ./install.sh [选项]                          # 仓库内就地安装（记得 chmod +x install.sh）
 #
 # 选项:
@@ -15,13 +15,13 @@
 #   --json            输出 JSON 摘要
 #   --help            显示帮助
 #
-# 发布时替换以下占位 URL:
+# URL 已硬编码为 cgartlab/men 真实地址（发布时无需再替换占位）:
 #   INSTALL_URL — install.sh 的原始 URL（用于管道安装，与 README 一键命令一致）
 #   REPO_URL    — 仓库 git clone 地址（用于拉取完整仓库）
 set -euo pipefail
 
-INSTALL_URL="<INSTALL_URL>"
-REPO_URL="<REPO_URL>"
+INSTALL_URL="https://raw.githubusercontent.com/cgartlab/men/main/install.sh"
+REPO_URL="https://github.com/cgartlab/men.git"
 DEFAULT_DIR="men"
 
 usage() {
@@ -29,7 +29,7 @@ usage() {
 men（门）Agent 团队 — 一键安装器（Linux/macOS）
 
 用法:
-  bash <(curl -fsSL <INSTALL_URL>) [选项]
+  bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh) [选项]
   ./install.sh [选项]
 
 选项:

@@ -38,7 +38,7 @@ xun 通过 OpenCode skills 机制组织研究能力，每个 skill 对应一个�
 |--------|------|------|
 | SearXNG | `http://192.168.31.111:8099` | 本地隐私搜索，首选 |
 | Miniflux | `http://192.168.31.111:8025` | RSS 聚合 |
-| Exa MCP | `https://mcp.exa.ai/mcp` | 外网搜索，已接入 mcporter.json |
+| Exa MCP | `https://mcp.exa.ai/mcp` | 外网搜索，已由 opencode.json 原生接入 |
 | Affine / Blinko | `http://192.168.31.111:8888` | 知识库（M2+ 启用） |
 
 ### RSS 3 路策略

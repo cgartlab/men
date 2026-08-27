@@ -12,7 +12,7 @@ description: "Use when searching for information online — user asks to find ne
 | 工具 | 地址 | 说明 | 优先级 |
 |------|------|------|--------|
 | SearXNG | `http://192.168.31.111:8099` | 本地隐私搜索，不上传查询到第三方 | 首选 |
-| Exa MCP | `https://mcp.exa.ai/mcp` | 外网搜索，已通过 mcporter.json 接入 | 补充 |
+| Exa MCP | `https://mcp.exa.ai/mcp` | 外网搜索，已由 opencode.json 原生接入 | 补充 |
 | r.jina.ai | `https://r.jina.ai/{url}` | 代理抓取，用于无法直连的目标 | 兜底 |
 
 ### 工具选择原则
@@ -80,7 +80,7 @@ description: "Use when searching for information online — user asks to find ne
 - **全员红线 #2**：搜索后必须确认结果数量≥1，空结果报告"未找到"
 - **全员红线 #3**：不泄露用户搜索词中的个人信息/隐私数据
 - **内网数据源**：首选 SearXNG（192.168.31.111:8099），本地隐私搜索，不上传查询到第三方
-- **MCP 补充**：Exa（https://mcp.exa.ai/mcp）作为外网搜索补充，已通过 mcporter.json 接入
+- **MCP 补充**：Exa（https://mcp.exa.ai/mcp）作为外网搜索补充，已由 opencode.json 原生接入
 - **r.jina.ai 代理**：直连被墙或被禁时，用 `https://r.jina.ai/{url}` 代理
 - **只读约束**：不修改任何数据源，不写入文件系统
 - **来源优先级**：1原始 > 2权威媒体 > 3行业报告 > 4二手（仅优先级1-2的双源可确认）

@@ -3,17 +3,23 @@
  * install.mjs — men（门）Agent 团队 全平台一键安装核心
  *
  * 纯 Node（零第三方依赖），Windows pwsh 友好。
- * 被 install.sh（Linux/macOS）与 install.ps1（Windows）引导调用，
- * 也可直接运行：node scripts/install.mjs [选项]
+ * 三种运行方式：
+ *   - npx @cgartlab/men（npm 包 bin）：从任意目录 scaffold 运行时资产到当前目录
+ *   - 被 install.sh（Linux/macOS）与 install.ps1（Windows）引导调用（git 一键路径）
+ *   - 直接运行：node scripts/install.mjs [选项]
  *
  * 用法：
+ *   npx @cgartlab/men
  *   node scripts/install.mjs [--dir <path>] [--skip-deps] [--skip-verify] [--json] [--help]
  *
  * 行为：
  *   1. 检测 Node 版本 >= 18（不满足则报错退出非 0）
- *   2. 目标目录：默认当前目录（已有仓库则就地安装）；
- *      --dir 指向不存在的目录时，从当前仓库根复制源码（排除运行态目录）
- *   3. 安装 .opencode/ 依赖（npm install --prefix .opencode，Windows 用 cmd /c 无 shell）
+ *   2. 目标目录：
+ *      - npm 包 bin 运行（cwd ≠ 包目录）：SCAFFOLD 模式，复制运行时白名单到当前目录
+ *      - 默认当前目录（仓库内运行则就地安装）
+ *      - --dir 指向不存在的目录时，从当前仓库根复制源码（排除运行态目录）
+ *   3. 安装 .opencode/ 依赖（npm install --prefix .opencode，Windows 用 cmd /c 无 shell）；
+ *      失败仅告警不中止（@opencode-ai/plugin 仅类型声明，运行时不需要）
  *   4. 配置：.env 不存在时从 .env.example 复制
  *   5. 端到端验证：node scripts/verify.mjs men --json，退出码 0 才报"安装成功"
  *   6. 输出安装摘要
@@ -32,7 +38,7 @@ const ENV_TARGET = ".env";
 
 // .opencode/package.json 缺失时的最小模板（npm 发布可能按 .gitignore 排除它）
 const OPCODE_PKG_TEMPLATE = {
-  dependencies: { "@opencode-ai/plugin": "1.18.18" },
+  dependencies: { "@opencode-ai/plugin": "1.18.23" },
 };
 
 // 复制到新目录时排除的路径（任意层级命中即跳过；.env 含密钥绝不复制）
@@ -42,6 +48,20 @@ const COPY_EXCLUDES = new Set([
   ".env", ".env.local",
   ".DS_Store", "Thumbs.db",
 ]);
+
+// scaffold 模式（npx @cgartlab/men）复制的运行时白名单：
+// 仅这些顶层条目会进入目标目录；目录型条目递归复制并尊重 COPY_EXCLUDES
+const SCAFFOLD_ENTRIES = [
+  "opencode.json",
+  "AGENTS.md",
+  ".env.example",
+  "install.sh",
+  "install.ps1",
+  ".opencode/",
+  "scripts/",
+  "config/",
+  "knowledge/",
+];
 
 // ─────────────────────────── 工具函数 ───────────────────────────
 
@@ -72,6 +92,11 @@ function parseArgs(argv) {
 function printHelp() {
   process.stdout.write(`men（门）Agent 团队 — 全平台一键安装器
 
+npm 一键安装（推荐，scaffold 到当前目录）:
+  npx @cgartlab/men
+    从任意目录运行：复制运行时资产（opencode.json / .opencode/ / scripts/ 等）
+    到当前目录，安装依赖、生成 .env、端到端验证，完成后在当前目录运行 opencode
+
 用法:
   node scripts/install.mjs [选项]
 
@@ -84,8 +109,8 @@ function printHelp() {
   --help, -h        显示本帮助
 
 平台引导（推荐，自动拉取仓库）:
-  Linux/macOS:  bash <(curl -fsSL <INSTALL_URL>)
-  Windows:      irm <INSTALL_URL> | iex
+  Linux/macOS:  bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)
+  Windows:      irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex
 `);
 }
 
@@ -133,6 +158,23 @@ function copyTree(src, dest, excludes) {
   }
 }
 
+// 按白名单复制运行时资产（scaffold 模式）：
+// 只复制 entries 中存在的顶层条目；目录型条目递归复制并尊重 excludes
+function copyAllowlist(src, dest, entries, excludes) {
+  for (const name of entries) {
+    const s = path.join(src, name);
+    if (!fs.existsSync(s)) continue;
+    const d = path.join(dest, name);
+    if (fs.statSync(s).isDirectory()) {
+      fs.mkdirSync(d, { recursive: true });
+      copyTree(s, d, excludes);
+    } else if (fs.statSync(s).isFile()) {
+      fs.mkdirSync(path.dirname(d), { recursive: true });
+      fs.copyFileSync(s, d);
+    }
+  }
+}
+
 // 确保 .opencode/package.json 存在（缺失时写入最小模板，兼容 npm 发布分发）
 function ensureOpencodePkg(dir) {
   const p = path.join(dir, ".opencode", "package.json");
@@ -162,19 +204,37 @@ function run() {
 
   // ── 2. 目标目录 ──
   let copyMode = "in-place";
+  const inRepo = path.resolve(process.cwd()) === ROOT;
   let targetDir = cfg.dir ? path.resolve(cfg.dir) : process.cwd();
 
-  if (!fs.existsSync(targetDir)) {
-    // 目标不存在：从当前仓库根复制（本地分发模式）
-    if (!isMenRepoRoot(ROOT)) {
-      fail(`目标目录不存在：${targetDir}，且脚本所在目录不是 men 仓库根，无法复制。请先用 install.sh / install.ps1 拉取仓库`);
+  if (cfg.dir) {
+    // --dir 显式指定：保持原行为（不存在 → 全量复制；存在 → 必须是 men 仓库根）
+    if (!fs.existsSync(targetDir)) {
+      if (!isMenRepoRoot(ROOT)) {
+        fail(`目标目录不存在：${targetDir}，且脚本所在目录不是 men 仓库根，无法复制。请先用 install.sh / install.ps1 拉取仓库`);
+      }
+      try {
+        fs.mkdirSync(targetDir, { recursive: true });
+        copyTree(ROOT, targetDir, COPY_EXCLUDES);
+        copyMode = "copied";
+      } catch (e) {
+        fail(`复制到 ${targetDir} 失败：${e.message}`);
+      }
+    } else if (!isMenRepoRoot(targetDir)) {
+      fail(`目标目录已存在但不是 men 仓库根：${targetDir}`);
     }
-    try {
-      fs.mkdirSync(targetDir, { recursive: true });
-      copyTree(ROOT, targetDir, COPY_EXCLUDES);
-      copyMode = "copied";
-    } catch (e) {
-      fail(`复制到 ${targetDir} 失败：${e.message}`);
+  } else if (!inRepo) {
+    // SCAFFOLD 模式：从已安装的 npm 包运行（npx @cgartlab/men），cwd ≠ 包目录
+    // 目标 = 当前目录；已是 men 仓库根则幂等跳过复制，否则复制运行时白名单
+    if (isMenRepoRoot(targetDir)) {
+      copyMode = "in-place";
+    } else {
+      try {
+        copyAllowlist(ROOT, targetDir, SCAFFOLD_ENTRIES, COPY_EXCLUDES);
+        copyMode = "scaffolded";
+      } catch (e) {
+        fail(`scaffold 到 ${targetDir} 失败：${e.message}`);
+      }
     }
   } else if (!isMenRepoRoot(targetDir)) {
     fail(`目标目录已存在但不是 men 仓库根：${targetDir}`);
@@ -182,7 +242,7 @@ function run() {
 
   // ── 3. 依赖安装 ──
   const opcodePkgCreated = ensureOpencodePkg(targetDir);
-  const deps = { skipped: cfg.skipDeps, ok: null, command: null, exitCode: null, note: null };
+  const deps = { skipped: cfg.skipDeps, ok: null, command: null, exitCode: null, note: null, warning: null };
   if (opcodePkgCreated) deps.note = ".opencode/package.json 缺失，已写入最小模板";
   if (!cfg.skipDeps) {
     deps.command = "npm install --prefix .opencode";
@@ -190,7 +250,9 @@ function run() {
     deps.exitCode = r.status ?? -1;
     deps.ok = deps.exitCode === 0;
     if (!deps.ok) {
-      fail(`依赖安装失败（exit ${deps.exitCode}）：${(r.stderr || "").slice(-300)}`);
+      // 非致命：@opencode-ai/plugin 仅类型声明，运行时不需要；无 registry 访问也能继续
+      deps.warning = `依赖安装失败（exit ${deps.exitCode}），已跳过继续：${(r.stderr || "").slice(-200)}`;
+      eprintf(`警告: ${deps.warning}\n`);
     }
   }
 
@@ -257,13 +319,17 @@ function printSummary(r) {
   };
   process.stdout.write(`men（门）Agent 团队 — 安装摘要\n`);
   process.stdout.write(`${"=".repeat(54)}\n`);
-  process.stdout.write(`  路径   ${r.dir}${r.copyMode === "copied" ? "（从仓库复制）" : ""}\n`);
+  const modeText =
+    r.copyMode === "copied" ? "（从仓库复制）" :
+    r.copyMode === "scaffolded" ? "（scaffold 到当前目录）" : "";
+  process.stdout.write(`  路径   ${r.dir}${modeText}\n`);
   process.stdout.write(`  Node   ${mark(true, false, `${r.node.version}（要求 ${r.node.required}）`, "", "")}\n`);
   const depsText = r.deps.command
     ? `${r.deps.command}（exit ${r.deps.exitCode}）`
     : "已存在 .opencode/package.json";
   process.stdout.write(`  依赖   ${mark(r.deps.ok, r.deps.skipped, depsText, "跳过（--skip-deps）", `exit ${r.deps.exitCode}`)}\n`);
   if (r.deps.note) process.stdout.write(`         注意: ${r.deps.note}\n`);
+  if (r.deps.warning) process.stdout.write(`         警告: ${r.deps.warning}\n`);
   const envText = r.env.created
     ? `已从 ${r.env.source} 创建 ${ENV_TARGET}`
     : r.env.existing
@@ -276,7 +342,10 @@ function printSummary(r) {
     : `scripts/verify.mjs men（exit ${r.verify.exitCode}）`;
   process.stdout.write(`  验证   ${mark(r.verify.ok, r.verify.skipped, verifyText, "跳过（--skip-verify）", `exit ${r.verify.exitCode}`)}\n`);
   process.stdout.write(`${"=".repeat(54)}\n`);
-  process.stdout.write(`  安装成功 ✓  下一步：在项目目录运行 opencode\n`);
+  const nextStep = r.copyMode === "scaffolded"
+    ? "  安装成功 ✓  下一步：在当前目录运行 opencode\n"
+    : "  安装成功 ✓  下一步：在项目目录运行 opencode\n";
+  process.stdout.write(nextStep);
 }
 
 run();

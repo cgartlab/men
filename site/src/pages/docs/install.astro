@@ -6,11 +6,12 @@ import content from '../../data/content.json';
 
 const pageTitle = '安装 — ' + content.hero.title;
 const base = '/';
-const rawBase = 'https://raw.githubusercontent.com/cgartlab/main';
+const rawBase = 'https://raw.githubusercontent.com/cgartlab/men/main';
 
 const infobox = [
-  { k: '分发方式', v: '<strong>Git 仓库</strong>分发（非独立 npm 包）' },
+  { k: '分发方式', v: '<strong>npm 包</strong>（<code>@cgartlab/men</code>）+ <strong>Git 仓库</strong>双通道' },
   { k: '前置依赖', v: '<code>Node ≥ 18</code> / <code>npm</code> / <code>git</code>' },
+  { k: 'npm 一步安装', v: '<code>npx @cgartlab/men</code>' },
   { k: 'Linux·macOS', v: '<code>bash &lt;(curl -fsSL …/install.sh)</code>' },
   { k: 'Windows', v: '<code>irm …/install.ps1 | iex</code>' },
   { k: '就地安装', v: '<code>./install.sh</code> / <code>./install.ps1</code>' },
@@ -19,6 +20,7 @@ const infobox = [
 
 const toc = [
   { id: 'prereq', label: '前置要求' },
+  { id: 'npm', label: 'npm 一步安装（npx @cgartlab/men）' },
   { id: 'linux-macos', label: '一键安装（Linux·macOS）' },
   { id: 'windows', label: '一键安装（Windows）' },
   { id: 'inplace', label: '就地安装' },
@@ -39,7 +41,9 @@ const seealso = [
   <WikiManual
     crumb="安装"
     title="安装"
-    lead={`<strong>men（门）</strong>不打包为独立 npm 包，而是通过 <strong>Git 仓库</strong>与配套的一键安装脚本分发：脚本负责检测依赖、拉取仓库，并调用共享核心 <code>scripts/install.mjs</code> 完成依赖安装、环境配置与端到端验证。`}
+    lead={`<strong>men（门）</strong>以 <strong>npm 包</strong>（<code>@cgartlab/men</code>）与 <strong>Git 仓库</strong>双通道分发：` +
+      `<code>npx @cgartlab/men</code> 可在任意目录一步 scaffold 并完成安装；Git 一键脚本负责检测依赖、拉取仓库，` +
+      `两条路径最终都调用共享核心 <code>scripts/install.mjs</code> 完成依赖安装、环境配置与端到端验证。`}
     infoboxTitle="安装概要"
     infobox={infobox}
     toc={toc}
@@ -59,7 +63,21 @@ const seealso = [
       <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
     </section>
 
-    <section id="linux-macos" class="doc-section">
+    <section id="npm" class="doc-section">
+      <h2>npm 一步安装（npx @cgartlab/men）</h2>
+      <p>在<strong>任意目录</strong>运行（前置：Node ≥ 18、已装 OpenCode；模型密钥由 CC Switch 在本地托管，无需提供）：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>npx @cgartlab/men</code></pre>
+      </div>
+      <p>安装器自动完成：scaffold 运行时资产到当前目录（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。若当前目录已是 men 仓库根，则幂等跳过复制、直接就地安装；依赖安装失败仅告警不中止（<code>@opencode-ai/plugin</code> 仅类型声明，运行时不需要）。</p>
+      <p>完成后在<strong>当前目录</strong>运行 <code>opencode</code> 即可进入 TUI：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>opencode</code></pre>
+      </div>
+      <SrcRef files={['D:\github-repos\men\scripts\install.mjs','D:\github-repos\men\package.json']} />
+    </section>
       <h2>一键安装（Linux·macOS）</h2>
       <p>在支持 <code>bash</code> 的 Linux / macOS 终端中，直接运行一键命令（使用 <code>curl</code> 拉取 <code>install.sh</code> 并交给 <code>bash</code> 执行），脚本会检测依赖、<code>git clone</code> 到默认目录 <code>men/</code>，再调用共享核心完成安装：</p>
       <div class="code-block">
@@ -109,7 +127,7 @@ const seealso = [
         <pre><code>node scripts/install.mjs [--dir &lt;path&gt;] [--skip-deps] [--skip-verify] [--json] [--help]</code></pre>
       </div>
       <div class="wiki-note">
-        分发脚本中的 <code>INSTALL_URL</code> 与 <code>REPO_URL</code> 为<strong>发布时替换的占位符</strong>：前者指向安装脚本的原始 URL（即 <code>raw.githubusercontent.com/cgartlab/main/&lt;install.sh|install.ps1&gt;</code>），后者是 <code>git clone</code> 使用的仓库地址。
+        分发脚本中的 <code>INSTALL_URL</code> 与 <code>REPO_URL</code> 已<strong>硬编码为真实地址</strong>：前者指向安装脚本的原始 URL（即 <code>raw.githubusercontent.com/cgartlab/men/main/&lt;install.sh|install.ps1&gt;</code>），后者是 <code>git clone</code> 使用的仓库地址（<code>github.com/cgartlab/men.git</code>）。
       </div>
       <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
     </section>

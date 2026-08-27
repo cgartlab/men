@@ -25,7 +25,9 @@
       "model": "sensenova/sensenova-6.8-flash-lite"
     }
   },
-  "plugin": [],
+  "plugin": [
+    ".opencode/plugins/men-sidebar"
+  ],
   "skills": {
     "paths": [
       ".opencode/skills"
@@ -48,15 +50,27 @@
       "enabled": true
     },
     "fetch": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-fetch"],
       "enabled": true
     },
     "github-mcp-server": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_TOKEN}"
+      },
       "enabled": true
     },
     "memory": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
       "enabled": true
     },
     "sequential-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
       "enabled": true
     }
   }
