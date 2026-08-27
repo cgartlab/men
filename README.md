@@ -75,7 +75,7 @@ cd men && opencode
 |------|------|------|
 | `/ultrawork` | `/ultrawork <任务描述>` | 一键编排：9 步协议自动调度多角色协作 |
 | `/verify` | `/verify <角色名>` | 运行机械验证 + chi 独立 Judge 复核 |
-| `/hyperplan` | `/hyperplan <项目名>` | 访谈式规划：逐层拆解复杂项目为可执行计划 |
+| `/hyperplan` | `/hyperplan <项目名>` | 深度思考与方案规划：多角度拆解复杂项目为可执行计划 |
 
 ---
 
@@ -138,7 +138,7 @@ flowchart LR
 |------|------|------|
 | **ultrawork** | `/ultrawork <任务>` | 9 步协议一键编排：意图判定 → 规划 → 多路 Wave 并行 → 汇总 → 验证 → 交付 |
 | **verify** | `/verify <角色>` | 运行 `scripts/verify.mjs` 五项机械检查，随后 chi 以 fresh context 独立 Judge 语义复核 |
-| **hyperplan** | `/hyperplan <项目>` | 访谈式规划：逐层提问澄清需求 → 生成 plan envelope → 拆解为可执行子任务 |
+| **hyperplan** | `/hyperplan <项目>` | 深度思考与方案规划：多角度提出方案 → 生成 plan envelope → 拆解为可执行子任务 |
 | **release** | `npm run release` | 版本发布：SemVer bump + CHANGELOG + git tag（详见 [`docs/guide/release.md`](docs/guide/release.md)） |
 
 ---
