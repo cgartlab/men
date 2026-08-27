@@ -1,0 +1,9 @@
+# 换行符统一策略：文本文件入库统一 LF，检出按平台 core.autocrlf 转换。
+# 避免手动统一换行符；diff 不因 CRLF/LF 差异混乱。
+* text=auto
+
+# Windows PowerShell 脚本保持 CRLF
+*.ps1 text eol=crlf
+
+# Shell 脚本强制 LF（跨平台安全）
+*.sh text eol=lf
