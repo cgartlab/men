@@ -68,7 +68,7 @@
     - ji: `opencode-go/deepseek-v4-flash`
    - chi: `sensenova/glm-5.2`
    - yi/xun: `sensenova/sensenova-6.8-flash-lite`
-6. **men 输出规范须保留**：`.opencode/agent/men.md` 含「交互提问与下一步建议规范」（下一步建议**必须使用 OpenCode 交互提问功能**，环境不支持时回退文本选择题：数字问题 + 字母答案）与「人类阅读优先（代号降噪）」（面向用户零内部代号），编辑时必须保留，不得删除或弱化（决策 D20）
+6. **men 输出规范须保留**：`.opencode/agent/men.md` 含「交互提问与下一步建议规范」（下一步建议**必须调用 OpenCode 内置 `question` 工具**——在 frontmatter 以 `permission.question: allow` 启用，仅 TUI 客户端提供；工具不可用时回退文本选择题：数字问题 + 字母答案）与「人类阅读优先（代号降噪）」（面向用户零内部代号）及「任务列表跟踪（todowrite）」，编辑时必须保留，不得删除或弱化（决策 D20）
 
 ## 自主学习回路（M7）
 

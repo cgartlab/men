@@ -14,13 +14,15 @@ men（门）作为用户唯一对话角色，其「提问」与「下一步建�
 
 ## 设计决策
 
-### 1. 下一步建议 → 必须使用 OpenCode 交互提问（用户 2026-08-28 升级）
+### 1. 下一步建议 → 必须调用 OpenCode 内置 question 工具（用户 2026-08-28 升级，2026-08-28 定稿）
 
-- men 的「下一步建议」与「提问」**必须使用 OpenCode 的交互提问功能**（askUser / 交互提问工具），让用户在对话界面直接选择
-- **禁止**：开放式提问；交互提问可用时仍用纯文本选择题替代
-- 选项设计：具体可执行、2–5 个、单选默认/多选标注
-- **回退形态**：环境未暴露交互提问工具时，回退到文本选择题固定模板（数字问题序号 + 字母答案序号，置于回复最后）
-- 生效前提：交互提问工具需由运行时环境暴露（当前 OpenCode 会话默认未暴露，见「生效路径」）
+- men 的「下一步建议」与「提问」**必须调用 OpenCode 内置的 `question` 工具**（非 askUser），在 TUI 界面弹出多选表单供用户直接点选
+- `question` 工具参数 schema：`{ questions: [{ question, header(≤30字), options:[{label, description}], multiple? }] }`，返回 `{ answers: [[选中label], ...] }`；`custom` 默认开启（用户可自输）
+- **启用方式**（准确）：agent 定义 frontmatter 加 `permission: { question: allow }`（`tools` 字段已废弃）；`question` 工具**仅 TUI 客户端提供**（`x-opencode-client: tui`），非 TUI 会话（ACP/web）默认不可用
+- **禁止**：开放式提问；工具可用时仍用纯文本选择题替代
+- 选项设计：label 具体可执行、2–5 个、单选默认（`multiple` 省略/false）/多选（`multiple: true`）
+- **回退形态**：工具不可用时（非 TUI / 会话工具集未含 question），回退到文本选择题固定模板（数字问题序号 + 字母答案序号，置于回复最后）
+- **生效路径**：`permission.question: allow` 已配置于 `.opencode/agent/men.md` frontmatter + `opencode.json` men agent；重启 OpenCode（TUI 模式）后 men 即能调用 question 工具
 
 ### 2. 交互提问 → 固定模板（回退形态）
 

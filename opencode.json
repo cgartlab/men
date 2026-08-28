@@ -7,7 +7,10 @@
   ],
   "agent": {
     "men": {
-      "model": "opencode-go/hy3"
+      "model": "opencode-go/hy3",
+      "permission": {
+        "question": "allow"
+      }
     },
     "si": {
       "model": "sensenova/deepseek-v4-flash"

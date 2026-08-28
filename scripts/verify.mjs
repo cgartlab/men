@@ -273,25 +273,30 @@ function checkStructure(targetPath) {
 function checkGate(targetPath) {
   const st = fs.statSync(targetPath);
   let pkgDir = st.isDirectory() ? targetPath : path.dirname(targetPath);
-  // 向上找 package.json
-  let found = null;
+  // 向上收集所有候选 package.json（从近到远）
+  const candidates = [];
   let cur = path.resolve(pkgDir);
   while (true) {
     const p = path.join(cur, "package.json");
-    if (fs.existsSync(p)) { found = p; break; }
+    if (fs.existsSync(p)) candidates.push(p);
     const parent = path.dirname(cur);
     if (parent === cur) break;
     cur = parent;
   }
-  if (!found) {
+  if (candidates.length === 0) {
     return { id: "gate-exit-code", status: "SKIP", evidence: "未找到 package.json，跳过 gate", details: "" };
   }
-  const pkg = JSON.parse(fs.readFileSync(found, "utf-8"));
-  const scripts = pkg.scripts || {};
   const want = ["typecheck", "test", "lint"];
+  // 优先选含 want 脚本的候选（从近到远第一个），否则回退最近候选
+  const chosen = candidates.find(p => {
+    const scripts = JSON.parse(fs.readFileSync(p, "utf-8")).scripts || {};
+    return want.some(k => typeof scripts[k] === "string");
+  }) || candidates[0];
+  const pkg = JSON.parse(fs.readFileSync(chosen, "utf-8"));
+  const scripts = pkg.scripts || {};
   const available = want.filter(k => typeof scripts[k] === "string");
   if (available.length === 0) {
-    return { id: "gate-exit-code", status: "SKIP", evidence: "package.json 中无 typecheck/test/lint 脚本", details: "" };
+    return { id: "gate-exit-code", status: "SKIP", evidence: `package.json（${path.relative(ROOT, chosen)}）中无 typecheck/test/lint 脚本`, details: "" };
   }
   const results = [];
   const win = process.platform === "win32";
@@ -302,7 +307,7 @@ function checkGate(targetPath) {
       ? ["cmd", "/c", script]
       : ["sh", "-c", script];
     const r = spawnSync(spawnArgs[0], spawnArgs.slice(1), {
-      cwd: path.dirname(found),
+      cwd: path.dirname(chosen),
       encoding: "utf-8",
       env: { ...process.env, npm_config_loglevel: "silent" },
       timeout: 60000,
