@@ -22,7 +22,7 @@ const CONFIDENCE_SCALE = 2;
 const ROUTES: Record<IntentType, { agents: string[]; needsJudge: boolean }> = {
   search: { agents: ["xun"], needsJudge: false },
   analyze: { agents: ["si", "chi"], needsJudge: true },
-  team: { agents: ["si", "ji", "xun", "chi"], needsJudge: true },
+  team: { agents: ["si", "ji", "xun", "chi", "yi"], needsJudge: true },
   hyperplan: { agents: ["si"], needsJudge: false },
   unknown: { agents: [], needsJudge: false },
 };
