@@ -17,6 +17,7 @@
  */
 
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { type Plugin } from "@opencode-ai/plugin";
 
@@ -66,6 +67,21 @@ function reportHasFail(jsonText: string): boolean {
 const plugin: Plugin = async (input) => {
   const root = input.directory || process.cwd();
 
+  // 安全日志：写入项目 .agents/logs/men-plugin.log，绝不写 stdout/stderr
+  // （插件的 console 输出会被 OpenCode TUI 捕获并污染输入框，见 UI 事故）。
+  function logToFile(msg: string) {
+    try {
+      const dir = path.join(root, ".agents", "logs");
+      fs.mkdirSync(dir, { recursive: true });
+      fs.appendFileSync(
+        path.join(dir, "men-plugin.log"),
+        `${new Date().toISOString()} [men-verify] ${msg}\n`
+      );
+    } catch {
+      /* best-effort，绝不阻塞主流程 */
+    }
+  }
+
   return {
     /**
      * tool.execute.after — 写产物后做非阻塞机械检查。
@@ -106,7 +122,7 @@ const plugin: Plugin = async (input) => {
       child.stdout?.on("data", (d: Buffer) => (stdout += d.toString()));
       child.on("error", (err) => {
         // spawn 失败：仅日志，不中断
-        console.error(`[men-verify] spawn 失败: ${err.message}`);
+        logToFile(`spawn 失败: ${err.message}`);
       });
       child.on("close", (code) => {
         const failed = code !== 0 && reportHasFail(stdout);
@@ -115,9 +131,9 @@ const plugin: Plugin = async (input) => {
           if (toolOutput && typeof toolOutput.output === "string") {
             toolOutput.output = `${toolOutput.output}\n${WARN_LINE}`;
           }
-          console.warn(`[men-verify] ${target} 未通过机械检查（exit=${code}）`);
+          logToFile(`${target} 未通过机械检查（exit=${code}）`);
         } else {
-          console.log(`[men-verify] ${target} 机械检查通过（exit=${code}）`);
+          logToFile(`${target} 机械检查通过（exit=${code}）`);
         }
       });
     },

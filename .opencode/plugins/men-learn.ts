@@ -19,6 +19,7 @@
  */
 
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { type Plugin } from "@opencode-ai/plugin";
 
@@ -57,6 +58,21 @@ function extractSessionID(event: any): string {
 const plugin: Plugin = async (input) => {
   const root = input.directory || process.cwd();
 
+  // 安全日志：写入项目 .agents/logs/men-plugin.log，绝不写 stdout/stderr
+  // （插件的 console 输出会被 OpenCode TUI 捕获并污染输入框，见 UI 事故）。
+  function logToFile(msg: string) {
+    try {
+      const dir = path.join(root, ".agents", "logs");
+      fs.mkdirSync(dir, { recursive: true });
+      fs.appendFileSync(
+        path.join(dir, "men-plugin.log"),
+        `${new Date().toISOString()} [men-learn] ${msg}\n`
+      );
+    } catch {
+      /* best-effort，绝不阻塞主流程 */
+    }
+  }
+
   // 去重状态：sessionID → 上次触发时间戳（进程内有效）
   const lastTrigger = new Map<string, number>();
 
@@ -68,9 +84,7 @@ const plugin: Plugin = async (input) => {
     const now = Date.now();
     const prev = lastTrigger.get(sid) ?? 0;
     if (now - prev < DEDUP_MS) {
-      console.log(
-        `[men-learn] skip（${DEDUP_MS / 1000}s 内已触发）sid=${sid || "unknown"} reason=${reason}`
-      );
+      logToFile(`skip（${DEDUP_MS / 1000}s 内已触发）sid=${sid || "unknown"} reason=${reason}`);
       return;
     }
     lastTrigger.set(sid, now);
@@ -88,12 +102,10 @@ const plugin: Plugin = async (input) => {
     child.stderr?.on("data", () => {});
     child.on("error", (err) => {
       // spawn 失败：仅日志，不中断
-      console.error(`[men-learn] spawn 失败: ${err.message}`);
+      logToFile(`spawn 失败: ${err.message}`);
     });
     child.on("close", (code) => {
-      console.log(
-        `[men-learn] learn.mjs 完成 sid=${sid || "unknown"} reason=${reason} exit=${code}`
-      );
+      logToFile(`learn.mjs 完成 sid=${sid || "unknown"} reason=${reason} exit=${code}`);
     });
   }
 
