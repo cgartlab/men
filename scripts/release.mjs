@@ -36,11 +36,15 @@ const VERSION_JSON_FILES = [
   "package-lock.json",          // 顶层 version + packages[""].version 两处
   "opencode.json",
   "site/package.json",
-  ".opencode/plugins/men-sidebar/package.json",
 ];
 // 发布时需同步版本号的文本文件（用 oldVersion → newVersion 文本替换）
+// 注：site/src/pages/docs/releases.astro 是内容性页面（发布历史 + 亮点），不进文本替换，发版后手动更新。
 const VERSION_TEXT_FILES = [
   "site/src/pages/docs/configure.astro",  // 配置版本号展示
+  "AGENTS.md",                            // 仓库状态 + CHARTER_CHECK 版本引用
+  "docs/guide/milestones.md",             // 里程碑进度版本引用
+  "docs/governance.md",                   // 治理文档版本引用
+  "knowledge/README.md",                  // 知识库 README 版本引用
 ];
 
 // ─────────────────────────── 工具函数 ───────────────────────────

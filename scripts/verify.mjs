@@ -151,7 +151,9 @@ function checkSecrets(targetPath) {
 // 2. TODO/FIXME 扫描（WARN 级，不 fail）
 function checkTodos(targetPath) {
   const files = listFiles(targetPath, ALL_EXTS);
-  const re = new RegExp('(TODO|FIXME|HACK|XXX)', 'gi');
+  // 大小写敏感 + 词边界：TODO 标记惯例全大写，避免误伤 todowrite/todo list 等正常词；
+  // \b 防止命中 TODOABC 这类粘连；捕获组保持 m[1] 供 tag 字段使用（\b 为零宽，不影响组编号）
+  const re = new RegExp('\\b(TODO|FIXME|HACK|XXX)\\b', 'g');
   const hits = [];
   for (const f of files) {
     try {

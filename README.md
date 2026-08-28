@@ -10,7 +10,7 @@
 
 | 特性 | 说明 |
 |------|------|
-| **6+1 角色分工** | 门（编排）· 思（思考/知识管理）· 记（代码/写作）· 持（数据/投资评审/Judge）· 艺（文生图/审美）· 寻（搜索/核查），各司其职 |
+| **6+1 角色分工** | **6 个子角色（思/记/持/艺/寻）+ 1 个编排者 men（门）**：门（编排）· 思（思考/知识管理）· 记（代码/写作）· 持（数据/投资评审/Judge）· 艺（文生图/审美）· 寻（搜索/核查），各司其职 |
 | **一键编排** | `/ultrawork` 9 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话 |
 | **双层机械验证** | `verify.mjs` 五项机械检查 + chi 独立 Judge 语义复核，假完成必识破 |
 | **安全门禁** | `gate.mjs` 白名单防注入，强化上限 5 次防死循环 |
@@ -113,7 +113,7 @@ cd men && opencode
 | 角色 | 中文名 | 模式 | 职责 |
 |------|--------|------|------|
 | **men** 🚪 | 门 | primary | 意图分诊、任务分发、结果汇总、事件审计 — 唯一接收用户指令 |
-| **si** 🖊️ | 思 | subagent | 需求访谈、plan envelope、内容写作、回评 |
+| **si** 🖊️ | 思 | subagent | 需求访谈、plan envelope、知识管理、回评（写作已移交 ji） |
 | **ji** 🛠️ | 记 | subagent | 前端实现、GitHub 操作、L1 机械验证、目录结构审计 |
 | **chi** 💹 | 持 | subagent | 持仓/财务分析 + **独立 Judge**（fresh-context 语义复核） |
 | **yi** 🎨 | 艺 | subagent | 设计决策、Logo 概念、生图（SenseNova 仅 yi 挂载） |
@@ -122,7 +122,7 @@ cd men && opencode
 ### 协作拓扑
 
 ```
-用户 → men(门, orchestrator) → si(思, planner/writer)
+用户 → men(门, orchestrator) → si(思, planner/knowledge)
                                 ji(记, engineer)
                                 chi(持, investor + judge)
                                 yi(艺, designer)
@@ -199,15 +199,29 @@ men/
 │   ├── agent/                 # 6 个 agent 定义（唯一源代码）
 │   ├── skills/                # 15 个技能包
 │   ├── command/               # 自定义命令（ultrawork / verify / hyperplan）
-│   ├── package.json           # @opencode-ai/plugin 本地依赖
+│   ├── plugins/               # 自动化插件（men-verify 产物验证 / men-learn 学习回路）
+│   │   └── men-sidebar/       # TUI 侧边栏（index.js / tui.js / update-check.mjs）
+│   ├── tui.json               # TUI 侧边栏入口声明
+│   ├── package.json           # @opencode-ai/plugin + @opentui/* 本地依赖
 │   └── node_modules/          # 本地依赖（不纳入版本控制）
 │
-├── scripts/                   # 机械脚本（纯 Node，零依赖）
+├── scripts/                   # 机械脚本（纯 Node，零依赖，共 16 个）
 │   ├── verify.mjs             # check battery — 五项机械检查
 │   ├── gate.mjs               # 门禁 — 白名单 + 强化上限
 │   ├── event.mjs              # 事件审计 — append/replay
 │   ├── install.mjs            # 一键安装核心（跨平台）
-│   └── release.mjs            # 版本发布（SemVer + CHANGELOG + tag）
+│   ├── setup.mjs              # 引导式模型配置
+│   ├── release.mjs            # 版本发布（SemVer + CHANGELOG + tag）
+│   ├── learn.mjs              # 学习回路主入口（L0 聚合 + L1 分类）
+│   ├── learn-rules.mjs        # 学习规则判定表
+│   ├── learn-budget.mjs       # 学习预算控制
+│   ├── eval-metrics.mjs       # 8 项 KPI 评估
+│   ├── eval-report.mjs        # 评估报告生成
+│   ├── route-hint.mjs         # 角色路由提示
+│   ├── release-notes.mjs      # 发布说明生成
+│   ├── learning.test.mjs      # 学习回路测试（17 用例）
+│   ├── smoke-update-check.mjs # 更新检查冒烟测试
+│   └── fix-port-4096.ps1      # 修复 OpenCode 端口 4096 占用
 │
 ├── config/
 │   └── models.json            # 模型知识基（setup.mjs 数据源）
@@ -232,7 +246,7 @@ men/
 | **架构说明** | `docs/architecture.md` | 系统架构、编排流程、验证体系，含 mermaid 流程图 |
 | **项目治理** | `docs/governance.md` | 决策机制、角色权限、变更流程 |
 | **快速上手** | `docs/guide/quickstart.md` | 新用户入门指南，从安装到第一个 ultrawork 任务 |
-| **里程碑** | `docs/guide/milestones.md` | M0–M5 进度记录、验收详情、已知问题 |
+| **里程碑** | `docs/guide/milestones.md` | M0–M7 进度记录、验收详情、已知问题 |
 | **贡献指南** | `CONTRIBUTING.md` | 分支命名、提交规范、PR 流程、验证要求 |
 | **安全策略** | `SECURITY.md` | 漏洞报告、敏感信息保护、事件响应 |
 | **行为准则** | `CODE_OF_CONDUCT.md` | 社区行为规范与举报渠道 |
@@ -242,9 +256,9 @@ men/
 
 ## 🏁 里程碑状态
 
-| M0 调研 | M1 骨架 | M2 单兵 | M3 编排 | M4 机械验证 | M5 文档 |
-|---------|---------|---------|---------|-------------|---------|
-| ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 |
+| M0 调研 | M1 骨架 | M2 单兵 | M3 编排 | M4 机械验证 | M5 文档 | M6 GitHub 基础设施 | M7 自主学习回路 |
+|---------|---------|---------|---------|-------------|---------|---------------------|-----------------|
+| ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 | ✅ 完成 |
 
 > 最新进度以 [`docs/guide/milestones.md`](docs/guide/milestones.md) 为准。
 

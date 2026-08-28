@@ -44,7 +44,7 @@
 ## Agent 团队拓扑
 
 ```
-用户 → men(门, orchestrator) → si(思, planner/writer)
+用户 → men(门, orchestrator) → si(思, planner/knowledge)
                                 ji(记, engineer)
                                 chi(持, investor + judge)
                                 yi(艺, designer)
