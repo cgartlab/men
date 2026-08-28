@@ -1,6 +1,6 @@
 {
   "name": "@cgartlab/men",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "6+1 Agent 团队系统 —— OpenCode 首发，假维斯（fakevis）出品",
   "type": "module",
   "license": "MIT",
@@ -46,6 +46,15 @@
     "config/",
     "knowledge/"
   ],
+  "exports": {
+    "./server": "./.opencode/plugins/men-sidebar/index.js",
+    "./tui": "./.opencode/plugins/men-sidebar/tui.js"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.5.8",
+    "@opentui/keymap": "^0.5.8",
+    "@opentui/solid": "^0.5.8"
+  },
   "keywords": [
     "opencode",
     "agent",

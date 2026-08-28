@@ -16,6 +16,16 @@
 
 ### Fixed
 
+## [v0.3.2] - 2026-08-28
+
+### Added
+
+### Changed
+
+### Fixed
+
+- 侧边栏全局化：新增 `install.mjs --global`（把 `@cgartlab/men` 注册进全局 `tui.json`）；根 `package.json` 补 `exports["./server"]`/`exports["./tui"]` 与 `@opentui/*` 依赖，使 OpenCode 启动自动安装 npm 包后，**任意目录**都能显示 Men 侧边栏（仅改 tui.json，不触碰 CC Switch 管理的 opencode.json）
+
 ## [v0.3.1] - 2026-08-27
 
 ### Added
