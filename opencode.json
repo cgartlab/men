@@ -29,7 +29,9 @@
     }
   },
   "plugin": [
-    ".opencode/plugins/men-sidebar"
+    ".opencode/plugins/men-sidebar",
+    ".opencode/plugins/men-verify.ts",
+    ".opencode/plugins/men-learn.ts"
   ],
   "skills": {
     "paths": [
