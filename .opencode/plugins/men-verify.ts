@@ -41,13 +41,6 @@ const WARN_LINE = "⚠️ men-verify: 产物未通过机械检查，建议运行
 
 // ─────────────────────────── 工具函数 ───────────────────────────
 
-/** 从 tool args 中提取目标文件路径（write/edit 的 filePath 或 path）。 */
-function extractFilePath(args: any): string | undefined {
-  if (!args || typeof args !== "object") return undefined;
-  const p = args.filePath ?? args.path;
-  return typeof p === "string" && p.length > 0 ? p : undefined;
-}
-
 /** 判断一个相对路径是否属于产物目录（docs/、knowledge/、output/）。 */
 function isProductPath(relPath: string): boolean {
   const rel = relPath.replace(/\\/g, "/");
@@ -82,8 +75,15 @@ const plugin: Plugin = async (input) => {
       // 1. 只关注写类工具
       if (!WATCH_TOOLS.has(toolInput.tool)) return;
 
-      // 2. 提取目标路径并解析到项目根
-      const filePath = extractFilePath(toolInput.args);
+      // 2. 提取目标路径。
+      //    注意：tool.execute.after 的 input 仅有 { tool, sessionID, callID }（无 args）；
+      //    write/edit 完成后 OpenCode 把文件路径写入 output.metadata.filePath（或 .path）。
+      //    回退兼容某些版本/工具可能透传的 input.args.filePath。
+      const filePath =
+        toolOutput?.metadata?.filePath ??
+        toolOutput?.metadata?.path ??
+        (toolInput as { args?: any }).args?.filePath ??
+        (toolInput as { args?: any }).args?.path;
       if (!filePath) return;
       const abs = path.resolve(root, filePath);
       const rel = path.relative(root, abs);
