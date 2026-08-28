@@ -1,6 +1,6 @@
-# 快速上手指南（Quickstart）— 假维斯（men Agent 团队）
+# 快速上手指南（Quickstart）— Men Agent 团队
 
-> 适用对象：第一次使用假维斯的用户
+> 适用对象：第一次使用 Men Agent 团队的用户
 > 前置条件：已安装 OpenCode 并进入 `men` 项目目录
 
 ---

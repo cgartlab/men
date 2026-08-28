@@ -9,7 +9,7 @@ const pageTitle = '路线图 — ' + content.hero.title;
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-08-27 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-08-28 发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -55,9 +55,24 @@ const seealso = [
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
             <tr>
+              <td><strong>v0.3.2</strong></td>
+              <td>2026-08-28</td>
+              <td>发布主题「侧边栏全局化」：新增 <code>install.mjs --global</code> 把 <code>@cgartlab/men</code> 注册进全局 <code>tui.json</code>，任意目录打开 OpenCode 即显示 Men 侧边栏（不触碰 CC Switch 管理的 opencode.json）。</td>
+            </tr>
+            <tr>
+              <td><strong>v0.3.1</strong></td>
+              <td>2026-08-27</td>
+              <td>发布主题「侧边栏修复」：新增 <code>.opencode/tui.json</code> 声明 TUI 插件入口（TUI 插件无目录自动发现，必须显式列出），补 <code>@opentui/*</code> 依赖。</td>
+            </tr>
+            <tr>
               <td><strong>v0.3.0</strong></td>
               <td>2026-08-27</td>
               <td>发布主题「一行命令安装」：发布 npm 包 <code>@cgartlab/men</code>，任意目录 <code>npx @cgartlab/men</code> 一步安装；安装指令准确性修复（URL 硬编码、install.astro 修复、<code>.opencode/package.json</code> 纳入版本控制、4 个 MCP 补齐 transport）；文档一致性同步；明确 Men=OpenCode 插件、模型密钥由 CC Switch 本地托管。</td>
+            </tr>
+            <tr>
+              <td><strong>v0.2.1</strong></td>
+              <td>2026-08-27</td>
+              <td>发布主题「角色定位重构」：men 确立为唯一编排核心（子角色不直接互编）、si 转向思考者与知识管理者（写作移交 ji）、yi 核心转文生图提示词工程；技能计数 14→13 修正；hyperplan 术语同步。</td>
             </tr>
             <tr>
               <td><strong>v0.2.0</strong></td>
@@ -78,7 +93,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-08-27，共发布 <strong>3 个正式版本</strong>（v0.1.0、v0.2.0、v0.3.0）。
+        截至 2026-08-28，共发布 <strong>6 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -87,7 +102,16 @@ const seealso = [
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
       <p>
-        当前版本 <code>v0.3.0</code> 于 2026-08-27 发布，主题为「一行命令安装」，将 men 从「Git 仓库分发」升级为「npm 一行安装」的产品化形态。
+        当前版本 <code>v0.3.2</code> 于 2026-08-28 发布，主题为「侧边栏全局化」，将 men 侧边栏从「仓库内插件」升级为「全局可用」形态。
+      </p>
+      <h3>v0.3.2「侧边栏全局化」</h3>
+      <ul>
+        <li><strong>install.mjs --global</strong>：把 <code>@cgartlab/men</code> 注册进 OpenCode 全局 <code>tui.json</code>，任意目录打开 OpenCode 即显示 Men 侧边栏</li>
+        <li><strong>仅改 tui.json</strong>：不触碰 CC Switch 管理的 opencode.json，模型与密钥托管不受影响</li>
+        <li><strong>补 exports 与 @opentui 依赖</strong>：根 package.json 补 <code>exports["./server"]</code>/<code>exports["./tui"]</code>，OpenCode 启动自动安装 npm 包后加载侧边栏</li>
+      </ul>
+      <p class="wiki-note">
+        以下为 v0.3.0（历史）版本的发布亮点回顾。
       </p>
       <h3>v0.3.0「一行命令安装」</h3>
       <ul>
@@ -156,7 +180,7 @@ const seealso = [
       <div class="wiki-note">
         时间线：M0–M4 于 2026-08-15 完成（调研 / 骨架 / 单兵 / 编排 / 机械验证），
         M5–M7 于 2026-08-21 完成（文档 / GitHub 基础设施 / 自主学习回路），
-        与 v0.1.0、v0.2.0、v0.3.0 版本的发布时间对应。
+        与 v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2 各版本的发布时间对应。
       </div>
       <p class="src-ref">来源：<code>site/src/data/content.json</code>（milestones）· <code>docs/guide/milestones.md</code></p>
     </section>

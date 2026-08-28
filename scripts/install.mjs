@@ -25,6 +25,7 @@
  *   6. 输出安装摘要
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -72,13 +73,14 @@ function eprintf(...args) {
 function parseArgs(argv) {
   const args = argv.slice(2);
   const out = {
-    dir: null, skipDeps: false, skipVerify: false, json: false, help: false,
+    dir: null, skipDeps: false, skipVerify: false, json: false, help: false, global: false,
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--dir") out.dir = args[++i] || null;
     else if (a === "--skip-deps") out.skipDeps = true;
     else if (a === "--skip-verify") out.skipVerify = true;
+    else if (a === "--global") out.global = true;
     else if (a === "--json") out.json = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else {
@@ -103,6 +105,8 @@ npm 一键安装（推荐，scaffold 到当前目录）:
 选项:
   --dir <path>      安装目标目录（默认: 当前目录）。
                     目录不存在时从当前仓库根复制文件后安装
+  --global          注册为 OpenCode 全局 TUI 插件（写入 tui.json 的 plugin 列表，
+                    不触碰 opencode.json；重启 OpenCode 后任意目录侧边栏生效）
   --skip-deps       跳过 .opencode/ 依赖安装（npm install）
   --skip-verify     跳过端到端验证（scripts/verify.mjs men）
   --json            输出 JSON 摘要
@@ -184,12 +188,73 @@ function ensureOpencodePkg(dir) {
   return true;
 }
 
+// ─────────────────────────── 全局模式 ───────────────────────────
+
+// OpenCode 全局配置目录：OPENCODE_CONFIG_DIR 优先，否则平台默认（~/.config/opencode）
+function globalConfigDir() {
+  if (process.env.OPENCODE_CONFIG_DIR) return path.resolve(process.env.OPENCODE_CONFIG_DIR);
+  return path.join(os.homedir(), ".config", "opencode");
+}
+
+// --global：把 @cgartlab/men 注册为 OpenCode 全局 TUI 插件（写 tui.json）。
+// 设计：只改 tui.json（TUI 插件声明）；不触碰 opencode.json（可能由 CC Switch 管理）。
+// OpenCode 启动时自动用 Bun 安装 npm 包并解析 exports["./tui"] 加载侧边栏。
+function installGlobal(cfg) {
+  const dir = globalConfigDir();
+  fs.mkdirSync(dir, { recursive: true });
+
+  const tuiPath = path.join(dir, "tui.json");
+  let tui = {};
+  try {
+    tui = JSON.parse(fs.readFileSync(tuiPath, "utf8"));
+  } catch {
+    tui = {};
+  }
+  const plugins = Array.isArray(tui.plugin) ? tui.plugin.slice() : [];
+  const spec = "@cgartlab/men";
+  const added = !plugins.includes(spec);
+  if (added) plugins.push(spec);
+  tui.plugin = plugins;
+
+  fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
+
+  const result = {
+    ok: true,
+    summary: added ? "已注册全局 TUI 插件" : "全局 TUI 插件已存在，无需变更",
+    mode: "global",
+    dir,
+    tuiJson: tuiPath,
+    plugin: spec,
+    added,
+    note: "OpenCode 启动时会自动安装 @cgartlab/men 并加载侧边栏；重启 OpenCode 生效",
+  };
+
+  if (cfg.json) {
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+  } else {
+    process.stdout.write(`men（门）Agent 团队 — 全局安装摘要\n`);
+    process.stdout.write(`${"=".repeat(54)}\n`);
+    process.stdout.write(`  模式   ${added ? "新增注册" : "已存在（幂等）"}\n`);
+    process.stdout.write(`  配置   ${tuiPath}\n`);
+    process.stdout.write(`  插件   ${spec}\n`);
+    process.stdout.write(`${"=".repeat(54)}\n`);
+    process.stdout.write(`  ✓ ${result.summary}。重启 OpenCode 后任意目录侧边栏生效\n`);
+  }
+  return result;
+}
+
 // ─────────────────────────── 主流程 ───────────────────────────
 
 function run() {
   const cfg = parseArgs(process.argv);
   if (cfg.help) {
     printHelp();
+    process.exit(0);
+  }
+
+  // --global：只注册全局 TUI 插件，不进入项目安装流程
+  if (cfg.global) {
+    installGlobal(cfg);
     process.exit(0);
   }
 

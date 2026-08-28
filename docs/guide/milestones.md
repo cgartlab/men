@@ -1,7 +1,7 @@
 # 里程碑进度记录（Milestones）
 
-> 日期：2026-08-21 ｜ 项目：假维斯（men Agent 团队）
-> 总进度：M0–M7 全部完成，项目 v0.3.0 已发布（npm 包 `@cgartlab/men` 支持 `npx @cgartlab/men` 一行安装）
+> 日期：2026-08-21 ｜ 项目：Men Agent 团队
+> 总进度：M0–M7 全部完成，项目 v0.3.2 已发布（npm 包 `@cgartlab/men` 支持 `npx @cgartlab/men` 一行安装）
 
 ---
 
@@ -10,7 +10,7 @@
 | 里程碑 | 主题 | 关键交付物 | 验收结果 | 日期 |
 |--------|------|-----------|----------|------|
 | M0 | 调研 | `docs/research/oh-my-openagent.md`、`docs/research/oh-my-agent.md`、`docs/research/00-m0-synthesis.md` | ✅ 完成：OmO 12 条 + oma 12 条机制合并去重，映射到 F1–F7 | 2026-08-15 |
-| M1 | 骨架 | 6 角色 agent 定义、13 个 skill、3 个 command、3 个脚本 | ✅ 完成：全部按 PRD + M0 决策落地 | 2026-08-15 |
+| M1 | 骨架 | 6 角色 agent 定义、15 个技能包、3 个 command、3 个脚本 | ✅ 完成：全部按 PRD + M0 决策落地 | 2026-08-15 |
 | M2 | 单兵 | 5 角色独立任务产物（si/ji/xi/yi/chi） | ✅ 完成：**5/5 全部通过**，chi judge 报告 13/13 标准 PASS | 2026-08-15 |
 | M3 | 编排 | ultrawork 三路并行汇总流程跑通 | ✅ 完成：写文章+查新闻+查金价混合任务，多 Wave 分发 + men 汇总 | 2026-08-15 |
 | M4 | 机械验证 | `verify.mjs` / `gate.mjs` / `event.mjs` 三项脚本 + chi 双层复核流程 | ✅ 完成：见下方 M4 验收详情 | 2026-08-15 |
@@ -64,7 +64,7 @@ M4 验收过程中，用 verify.mjs 对"声称完成但未产出文件"的场景
 
 | # | 决策 | 说明 |
 |---|------|------|
-| D1 | **命名暂定 men** | 仓库命名为 `men`（门），团队中文别名"假维斯（fakevis）"为暂定；命名可后续调整，不影响架构 |
+| D1 | **命名暂定 men** | 仓库命名为 `men`（门），团队中文别名"Men Agent 团队"为暂定；命名可后续调整，不影响架构 |
 | D2 | **adapter 后续适配 Codex / OpenClaw** | 当前仅适配 OpenCode；跨运行时复用（Codex、OpenClaw 等）的 adapter 层设计未进入当前里程碑，规划 M5 后启动 |
 | D3 | **M1 先不做插件** | 采用 OpenCode 原生 agent 定义 + command + 脚本；`opencode.json` 中 `plugin: []`，不启用 `@opencode-ai/plugin` |
 | D4 | **SenseNova 生图仅 yi 挂载** | 避免其他角色误用外部 API；SenseNova 密钥仅对 yi 暴露 |

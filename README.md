@@ -2,7 +2,7 @@
 
 [![Node.js >= 18](https://img.shields.io/badge/Node.js->=18-brightgreen)](https://nodejs.org/) [![OpenCode](https://img.shields.io/badge/OpenCode-v1.18-blue)](https://opencode.ai/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![GitHub stars](https://img.shields.io/github/stars/cgartlab/men?style=social)](https://github.com/cgartlab/men) [![Last commit](https://img.shields.io/github/last-commit/cgartlab/men)](https://github.com/cgartlab/men/commits/main) [![Release](https://img.shields.io/github/v/release/cgartlab/men)](https://github.com/cgartlab/men/releases)
 
-> 围绕一人内容创作与工程协作的 **6+1 Agent 团队系统** —— OpenCode 首发，假维斯（fakevis）出品。
+> 围绕一人内容创作与工程协作的 **6+1 Agent 团队系统** —— OpenCode 首发，Men Agent 团队出品。
 
 ---
 
@@ -284,12 +284,12 @@ men/
 
 本项目采用 **MIT License**。详见 [LICENSE](LICENSE)。
 
-© 2026 fakevis（假维斯）
+© 2026 Men Agent 团队
 
 ---
 
 ## 🙏 鸣谢
 
 - **[OpenCode](https://opencode.ai/) 团队** — 提供优秀的原生 agent 框架与 MCP 生态
-- **假维斯（fakevis）团队** — 角色设计、架构决策、工程实现
+- **Men Agent 团队** — 角色设计、架构决策、工程实现
 - **社区贡献者** — 每一个 Issue、PR 与反馈

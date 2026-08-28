@@ -452,7 +452,7 @@ function question(rl, prompt) {
 
 function printIntro() {
   blank();
-  menSay("👋 你好！我是 **men（门）**，假维斯 Agent 团队的编排核心。");
+  menSay("👋 你好！我是 **men（门）**，Men Agent 团队的编排核心。");
   blank();
   menSay("我看到你是第一次使用这个项目，需要先配置 AI 模型才能让整个团队跑起来。");
   blank();
@@ -926,7 +926,7 @@ async function main(argv = process.argv) {
     }
     process.stdout.write(`  你现在可以：\n`);
     process.stdout.write(`  • 重启 OpenCode 加载新配置\n`);
-    process.stdout.write(`  • 运行 /ultrawork 开始使用假维斯团队\n`);
+    process.stdout.write(`  • 运行 /ultrawork 开始使用 Men Agent 团队\n`);
     process.stdout.write(`  • 运行 node scripts/setup.mjs --reset 重新配置\n`);
     blank();
     process.exit(0);

@@ -48,7 +48,7 @@ flowchart TD
 **men 说：**
 
 ```
-👋 你好！我是 **men（门）**，假维斯 Agent 团队的编排核心。
+👋 你好！我是 **men（门）**，Men Agent 团队的编排核心。
 
 我看到你想手动配置模型（未使用 CC Switch 托管）。说明一下：这不是必选步骤——若模型已由 CC Switch 在本机托管，团队即可正常运行；仅当你希望本仓库的 opencode.json 自行管理模型分配时才需要继续。
 
@@ -679,7 +679,7 @@ function generateAssignment(subscriptions, hasPaid):
 
   你现在可以：
   • 重启 OpenCode 加载新配置
-  • 运行 /ultrawork 开始使用假维斯团队
+  • 运行 /ultrawork 开始使用 Men Agent 团队
   • 运行 node scripts/setup.mjs --reset 重新配置
 ```
 

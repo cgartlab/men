@@ -1,6 +1,6 @@
-# 团队知识库（Knowledge）— 假维斯（men Agent 团队）
+# 团队知识库（Knowledge）— Men Agent 团队
 
-> 版本：v0.2.0 ｜ 日期：2026-08-21
+> 版本：v0.3.2 ｜ 日期：2026-08-28
 > 定位：自主学习回路产生的经验、模式、决策记录
 
 ---
@@ -24,13 +24,13 @@ knowledge/
 - **patterns/**：记录团队协作中发现的有效/无效模式，提炼为可复用的行为规则
 - **decisions/**：记录架构决策、技术选型、治理规则变更，替代散落在各处的决策碎片
 
-## 当前内容（v0.2.0）
+## 当前内容（v0.3.2）
 
 | 目录 | 条目数 | 说明 |
 |------|--------|------|
 | `errors/` | 1 | learn.mjs 自动提取（verdict-revision-needed） |
 | `patterns/` | 3 | verdict-revision / wave-parallel / event-type-inconsistency |
-| `decisions/` | 3 | M0 / M6 / M7 决策记录 |
+| `decisions/` | 4 | M0 / M6 / M7 / D20（men 输出规范）决策记录 |
 
 ## 写入方式
 

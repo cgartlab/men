@@ -1,4 +1,4 @@
-# 产品需求文档（PRD）— 假维斯（men Agent 团队）
+# 产品需求文档（PRD）— Men Agent 团队
 
 > 版本：M7 完成版 ｜ 日期：2026-08-21
 > 定位：OpenCode 首发 6+1 Agent 团队，面向一人内容创作与工程协作
@@ -64,7 +64,7 @@ chi fresh-context 独立 Judge 语义复核（只信自己的检查结果，不�
 | 里程碑 | 交付物 | 状态 |
 |--------|--------|------|
 | M0 调研 | `docs/research/` 三份（OmO + oma + 合成笔记） | ✅ 完成 |
-| M1 骨架 | 6 角色 agent 定义 + 13 个 skill + 3 个 command + 3 个脚本 | ✅ 完成 |
+| M1 骨架 | 6 角色 agent 定义 + 15 个技能包 + 3 个 command + 3 个脚本 | ✅ 完成 |
 | M2 单兵 | 5 角色独立任务验收（si 团队简介、ji skill 结构、xun AI 新闻、yi Logo 概念、chi judge 报告） | ✅ 完成（5/5） |
 | M3 编排 | ultrawork 三路并行汇总跑通（写文章+查新闻+查金价混合任务） | ✅ 完成 |
 | M4 机械验证 | verify.mjs / gate.mjs / event.mjs 三项脚本 + chi 双层复核跑通；识破"假完成"（产出文件缺失）、修复 verify.mjs structure 误报（非 `.opencode/` 作用域的 .md 跳过 frontmatter 检查） | ✅ 完成 |
@@ -79,7 +79,7 @@ chi fresh-context 独立 Judge 语义复核（只信自己的检查结果，不�
 - **识破假完成**：verify.mjs `output-exists` 检查文件是否真实存在且非空，缺失即 FAIL
 - **超限诚实停止**：强化次数 ≥5 → GATE_EXHAUSTED，报"卡住"，把已完成中间产物交用户
 - **事件审计可回溯**：所有关键决策写入 events.jsonl，可用 `node scripts/event.mjs replay --sid <sid>` 回放
-- **命名暂定 men**：仓库命名为 `men`（门），团队名 `fakevis`（假维斯）为暂定，可调整
+- **命名暂定 men**：仓库命名为 `men`（门），团队名 Men Agent 团队为暂定，可调整
 - **GitHub 基础设施完备**：LICENSE / CONTRIBUTING / SECURITY / CODE_OF_CONDUCT / PR&Issue 模板 / CODEOWNERS / CI workflow
 - **文档可维护**：governance.md 定义角色职责、决策流程、变更管理、发布策略
 - **自主学习可触发**：`/ultrawork` 完成后自动调用 `learn.mjs`，`/verify` 完成后自动调用 `eval-metrics.mjs`

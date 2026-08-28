@@ -1,4 +1,4 @@
-# 架构说明（Architecture）— 假维斯（men Agent 团队）
+# 架构说明（Architecture）— Men Agent 团队
 
 > 版本：M7 ｜ 日期：2026-08-21
 > 关联：`docs/research/00-m0-synthesis.md` 提供上游调研与决策来源
@@ -208,7 +208,7 @@ men/
 | D7 | **意图分类用规则判定表**，不用 LLM 分类 | 机械优先 + PRD §3.1 | 已落地 |
 | D8 | **强化次数上限 5 次**，超限诚实报"卡住" | oma MAX_REINFORCEMENTS=5 | 已落地 |
 | D9 | **事件审计 best-effort**，命令失败不阻塞主流程 | oma events.jsonl 规范 | 已落地 |
-| D10 | **命名暂定 men（门）**，团队名暂定 fakevis（假维斯） | 命名可后续调整 | 已落地 |
+| D10 | **命名暂定 men（门）**，团队名暂定 Men Agent 团队 | 命名可后续调整 | 已落地 |
 | D11 | **adapter 后续适配 Codex / OpenClaw** | 跨运行时复用，未进入当前里程碑 | 待 M5 后 |
 | D12 | **技术栈 TypeScript + Bun** | 两上游一致，OpenCode 插件生态 | 已落地（脚本侧用纯 Node） |
 | D13 | **自主学习回路**（M5+ 增量） | 四层认知模型（评估/认知/行为/记忆），L0/L1/L2 三级触发，events.jsonl → learn.mjs → errors/ + patterns/ | 已落地 |
@@ -218,3 +218,4 @@ men/
 | D17 | **事件类型归一化** | learn-rules.mjs 和 eval-metrics.mjs 均支持 men.* 前缀映射，兼容 ultrawork 事件格式 | 已落地 |
 | D18 | **Ji 承担写作职责** | 用户确认 Ji 原始设计含写作，写作从 si 移交 ji（ji-content-write skill），si 专注规划与知识管理 | 已落地 |
 | D19 | **学习回流闭环**（R1-R5） | men 路由前读 knowledge/patterns + route-hint.mjs；learn.mjs --apply 转门禁；chi plan review 类型；KPI 落盘 | 已落地 |
+| D20 | **men 输出规范：选择题交互 + 人类阅读优先** | 下一步建议一律单选/多选（禁开放式提问）；交互提问用固定模板（数字问题序号 + 字母答案序号，置于回复最后）；**代号降噪**：面向用户输出零内部代号，编号/代号翻译为自然语言 | 已落地 |

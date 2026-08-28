@@ -1,7 +1,7 @@
 {
   "name": "@cgartlab/men",
   "version": "0.3.2",
-  "description": "6+1 Agent 团队系统 —— OpenCode 首发，假维斯（fakevis）出品",
+  "description": "6+1 Agent 团队系统 —— OpenCode 首发，Men Agent 团队出品",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -61,7 +61,7 @@
     "team",
     "orchestration",
     "ai",
-    "fakevis"
+    "men"
   ],
   "devDependencies": {
     "@types/node": "^26.3.0",

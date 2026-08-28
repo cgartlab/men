@@ -1,10 +1,10 @@
-# AGENTS.md — men（假维斯 Agent 团队）
+# AGENTS.md — Men Agent 团队
 
-> **本仓库用途**：OpenCode Agent 团队配置（6 个角色定义），不是应用代码库。
+> **本仓库用途**：OpenCode Agent 团队配置（6 个角色定义）为主 + 纯 Node 脚本；`src/` 为 Core Engine 状态机（Phase 2 产品化探索，**非当前运行时路径**——运行时靠 `.opencode/` 配置）。
 
 ## 仓库状态
 
-- **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.3.0（npm 包 `@cgartlab/men` 已发布，支持 `npx @cgartlab/men` 一行安装）
+- **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.3.2（npm 包 `@cgartlab/men` 已发布，支持 `npx @cgartlab/men` 一行安装）
 - **自主学习回路已验证**：learn.mjs 正确识别 ultrawork 事件并写入 errors/，eval-metrics.mjs 计算 8 项 KPI 正常
 - **MCP×7 全部启用**：exa / context7 / grep_app / fetch / github-mcp-server / memory / sequential-thinking
 - **GitHub 私有仓库**：`cgartlab/men`（main 分支），MIT 许可证
@@ -18,7 +18,7 @@
 | `.opencode/agent/*.md` | **6 个 agent 定义**（唯一源代码）。每次编辑必须先 read 再 edit |
 | `.opencode/skills/*/SKILL.md` | 15 个技能包（ji×4/si×2/xun×3/chi×2/yi×2/men×2） |
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
-| `.opencode/plugins/men-sidebar/` | **TUI 侧边栏插件**：橘黄徽章 + 版本号统一变量 + agents 兜底链（V8） |
+| `.opencode/plugins/men-sidebar/` | **TUI 侧边栏插件**：橘黄徽章 + 版本号统一变量 + agents 兜底链（V8）；`tui.json` 声明 TUI 入口，`@opentui/*` 为其运行时依赖 |
 | `scripts/*.mjs` | 机械验证三件套：`verify.mjs`（check battery）/ `gate.mjs`（门禁）/ `event.mjs`（事件审计），纯 Node 零依赖 |
 | `scripts/learn.mjs` / `scripts/eval-metrics.mjs` | 自主学习回路（L0/L1 经验提取与评估） |
 | `scripts/learn-rules.mjs` | 学习规则判定表（L1 机械，men.* 类型归一化） |
@@ -27,16 +27,15 @@
 | `scripts/core-test.mjs` | Core Engine 状态机验证脚本（Phase 2） |
 | `errors/` | 学习回路自动生成的错误模式（error-*.md） |
 | `knowledge/patterns/` | 协作模式库（3 条初始条目） |
-| `knowledge/decisions/` | 决策记录（3 条：M0/M6/M7） |
+| `knowledge/decisions/` | 决策记录（4 条：M0/M6/M7/D20） |
 | `scripts/fix-port-4096.ps1` | 修复 OpenCode 端口 4096 占用 |
 | `src/core/` | **Core Engine 状态机**：`orchestrator.ts`（编排器）/ `triage.ts`（意图门判定）/ `intent.ts`（意图判定表） |
-
 | `.github/workflows/ci.yml` | CI 工作流（validate/triage） |
 | `.github/` | PR/Issue 模板、CODEOWNERS、FUNDING、dependabot |
 | `docs/governance.md` | 团队治理（角色/决策/变更/审查/发布） |
 | `docs/learning-architecture.md` | 自主学习与进化架构（四层认知模型） |
 | `knowledge/` | 团队知识库（errors/、patterns/、decisions/） |
-| `.opencode/package.json` | `@opencode-ai/plugin` 1.18.23，本地安装 |
+| `.opencode/package.json` | `@opencode-ai/plugin` 1.18.23 + `@opentui/*`（侧边栏 TUI 运行时依赖），本地安装 |
 | `config/models.json` | 模型知识基（providers/roleDefaults/presets），`setup.mjs` 引导式模型配置的数据源 |
 | `docs/PRD.md` | 正式 PRD（里程碑 M0–M5） |
 | `docs/architecture.md` | 架构说明（拓扑/编排流程/验证体系 mermaid） |
@@ -69,6 +68,7 @@
     - ji: `opencode-go/deepseek-v4-flash`
    - chi: `sensenova/glm-5.2`
    - yi/xun: `sensenova/sensenova-6.8-flash-lite`
+6. **men 输出规范须保留**：`.opencode/agent/men.md` 含「交互提问与下一步建议规范」（下一步建议**必须使用 OpenCode 交互提问功能**，环境不支持时回退文本选择题：数字问题 + 字母答案）与「人类阅读优先（代号降噪）」（面向用户零内部代号），编辑时必须保留，不得删除或弱化（决策 D20）
 
 ## 自主学习回路（M7）
 
@@ -119,9 +119,19 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - `.opencode/.gitignore` 排除了 `node_modules`, `package-lock.json`, `bun.lock`（`package.json` 已纳入版本控制）
 - **事件类型归一化**：learn-rules.mjs 和 eval-metrics.mjs 均支持 men.* 前缀 → 标准类型映射（subject-first 策略）
 
+## 版本同步缺口（发版后需手动同步）
+
+`scripts/release.mjs` 仅自动同步 JSON 文件与 `site/src/pages/docs/configure.astro` 的版本号；**以下文档不自动同步**，发版后需手动更新版本号：
+
+- `AGENTS.md`（仓库状态 + CHARTER_CHECK 两处）
+- `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md`
+- `site/src/pages/docs/releases.astro`（发布历史表 + 当前版本亮点，内容性更新）
+
+先例：v0.3.2 发版后曾漏 6 处版本引用，全靠手动补齐。改版后请按此清单自查。
+
 ## CHARTER_CHECK
 
-- **项目状态**：v0.3.0（M0–M7 完成；npm 包 `@cgartlab/men` 已发布）
+- **项目状态**：v0.3.2（M0–M7 完成；npm 包 `@cgartlab/men` 已发布）
 - **许可证**：MIT
 - **远程仓库**：https://github.com/cgartlab/men
 - **CI 状态**：GitHub Actions validate/triage 自动运行
