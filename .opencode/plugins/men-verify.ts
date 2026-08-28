@@ -1,0 +1,127 @@
+/**
+ * men-verify — 产物机械验证自动插件（渐进式第 1 步：非阻塞）
+ *
+ * 在 `write` / `edit` 工具写完产物后，若目标路径指向本项目产物目录
+ * （docs/、knowledge/、output/ 等），后台 spawn 运行
+ *   `node scripts/verify.mjs <目标> --json`
+ * 做机械检查（产物存在性 / 密钥扫描 / TODO / 结构 / gate 退出码）。
+ *
+ * 非阻塞约定：
+ *   - 检查结果只作为提示（附加一行警告到 tool 输出 / console 日志）
+ *   - 绝不 throw、绝不中断 tool 执行、绝不 await 阻塞写回
+ *   - 命中 FAIL 时仅提示「建议运行 /verify」，不阻止写入
+ *
+ * 递归安全：verify.mjs 是独立脚本（不经过插件 Hook），不会再次触发本插件。
+ *
+ * 运行环境：OpenCode 插件（Bun 运行，无需构建），类型来自 @opencode-ai/plugin。
+ */
+
+import { spawn } from "node:child_process";
+import path from "node:path";
+import { type Plugin } from "@opencode-ai/plugin";
+
+// ─────────────────────────── 常量 ───────────────────────────
+
+// 产物目录识别：命中这些相对前缀的写入路径才触发机械检查
+// （相对项目根解析；全部前缀须带尾部分隔符，避免误匹配如 `documentation/`）
+const PRODUCT_PREFIXES = [
+  "docs" + path.sep,
+  "knowledge" + path.sep,
+  "output" + path.sep,
+];
+
+// 触发机械检查的工具
+const WATCH_TOOLS = new Set(["write", "edit"]);
+
+// verify.mjs 相对项目根的路径
+const VERIFY_SCRIPT = ["scripts", "verify.mjs"];
+
+// 检查完成后附加到 tool 输出的警告行
+const WARN_LINE = "⚠️ men-verify: 产物未通过机械检查，建议运行 /verify";
+
+// ─────────────────────────── 工具函数 ───────────────────────────
+
+/** 从 tool args 中提取目标文件路径（write/edit 的 filePath 或 path）。 */
+function extractFilePath(args: any): string | undefined {
+  if (!args || typeof args !== "object") return undefined;
+  const p = args.filePath ?? args.path;
+  return typeof p === "string" && p.length > 0 ? p : undefined;
+}
+
+/** 判断一个相对路径是否属于产物目录（docs/、knowledge/、output/）。 */
+function isProductPath(relPath: string): boolean {
+  const rel = relPath.replace(/\\/g, "/");
+  return PRODUCT_PREFIXES.some((prefix) =>
+    rel.startsWith(prefix.replace(/\\/g, "/"))
+  );
+}
+
+/** 解析 verify.mjs 的 --json 输出，返回是否包含 FAIL 项。 */
+function reportHasFail(jsonText: string): boolean {
+  try {
+    const report = JSON.parse(jsonText);
+    return (
+      typeof report?.summary?.failed === "number" && report.summary.failed > 0
+    );
+  } catch {
+    return false;
+  }
+}
+
+// ─────────────────────────── 插件主体 ───────────────────────────
+
+const plugin: Plugin = async (input) => {
+  const root = input.directory || process.cwd();
+
+  return {
+    /**
+     * tool.execute.after — 写产物后做非阻塞机械检查。
+     * 绝不 throw：所有错误路径都吞掉，只留日志。
+     */
+    "tool.execute.after": async (toolInput, toolOutput) => {
+      // 1. 只关注写类工具
+      if (!WATCH_TOOLS.has(toolInput.tool)) return;
+
+      // 2. 提取目标路径并解析到项目根
+      const filePath = extractFilePath(toolInput.args);
+      if (!filePath) return;
+      const abs = path.resolve(root, filePath);
+      const rel = path.relative(root, abs);
+
+      // 3. 只检查产物目录内的写入
+      if (rel.startsWith("..") || path.isAbsolute(rel)) return; // 项目根之外，跳过
+      if (!isProductPath(rel)) return;
+
+      // 4. 非阻塞 spawn verify.mjs（Windows 下用 node 直接调用，无需 shell）
+      const target = rel;
+      const verifyPath = path.join(root, ...VERIFY_SCRIPT);
+      const args = [verifyPath, target, "--json", "--sid", `men-verify-${Date.now()}`];
+
+      const child = spawn(process.execPath, args, {
+        cwd: root,
+        windowsHide: true,
+      });
+
+      let stdout = "";
+      child.stdout?.on("data", (d: Buffer) => (stdout += d.toString()));
+      child.on("error", (err) => {
+        // spawn 失败：仅日志，不中断
+        console.error(`[men-verify] spawn 失败: ${err.message}`);
+      });
+      child.on("close", (code) => {
+        const failed = code !== 0 && reportHasFail(stdout);
+        if (failed) {
+          // 仅在确有 FAIL 时追加提示；不阻断、不覆盖原文
+          if (toolOutput && typeof toolOutput.output === "string") {
+            toolOutput.output = `${toolOutput.output}\n${WARN_LINE}`;
+          }
+          console.warn(`[men-verify] ${target} 未通过机械检查（exit=${code}）`);
+        } else {
+          console.log(`[men-verify] ${target} 机械检查通过（exit=${code}）`);
+        }
+      });
+    },
+  };
+};
+
+export default plugin;

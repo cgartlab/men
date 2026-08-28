@@ -259,7 +259,7 @@ question: {
    B. 仅提交本次 6 处文档，遗留项另行处理
    C. 暂不提交，先讨论开发方向
 2. 后续开发方向优先讨论哪一项？
-   A. src/ Core Engine 产品化定位
+   A. 验证自动化插件（men-verify.ts）渐进式升级
    B. release.mjs 版本同步机制扩展
    C. M8+ 路线（跨运行时 adapter / 插件化 / 团队扩展）
 

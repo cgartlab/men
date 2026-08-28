@@ -1,6 +1,6 @@
 # AGENTS.md — Men Agent 团队
 
-> **本仓库用途**：OpenCode Agent 团队配置（6 个角色定义）为主 + 纯 Node 脚本；`src/` 为 Core Engine 状态机（Phase 2 产品化探索，**非当前运行时路径**——运行时靠 `.opencode/` 配置）。
+> **本仓库用途**：OpenCode Agent 团队配置（6 个角色定义）为主 + 纯 Node 脚本 + OpenCode 插件（验证自动化）；运行时全部靠 `.opencode/` 配置。
 
 ## 仓库状态
 
@@ -24,12 +24,11 @@
 | `scripts/learn-rules.mjs` | 学习规则判定表（L1 机械，men.* 类型归一化） |
 | `scripts/learn-budget.mjs` | 学习预算控制 |
 | `scripts/eval-report.mjs` | 评估报告生成 |
-| `scripts/core-test.mjs` | Core Engine 状态机验证脚本（Phase 2） |
+| `.opencode/plugins/men-verify.ts` | **产物机械验证自动插件**（渐进式非阻塞）：`write`/`edit` 写产物后自动跑 verify.mjs 检查 |
 | `errors/` | 学习回路自动生成的错误模式（error-*.md） |
 | `knowledge/patterns/` | 协作模式库（3 条初始条目） |
 | `knowledge/decisions/` | 决策记录（4 条：M0/M6/M7/D20） |
 | `scripts/fix-port-4096.ps1` | 修复 OpenCode 端口 4096 占用 |
-| `src/core/` | **Core Engine 状态机**：`orchestrator.ts`（编排器）/ `triage.ts`（意图门判定）/ `intent.ts`（意图判定表） |
 | `.github/workflows/ci.yml` | CI 工作流（validate/triage） |
 | `.github/` | PR/Issue 模板、CODEOWNERS、FUNDING、dependabot |
 | `docs/governance.md` | 团队治理（角色/决策/变更/审查/发布） |
