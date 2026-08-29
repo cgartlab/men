@@ -4,7 +4,7 @@
 
 ## 仓库状态
 
-- **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.3.2（npm 包 `@cgartlab/men` 已发布，支持 `npx @cgartlab/men` 一行安装）
+- **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.3.3（npm 包 `@cgartlab/men` 已发布，支持 `npx @cgartlab/men` 一行安装）
 - **自主学习回路已验证**：learn.mjs 正确识别 ultrawork 事件并写入 errors/，eval-metrics.mjs 计算 8 项 KPI 正常
 - **MCP×7 全部启用**：exa / context7 / grep_app / fetch / github-mcp-server / memory / sequential-thinking
 - **GitHub 私有仓库**：`cgartlab/men`（main 分支），MIT 许可证
@@ -126,11 +126,11 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md`
 - `site/src/pages/docs/releases.astro`（发布历史表 + 当前版本亮点，内容性更新）
 
-先例：v0.3.2 发版后曾漏 6 处版本引用，全靠手动补齐。改版后请按此清单自查。
+先例：v0.3.3 发版后曾漏 6 处版本引用，全靠手动补齐。改版后请按此清单自查。
 
 ## CHARTER_CHECK
 
-- **项目状态**：v0.3.2（M0–M7 完成；npm 包 `@cgartlab/men` 已发布）
+- **项目状态**：v0.3.3（M0–M7 完成；npm 包 `@cgartlab/men` 已发布）
 - **许可证**：MIT
 - **远程仓库**：https://github.com/cgartlab/men
 - **CI 状态**：GitHub Actions validate/triage 自动运行

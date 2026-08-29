@@ -16,6 +16,26 @@
 
 ### Fixed
 
+## [v0.3.3] - 2026-08-29
+
+### Added
+- men-verify 自动化插件：写产物后自动跑 `verify.mjs` 五项机械验证
+- men-learn 自动学习插件：任务完成后自动提取经验写入 knowledge/
+- men 内置 `question` 工具启用：下一步建议改为交互式选择题
+
+### Changed
+- 全量 rebrand 为「Men Agent 团队」（agent/command 定义 8 处同步）
+- 删除手写调度器 `src/`（−1433 行），转向 OpenCode 原生插件架构
+- men-verify 从 `output.metadata.filePath` 提取路径（不再依赖 `input.args`）
+- 站点文档同步品牌名与协议表述
+
+### Fixed
+- 插件 `console.*` 改为文件日志，消除 UI 输入区污染
+- README/CHANGELOG/architecture 协议步数 9→10（与实际 `ultrawork.md` 一致）
+- 修复 `check-event-kinds.mjs` 硬编码路径死脚本（改相对路径，任意位置可运行）
+- `learn.mjs` 事件 type 对齐 14 种 KINDS 枚举（消除坏事件行）
+- 站点：10 步编排 SVG 标签、技能包计数 14→15 修正
+
 ## [v0.3.2] - 2026-08-28
 
 ### Added

@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "default_agent": "men",
   "instructions": [
     "AGENTS.md"
