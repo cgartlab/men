@@ -126,7 +126,7 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 - `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md`
 - `site/src/pages/docs/releases.astro`（发布历史表 + 当前版本亮点，内容性更新）
 
-先例：v0.3.3 发版后曾漏 6 处版本引用，全靠手动补齐。改版后请按此清单自查。
+先例：v0.3.2 发版后曾漏 6 处版本引用，全靠手动补齐。改版后请按此清单自查。
 
 ## CHARTER_CHECK
 
