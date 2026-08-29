@@ -17,6 +17,11 @@
  *   workflow.phase / gate.passed / gate.failed
  *   blocker.raised / decision.made / decision.missing
  *   verify / judge / error / dispatch / handoff
+ *
+ * Windows PowerShell 提示:
+ *   --detail / --payload 含中文或引号时，建议用单引号包裹整个 JSON，
+ *   避免双引号被 PowerShell 转义破坏。示例:
+ *   node scripts/event.mjs append --type decision.made --subject test --sid x --detail '{"k":"v"}'
  */
 
 import fs from 'node:fs';
@@ -120,6 +125,11 @@ function cmdHelp() {
 
 事件 kind 枚举（${KINDS.length} 种）:
 ${KINDS.map((k) => `  ${k}`).join('\n')}
+
+Windows PowerShell 提示:
+  在 PowerShell 下 --detail / --payload 含中文或引号时，建议用单引号包裹整个 JSON，
+  避免双引号被 PowerShell 转义破坏。示例:
+  node scripts/event.mjs append --type decision.made --subject test --sid x --detail '{"k":"v"}'
 `);
   process.exit(0);
 }

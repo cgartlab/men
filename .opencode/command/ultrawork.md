@@ -201,12 +201,12 @@ node scripts/event.mjs append --type <kind> --subject <s> --sid <sid> [--detail 
 
 ### 事件 kind 枚举
 
-`session.created` / `session.ended` / `boundary` / `workflow.phase` / `gate.passed` / `gate.failed` / `blocker.raised` / `decision.made` / `decision.missing`（共 9 种）
+`session.created` / `session.ended` / `boundary` / `workflow.phase` / `gate.passed` / `gate.failed` / `blocker.raised` / `decision.made` / `decision.missing` / `verify` / `judge` / `error` / `dispatch` / `handoff`（共 14 种）
 
 ### 执行要点
 
 1. 事件命令**全部 best-effort**——命令失败不阻塞主流程，但不丢弃任何关键字段
-2. `--payload` 为 JSON 字符串，字段需转义（用双引号包裹整个 JSON）
+2. `--payload` 为 JSON 字符串，字段需转义（用双引号包裹整个 JSON）；Windows PowerShell 下建议用单引号包裹整个 detail/payload，避免双引号转义破坏，如 `--detail '{"k":"v"}'`
 3. gate.mjs 内部会自动 append `gate.passed` / `gate.failed` 事件，**不要重复手动记录**
 4. 事件流用于事后审计与编排回溯，不用于驱动流程
 

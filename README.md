@@ -11,7 +11,7 @@
 | 特性 | 说明 |
 |------|------|
 | **6+1 角色分工** | **6 个子角色（思/记/持/艺/寻）+ 1 个编排者 men（门）**：门（编排）· 思（思考/知识管理）· 记（代码/写作）· 持（数据/投资评审/Judge）· 艺（文生图/审美）· 寻（搜索/核查），各司其职 |
-| **一键编排** | `/ultrawork` 9 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话 |
+| **一键编排** | `/ultrawork` 10 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话 |
 | **双层机械验证** | `verify.mjs` 五项机械检查 + chi 独立 Judge 语义复核，假完成必识破 |
 | **安全门禁** | `gate.mjs` 白名单防注入，强化上限 5 次防死循环 |
 | **全量事件审计** | `events.jsonl` 记录 14 种事件，支持命令行回放，所有决策可追溯 |
@@ -102,7 +102,7 @@ cd men && opencode
 
 | 命令 | 用法 | 说明 |
 |------|------|------|
-| `/ultrawork` | `/ultrawork <任务描述>` | 一键编排：9 步协议自动调度多角色协作 |
+| `/ultrawork` | `/ultrawork <任务描述>` | 一键编排：10 步协议自动调度多角色协作 |
 | `/verify` | `/verify <角色名>` | 运行机械验证 + chi 独立 Judge 复核 |
 | `/hyperplan` | `/hyperplan <项目名>` | 深度思考与方案规划：多角度拆解复杂项目为可执行计划 |
 
@@ -149,7 +149,7 @@ flowchart LR
     I --> J[LOOP 迭代/结束]
 ```
 
-`/ultrawork` 遵循 9 步协议，低置信任务循环迭代，直至达到交付标准。
+`/ultrawork` 遵循 10 步协议，低置信任务循环迭代，直至达到交付标准。
 
 ```mermaid
 flowchart LR
@@ -165,7 +165,7 @@ flowchart LR
 
 | 命令 | 用法 | 说明 |
 |------|------|------|
-| **ultrawork** | `/ultrawork <任务>` | 9 步协议一键编排：意图判定 → 规划 → 多路 Wave 并行 → 汇总 → 验证 → 交付 |
+| **ultrawork** | `/ultrawork <任务>` | 10 步协议一键编排：意图判定 → 规划 → 多路 Wave 并行 → 汇总 → 验证 → 交付 |
 | **verify** | `/verify <角色>` | 运行 `scripts/verify.mjs` 五项机械检查，随后 chi 以 fresh context 独立 Judge 语义复核 |
 | **hyperplan** | `/hyperplan <项目>` | 深度思考与方案规划：多角度提出方案 → 生成 plan envelope → 拆解为可执行子任务 |
 | **release** | `npm run release` | 版本发布：SemVer bump + CHANGELOG + git tag（详见 [`docs/guide/release.md`](docs/guide/release.md)） |

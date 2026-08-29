@@ -165,12 +165,15 @@ node scripts/eval-metrics.mjs --sid <sid> --json
 
 #### EVALUATE 输出
 
-eval-metrics.mjs 输出 JSON，包含窗口期（默认最近 10 次任务）的：
-- 通过率（pass_rate）
-- 平均执行耗时
-- 回归次数（regression_count）
-- gate 失败率
-- 各角色 KPI 明细
+eval-metrics.mjs 输出 JSON，包含窗口期（默认最近 10 次任务）的 8 项 KPI：
+- 任务完成率（KPI-task-completion）
+- 一次通过率（KPI-first-pass）
+- 回归率（KPI-regression）
+- 平均重试次数（KPI-avg-retries）
+- 技能使用率（KPI-skill-usage）
+- 知识沉淀率（KPI-knowledge）
+- 错误重复率（KPI-error-repeat）
+- 学习效率（KPI-learn-efficiency）
 
 #### 触发时机
 

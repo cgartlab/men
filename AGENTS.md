@@ -33,7 +33,7 @@
 | `.github/` | PR/Issue 模板、CODEOWNERS、FUNDING、dependabot |
 | `docs/governance.md` | 团队治理（角色/决策/变更/审查/发布） |
 | `docs/learning-architecture.md` | 自主学习与进化架构（四层认知模型） |
-| `knowledge/` | 团队知识库（errors/、patterns/、decisions/） |
+| `knowledge/` | 团队知识库（patterns/、decisions/；errors/ 在根目录，见上表） |
 | `.opencode/package.json` | `@opencode-ai/plugin` 1.18.23 + `@opentui/*`（侧边栏 TUI 运行时依赖），本地安装 |
 | `config/models.json` | 模型知识基（providers/roleDefaults/presets），`setup.mjs` 引导式模型配置的数据源 |
 | `docs/PRD.md` | 正式 PRD（里程碑 M0–M5） |

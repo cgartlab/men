@@ -74,7 +74,7 @@ Wave 2: {依赖 Wave 1 的任务}
 
 ## 项目规范参考
 
-- **9 步协议**：PLAN 是第 3 步，位于 CERTAINTY（需求确认）和 TRIAGE（意图判定）之后
+- **10 步协议**：PLAN 是第 3 步，位于 CERTAINTY（需求确认）和 TRIAGE（意图判定）之后
 - **4 种意图**：search→xun 单路 / analyze→专家+chi judge / team→si 规划多 Wave / hyperplan→访谈式规划
 - **wave 并行上限**：≤4 个任务同时并行
 - **子任务自洽**：每个子任务 prompt 必须完整自洽（子 agent 无法追问 men）

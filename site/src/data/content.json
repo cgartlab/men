@@ -349,7 +349,7 @@
       "m": "M1",
       "name": "骨架",
       "status": "完成",
-      "detail": "6 角色 agent 定义 + 14 个 skill + 3 个 command + 15 个脚本",
+      "detail": "6 角色 agent 定义 + 15 个技能包 + 3 个 command + 15 个脚本",
       "source": "docs/PRD.md"
     },
     {

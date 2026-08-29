@@ -46,7 +46,7 @@ function appendEvent(sid, event) {
       eventId: crypto.randomUUID(),
       ts: new Date().toISOString(),
       sid,
-      type: event.type || event.kind || 'decision',
+      type: event.type || event.kind || 'decision.made', // 回退值须属于 event.mjs KINDS 枚举
       subject: event.subject || '',
       detail: event.detail || '',
       payload: event.payload || {},
@@ -170,9 +170,9 @@ export function main(argv) {
     }
   }
 
-  // 记录决策事件
+  // 记录决策事件（type 须属于 event.mjs KINDS 枚举；extracted/skipped 通过 subject 区分）
   appendEvent(sid, {
-    type: 'decision',
+    type: 'decision.made',
     subject: `learn.${result.type === 'skip' ? 'skipped' : 'extracted'}`,
     detail: JSON.stringify({ type: result.type, actions: actions.length, dryRun }),
   });
