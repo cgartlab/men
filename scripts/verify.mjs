@@ -340,6 +340,113 @@ function checkGate(targetPath) {
   };
 }
 
+// 6. config/models.json schema 校验（全局配置检查，不依赖 targetPath）
+function checkModelsSchema() {
+  const cfgPath = path.join(ROOT, "config", "models.json");
+  if (!fs.existsSync(cfgPath)) {
+    return { id: "models-schema", status: "SKIP", evidence: "config/models.json 不存在，跳过", details: "" };
+  }
+  let cfg;
+  try {
+    cfg = JSON.parse(fs.readFileSync(cfgPath, "utf-8"));
+  } catch (e) {
+    return { id: "models-schema", status: "FAIL", evidence: "config/models.json JSON.parse 失败", details: e.message };
+  }
+  const problems = [];
+  const modelIds = new Set();
+
+  // 顶层必须有 providers / roleDefaults / presets 三个对象
+  for (const key of ["providers", "roleDefaults", "presets"]) {
+    if (!cfg[key] || typeof cfg[key] !== "object" || Array.isArray(cfg[key])) {
+      problems.push(`顶层缺少对象 ${key}`);
+    }
+  }
+  if (problems.length > 0) {
+    return { id: "models-schema", status: "FAIL", evidence: `${problems.length} 处配置问题`, details: problems.slice(0, 20).join("; ") };
+  }
+
+  // providers：每个 provider 必须有 name（字符串）和 models（非空数组）
+  for (const [pname, provider] of Object.entries(cfg.providers)) {
+    if (typeof provider.name !== "string") {
+      problems.push(`provider ${pname}: 缺少 name 字符串`);
+    }
+    if (!Array.isArray(provider.models) || provider.models.length === 0) {
+      problems.push(`provider ${pname}: models 必须是非空数组`);
+      continue;
+    }
+    for (const model of provider.models) {
+      if (!model || typeof model.id !== "string") {
+        problems.push(`provider ${pname}: model 缺少 id 字符串`);
+        continue;
+      }
+      // id 必须以 provider 名/ 开头（id 与所属 provider 匹配）
+      if (!model.id.startsWith(`${pname}/`)) {
+        problems.push(`model ${model.id}: id 必须以 ${pname}/ 开头`);
+      }
+      // tier / free / bestFor 若存在则类型校验
+      if (model.tier !== undefined && model.tier !== "premium" && model.tier !== "free") {
+        problems.push(`model ${model.id}: tier 必须是 premium 或 free`);
+      }
+      if (model.free !== undefined && typeof model.free !== "boolean") {
+        problems.push(`model ${model.id}: free 必须是 boolean`);
+      }
+      if (model.bestFor !== undefined && !Array.isArray(model.bestFor)) {
+        problems.push(`model ${model.id}: bestFor 必须是数组`);
+      }
+      // 仅收集 id 与所属 provider 匹配的合法 model id
+      if (model.id.startsWith(`${pname}/`)) {
+        modelIds.add(model.id);
+      }
+    }
+  }
+
+  // roleDefaults：priority 必须是非空数组且引用合法；fallback（若存在）同理
+  for (const [role, rd] of Object.entries(cfg.roleDefaults)) {
+    if (!Array.isArray(rd.priority) || rd.priority.length === 0) {
+      problems.push(`roleDefaults.${role}: priority 必须是非空数组`);
+    } else {
+      for (const id of rd.priority) {
+        if (!modelIds.has(id)) problems.push(`roleDefaults.${role}: priority 引用未知模型 ${id}`);
+      }
+    }
+    if (rd.fallback !== undefined && !modelIds.has(rd.fallback)) {
+      problems.push(`roleDefaults.${role}: fallback 引用未知模型 ${rd.fallback}`);
+    }
+  }
+
+  // presets：除 name/description 外的键（角色名）必须在 model id Set 中；键名限预留角色
+  const RESERVED_ROLES = ["men", "si", "ji", "chi", "yi", "xun"];
+  for (const [presetName, preset] of Object.entries(cfg.presets)) {
+    for (const [key, val] of Object.entries(preset)) {
+      if (key === "name" || key === "description") continue;
+      if (!RESERVED_ROLES.includes(key)) {
+        problems.push(`preset ${presetName}: 未知角色键 ${key}`);
+      }
+      if (!modelIds.has(val)) {
+        problems.push(`preset ${presetName}: ${key} 引用未知模型 ${val}`);
+      }
+    }
+  }
+
+  if (problems.length > 0) {
+    return {
+      id: "models-schema",
+      status: "FAIL",
+      evidence: `${problems.length} 处配置问题`,
+      details: problems.slice(0, 20).join("; "),
+    };
+  }
+  const modelCount = modelIds.size;
+  const roleCount = Object.keys(cfg.roleDefaults).length;
+  const presetCount = Object.keys(cfg.presets).length;
+  return {
+    id: "models-schema",
+    status: "PASS",
+    evidence: "config/models.json schema 校验通过",
+    details: `${modelCount} 个模型 / ${roleCount} 个角色 / ${presetCount} 个预设`,
+  };
+}
+
 // ─────────────────────────── 主流程 ───────────────────────────
 
 function parseArgs(argv) {
@@ -401,6 +508,7 @@ function run() {
     try { checks.push(checkTodos(targetPath)); } catch (e) { checks.push({ id: "todo-scan", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkStructure(targetPath)); } catch (e) { checks.push({ id: "structure", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkGate(targetPath)); } catch (e) { checks.push({ id: "gate-exit-code", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
+    try { checks.push(checkModelsSchema()); } catch (e) { checks.push({ id: "models-schema", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
   }
 
   const passed = checks.filter(c => c.status === "PASS").length;
