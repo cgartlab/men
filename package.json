@@ -29,6 +29,8 @@
     "release:minor": "node scripts/release.mjs minor",
     "release:major": "node scripts/release.mjs major",
     "release:dry-run": "node scripts/release.mjs --dry-run",
+    "release:all": "node scripts/release.mjs --all",
+    "release:push": "node scripts/release.mjs --push",
     "learn": "node scripts/learn.mjs",
     "learn:dry-run": "node scripts/learn.mjs --dry-run",
     "eval": "node scripts/eval-metrics.mjs",

@@ -218,27 +218,39 @@ const seealso = [
         <span class="code-block__lang">bash</span>
         <pre><code>npm run release            # patch（默认）
 npm run release:minor      # 0.2.1 → 0.3.0
-npm run release:major      # 0.1.0 → 1.0.0</code></pre>
+npm run release:major      # 0.1.0 → 1.0.0
+npm run release:all        # 全部 = --push + --gh-release + --npm</code></pre>
       </div>
       <p><code>scripts/release.mjs</code> 自动完成以下步骤：</p>
       <ol>
         <li>读取 <code>package.json</code> 的 version 并校验 SemVer（非法退出码 2）</li>
         <li>bump 版本号并写回 <code>package.json</code></li>
         <li>在 <code>CHANGELOG.md</code> 的 <code>[Unreleased]</code> 下插入新版本节，迁移已整理条目</li>
-        <li>若已 <code>git init</code>：<code>git commit -m "chore(release): vX.Y.Z"</code> + <code>git tag vX.Y.Z</code></li>
+        <li>同步版本号到 JSON/文本文件（<code>opencode.json</code>、<code>configure.astro</code>、<code>AGENTS.md</code> 等 8 处）</li>
+        <li>若已 <code>git init</code>：<code>git add</code> + <code>git commit -m "chore(release): vX.Y.Z"</code> + <code>git tag vX.Y.Z</code></li>
         <li>用 <code>scripts/release-notes.mjs</code> 提取只含当前版本的 release notes</li>
       </ol>
       <div class="wiki-note">
-        <strong>不自动 push</strong>：release.mjs 打 tag 后不推送远端，由维护者确认后手动
-        <code>git push && git push --tags</code>。发布前必须先 <code>git init</code>，否则脚本跳过 git tag。
+        <strong>推送与发布由 flag 控制</strong>：默认不推送不发布，由维护者确认后执行。
+        使用 <code>--push</code> 自动推送、<code>--gh-release</code> 自动创建 GitHub Release、<code>--npm</code> 自动发布 npm、<code>--all</code> 全部执行。
+        使用 <code>--push</code> 或 <code>--gh-release</code> 时，<code>update-release-page.mjs</code> 自动同步 <code>releases.astro</code>（版本行 + 高亮 + 日期 + 计数）。
       </div>
 
       <h3>GitHub Releases 关联</h3>
       <p>
-        推送 tag 后，在仓库 Releases 页面 Draft a new release 并选择 <code>vX.Y.Z</code> tag 发布。
-        Release 正文只记录当前发布版本的改进，使用 <code>release-notes.mjs</code> 提取的文件，
-        而非粘贴整个 CHANGELOG。
+        使用 <code>--gh-release</code> flag 时，脚本自动调用 <code>gh release create</code> 创建 GitHub Release，
+        release notes 使用 <code>release-notes.mjs</code> 提取的只含当前版本内容。
+        也可手动使用 <code>scripts/release-notes.mjs</code> 提取后创建：
       </p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code># 自动（推荐）
+node scripts/release.mjs patch --push --gh-release
+
+# 手动提取 + 创建
+node scripts/release-notes.mjs --output /tmp/release-notes.md
+gh release create vX.Y.Z --title "vX.Y.Z — 主题" --notes-file /tmp/release-notes.md</code></pre>
+      </div>
 
       <h3>CI 自动验证</h3>
       <p>
