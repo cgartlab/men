@@ -43,7 +43,9 @@ const USAGE_TEXT = `用法: node scripts/verify.mjs <target> [--json] [--sid <si
 const SKIP_DIRS = new Set(["node_modules", ".venv", "dist", "build", ".git"]);
 // 密钥扫描的文件扩展
 const SECRET_EXTS = new Set([".py", ".ts", ".tsx", ".js", ".mjs", ".json", ".cjs"]);
-// 全量扫描的扩展（TODO / 结构检查等）
+// 代码文件扩展（待办标记扫描的 FAIL 级作用域；文档/配置仅 WARN）
+const CODE_EXTS = new Set([".py", ".ts", ".tsx", ".js", ".mjs", ".cjs"]);
+// 全量扫描的扩展（待办标记 / 结构检查等）
 const ALL_EXTS = new Set([
   ".py", ".ts", ".tsx", ".js", ".mjs", ".json", ".cjs",
   ".md", ".yml", ".yaml", ".toml", ".cfg", ".ini", ".env",
@@ -148,30 +150,41 @@ function checkSecrets(targetPath) {
   };
 }
 
-// 2. TODO/FIXME 扫描（WARN 级，不 fail）
+// 2. 待办标记扫描：代码文件 FAIL，文档/配置 WARN
+// 标签名用拼接构造：源码中不出现连续字母序列，避免 verify.mjs 被自身 todo-scan 命中
+const TAG_NAMES = [`TO${"D"}O`, `FIXM${"E"}`, `HAC${"K"}`, `X${"X"}X`];
 function checkTodos(targetPath) {
   const files = listFiles(targetPath, ALL_EXTS);
-  // 大小写敏感 + 词边界：TODO 标记惯例全大写，避免误伤 todowrite/todo list 等正常词；
-  // \b 防止命中 TODOABC 这类粘连；捕获组保持 m[1] 供 tag 字段使用（\b 为零宽，不影响组编号）
-  const re = new RegExp('\\b(TODO|FIXME|HACK|XXX)\\b', 'g');
-  const hits = [];
+  // 大小写敏感 + 词边界：标记惯例全大写，避免误伤 todowrite/todo list 等正常词；
+  // \b 防止命中标记后接字母的粘连词；捕获组保持 m[1] 供 tag 字段使用（\b 为零宽，不影响组编号）
+  const re = new RegExp(`\\b(${TAG_NAMES.join("|")})\\b`, "g");
+  const codeHits = [];
+  const docHits = [];
   for (const f of files) {
     try {
       const txt = fs.readFileSync(f, "utf-8");
       const rel = path.relative(ROOT, f);
+      const isCode = CODE_EXTS.has(path.extname(f));
       for (const m of txt.matchAll(re)) {
-        hits.push({ file: rel, tag: m[1] });
+        const hit = { file: rel, tag: m[1], type: isCode ? "code" : "doc" };
+        if (isCode) codeHits.push(hit);
+        else docHits.push(hit);
       }
     } catch (_) { /* 忽略 */ }
   }
-  if (hits.length === 0) {
-    return { id: "todo-scan", status: "PASS", evidence: "未发现 TODO/FIXME/HACK/XXX", details: `${files.length} 个文件扫描通过` };
+  if (codeHits.length + docHits.length === 0) {
+    return { id: "todo-scan", status: "PASS", evidence: `未发现 ${TAG_NAMES.join("/")}`, details: `${files.length} 个文件扫描通过` };
   }
+  // FAIL 优先：代码文件中的标记是硬性门禁，文档/配置仅作提醒
+  const status = codeHits.length > 0 ? "FAIL" : "WARN";
+  const evidence = codeHits.length > 0
+    ? `代码文件 ${codeHits.length} 处 ${TAG_NAMES.join("/")}`
+    : `文档/配置 ${docHits.length} 处 ${TAG_NAMES.join("/")}`;
   return {
     id: "todo-scan",
-    status: "WARN",
-    evidence: `${hits.length} 处 TODO/FIXME/HACK/XXX`,
-    details: JSON.stringify(hits.slice(0, 20), null, 2),
+    status,
+    evidence,
+    details: JSON.stringify([...codeHits, ...docHits].slice(0, 20), null, 2),
   };
 }
 
