@@ -79,7 +79,8 @@ function eprintf(...args) {
 export function parseArgs(argv) {
   const args = argv.slice(2);
   const out = {
-    dir: null, skipDeps: false, skipVerify: false, json: false, help: false, global: false,
+    dir: null, skipDeps: false, skipVerify: false, json: false, help: false,
+    global: false, globalRemove: false,
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -87,6 +88,7 @@ export function parseArgs(argv) {
     else if (a === "--skip-deps") out.skipDeps = true;
     else if (a === "--skip-verify") out.skipVerify = true;
     else if (a === "--global") out.global = true;
+    else if (a === "--global-remove") out.globalRemove = true;
     else if (a === "--json") out.json = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else {
@@ -110,9 +112,12 @@ npm 一键安装（推荐，scaffold 到当前目录）:
 
 选项:
   --dir <path>      安装目标目录（默认: 当前目录）。
-                    目录不存在时从当前仓库根复制文件后安装
-  --global          注册为 OpenCode 全局 TUI 插件（写入 tui.json 的 plugin 列表，
-                    不触碰 opencode.json；重启 OpenCode 后任意目录侧边栏生效）
+                     目录不存在时从当前仓库根复制文件后安装
+  --global          全局安装：部署 agents/commands/skills 到 ~/.config/opencode，
+                     合并全局 opencode.json（default_agent: men + plugin），
+                     并注册 TUI 插件（tui.json）。重启 OpenCode 后任意目录生效
+  --global-remove   卸载全局安装：删除部署的 agents/commands/skills，
+                     还原 opencode.json（或移除 default_agent/plugin），并从 tui.json 注销
   --skip-deps       跳过 .opencode/ 依赖安装（npm install）
   --skip-verify     跳过端到端验证（scripts/verify.mjs men）
   --json            输出 JSON 摘要
@@ -280,9 +285,98 @@ function globalConfigDir() {
   return path.join(os.homedir(), ".config", "opencode");
 }
 
-// --global：把 @cgartlab/men 注册为 OpenCode 全局 TUI 插件（写 tui.json）。
-// 设计：只改 tui.json（TUI 插件声明）；不触碰 opencode.json（可能由 CC Switch 管理）。
-// OpenCode 启动时自动用 Bun 安装 npm 包并解析 exports["./tui"] 加载侧边栏。
+// 全局安装时部署的运行时资产白名单：<men 相对路径> -> <全局子目录>
+// agents/commands 是单个 md 文件；skills 是「技能名目录/SKILL.md」目录。
+const GLOBAL_ASSETS = [
+  { name: "agents",   src: path.join(ROOT, ".opencode", "agent"),   dest: "agent" },
+  { name: "commands", src: path.join(ROOT, ".opencode", "command"), dest: "command" },
+  { name: "skills",   src: path.join(ROOT, ".opencode", "skills"),  dest: "skills" },
+];
+
+const MEN_PLUGIN_SPEC = "@cgartlab/men";
+const MEN_DEFAULT_AGENT = "men";
+const GLOBAL_BACKUP_NAME = "opencode.json.men-backup";
+
+// 安全读 JSON：解析失败返回 null
+function readJsonSafe(p) {
+  try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return null; }
+}
+
+// 部署单类资产：把 src 下的每个条目复制到 destDir/<同名条目>
+// 返回 { copied, entries }（copied 为成功复制的条目数，entries 为复制到的绝对路径）
+function deployAssetGroup(src, destDir) {
+  const out = { copied: 0, entries: [] };
+  if (!fs.existsSync(src)) return out;
+  fs.mkdirSync(destDir, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    if (entry.name.startsWith(".")) continue;
+    const s = path.join(src, entry.name);
+    const d = path.join(destDir, entry.name);
+    try {
+      if (entry.isDirectory()) {
+        fs.mkdirSync(d, { recursive: true });
+        copyTree(s, d, COPY_EXCLUDES);
+      } else if (entry.isFile()) {
+        fs.copyFileSync(s, d);
+      }
+      out.copied += 1;
+      out.entries.push(d);
+    } catch (e) {
+      eprintf(`警告: 复制 ${s} 失败: ${e.message}`);
+    }
+  }
+  return out;
+}
+
+// 备份全局 opencode.json（仅首次修改前备份一次，不覆盖既有备份）
+function backupGlobalOpencodeJson(dir) {
+  const p = path.join(dir, "opencode.json");
+  const bak = path.join(dir, GLOBAL_BACKUP_NAME);
+  if (!fs.existsSync(p)) return { existed: false, backedUp: false };
+  if (fs.existsSync(bak)) return { existed: true, backedUp: false };
+  fs.copyFileSync(p, bak);
+  return { existed: true, backedUp: true };
+}
+
+// 合并全局 opencode.json：default_agent=men + plugin 追加 men（幂等去重）。
+// 不改动 mcp 等其余字段（MCP 由 CC Switch 统一管理）。
+function mergeGlobalOpencodeJson(dir, spec) {
+  const p = path.join(dir, "opencode.json");
+  const cfg = readJsonSafe(p) || {};
+  let changed = false;
+
+  if (cfg.default_agent !== MEN_DEFAULT_AGENT) {
+    cfg.default_agent = MEN_DEFAULT_AGENT;
+    changed = true;
+  }
+  const plugins = Array.isArray(cfg.plugin) ? cfg.plugin.slice() : [];
+  if (!plugins.includes(spec)) {
+    plugins.push(spec);
+    cfg.plugin = plugins;
+    changed = true;
+  }
+
+  if (changed) fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + "\n");
+  return { path: p, changed };
+}
+
+// 注册全局 TUI 插件（写 tui.json）
+function writeTuiPlugin(dir, spec) {
+  const tuiPath = path.join(dir, "tui.json");
+  const tui = readJsonSafe(tuiPath) || {};
+  const plugins = Array.isArray(tui.plugin) ? tui.plugin.slice() : [];
+  const added = !plugins.includes(spec);
+  if (added) plugins.push(spec);
+  tui.plugin = plugins;
+  fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
+  return { path: tuiPath, added };
+}
+
+// --global：完整全局安装。
+// 1. 部署 agents/commands/skills 到 ~/.config/opencode/{agent,command,skills}
+// 2. 备份并合并全局 opencode.json（default_agent=men + plugin，不动 mcp）
+// 3. 注册 TUI 插件（tui.json）
+// 幂等：重复执行不产生重复条目。
 function installGlobal(cfg) {
   const dir = globalConfigDir();
   fs.mkdirSync(dir, { recursive: true });
@@ -292,32 +386,37 @@ function installGlobal(cfg) {
     eprintf("警告: 未检测到 opencode 命令，全局注册暂不生效；请先安装 OpenCode CLI（https://opencode.ai）\n");
   }
 
-  const tuiPath = path.join(dir, "tui.json");
-  let tui = {};
-  try {
-    tui = JSON.parse(fs.readFileSync(tuiPath, "utf8"));
-  } catch {
-    tui = {};
+  const assets = {};
+  for (const a of GLOBAL_ASSETS) {
+    const r = deployAssetGroup(a.src, path.join(dir, a.dest));
+    assets[a.name] = r.copied;
   }
-  const plugins = Array.isArray(tui.plugin) ? tui.plugin.slice() : [];
-  const spec = "@cgartlab/men";
-  const added = !plugins.includes(spec);
-  if (added) plugins.push(spec);
-  tui.plugin = plugins;
 
-  fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
+  const backup = backupGlobalOpencodeJson(dir);
+  const merged = mergeGlobalOpencodeJson(dir, MEN_PLUGIN_SPEC);
+  const tui = writeTuiPlugin(dir, MEN_PLUGIN_SPEC);
 
   const result = {
     ok: true,
-    summary: added ? "已注册全局 TUI 插件" : "全局 TUI 插件已存在，无需变更",
+    summary: "全局安装完成（agents/commands/skills 已部署，opencode.json 已合并）",
     mode: "global",
     dir,
-    tuiJson: tuiPath,
-    plugin: spec,
-    added,
+    assets: {
+      agents: assets.agents,
+      commands: assets.commands,
+      skills: assets.skills,
+    },
+    opencodeJson: {
+      path: path.join(dir, "opencode.json"),
+      changed: merged.changed,
+      backup: backup.backedUp ? path.join(dir, GLOBAL_BACKUP_NAME) : null,
+    },
+    tuiJson: tui.path,
+    plugin: MEN_PLUGIN_SPEC,
+    defaultAgent: MEN_DEFAULT_AGENT,
     opencodeDetected: hasOpencode,
     warning: hasOpencode ? null : "未检测到 opencode 命令，注册暂不生效",
-    note: "OpenCode 启动时会自动安装 @cgartlab/men 并加载侧边栏；重启 OpenCode 生效",
+    note: "重启 OpenCode 后任意目录生效：agents 可选（Tab/@）、侧边栏显示 MEN AGENTS、/ultrawork /verify /hyperplan 可用",
   };
 
   if (cfg.json) {
@@ -325,11 +424,112 @@ function installGlobal(cfg) {
   } else {
     process.stdout.write(`men（门）Agent 团队 — 全局安装摘要\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
-    process.stdout.write(`  模式   ${added ? "新增注册" : "已存在（幂等）"}\n`);
-    process.stdout.write(`  配置   ${tuiPath}\n`);
-    process.stdout.write(`  插件   ${spec}\n`);
+    process.stdout.write(`  全局目录  ${dir}\n`);
+    process.stdout.write(`  agents    ${assets.agents} 个 → ${path.join(dir, "agent")}\n`);
+    process.stdout.write(`  commands  ${assets.commands} 个 → ${path.join(dir, "command")}\n`);
+    process.stdout.write(`  skills    ${assets.skills} 个 → ${path.join(dir, "skills")}\n`);
+    process.stdout.write(`  opencode.json  ${merged.changed ? "已合并（default_agent=men + plugin）" : "已就绪（无需变更）"}\n`);
+    if (backup.backedUp) process.stdout.write(`  （原 opencode.json 已备份: ${path.join(dir, GLOBAL_BACKUP_NAME)}）\n`);
+    process.stdout.write(`  tui.json  插件已${tui.added ? "新增注册" : "注册（幂等）"}\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
-    process.stdout.write(`  ✓ ${result.summary}。重启 OpenCode 后任意目录侧边栏生效\n`);
+    process.stdout.write(`  ✓ 重启 OpenCode 后任意目录生效。卸载: node scripts/install.mjs --global-remove\n`);
+  }
+  return result;
+}
+
+// 从全局目录删除 men 部署的资产（仅删除 men 源里存在的同名条目，避免误删其它插件的文件）
+function removeGlobalAssets(dir) {
+  const removed = { agents: 0, commands: 0, skills: 0 };
+  for (const a of GLOBAL_ASSETS) {
+    if (!fs.existsSync(a.src)) continue;
+    const destDir = path.join(dir, a.dest);
+    for (const entry of fs.readdirSync(a.src, { withFileTypes: true })) {
+      if (entry.name.startsWith(".")) continue;
+      const d = path.join(destDir, entry.name);
+      if (!fs.existsSync(d)) continue;
+      try {
+        fs.rmSync(d, { recursive: true, force: true });
+        removed[a.name] += 1;
+      } catch (e) {
+        eprintf(`警告: 删除 ${d} 失败: ${e.message}`);
+      }
+    }
+  }
+  return removed;
+}
+
+// 还原全局 opencode.json：有备份则恢复；无备份则移除 default_agent 与 plugin 中的 men 条目
+function restoreGlobalOpencodeJson(dir) {
+  const p = path.join(dir, "opencode.json");
+  const bak = path.join(dir, GLOBAL_BACKUP_NAME);
+  if (fs.existsSync(bak)) {
+    fs.copyFileSync(bak, p);
+    fs.rmSync(bak, { force: true });
+    return { restored: true, note: "已从备份还原" };
+  }
+  const cfg = readJsonSafe(p);
+  if (!cfg) return { restored: false, note: "opencode.json 不存在或无法解析，跳过" };
+  let changed = false;
+  if (cfg.default_agent === MEN_DEFAULT_AGENT) {
+    delete cfg.default_agent;
+    changed = true;
+  }
+  if (Array.isArray(cfg.plugin)) {
+    const next = cfg.plugin.filter((x) => x !== MEN_PLUGIN_SPEC);
+    if (next.length !== cfg.plugin.length) {
+      cfg.plugin = next;
+      changed = true;
+    }
+  }
+  if (changed) fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + "\n");
+  return { restored: changed, note: changed ? "已移除 men 的 default_agent/plugin" : "未发现 men 相关字段" };
+}
+
+// 从 tui.json 注销 men 插件
+function unregisterTuiPlugin(dir, spec) {
+  const tuiPath = path.join(dir, "tui.json");
+  const tui = readJsonSafe(tuiPath);
+  if (!tui) return { path: tuiPath, removed: false };
+  if (Array.isArray(tui.plugin)) {
+    const next = tui.plugin.filter((x) => x !== spec);
+    if (next.length !== tui.plugin.length) {
+      tui.plugin = next;
+      fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
+      return { path: tuiPath, removed: true };
+    }
+  }
+  return { path: tuiPath, removed: false };
+}
+
+// --global-remove：卸载全局安装（删除部署资产 + 还原 opencode.json + 注销 TUI 插件）
+function removeGlobal(cfg) {
+  const dir = globalConfigDir();
+  const removed = removeGlobalAssets(dir);
+  const opencode = restoreGlobalOpencodeJson(dir);
+  const tui = unregisterTuiPlugin(dir, MEN_PLUGIN_SPEC);
+
+  const result = {
+    ok: true,
+    summary: "全局卸载完成",
+    mode: "global-remove",
+    dir,
+    removed,
+    opencodeJson: { path: path.join(dir, "opencode.json"), ...opencode },
+    tuiJson: tui,
+  };
+
+  if (cfg.json) {
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+  } else {
+    process.stdout.write(`men（门）Agent 团队 — 全局卸载摘要\n`);
+    process.stdout.write(`${"=".repeat(54)}\n`);
+    process.stdout.write(`  删除 agents    ${removed.agents} 个\n`);
+    process.stdout.write(`  删除 commands  ${removed.commands} 个\n`);
+    process.stdout.write(`  删除 skills    ${removed.skills} 个\n`);
+    process.stdout.write(`  opencode.json  ${opencode.note}\n`);
+    process.stdout.write(`  tui.json       ${tui.removed ? "已注销 men 插件" : "无需变更"}\n`);
+    process.stdout.write(`${"=".repeat(54)}\n`);
+    process.stdout.write(`  ✓ 全局安装已卸载。重启 OpenCode 生效\n`);
   }
   return result;
 }
@@ -343,7 +543,11 @@ export function main(argv = process.argv) {
     return { ok: true, exitCode: 0, help: true };
   }
 
-  // --global：只注册全局 TUI 插件，不进入项目安装流程
+  // --global / --global-remove：不进入项目安装流程
+  if (cfg.globalRemove) {
+    removeGlobal(cfg);
+    process.exit(0);
+  }
   if (cfg.global) {
     const result = installGlobal(cfg);
     return { ok: true, exitCode: 0, result };
