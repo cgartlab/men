@@ -28,7 +28,10 @@ const PKG = (() => {
   return { version: String(self?.version ?? ""), name: self?.name || "", source: "(plugin self)" };
 })();
 const VERSION = PKG.version;
-console.log(`[men-sidebar] version source: ${PKG.source} -> ${PKG.name || "?"}@v${VERSION || "?"}`);
+
+// 调试日志门控：MEN_DEBUG=1（或 true）时输出，默认静默，避免污染 host stdout
+const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEBUG === "true") { console.log(...a); } };
+dbg(`[men-sidebar] version source: ${PKG.source} -> ${PKG.name || "?"}@v${VERSION || "?"}`);
 
 function readAgents(dir) {
   // 兜底链：项目级 opencode.json 优先；为空时合并全局 ~/.config/opencode/opencode.json
@@ -38,19 +41,19 @@ function readAgents(dir) {
   let merged = {};
   for (const p of candidates) {
     try {
-      if (!existsSync(p)) { console.log("[men-sidebar] opencode.json NOT FOUND:", p); continue; }
+      if (!existsSync(p)) { dbg("[men-sidebar] opencode.json NOT FOUND:", p); continue; }
       const cfg = JSON.parse(readFileSync(p, "utf8"));
       const a = cfg.agent ?? {};
       const keys = Object.keys(a);
       if (keys.length) {
-        console.log("[men-sidebar] readAgents from " + p + ":", keys.join(", "));
+        dbg("[men-sidebar] readAgents from " + p + ":", keys.join(", "));
         merged = Object.assign({}, merged, a); // 后读的覆盖先读的 → 全局在前、项目在后（项目优先）
       }
     } catch (e) {
       console.error("[men-sidebar] readAgents ERROR:", e && e.message ? e.message : String(e));
     }
   }
-  if (!Object.keys(merged).length) console.log("[men-sidebar] WARN: no agents found in any candidate path");
+  if (!Object.keys(merged).length) dbg("[men-sidebar] WARN: no agents found in any candidate path");
   return merged;
 }
 
@@ -107,12 +110,12 @@ function renderSidebar(dir, theme, el_fn, box_fn, txt_fn) {
   );
 }
 
-console.log("[men-sidebar] === ① TUI ENTRY LOADED (V8) ===");
+dbg("[men-sidebar] === ① TUI ENTRY LOADED (V8) ===");
 
 export default {
   id: "men-sidebar:tui",
   tui: async (api, _options, meta) => {
-    console.log("[men-sidebar] === ④ TUI PLUGIN CALLED ===");
+    dbg("[men-sidebar] === ④ TUI PLUGIN CALLED ===");
 
     let createElement, setProp, insert;
     try {
@@ -120,7 +123,7 @@ export default {
       createElement = solid.createElement;
       setProp = solid.setProp;
       insert = solid.insert;
-      console.log("[men-sidebar] ② @opentui/solid IMPORTED OK");
+      dbg("[men-sidebar] ② @opentui/solid IMPORTED OK");
     } catch (e) {
       console.error("[men-sidebar] ② @opentui/solid IMPORT FAILED:", e && e.message ? e.message : String(e));
       return;
@@ -137,7 +140,7 @@ export default {
 
     try {
       const dir = (api && api.state && api.state.path && api.state.path.directory) ? api.state.path.directory : process.cwd();
-      console.log("[men-sidebar] directory:", dir);
+      dbg("[men-sidebar] directory:", dir);
 
       if (!api || !api.slots || typeof api.slots.register !== "function") {
         console.error("[men-sidebar] ④ api.slots.register NOT AVAILABLE");
@@ -148,12 +151,12 @@ export default {
         order: 1000,
         slots: {
           sidebar_content() {
-            console.log("[men-sidebar] === ⑤ sidebar_content() RENDER ===");
+            dbg("[men-sidebar] === ⑤ sidebar_content() RENDER ===");
             return renderSidebar(dir, api.theme, el, box, txt);
           },
         },
       });
-      console.log("[men-sidebar] ⑤ SLOT REGISTERED OK");
+      dbg("[men-sidebar] ⑤ SLOT REGISTERED OK");
 
       // 自动版本检查：fire-and-forget，不 await，避免阻塞 UI 启动
       runUpdateCheck(api, meta, VERSION).catch(() => {});
@@ -163,4 +166,4 @@ export default {
   },
 };
 
-console.log("[men-sidebar] === ③ TUI PLUGIN EXPORT COMPLETE ===");
+dbg("[men-sidebar] === ③ TUI PLUGIN EXPORT COMPLETE ===");
