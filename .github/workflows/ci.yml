@@ -23,6 +23,8 @@ jobs:
       - name: Run tests
         run: npm test
       - run: npm run verify
+      - name: Verify @opentui/solid resolution
+        run: node -e "import('@opentui/solid').then(()=>{console.log('opentui OK');}).catch(e=>{console.error('opentui import FAILED:',e.message);process.exit(1);})"
       - run: node scripts/release.mjs --dry-run
       - run: node scripts/install.mjs --skip-deps --skip-verify --json
 

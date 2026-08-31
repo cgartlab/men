@@ -460,6 +460,123 @@ function checkModelsSchema() {
   };
 }
 
+// 7. bin/exports 目标存在性（package.json 声明的入口必须真实存在）
+function checkBinExportsTargets(targetPath) {
+  const st = fs.statSync(targetPath);
+  let pkgDir = st.isDirectory() ? targetPath : path.dirname(targetPath);
+  // 向上收集候选 package.json（从近到远），优先选含 bin 或 exports 字段的（参照 checkGate 逻辑）
+  const candidates = [];
+  let cur = path.resolve(pkgDir);
+  while (true) {
+    const p = path.join(cur, "package.json");
+    if (fs.existsSync(p)) candidates.push(p);
+    const parent = path.dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
+  }
+  const chosen = candidates.find(p => {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(p, "utf-8"));
+      return pkg.bin || pkg.exports;
+    } catch { return false; }
+  }) || candidates[0];
+  if (!chosen) {
+    return { id: "bin-exports-targets", status: "SKIP", evidence: "未找到 package.json，跳过", details: "" };
+  }
+  let pkg;
+  try {
+    pkg = JSON.parse(fs.readFileSync(chosen, "utf-8"));
+  } catch (e) {
+    return { id: "bin-exports-targets", status: "FAIL", evidence: `package.json 解析失败: ${e.message}`, details: chosen };
+  }
+  const refs = [];
+  // bin：每个 key 的 value 是相对路径
+  if (pkg.bin && typeof pkg.bin === "object") {
+    for (const [k, v] of Object.entries(pkg.bin)) {
+      if (typeof v === "string") {
+        refs.push({ kind: `bin.${k}`, p: path.resolve(path.dirname(chosen), v) });
+      }
+    }
+  }
+  // exports：只处理 value 是字符串且以 ./ 开头的静态映射
+  if (pkg.exports && typeof pkg.exports === "object") {
+    for (const [k, v] of Object.entries(pkg.exports)) {
+      if (typeof v === "string" && v.startsWith("./")) {
+        refs.push({ kind: `exports.${k}`, p: path.resolve(path.dirname(chosen), v) });
+      }
+    }
+  }
+  if (refs.length === 0) {
+    return { id: "bin-exports-targets", status: "SKIP", evidence: "package.json 无 bin/exports 映射，跳过", details: path.relative(ROOT, chosen) };
+  }
+  const missing = refs.filter(r => !fs.existsSync(r.p));
+  if (missing.length === 0) {
+    return {
+      id: "bin-exports-targets",
+      status: "PASS",
+      evidence: `${refs.length} 个 bin/exports 目标全部存在`,
+      details: refs.map(r => `${r.kind} → ${path.relative(ROOT, r.p)}`).join("; "),
+    };
+  }
+  return {
+    id: "bin-exports-targets",
+    status: "FAIL",
+    evidence: `${missing.length} 个 bin/exports 目标缺失: ${missing.map(m => `${m.kind} → ${path.relative(ROOT, m.p)}`).join(", ")}`,
+    details: JSON.stringify(missing.map(m => ({ kind: m.kind, path: path.relative(ROOT, m.p) })), null, 2),
+  };
+}
+
+// 8. 依赖引用一致性（根 package.json.dependencies 必须在代码中被引用，或位于白名单）
+const DEP_IMPORT_WHITELIST = ["@opencode-ai/plugin"];
+function checkDepsImportConsistency(targetPath) {
+  const rootPkgPath = path.join(ROOT, "package.json");
+  if (!fs.existsSync(rootPkgPath)) {
+    return { id: "deps-import-consistency", status: "SKIP", evidence: "根 package.json 不存在，跳过", details: "" };
+  }
+  let pkg;
+  try {
+    pkg = JSON.parse(fs.readFileSync(rootPkgPath, "utf-8"));
+  } catch (e) {
+    return { id: "deps-import-consistency", status: "FAIL", evidence: "根 package.json 解析失败", details: e.message };
+  }
+  const deps = pkg.dependencies || {};
+  const names = Object.keys(deps);
+  if (names.length === 0) {
+    return { id: "deps-import-consistency", status: "SKIP", evidence: "根 package.json 无 dependencies，跳过", details: "" };
+  }
+  // 扫描 scripts/、.opencode/plugins/、.opencode/command/ 下的代码文件
+  const scanDirs = ["scripts", ".opencode/plugins", ".opencode/command"].map(d => path.join(ROOT, d));
+  const files = [];
+  for (const d of scanDirs) walk(d, SECRET_EXTS, files);
+  const missingRefs = [];
+  for (const name of names) {
+    if (DEP_IMPORT_WHITELIST.includes(name)) continue;
+    const esc = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`import\\(.*${esc}|from ['"]${esc}|require\\(['"]${esc}`);
+    let hit = false;
+    for (const f of files) {
+      try {
+        if (re.test(fs.readFileSync(f, "utf-8"))) { hit = true; break; }
+      } catch (_) { /* 忽略 */ }
+    }
+    if (!hit) missingRefs.push(name);
+  }
+  if (missingRefs.length === 0) {
+    return {
+      id: "deps-import-consistency",
+      status: "PASS",
+      evidence: `${names.length} 个 dependencies 均有引用（或位于白名单）`,
+      details: names.join(", "),
+    };
+  }
+  return {
+    id: "deps-import-consistency",
+    status: "FAIL",
+    evidence: `未发现引用的依赖: ${missingRefs.join(", ")}`,
+    details: `扫描目录: ${scanDirs.map(d => path.relative(ROOT, d)).join(", ")}`,
+  };
+}
+
 // ─────────────────────────── 主流程 ───────────────────────────
 
 function parseArgs(argv) {
@@ -522,6 +639,8 @@ function run() {
     try { checks.push(checkStructure(targetPath)); } catch (e) { checks.push({ id: "structure", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkGate(targetPath)); } catch (e) { checks.push({ id: "gate-exit-code", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkModelsSchema()); } catch (e) { checks.push({ id: "models-schema", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
+    try { checks.push(checkBinExportsTargets(targetPath)); } catch (e) { checks.push({ id: "bin-exports-targets", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
+    try { checks.push(checkDepsImportConsistency(targetPath)); } catch (e) { checks.push({ id: "deps-import-consistency", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
   }
 
   const passed = checks.filter(c => c.status === "PASS").length;

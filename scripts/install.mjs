@@ -37,10 +37,16 @@ const MIN_NODE_MAJOR = 18;
 const ENV_TEMPLATE = ".env.example";
 const ENV_TARGET = ".env";
 
-// .opencode/package.json 缺失时的最小模板（npm 发布可能按 .gitignore 排除它）
-const OPCODE_PKG_TEMPLATE = {
-  dependencies: { "@opencode-ai/plugin": "1.18.23" },
-};
+// .opencode/package.json 缺失时的最小模板：从根 package.json 派生运行时依赖，加 @opencode-ai/plugin 兜底
+function buildOpencodePkgTemplate() {
+  try {
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+    return { dependencies: { "@opencode-ai/plugin": "1.18.23", ...(rootPkg.dependencies || {}) } };
+  } catch {
+    return { dependencies: { "@opencode-ai/plugin": "1.18.23" } };
+  }
+}
+const OPCODE_PKG_TEMPLATE = buildOpencodePkgTemplate();
 
 // 复制到新目录时排除的路径（任意层级命中即跳过；.env 含密钥绝不复制）
 const COPY_EXCLUDES = new Set([
