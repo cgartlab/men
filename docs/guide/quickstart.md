@@ -30,12 +30,16 @@
    ```bash
    npx @cgartlab/men
    ```
+   - **首次 npx 会询问 "Ok to proceed? (y)"**，输入 `y` 回车即可（或 `npx -y @cgartlab/men` 跳过确认）。
    - 自动完成：scaffold 运行时资产到当前目录（`opencode.json` / `.opencode/` / `scripts/` / `config/` / `knowledge/`）→ 安装 `.opencode/` 依赖 → 从 `.env.example` 生成 `.env` → 端到端验证。
    - 若当前目录已是 men 仓库根，则幂等跳过复制，直接就地安装。
+   - **注意**：scaffold 会把资产复制到**当前目录**，装完后 men 仅对当前目录生效；在已有项目目录运行时，已有 `opencode.json` / `AGENTS.md` 会被备份为 `.men.bak` 并替换。想全局显示侧边栏：`npx @cgartlab/men --global`。
 2. 启动 OpenCode（会自动读取 `opencode.json`，将 `men` 设为默认 agent）：
    ```
    opencode
    ```
+
+> **`.env` 是什么？** 安装器会自动生成 `.env`（从模板复制），里面是**占位符**。它只用于**知识检索（Embedding）与内网数据源**，基础对话**不需要填写**；用到相关功能时再按模板注释填入即可。
 
 **方式 B：Git 仓库（备选）** — 打开终端，进入 `men` 项目目录：
 
@@ -51,9 +55,11 @@
    - 输入 `/quit` 退出，再重新执行 `opencode`
    - 或关闭终端重开
 
-## 二、引导式模型配置（可选，仅未使用 CC Switch 时）
+## 二、引导式模型配置（未配置模型的用户**必读**）
 
-> **跳过条件**：若你的模型与密钥已由 CC Switch（或本机 OpenCode 全局配置 `~/.config/opencode/opencode.json`）统一托管，请**跳过本节**，直接进入「三、三个命令用法表」。
+> **先判断**：你的模型与密钥已由 **CC Switch**（或本机 OpenCode 全局配置 `~/.config/opencode/opencode.json`）统一托管了吗？
+> - **已配置** ✅ → 跳过本节，直接进入「三、三个命令用法表」。
+> - **没配置 / 不确定** ⚠️ → **不要跳过本节**：Men 的 `opencode.json` 声明了各 agent 的模型 ID（如 `opencode-go/hy3`、`sensenova/glm-5.2`），但这些 provider 必须存在于你的 OpenCode 运行环境；未配置时首次启动 `opencode` 会提示"模型不存在"（安装器摘要也会检测并预警）。
 
 仅当**未使用 CC Switch**、且希望本仓库的 `opencode.json` 自行管理各 agent 的模型分配时，才需要运行引导脚本。以下命令均为"未使用 CC Switch"路径下的**可选**操作：
 

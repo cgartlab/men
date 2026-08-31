@@ -70,6 +70,7 @@ const seealso = [
         <span class="code-block__lang">bash</span>
         <pre><code>npx @cgartlab/men</code></pre>
       </div>
+      <p>首次执行 <code>npx</code> 会询问 "Ok to proceed? (y)"——输入 <code>y</code> 回车即可；或直接 <code>npx -y @cgartlab/men</code> 跳过确认。</p>
       <p>安装器自动完成：scaffold 运行时资产到当前目录（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。若当前目录已是 men 仓库根，则幂等跳过复制、直接就地安装；依赖安装失败仅告警不中止（<code>@opencode-ai/plugin</code> 仅类型声明，运行时不需要）。</p>
       <p>完成后在<strong>当前目录</strong>运行 <code>opencode</code> 即可进入 TUI：</p>
       <div class="code-block">
@@ -91,20 +92,25 @@ const seealso = [
         <span class="code-block__lang">bash</span>
         <pre><code>bash <(curl -fsSL {rawBase}/install.sh) --dir ~/men</code></pre>
       </div>
+      <div class="wiki-note">
+        若 <code>curl</code> 因网络/代理失败，进程替换可能静默成功（无任何输出）。建议先显式下载再执行，失败时能看到明确报错：
+        <pre><code>curl -fsSL {rawBase}/install.sh -o /tmp/men-install.sh &amp;&amp; bash /tmp/men-install.sh [选项]</code></pre>
+      </div>
       <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\scripts\install.mjs']} />
     </section>
 
     <section id="windows" class="doc-section">
       <h2>一键安装（Windows）</h2>
-      <p>在 <strong>PowerShell 7+</strong> 中运行一键命令（使用 <code>irm</code> 拉取 <code>install.ps1</code> 并交给 <code>iex</code> 执行），脚本同样会检测依赖并 <code>git clone</code> 到默认目录 <code>men/</code>：</p>
+      <p>在 <strong>PowerShell 5.1+（推荐 7+）</strong> 中运行一键命令（使用 <code>irm</code> 拉取 <code>install.ps1</code> 并交给 <code>iex</code> 执行），脚本同样会检测依赖并 <code>git clone</code> 到默认目录 <code>men/</code>：</p>
       <div class="code-block">
         <span class="code-block__lang">powershell</span>
         <pre><code>irm {rawBase}/install.ps1 | iex</code></pre>
       </div>
-      <p>PowerShell 参数使用大写开关形式，例如指定目录：</p>
+      <p><strong>管道模式不支持传参</strong>（<code>iex -Dir ...</code> 会把 <code>-Dir</code> 当作 <code>iex</code> 的参数导致报错）。如需指定目录，请先下载脚本再本地运行：</p>
       <div class="code-block">
         <span class="code-block__lang">powershell</span>
-        <pre><code>irm {rawBase}/install.ps1 | iex -Dir C:\men</code></pre>
+        <pre><code>irm {rawBase}/install.ps1 -OutFile install.ps1
+./install.ps1 -Dir C:\men</code></pre>
       </div>
       <SrcRef files={['D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
     </section>
@@ -142,6 +148,7 @@ const seealso = [
           <thead><tr><th>选项</th><th>PowerShell</th><th>说明</th></tr></thead>
           <tbody>
             <tr><td><code>--dir &lt;path&gt;</code></td><td><code>-Dir &lt;path&gt;</code></td><td>安装目标目录。默认当前目录；指向不存在的目录时从当前仓库根复制源码（排除 <code>node_modules</code>、<code>.env</code> 等运行态路径）。</td></tr>
+            <tr><td><code>--global</code></td><td>—（仅 npm 通道）</td><td>注册为 OpenCode 全局 TUI 插件（写入全局 <code>tui.json</code>），重启 OpenCode 后<strong>任意目录</strong>显示侧边栏；不触碰 <code>opencode.json</code>。用法：<code>npx @cgartlab/men --global</code>。</td></tr>
             <tr><td><code>--skip-deps</code></td><td><code>-SkipDeps</code></td><td>跳过 <code>.opencode/</code> 依赖安装（<code>npm install --prefix .opencode</code>）。</td></tr>
             <tr><td><code>--skip-verify</code></td><td><code>-SkipVerify</code></td><td>跳过端到端验证（<code>scripts/verify.mjs men --json</code>）。</td></tr>
             <tr><td><code>--json</code></td><td><code>-Json</code></td><td>以 JSON 格式输出安装摘要。</td></tr>
@@ -150,7 +157,10 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        安装流程共 6 步：<strong>1.</strong> Node 版本检查 → <strong>2.</strong> 确定目标目录（就地或复制）→ <strong>3.</strong> 安装 <code>.opencode/</code> 依赖 → <strong>4.</strong> 环境配置（<code>.env</code> 不存在时从 <code>.env.example</code> 复制）→ <strong>5.</strong> 端到端验证 → <strong>6.</strong> 输出摘要。第 3、5 步分别由 <code>--skip-deps</code>、<code>--skip-verify</code> 跳过。
+        安装流程共 6 步：<strong>1.</strong> Node 版本检查 → <strong>2.</strong> 确定目标目录（就地或复制）→ <strong>3.</strong> 安装 <code>.opencode/</code> 依赖 → <strong>4.</strong> 环境配置（<code>.env</code> 不存在时从 <code>.env.example</code> 复制）→ <strong>5.</strong> 端到端验证 → <strong>6.</strong> 检测运行环境（opencode 命令、模型配置）。第 3、5 步分别由 <code>--skip-deps</code>、<code>--skip-verify</code> 跳过。
+      </div>
+      <div class="wiki-note">
+        <strong>MCP 依赖说明</strong>：<code>opencode.json</code> 声明 7 个 MCP 服务器，首次启动 <code>opencode</code> 时需要联网（<code>fetch</code>/<code>memory</code>/<code>sequential-thinking</code> 由 <code>npx</code> 自动拉取；<code>exa</code>/<code>context7</code>/<code>grep_app</code> 为远程服务）。其中 <code>github-mcp-server</code> 需要环境变量 <code>GITHUB_TOKEN</code>（未设置时该 MCP 不可用，不影响其余功能）。MCP 连接失败通常只是降级提示，不阻塞核心使用。
       </div>
       <SrcRef files={['D:\github-repos\men\scripts\install.mjs']} />
     </section>

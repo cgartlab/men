@@ -6,6 +6,20 @@
 
 ---
 
+## 3 秒看懂
+
+**men 是装在 OpenCode 里的 6 人 AI 团队**：你给一句话任务（"查一下…" / "写一篇…" / "评估一下…"），门（men）自动分派给思 / 记 / 持 / 艺 / 寻 五个角色协作完成，全程机械验证，绝不假报完成。
+
+装完就能跑：
+
+```bash
+npx @cgartlab/men   # 一步安装（当前目录生效）
+opencode            # 启动 OpenCode，默认 agent 即 men
+/ultrawork 查一下本周 AI 开源模型动态
+```
+
+---
+
 ## 核心特性
 
 | 特性 | 说明 |
@@ -41,7 +55,15 @@
 npx @cgartlab/men
 ```
 
+> **首次 npx 会询问 "Ok to proceed? (y)"**：输入 `y` 回车即可；或直接 `npx -y @cgartlab/men` 跳过确认。
+
 安装器自动完成：scaffold 运行时资产（`opencode.json` / `.opencode/` / `scripts/` / `config/` / `knowledge/`） -> 安装 `.opencode/` 依赖 -> 从 `.env.example` 生成 `.env` -> 端到端验证。完成后**在当前目录**运行 `opencode` 即可。
+
+> **安装位置注意**：`npx @cgartlab/men` 会把运行时资产复制到**你当前所在的目录**，装完后 men 仅对**该目录**生效。建议在**空目录或专用目录**运行；若在已有项目目录运行，已有的 `opencode.json` / `AGENTS.md` 会被备份为 `.men.bak` 并替换（安装器会提示）。想在任何目录都显示侧边栏，安装后再执行：
+> ```bash
+> npx @cgartlab/men --global
+> ```
+> （把 men 注册为 OpenCode 全局 TUI 插件，重启 OpenCode 生效。）
 
 **方式 B：Git 一键脚本（备选）**
 
