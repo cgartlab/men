@@ -1,0 +1,47 @@
+# .argus.yml — men 仓库 Argus 消费者配置
+# Argus 前端设计代码审查定制：https://github.com/cgartlab/argus
+# Schema 版本 0.3：https://github.com/cgartlab/argus/blob/main/docs/argus-config-schema.md
+#
+# men 仓库前端位于 site/（Astro 7），设计 token 为多族前缀：
+#   --color-*  颜色（背景/前景/边框/accent）
+#   --space-*  间距
+#   --radius-* 圆角
+#   --font-*/--text-* 字体与排版
+# 仓库其余部分（scripts/、docs/、.opencode/、knowledge/）非前端代码，不做审查。
+
+version: "0.3"
+
+# 仅启用 design-review（当前唯一可用 skill）
+skills:
+  - design-review
+
+overrides:
+  # men 颜色 token 使用 --color-* 前缀族（argus 默认是 --ds-*）
+  # 注：--space-* / --radius-* 等非颜色 token 不在此前缀下，
+  #     审查时会按 hardcoded values 规则评估，属预期行为。
+  token-prefix: "--color-"
+
+# 非前端目录跳过审查；内置排除（node_modules/dist/.git）之外的追加忽略
+ignore:
+  paths:
+    - ".opencode/**"          # agent 定义/插件配置，非前端
+    - "scripts/**"            # Node 工具脚本，非前端
+    - "docs/**"               # 文档
+    - "knowledge/**"          # 知识库
+    - "errors/**"             # 学习回路错误模式
+    - "config/**"             # 模型/CLI 配置
+    - ".github/**"            # CI 工作流
+    - "tests/**"              # 测试夹具
+    - "site/scripts/**"       # site 构建工具脚本
+    - "site/public/**"        # 静态资源（favicon/CNAME）
+    - "site/dist/**"          # 构建产物
+
+# 阻塞级严重度：P0（阻断）→ P1（高）导致 check 失败；P2/P3 仅报告不阻塞
+fail-on:
+  - P0
+  - P1
+
+output:
+  group-by-severity: true
+  show-token-names: true
+  max-findings: 50
