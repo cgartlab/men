@@ -7,7 +7,7 @@
  * 做机械检查（产物存在性 / 密钥扫描 / TODO / 结构 / gate 退出码）。
  *
  * 非阻塞约定：
- *   - 检查结果只作为提示（附加一行警告到 tool 输出 / console 日志）
+ *   - 检查结果只作为提示（写 .agents/logs/men-plugin.log 日志）
  *   - 绝不 throw、绝不中断 tool 执行、绝不 await 阻塞写回
  *   - 命中 FAIL 时仅提示「建议运行 /verify」，不阻止写入
  *
@@ -36,9 +36,6 @@ const WATCH_TOOLS = new Set(["write", "edit"]);
 
 // verify.mjs 相对项目根的路径
 const VERIFY_SCRIPT = ["scripts", "verify.mjs"];
-
-// 检查完成后附加到 tool 输出的警告行
-const WARN_LINE = "⚠️ men-verify: 产物未通过机械检查，建议运行 /verify";
 
 // ─────────────────────────── 工具函数 ───────────────────────────
 
@@ -92,14 +89,16 @@ const plugin: Plugin = async (input) => {
       if (!WATCH_TOOLS.has(toolInput.tool)) return;
 
       // 2. 提取目标路径。
-      //    注意：tool.execute.after 的 input 仅有 { tool, sessionID, callID }（无 args）；
-      //    write/edit 完成后 OpenCode 把文件路径写入 output.metadata.filePath（或 .path）。
-      //    回退兼容某些版本/工具可能透传的 input.args.filePath。
+      //    tool.execute.after 的 input 实含 args 字段（见 @opencode-ai/plugin@1.18.23
+      //    dist/index.d.ts 第 249-253 行：{ tool, sessionID, callID, args }）。
+      //    write/edit 工具的目标路径参数名为 filePath（OpenCode 内置工具 schema）；
+      //    保留 args.path / args.file_path 与 output.metadata 作向后兼容回退。
       const filePath =
+        toolInput.args?.filePath ??
+        toolInput.args?.path ??
+        toolInput.args?.file_path ??
         toolOutput?.metadata?.filePath ??
-        toolOutput?.metadata?.path ??
-        (toolInput as { args?: any }).args?.filePath ??
-        (toolInput as { args?: any }).args?.path;
+        toolOutput?.metadata?.path;
       if (!filePath) return;
       const abs = path.resolve(root, filePath);
       const rel = path.relative(root, abs);
@@ -127,10 +126,8 @@ const plugin: Plugin = async (input) => {
       child.on("close", (code) => {
         const failed = code !== 0 && reportHasFail(stdout);
         if (failed) {
-          // 仅在确有 FAIL 时追加提示；不阻断、不覆盖原文
-          if (toolOutput && typeof toolOutput.output === "string") {
-            toolOutput.output = `${toolOutput.output}\n${WARN_LINE}`;
-          }
+          // 非阻塞约定：仅写日志提示。不修改 toolOutput——spawn 后 async hook 立即
+          // resolve，close 回调触发时 output 已被消费，写入无效（M5/D4 修复）。
           logToFile(`${target} 未通过机械检查（exit=${code}）`);
         } else {
           logToFile(`${target} 机械检查通过（exit=${code}）`);
