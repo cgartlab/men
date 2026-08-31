@@ -262,6 +262,11 @@ function main() {
     actions.push(`package.json version → ${newVersion}`);
     actions.push(`CHANGELOG.md 插入 [v${newVersion}] - ${date}`);
     actions.push(`同步版本文件 → ${newVersion}（${VERSION_JSON_FILES.length} JSON + ${VERSION_TEXT_FILES.length} 文本）`);
+    // dry-run 也执行 syncVersionFiles（dryRun=true 不写盘），提前发现文件缺失/解析失败
+    const syncResults = syncVersionFiles(newVersion, oldVersion, true);
+    for (const r of syncResults) {
+      actions.push(`同步 version → ${newVersion}: ${r.file} (${r.changed ? "将变更" : "无需变更"})`);
+    }
     if (cfg.push || cfg.ghRelease) {
       actions.push(`releases.astro 更新 → v${newVersion}`);
     }
@@ -411,7 +416,11 @@ function main() {
 
     // ── 可选：npm publish ──
     if (cfg.npm) {
-      const npmResult = spawnSync("npm", ["publish"], {
+      // Windows 下 npm 是 npm.cmd，不能直接 spawnSync('npm')，用 cmd /c 包裹（同 install.mjs runNpm）
+      const win = process.platform === "win32";
+      const npmCmd = win ? "cmd" : "npm";
+      const npmArgs = win ? ["/c", "npm", "publish"] : ["publish"];
+      const npmResult = spawnSync(npmCmd, npmArgs, {
         cwd: ROOT, encoding: "utf-8", shell: false, timeout: 120_000,
       });
       const npmOk = npmResult.status === 0;
