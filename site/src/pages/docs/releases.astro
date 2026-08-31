@@ -9,7 +9,7 @@ const pageTitle = '路线图 — ' + content.hero.title;
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-08-29 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-09-01 发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -54,7 +54,12 @@ const seealso = [
         <table>
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
-            <tr>
+                        <tr>
+              <td><strong>v0.3.4</strong></td>
+              <td>2026-09-01</td>
+              <td>发布主题「新用户安装体验全面打磨」。</td>
+            </tr>
+<tr>
               <td><strong>v0.3.3</strong></td>
               <td>2026-08-29</td>
               <td>发布主题「品牌升级 + 架构重构」：全量 rebrand 为「Men Agent 团队」；删除手写调度器 <code>src/</code>（−1433 行）转向 OpenCode 原生插件；新增 men-verify / men-learn 自动化插件；修复死脚本与文档步数（9→10）等诚实性问题。</td>
@@ -98,7 +103,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-08-29，共发布 <strong>7 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3）。
+        截至 2026-08-29，共发布 <strong>8 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -106,15 +111,12 @@ const seealso = [
 
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
-      <p>
-        当前版本 <code>v0.3.3</code> 于 2026-08-29 发布，主题为「品牌升级 + 架构重构」：全量 rebrand 为「Men Agent 团队」，并删除手写调度器、转向 OpenCode 原生插件架构。
+            <p>
+        当前版本 <code>v0.3.4</code> 于 2026-09-01 发布，主题为「新用户安装体验全面打磨」。
       </p>
-      <h3>v0.3.3「品牌升级 + 架构重构」</h3>
+      <h3>v0.3.4「新用户安装体验全面打磨」</h3>
       <ul>
-        <li><strong>品牌 rebrand</strong>：agent/command 定义全量同步为「Men Agent 团队」（8 处）</li>
-        <li><strong>架构重构</strong>：删除手写调度器 <code>src/</code>（−1433 行），转向 OpenCode 原生 agent/command/skill/plugin 组合</li>
-        <li><strong>men-verify / men-learn 自动化插件</strong>：写产物后自动跑机械验证、任务完成后自动提取经验</li>
-        <li><strong>诚实性修复</strong>：README 协议步数 9→10、死脚本改相对路径、事件 type 对齐 14 种 KINDS、插件日志改文件写入消除 UI 污染</li>
+        <li>安装更安全（配置自动备份）、反馈更清晰（进度/错误/环境检测）、出错不再装完即坏</li>
       </ul>
       <h3>v0.3.2「侧边栏全局化」</h3>
       <ul>
