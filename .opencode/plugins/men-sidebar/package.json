@@ -1,0 +1,8 @@
+{
+  "name": "men-sidebar",
+  "type": "module",
+  "exports": {
+    "./server": "./index.js",
+    "./tui": "./tui.js"
+  }
+}
