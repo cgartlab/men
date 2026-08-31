@@ -6,7 +6,7 @@
   逻辑集中在 install.mjs，本脚本只做平台引导，避免双份安装逻辑。
 
   用法:
-    irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex     # 管道一键安装（PowerShell 7+）
+    irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex     # 管道一键安装（PowerShell 5.1+，推荐 7+）
     ./install.ps1 [-Dir <path>] [-SkipDeps] [-SkipVerify] [-Json] [-Help]
 
   选项:
@@ -50,13 +50,13 @@ men（门）Agent 团队 — 一键安装器（Windows / PowerShell）
 "@ | Write-Host
 }
 
-if ($Help) { Show-Help; exit 0 }
+if ($Help) { Show-Help; return }
 
 # ─── 依赖检测 ───
 foreach ($cmd in @('node', 'npm', 'git')) {
   if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
     Write-Error "缺少 $cmd，请先安装（Node >= 18 与 git）"
-    exit 1
+    return
   }
 }
 
@@ -74,12 +74,12 @@ if (-not (Test-Path -LiteralPath $TARGET -PathType Container)) {
   Write-Host ">> 拉取仓库到 $TARGET ..."
   git clone $REPO_URL $TARGET
   if ($LASTEXITCODE -ne 0) {
-    Write-Error "git clone 失败（exit $LASTEXITCODE）"
-    exit 1
+    Write-Error "git clone 失败（exit $LASTEXITCODE）：请检查网络或代理后重试"
+    return
   }
 } elseif (-not (Test-Path -LiteralPath (Join-Path $TARGET 'scripts\install.mjs'))) {
   Write-Error "目标目录已存在但不是 men 仓库: $TARGET"
-  exit 1
+  return
 }
 
 # ─── 调用共享核心安装器（透传参数）───
@@ -90,7 +90,8 @@ try {
   if ($SkipVerify) { $passArgs += '--skip-verify' }
   if ($Json) { $passArgs += '--json' }
   & node scripts\install.mjs @passArgs
-  exit $LASTEXITCODE
+  # 注意：不用 exit，避免 irm | iex 管道下关闭整个 PowerShell 会话
+  return
 } finally {
   Pop-Location
 }

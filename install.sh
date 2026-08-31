@@ -87,9 +87,13 @@ fi
 
 if [[ ! -d "$TARGET" ]]; then
   echo ">> 拉取仓库到 $TARGET ..."
-  git clone "$REPO_URL" "$TARGET"
+  if ! git clone "$REPO_URL" "$TARGET"; then
+    echo "错误: git clone 失败：请检查网络或代理后重试（$REPO_URL）" >&2
+    exit 1
+  fi
 elif [[ ! -f "$TARGET/scripts/install.mjs" ]]; then
   echo "错误: 目标目录已存在但不是 men 仓库: $TARGET" >&2
+  echo "提示: 若想在当前目录安装，请进入目标目录后直接运行: bash <(curl -fsSL $INSTALL_URL) --dir ." >&2
   exit 1
 fi
 
