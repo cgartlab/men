@@ -137,8 +137,8 @@ export function computeMetrics(events, opts = {}) {
   const repeatedErrors = Object.values(errorTypeCounts).filter(c => c > 1).length;
   const errorRepeatRate = errorTypes.length > 0 ? repeatedErrors / Object.keys(errorTypeCounts).length : 0;
 
-  // 知识沉淀（从 dispatch 事件估算）
-  const knowledgeEvents = recent.filter(e => eventType(e) === 'decision' || eventType(e) === 'handoff');
+  // 知识沉淀（合法事件: decision.made / handoff；不再统计非法 type=decision）
+  const knowledgeEvents = recent.filter(e => eventType(e) === 'decision.made' || eventType(e) === 'handoff');
 
   // 学习效率（学习相关事件占比）
   const learnEvents = recent.filter(e => {
