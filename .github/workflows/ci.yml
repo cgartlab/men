@@ -33,9 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
-      issues: write
     concurrency:
       group: triage-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
