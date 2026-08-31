@@ -171,11 +171,13 @@ export function main(argv) {
   }
 
   // 记录决策事件（type 须属于 event.mjs KINDS 枚举；extracted/skipped 通过 subject 区分）
-  appendEvent(sid, {
-    type: 'decision.made',
-    subject: `learn.${result.type === 'skip' ? 'skipped' : 'extracted'}`,
-    detail: JSON.stringify({ type: result.type, actions: actions.length, dryRun }),
-  });
+  if (!dryRun) {
+    appendEvent(sid, {
+      type: 'decision.made',
+      subject: `learn.${result.type === 'skip' ? 'skipped' : 'extracted'}`,
+      detail: JSON.stringify({ type: result.type, actions: actions.length, dryRun }),
+    });
+  }
 
   const output = {
     ok: true,

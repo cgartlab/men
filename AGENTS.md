@@ -144,6 +144,6 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 > 事故背景：跨 session 存活的僵尸 `astro preview` 占用 4399 端口并按旧 base 路由，导致站点访问异常；OpenCode 在 Windows 上存在已知的 child process leak / orphan 问题。
 
 1. **常驻服务仅限受管形态**：只允许 `astro preview` 守护进程（自带 stop/status/logs 生命周期）。必须使用仓库配置端口（4399），并向用户报告 pid 与停止命令；禁止裸 `Start-Process` / detached / 管道截流等不可追踪形态。
-2. **静态站验证走产物级检查**：一律使用 `node scripts/check-site.mjs`（扫描 dist：UTF-8 解码 / charset / mojibake / 空 slot 守卫 / base 回归 / 路由锚点），不依赖任何活服务器。
+2. **静态站验证走产物级检查**：一律使用 `node site/scripts/check-site.mjs`（扫描 dist：UTF-8 解码 / charset / mojibake / 空 slot 守卫 / base 回归 / 路由锚点），不依赖任何活服务器。
 3. **确需 HTTP 冒烟时的唯一合法形态**：单个 Node 脚本内 `spawn` 子进程 + `finally { kill }` 自终止包装，超时上限 60s，禁止脱离本次命令的进程树存活。
 4. **会话收尾自查**：结束前运行 `Get-CimInstance Win32_Process -Filter "Name='node.exe'"` 过滤本仓库路径残留并清理；确认 4399/4399 无监听。
