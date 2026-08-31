@@ -25,6 +25,7 @@
 | `scripts/learn-budget.mjs` | 学习预算控制 |
 | `scripts/eval-report.mjs` | 评估报告生成 |
 | `.opencode/plugins/men-verify.ts` | **产物机械验证自动插件**（渐进式非阻塞）：`write`/`edit` 写产物后自动跑 verify.mjs 检查 |
+| `.opencode/plugins/men-learn.ts` | 自动学习插件（任务完成后自动提取经验写入 knowledge/） |
 | `errors/` | 学习回路自动生成的错误模式（error-*.md） |
 | `knowledge/patterns/` | 协作模式库（3 条初始条目） |
 | `knowledge/decisions/` | 决策记录（4 条：M0/M6/M7/D20） |

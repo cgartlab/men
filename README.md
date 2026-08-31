@@ -10,7 +10,7 @@
 
 | 特性 | 说明 |
 |------|------|
-| **6+1 角色分工** | **6 个子角色（思/记/持/艺/寻）+ 1 个编排者 men（门）**：门（编排）/ 思（思考/知识管理）/ 记（代码/写作）/ 持（数据/投资评审/Judge）/ 艺（文生图/审美）/ 寻（搜索/核查），各司其职 |
+| **6+1 角色分工** | **5 个子角色（思/记/持/艺/寻）+ 1 个编排者 men（门）**：门（编排）/ 思（思考/知识管理）/ 记（代码/写作）/ 持（数据/投资评审/Judge）/ 艺（文生图/审美）/ 寻（搜索/核查），各司其职 |
 | **一键编排** | `/ultrawork` 10 步协议自动调度，多 Wave 并行分发，用户只需给任务一句话 |
 | **双层机械验证** | `verify.mjs` 五项机械检查 + chi 独立 Judge 语义复核，假完成必识破 |
 | **安全门禁** | `gate.mjs` 白名单防注入，强化上限 5 次防死循环 |
@@ -205,7 +205,7 @@ men/
 |   |-- package.json           # @opencode-ai/plugin + @opentui/* 本地依赖
 |   +-- node_modules/          # 本地依赖（不纳入版本控制）
 |
-|-- scripts/                   # 机械脚本（纯 Node，零依赖，共 16 个）
+|-- scripts/                   # 机械脚本（纯 Node，零依赖，共 17 个）
 |   |-- verify.mjs             # check battery -- 五项机械检查
 |   |-- gate.mjs               # 门禁 -- 白名单 + 强化上限
 |   |-- event.mjs              # 事件审计 -- append/replay
@@ -219,6 +219,7 @@ men/
 |   |-- eval-report.mjs        # 评估报告生成
 |   |-- route-hint.mjs         # 角色路由提示
 |   |-- release-notes.mjs      # 发布说明生成
+|   |-- update-release-page.mjs # 站点发布页同步（releases.astro）
 |   |-- learning.test.mjs      # 学习回路测试（17 用例）
 |   |-- smoke-update-check.mjs # 更新检查冒烟测试
 |   +-- fix-port-4096.ps1      # 修复 OpenCode 端口 4096 占用
