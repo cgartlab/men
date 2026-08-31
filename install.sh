@@ -50,7 +50,11 @@ HELP=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --dir) DIR="${2:-}"; shift 2 ;;
+    --dir)
+      if [ -z "${2:-}" ]; then
+        echo "错误: --dir 需要指定目录路径" >&2; usage; exit 2
+      fi
+      DIR="$2"; shift 2 ;;
     --skip-deps) SKIP_DEPS="--skip-deps"; shift ;;
     --skip-verify) SKIP_VERIFY="--skip-verify"; shift ;;
     --json) JSON="--json"; shift ;;

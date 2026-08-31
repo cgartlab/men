@@ -140,6 +140,13 @@ function runNpm(cwd, args) {
   });
 }
 
+// 截断长输出：保留头部 + 尾部，丢掉中间，避免丢关键错误信息
+function clipErr(s, n = 200) {
+  if (!s) return "";
+  if (s.length <= n * 2) return s;
+  return s.slice(0, n) + "\n...（截断）...\n" + s.slice(-n);
+}
+
 function runVerify(cwd) {
   return spawnSync(process.execPath, ["scripts/verify.mjs", "men", "--json"], {
     cwd, encoding: "utf-8", shell: false, timeout: 60_000,
@@ -322,7 +329,7 @@ function run() {
     deps.ok = deps.exitCode === 0;
     if (!deps.ok) {
       // 非致命：@opencode-ai/plugin 仅类型声明，运行时不需要；无 registry 访问也能继续
-      deps.warning = `依赖安装失败（exit ${deps.exitCode}），已跳过继续：${(r.stderr || "").slice(-200)}`;
+      deps.warning = `依赖安装失败（exit ${deps.exitCode}），已跳过继续：${clipErr(r.stderr || "")}`;
       eprintf(`警告: ${deps.warning}\n`);
     }
   }
@@ -357,7 +364,7 @@ function run() {
     verify.summary = verify.report ? verify.report.summary : null;
     verify.ok = verify.exitCode === 0;
     if (!verify.ok) {
-      fail(`端到端验证失败（exit ${verify.exitCode}）：${(r.stdout || r.stderr || "").slice(-300)}`);
+      fail(`端到端验证失败（exit ${verify.exitCode}）：${clipErr(r.stdout || r.stderr || "", 300)}`);
     }
   }
 

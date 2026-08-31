@@ -21,6 +21,13 @@ const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
 const AGENT_DIR = path.join(ROOT, ".opencode", "agent");
 const ROLE_MAP = ["ji", "si", "xun", "chi", "yi", "men"];
 
+// 截断长输出：保留头部 + 尾部，丢掉中间，避免丢关键错误信息
+function clipErr(s, n = 200) {
+  if (!s) return "";
+  if (s.length <= n * 2) return s;
+  return s.slice(0, n) + "\n...（截断）...\n" + s.slice(-n);
+}
+
 // ── 用法文本（--help / -h） ──
 const USAGE_TEXT = `用法: node scripts/verify.mjs <target> [--json] [--sid <sid>]
 
@@ -288,14 +295,28 @@ function checkStructure(targetPath) {
 function checkGate(targetPath) {
   const st = fs.statSync(targetPath);
   let pkgDir = st.isDirectory() ? targetPath : path.dirname(targetPath);
-  // 向上收集所有候选 package.json（从近到远）
+  // 计算仓库根：从 pkgDir 向上找含 scripts/install.mjs 的目录
+  let repoRoot = null;
+  let scan = path.resolve(pkgDir);
+  for (let i = 0; i < 20 && scan !== path.dirname(scan); i++) {
+    if (fs.existsSync(path.join(scan, "scripts", "install.mjs"))) { repoRoot = scan; break; }
+    scan = path.dirname(scan);
+  }
+  // 如果目标不在仓库内（scaffold 场景），gate 直接 SKIP
+  if (repoRoot && !path.resolve(pkgDir).startsWith(repoRoot)) {
+    return { id: "gate-exit-code", status: "SKIP", evidence: "目标不在 men 仓库内，跳过 gate（scaffold 模式）", details: "" };
+  }
+  // 向上收集所有候选 package.json（从近到远；遇仓库根、文件系统根或深度上限即停）
   const candidates = [];
   let cur = path.resolve(pkgDir);
+  let depth = 0;
   while (true) {
     const p = path.join(cur, "package.json");
     if (fs.existsSync(p)) candidates.push(p);
     const parent = path.dirname(cur);
     if (parent === cur) break;
+    if (repoRoot && cur === repoRoot) break;
+    if (++depth > 20) break;
     cur = parent;
   }
   if (candidates.length === 0) {
@@ -332,8 +353,8 @@ function checkGate(targetPath) {
       script: k,
       command: script,
       exitCode: r.status ?? -1,
-      stdout: (r.stdout || "").slice(-200),
-      stderr: (r.stderr || "").slice(-200),
+      stdout: clipErr(r.stdout || ""),
+      stderr: clipErr(r.stderr || ""),
     });
   }
   const failed = results.filter(r => r.exitCode !== 0);

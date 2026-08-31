@@ -34,10 +34,11 @@ const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEB
 dbg(`[men-sidebar] version source: ${PKG.source} -> ${PKG.name || "?"}@v${VERSION || "?"}`);
 
 function readAgents(dir) {
-  // 兜底链：项目级 opencode.json 优先；为空时合并全局 ~/.config/opencode/opencode.json
+  // 合并链：全局在前、项目在后（项目覆盖全局），与 OpenCode 语义一致
   const home = process.env.USERPROFILE || process.env.HOME || "";
-  const candidates = [join(dir, "opencode.json")];
+  const candidates = [];
   if (home) candidates.push(join(home, ".config", "opencode", "opencode.json"));
+  candidates.push(join(dir, "opencode.json"));
   let merged = {};
   for (const p of candidates) {
     try {
