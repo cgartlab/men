@@ -9,3 +9,23 @@ updates:
     labels:
       - "dependencies"
       - "chore"
+
+  # 检查根 package.json（@opentui/solid 等运行时依赖）
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "chore"
+
+  # 检查 site/package.json（astro 等站点依赖）
+  - package-ecosystem: "npm"
+    directory: "/site"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "chore"
