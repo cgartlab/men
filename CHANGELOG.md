@@ -20,8 +20,6 @@
 
 > 工程化加固 + MCP 归属回归
 
-
-
 ### Added
 
 - **测试基线**：新增 `test/` 目录（`node:test` 零依赖），覆盖 verify / release / install / event / update-check / learning 六模块 116 项测试；`verify.mjs` / `release.mjs` / `install.mjs` 导出 `main` + 入口守卫，纯函数可单测

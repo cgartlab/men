@@ -16,7 +16,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
 const RELEASES_ASTRO = path.join(ROOT, "site/src/pages/docs/releases.astro");
@@ -25,6 +25,17 @@ const RELEASES_ASTRO = path.join(ROOT, "site/src/pages/docs/releases.astro");
 
 function eprintf(...args) {
   process.stderr.write(args.map((a) => `${a}\n`).join(""));
+}
+
+/**
+ * 把 CHANGELOG 条目里的轻量 Markdown 转为 HTML 标签。
+ * 支持行内代码 `x` 与粗体 **x**（避免发布页原样显示裸标记）。
+ * 先转代码再转粗体，保证 code 内容里的 ** 不被二次处理。
+ */
+export function mdToHtml(s) {
+  return String(s)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
 }
 
 function parseArgs(argv) {
@@ -82,7 +93,7 @@ function buildHighlight(version, date, theme, notesLines) {
   lines.push(`      <h3>v${version}「${theme}」</h3>`);
   lines.push(`      <ul>`);
   for (const line of notesLines) {
-    const trimmed = line.replace(/^\s*-\s*/, "").trim();
+    const trimmed = mdToHtml(line.replace(/^\s*-\s*/, "").trim());
     if (trimmed) lines.push(`        <li>${trimmed}</li>`);
   }
   lines.push(`      </ul>`);
@@ -202,4 +213,7 @@ function main() {
   process.exit(0);
 }
 
-main();
+// 入口守卫：仅直接执行时运行 CLI，被 import（测试）时不触发
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

@@ -147,7 +147,7 @@ export function bumpChangelog(text, version, date) {
   const section = lines.slice(idx + 1, end).join("\n").trim();
   // 发布主题 blockquote（> 开头，通常首行）单独提取并剥离，避免迁入时重复
   const blockquote = section.match(/^> .+/m)?.[0] ?? "";
-  const bodySection = blockquote ? section.replace(/^> .+\n?/, "") : section;
+  const bodySection = blockquote ? section.replace(/^> .+\n?/, "").replace(/^\n+/, "") : section;
   const hasItems = /^[ \t]*[-*] /m.test(bodySection);
   const migrated = hasItems ? `${bodySection}\n` : "";
   const block = `${entry}\n\n${blockquote ? `${blockquote}\n\n` : ""}${migrated || "### Added\n\n### Changed\n\n### Fixed\n"}`.trimEnd();

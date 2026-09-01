@@ -20,6 +20,7 @@ import {
   parseArgs,
   procFailInfo,
 } from '../scripts/release.mjs';
+import { mdToHtml } from '../scripts/update-release-page.mjs';
 
 const REPO_ROOT = path.resolve(fileURLToPath(import.meta.url), '../..');
 
@@ -105,6 +106,17 @@ test('release bumpChangelog: theme blockquote migrated once (no duplicate)', () 
   assert.strictEqual(themeCount, 1);
   // 条目仍迁移
   assert.ok(entrySection.includes('- feat: new thing'));
+});
+
+test('release bumpChangelog: no blank-line buildup between theme and first heading', () => {
+  const input = '# Changelog\n\n## [Unreleased]\n\n> 工程化加固 + MCP 归属回归\n\n### Added\n\n- feat: new thing\n\n## [v0.3.4] - 2026-08-01\n';
+  const out = bumpChangelog(input, '0.4.0', '2026-09-01');
+  const entryIdx = out.indexOf('## [v0.4.0]');
+  const nextIdx = out.indexOf('## [v0.3.4]');
+  const entrySection = out.slice(entryIdx, nextIdx);
+  // theme 与首个 ### 之间不超过 1 个空行
+  const gap = entrySection.match(/^> 工程化加固[\s\S]*?(?=### Added)/)?.[0] ?? '';
+  assert.ok(!/\n{4,}/.test(gap), `不应出现 3+ 连续空行: ${JSON.stringify(gap)}`);
 });
 
 // ── parseArgs ────────────────────────────────────────────
