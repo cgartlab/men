@@ -47,7 +47,7 @@ node -e "console.log(require('./package.json').version)"
 
 | 项 | 值 |
 |----|----|
-| 版本 | v0.3.3 |
+| 版本 | v0.3.7 |
 | 上次更新检查 | 2026-08-27 10:00（或：需在 OpenCode 内查看） |
 | 已忽略版本 | 无（或 v0.3.0） |
 | Node | v22.x ✅ |
