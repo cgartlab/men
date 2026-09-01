@@ -12,6 +12,14 @@
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [v0.3.6] - 2026-09-02
+
+### Added
+
 - **install.mjs 全局安装/卸载**：新增 `--global` 完整全局安装（部署 agents/commands/skills 到 `~/.config/opencode`，含 opencode.json 与 TUI 注册，任意目录生效）；新增 `--global-remove` 一键卸载（删除部署资产 + 还原 opencode.json + 注销 TUI 插件）——补齐 v0.3.2 侧边栏全局化（仅注册 tui.json）未覆盖的完整全局能力
 
 ## [v0.3.5] - 2026-09-02
