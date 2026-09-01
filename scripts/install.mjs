@@ -28,7 +28,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // ─────────────────────────── 常量 ───────────────────────────
 
@@ -38,7 +38,7 @@ const ENV_TEMPLATE = ".env.example";
 const ENV_TARGET = ".env";
 
 // .opencode/package.json 缺失时的最小模板：从根 package.json 派生运行时依赖，加 @opencode-ai/plugin 兜底
-function buildOpencodePkgTemplate() {
+export function buildOpencodePkgTemplate() {
   try {
     const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
     return { dependencies: { "@opencode-ai/plugin": "1.18.23", ...(rootPkg.dependencies || {}) } };
@@ -76,7 +76,7 @@ function eprintf(...args) {
   process.stderr.write(args.map((a) => `${a}\n`).join(""));
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const args = argv.slice(2);
   const out = {
     dir: null, skipDeps: false, skipVerify: false, json: false, help: false, global: false,
@@ -124,7 +124,7 @@ npm 一键安装（推荐，scaffold 到当前目录）:
 `);
 }
 
-function checkNode() {
+export function checkNode() {
   const raw = process.versions.node; // e.g. "26.2.0"
   const major = Number(raw.split(".")[0]);
   return { version: `v${raw}`, major, ok: Number.isFinite(major) && major >= MIN_NODE_MAJOR };
@@ -154,14 +154,14 @@ function runVerify(cwd) {
 }
 
 // 判断 dir 是否看起来像 men 仓库根
-function isMenRepoRoot(dir) {
+export function isMenRepoRoot(dir) {
   return (
     fs.existsSync(path.join(dir, "scripts", "install.mjs")) &&
     fs.existsSync(path.join(dir, ".opencode", "agent"))
   );
 }
 
-function copyTree(src, dest, excludes) {
+export function copyTree(src, dest, excludes) {
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     if (excludes.has(entry.name)) continue;
     const s = path.join(src, entry.name);
@@ -177,7 +177,7 @@ function copyTree(src, dest, excludes) {
 
 // 按白名单复制运行时资产（scaffold 模式）：
 // 只复制 entries 中存在的顶层条目；目录型条目递归复制并尊重 excludes
-function copyAllowlist(src, dest, entries, excludes) {
+export function copyAllowlist(src, dest, entries, excludes) {
   for (const name of entries) {
     const s = path.join(src, name);
     if (!fs.existsSync(s)) continue;
@@ -336,23 +336,27 @@ function installGlobal(cfg) {
 
 // ─────────────────────────── 主流程 ───────────────────────────
 
-function run() {
-  const cfg = parseArgs(process.argv);
+export function main(argv = process.argv) {
+  const cfg = parseArgs(argv);
   if (cfg.help) {
     printHelp();
-    process.exit(0);
+    return { ok: true, exitCode: 0, help: true };
   }
 
   // --global：只注册全局 TUI 插件，不进入项目安装流程
   if (cfg.global) {
-    installGlobal(cfg);
-    process.exit(0);
+    const result = installGlobal(cfg);
+    return { ok: true, exitCode: 0, result };
   }
 
+  // fail 通过抛错中断流程，由外层 catch 捕获并返回错误结果
+  class InstallError extends Error {}
   const fail = (msg) => {
     eprintf(`安装失败：${msg}`);
-    process.exit(1);
+    throw new InstallError(msg);
   };
+
+  try {
 
   // ── 1. Node 版本检查 ──
   eprintf(">> [1/6] 检查 Node.js 版本 ...");
@@ -495,7 +499,18 @@ function run() {
   } else {
     printSummary(result);
   }
-  process.exit(0);
+  return { ok: true, exitCode: 0, result };
+  } catch (e) {
+    // fail() 抛出的 InstallError → 返回失败结果；其余异常归为内部错误
+    const msg = e instanceof InstallError ? e.message : `内部错误：${e.message}`;
+    return { ok: false, exitCode: 1, error: msg };
+  }
+}
+
+// 入口守卫：仅直接执行时运行 CLI，被 import 时不触发
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const res = main(process.argv);
+  if (res && typeof res.exitCode === "number") process.exit(res.exitCode);
 }
 
 function printSummary(r) {
@@ -553,5 +568,3 @@ function printSummary(r) {
   }
   process.stdout.write(nextStep);
 }
-
-run();

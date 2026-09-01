@@ -29,7 +29,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // ─────────────────────────── 常量 ───────────────────────────
 
@@ -63,7 +63,7 @@ function eprintf(...args) {
   process.stderr.write(args.map((a) => `${a}\n`).join(""));
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const args = argv.slice(2);
   const out = { bump: "patch", dryRun: false, json: false, push: false, ghRelease: false, npm: false };
   for (const a of args) {
@@ -75,18 +75,18 @@ function parseArgs(argv) {
     else if (a === "--all") { out.push = true; out.ghRelease = true; out.npm = true; }
     else if (a === "--help" || a === "-h") {
       printHelp();
-      process.exit(0);
+      return { ...out, help: true };
     } else if (a === "patch" || a === "minor" || a === "major") {
       out.bump = a;
     } else {
       eprintf(`未知参数: ${a}（用法: node scripts/release.mjs [patch|minor|major] [--dry-run] [--json] [--push] [--gh-release] [--npm] [--all]）`);
-      process.exit(2);
+      return { ...out, unknownArg: a };
     }
   }
   return out;
 }
 
-function printHelp() {
+export function printHelp() {
   process.stdout.write(`men（门）Agent 团队 — 版本发布器
 
 用法:
@@ -112,7 +112,7 @@ function printHelp() {
 `);
 }
 
-function bumpVersion(v, kind) {
+export function bumpVersion(v, kind) {
   const seg = v.split(".").map(Number);
   const idx = BUMP_SEGMENTS[kind];
   seg[idx] += 1;
@@ -124,7 +124,7 @@ function bumpVersion(v, kind) {
  * 在 CHANGELOG 的 [Unreleased] 下插入新版本节。
  * 返回新全文；若文本不含 [Unreleased]，则插到文件头部。
  */
-function bumpChangelog(text, version, date) {
+export function bumpChangelog(text, version, date) {
   const lines = text.split("\n");
   const entry = `## [v${version}] - ${date}`;
 
@@ -228,21 +228,46 @@ function git(args, cwd) {
   return spawnSync("git", args, { cwd, encoding: "utf-8", shell: false, timeout: 30_000 });
 }
 
+/**
+ * 生成子进程失败/超时的诊断信息（exit code 或超时提示）。
+ * spawnSync 在子进程被 timeout 杀掉时返回 status === null（error 为 timeout）——
+ * 此时给出明确超时提示（X 为对应 timeout 秒数），而非笼统的「exit -1」。
+ *
+ * @param {object} r spawnSync 返回结果
+ * @param {number} timeoutMs 该次调用的超时毫秒数（用于提示实际超时秒数）
+ * @returns {string} 如 "exit 1" 或 "子进程超时（30s）"
+ */
+export function procFailInfo(r, timeoutMs) {
+  if (r && typeof r === "object" && r.status === null) {
+    const secs = Math.round((timeoutMs || 0) / 1000);
+    return `子进程超时（${secs}s）`;
+  }
+  return `exit ${r?.status ?? -1}`;
+}
+
 // ─────────────────────────── 主流程 ───────────────────────────
 
-function main() {
-  const cfg = parseArgs(process.argv);
+export function main(argv = process.argv) {
+  const cfg = parseArgs(argv);
+  // --help / -h 短路径（在 parseArgs 内已输出帮助文本）
+  if (cfg.help) {
+    return { ok: true, exitCode: 0, help: true };
+  }
+  // 未知参数
+  if (cfg.unknownArg) {
+    return { ok: false, exitCode: 2, error: `未知参数: ${cfg.unknownArg}` };
+  }
 
   if (!fs.existsSync(PKG_PATH)) {
     eprintf(`package.json 不存在：${PKG_PATH}（请在仓库根目录运行）`);
-    process.exit(2);
+    return { ok: false, exitCode: 2, error: "package.json 不存在" };
   }
 
   const pkg = JSON.parse(fs.readFileSync(PKG_PATH, "utf-8"));
   const oldVersion = String(pkg.version ?? "");
   if (!SEMVER_RE.test(oldVersion)) {
     eprintf(`非法 SemVer 版本号: "${oldVersion}"（要求形如 0.1.0）`);
-    process.exit(2);
+    return { ok: false, exitCode: 2, error: `非法 SemVer: ${oldVersion}` };
   }
 
   const newVersion = bumpVersion(oldVersion, cfg.bump);
@@ -330,7 +355,7 @@ function main() {
         if (updateOk) {
           addFiles.push("site/src/pages/docs/releases.astro");
         } else {
-          eprintf(`警告: update-release-page.mjs 失败：${(updateResult.stderr || "").trim().slice(-200)}`);
+          eprintf(`警告: update-release-page.mjs 失败：${procFailInfo(updateResult, 30_000)}：${(updateResult.stderr || "").trim().slice(-200)}`);
         }
       }
     }
@@ -347,7 +372,7 @@ function main() {
         const ok = r.status === 0;
         gitResults.push({ step: name, command: `git ${args.join(" ")}`, ok, exitCode: r.status ?? -1 });
         if (!ok) {
-          eprintf(`警告: git ${name} 失败（exit ${r.status ?? -1}）：${(r.stderr || r.stdout || "").trim().slice(-200)}`);
+          eprintf(`警告: git ${name} 失败（${procFailInfo(r, 30_000)}）：${(r.stderr || r.stdout || "").trim().slice(-200)}`);
         }
       }
     } else {
@@ -366,7 +391,7 @@ function main() {
         gitResults.push({ step: name, command: `git ${args.join(" ")}`, ok, exitCode: r.status ?? -1 });
         actions.push(`git ${name} ${ok ? "OK" : "FAIL"}`);
         if (!ok) {
-          eprintf(`警告: git ${name} 失败（exit ${r.status ?? -1}）：${(r.stderr || r.stdout || "").trim().slice(-200)}`);
+          eprintf(`警告: git ${name} 失败（${procFailInfo(r, 30_000)}）：${(r.stderr || r.stdout || "").trim().slice(-200)}`);
         }
       }
     }
@@ -400,12 +425,12 @@ function main() {
             const url = (ghResult.stdout || "").trim();
             if (url) actions.push(`  ${url}`);
           } else {
-            eprintf(`警告: gh release create 失败：${(ghResult.stderr || "").trim().slice(-200)}`);
+            eprintf(`警告: gh release create 失败：${procFailInfo(ghResult, 60_000)}：${(ghResult.stderr || "").trim().slice(-200)}`);
           }
           // 清理临时 notes 文件
-          try { fs.unlinkSync(RELEASE_NOTES_PATH); } catch {}
+          try { fs.unlinkSync(RELEASE_NOTES_PATH); } catch { /* 临时文件清理失败可忽略 */ }
         } else {
-          eprintf("警告: release-notes.mjs 提取失败，跳过 gh release create");
+          eprintf(`警告: release-notes.mjs 提取失败（${procFailInfo(notesResult, 30_000)}），跳过 gh release create`);
           actions.push("gh release create SKIP（release-notes 提取失败）");
         }
       } else {
@@ -479,7 +504,12 @@ function main() {
       process.stdout.write(`完成 ✓\n`);
     }
   }
-  process.exit(0);
+  result.ok = true;
+  return { ok: true, exitCode: 0, result };
 }
 
-main();
+// 入口守卫：仅直接执行时运行 CLI，被 import 时不触发
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const res = main(process.argv);
+  if (res && typeof res.exitCode === "number") process.exit(res.exitCode);
+}

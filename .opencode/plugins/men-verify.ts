@@ -55,6 +55,7 @@ function reportHasFail(jsonText: string): boolean {
       typeof report?.summary?.failed === "number" && report.summary.failed > 0
     );
   } catch {
+    // 解析失败按无 FAIL 处理：verify 输出非预期 JSON 时保守返回 false，不误报、不阻塞
     return false;
   }
 }
@@ -75,6 +76,7 @@ const plugin: Plugin = async (input) => {
         `${new Date().toISOString()} [men-verify] ${msg}\n`
       );
     } catch {
+      // 日志器失败无可降级：日志本身是 best-effort，再失败只能静默（绝不 throw、绝不阻塞主流程）
       /* best-effort，绝不阻塞主流程 */
     }
   }
