@@ -35,8 +35,16 @@ const PKG = (() => {
 const VERSION = PKG.version;
 
 dbg(`[men-sidebar] version source: ${PKG.source} -> ${PKG.name || "?"}@v${VERSION || "?"}`);
-function readAgents(dir) {
-  // 合并链：全局在前、项目在后（项目覆盖全局），与 OpenCode 语义一致
+function readAgents(dir, runtimeAgents) {
+  // 优先：opencode 运行时合并后的配置（全局 + 项目 + 插件注册的 agents）。
+  // 兜底：磁盘 opencode.json（合并链：全局在前、项目在后，项目覆盖全局）。
+  if (runtimeAgents && typeof runtimeAgents === "object") {
+    const keys = Object.keys(runtimeAgents);
+    if (keys.length) {
+      dbg("[men-sidebar] readAgents from runtime config:", keys.join(", "));
+      return Object.assign({}, runtimeAgents);
+    }
+  }
   const home = process.env.USERPROFILE || process.env.HOME || "";
   const candidates = [];
   if (home) candidates.push(join(home, ".config", "opencode", "opencode.json"));
@@ -79,12 +87,12 @@ function contrastOn(bg) {
   return 0.299 * r + 0.587 * g + 0.114 * b > 0.6 ? "#000000" : "#ffffff";
 }
 
-function renderSidebar(dir, theme, el_fn, box_fn, txt_fn) {
+function renderSidebar(dir, theme, el_fn, box_fn, txt_fn, runtimeAgents) {
   if (!el_fn || !box_fn || !txt_fn) {
     console.error("[men-sidebar] renderSidebar: VDOM helpers MISSING");
     return null;
   }
-  const agents = readAgents(dir);
+  const agents = readAgents(dir, runtimeAgents);
   const names = Object.keys(agents).sort();
   const t = (theme && theme.current) || {};
   const muted = t.textMuted || t.text || "white";
@@ -155,7 +163,8 @@ export default {
         slots: {
           sidebar_content() {
             dbg("[men-sidebar] === ⑤ sidebar_content() RENDER ===");
-            return renderSidebar(dir, api.theme, el, box, txt);
+            const runtimeAgents = (api.state && api.state.config && api.state.config.agent) || null;
+            return renderSidebar(dir, api.theme, el, box, txt, runtimeAgents);
           },
         },
       });
