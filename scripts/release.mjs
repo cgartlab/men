@@ -145,9 +145,12 @@ export function bumpChangelog(text, version, date) {
 
   // Unreleased 节内已整理的条目（任意行以 - 或 * 开头的列表项）→ 迁入新版本节
   const section = lines.slice(idx + 1, end).join("\n").trim();
-  const hasItems = /^[ \t]*[-*] /m.test(section);
-  const migrated = hasItems ? `${section}\n` : "";
-  const block = `${entry}\n\n${migrated || "### Added\n\n### Changed\n\n### Fixed\n"}`.trimEnd();
+  // 发布主题 blockquote（> 开头，通常首行）单独提取并剥离，避免迁入时重复
+  const blockquote = section.match(/^> .+/m)?.[0] ?? "";
+  const bodySection = blockquote ? section.replace(/^> .+\n?/, "") : section;
+  const hasItems = /^[ \t]*[-*] /m.test(bodySection);
+  const migrated = hasItems ? `${bodySection}\n` : "";
+  const block = `${entry}\n\n${blockquote ? `${blockquote}\n\n` : ""}${migrated || "### Added\n\n### Changed\n\n### Fixed\n"}`.trimEnd();
 
   // 保持 [Unreleased] 在文件顶部，新版本节插在其下、旧版本节之上（Keep a Changelog 约定）
   const head = lines.slice(0, idx).join("\n").trimEnd();
@@ -271,7 +274,9 @@ export function main(argv = process.argv) {
   }
 
   const newVersion = bumpVersion(oldVersion, cfg.bump);
-  const date = new Date().toISOString().slice(0, 10);
+  // 日期取本地时区（东八区场景：UTC 的 toISOString 会差一天，导致 CHANGELOG / releases.astro 日期错位）
+  const now = new Date();
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const gitOk = isGitRepo(ROOT);
   const actions = [];
   const gitResults = [];

@@ -94,6 +94,19 @@ test('release bumpChangelog: Unreleased empty → placeholder subsections', () =
   assert.ok(entrySection.includes('### Fixed'));
 });
 
+test('release bumpChangelog: theme blockquote migrated once (no duplicate)', () => {
+  const input = '# Changelog\n\n## [Unreleased]\n\n> 工程化加固 + MCP 归属回归\n\n### Added\n\n- feat: new thing\n\n## [v0.3.4] - 2026-08-01\n';
+  const out = bumpChangelog(input, '0.4.0', '2026-09-01');
+  const entryIdx = out.indexOf('## [v0.4.0]');
+  const nextIdx = out.indexOf('## [v0.3.4]');
+  const entrySection = out.slice(entryIdx, nextIdx);
+  // 主题只出现一次
+  const themeCount = (entrySection.match(/> 工程化加固/g) || []).length;
+  assert.strictEqual(themeCount, 1);
+  // 条目仍迁移
+  assert.ok(entrySection.includes('- feat: new thing'));
+});
+
 // ── parseArgs ────────────────────────────────────────────
 test('release parseArgs: default bump patch', () => {
   const r = parseArgs(['node', 'scripts/release.mjs']);
