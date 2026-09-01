@@ -1,7 +1,7 @@
 # 里程碑进度记录（Milestones）
 
 > 日期：2026-08-21 ｜ 项目：Men Agent 团队
-> 总进度：M0–M7 全部完成，项目 v0.3.4 已发布（npm 包 `@cgartlab/men` 支持 `npx @cgartlab/men` 一行安装）
+> 总进度：M0–M7 全部完成，项目 v0.3.5 已发布（npm 包 `@cgartlab/men` 支持 `npx @cgartlab/men` 一行安装）
 
 ---
 

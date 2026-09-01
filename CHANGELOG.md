@@ -16,6 +16,29 @@
 
 ### Fixed
 
+## [v0.3.5] - 2026-09-02
+
+> 工程化加固 + MCP 归属回归
+
+
+
+### Added
+
+- **测试基线**：新增 `test/` 目录（`node:test` 零依赖），覆盖 verify / release / install / event / update-check / learning 六模块 116 项测试；`verify.mjs` / `release.mjs` / `install.mjs` 导出 `main` + 入口守卫，纯函数可单测
+- **code-hygiene 扫描防线**：`verify.mjs` 新增空 catch / 无 timeout spawnSync / 裸 console.log 不可回归检查
+- **知识沉淀**：`knowledge/patterns` 新增 3 篇 pattern（巡检勘察 / 可测性重构 / 质量扫描），`index.md` 收录
+
+### Changed
+
+- **MCP 归属回归 CC Switch**：`opencode.json` 移除全部 7 个 MCP 配置，回归纯 Agent 定位——MCP 由 CC Switch 统一管理（模型 / 密钥 / MCP 本地托管），修复仓库越权携带过时 MCP 配置导致的 MCP 大面积瘫痪
+- **men-update 新增第 4 步**：更新后强制刷新 opencode npm 包缓存（删除 `@cgartlab/men@latest` 缓存），解决侧边栏版本号滞后不更新的问题
+- **verify 退出码判定修正**：任何非零退出码一律视为 FAIL（不再误判），JSON 作为失败回退
+- 依赖升级：`.opencode` `@opencode-ai/plugin` → 1.18.25；`site` astro → 7.2.9
+
+### Fixed
+
+- 7 个 tech-debt issue 修复：`#63` console.log MEN_DEBUG 门控 / `#66` update-check 超时常量 / `#67` release 超时分支防御 / `#64` 空 catch 分级日志
+
 ## [v0.3.4] - 2026-08-31
 
 ### Added

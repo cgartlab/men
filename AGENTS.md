@@ -4,7 +4,7 @@
 
 ## 仓库状态
 
-- **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.3.4（npm 包 `@cgartlab/men` 已发布，支持 `npx @cgartlab/men` 一行安装）
+- **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.3.5（npm 包 `@cgartlab/men` 已发布，支持 `npx @cgartlab/men` 一行安装）
 - **自主学习回路已验证**：learn.mjs 正确识别 ultrawork 事件并写入 errors/，eval-metrics.mjs 计算 8 项 KPI 正常
 - **MCP 由 CC Switch 统一管理**：仓库不携带任何 mcp 配置（模型/密钥/MCP 均在本地 CC Switch 托管），Men 定位为纯 Agent + 协作代码
 - **GitHub 私有仓库**：`cgartlab/men`（main 分支），MIT 许可证
@@ -131,7 +131,7 @@ M0 调研期间克隆的参考项目源码（`oh-my-openagent`）已删除（88M
 
 ## CHARTER_CHECK
 
-- **项目状态**：v0.3.4（M0–M7 完成；npm 包 `@cgartlab/men` 已发布）
+- **项目状态**：v0.3.5（M0–M7 完成；npm 包 `@cgartlab/men` 已发布）
 - **许可证**：MIT
 - **远程仓库**：https://github.com/cgartlab/men
 - **CI 状态**：GitHub Actions validate/triage 自动运行

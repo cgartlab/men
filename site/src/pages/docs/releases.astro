@@ -9,7 +9,7 @@ const pageTitle = '路线图 — ' + content.hero.title;
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-09-01 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-09-02 发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -54,7 +54,12 @@ const seealso = [
         <table>
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
-                        <tr>
+                                    <tr>
+              <td><strong>v0.3.5</strong></td>
+              <td>2026-09-02</td>
+              <td>发布主题「工程化加固 + MCP 归属回归」。</td>
+            </tr>
+<tr>
               <td><strong>v0.3.4</strong></td>
               <td>2026-09-01</td>
               <td>发布主题「新用户安装体验全面打磨」。</td>
@@ -103,7 +108,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-08-29，共发布 <strong>8 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4）。
+        截至 2026-08-29，共发布 <strong>9 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -111,12 +116,19 @@ const seealso = [
 
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
-            <p>
-        当前版本 <code>v0.3.4</code> 于 2026-09-01 发布，主题为「新用户安装体验全面打磨」。
+                  <p>
+        当前版本 <code>v0.3.5</code> 于 2026-09-02 发布，主题为「工程化加固 + MCP 归属回归」。
       </p>
-      <h3>v0.3.4「新用户安装体验全面打磨」</h3>
+      <h3>v0.3.5「工程化加固 + MCP 归属回归」</h3>
       <ul>
-        <li>安装更安全（配置自动备份）、反馈更清晰（进度/错误/环境检测）、出错不再装完即坏</li>
+        <li>**测试基线**：新增 `test/` 目录（`node:test` 零依赖），覆盖 verify / release / install / event / update-check / learning 六模块 116 项测试；`verify.mjs` / `release.mjs` / `install.mjs` 导出 `main` + 入口守卫，纯函数可单测</li>
+        <li>**code-hygiene 扫描防线**：`verify.mjs` 新增空 catch / 无 timeout spawnSync / 裸 console.log 不可回归检查</li>
+        <li>**知识沉淀**：`knowledge/patterns` 新增 3 篇 pattern（巡检勘察 / 可测性重构 / 质量扫描），`index.md` 收录</li>
+        <li>**MCP 归属回归 CC Switch**：`opencode.json` 移除全部 7 个 MCP 配置，回归纯 Agent 定位——MCP 由 CC Switch 统一管理（模型 / 密钥 / MCP 本地托管），修复仓库越权携带过时 MCP 配置导致的 MCP 大面积瘫痪</li>
+        <li>**men-update 新增第 4 步**：更新后强制刷新 opencode npm 包缓存（删除 `@cgartlab/men@latest` 缓存），解决侧边栏版本号滞后不更新的问题</li>
+        <li>**verify 退出码判定修正**：任何非零退出码一律视为 FAIL（不再误判），JSON 作为失败回退</li>
+        <li>依赖升级：`.opencode` `@opencode-ai/plugin` → 1.18.25；`site` astro → 7.2.9</li>
+        <li>7 个 tech-debt issue 修复：`#63` console.log MEN_DEBUG 门控 / `#66` update-check 超时常量 / `#67` release 超时分支防御 / `#64` 空 catch 分级日志</li>
       </ul>
       <h3>v0.3.2「侧边栏全局化」</h3>
       <ul>
