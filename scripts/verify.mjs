@@ -13,7 +13,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // ─────────────────────────── 工具函数 ───────────────────────────
 
@@ -22,7 +22,7 @@ const AGENT_DIR = path.join(ROOT, ".opencode", "agent");
 const ROLE_MAP = ["ji", "si", "xun", "chi", "yi", "men"];
 
 // 截断长输出：保留头部 + 尾部，丢掉中间，避免丢关键错误信息
-function clipErr(s, n = 200) {
+export function clipErr(s, n = 200) {
   if (!s) return "";
   if (s.length <= n * 2) return s;
   return s.slice(0, n) + "\n...（截断）...\n" + s.slice(-n);
@@ -130,7 +130,7 @@ function walk(dir, exts, acc = []) {
  */
 
 // 1. 硬编码密钥扫描
-function checkSecrets(targetPath) {
+export function checkSecrets(targetPath) {
   const files = listFiles(targetPath, SECRET_EXTS);
   const re = new RegExp(
     '(password|secret|api_key|token|apikey)\\s*[:=]\\s*[\'"][^\'"]{8,}',
@@ -160,7 +160,7 @@ function checkSecrets(targetPath) {
 // 2. 待办标记扫描：代码文件 FAIL，文档/配置 WARN
 // 标签名用拼接构造：源码中不出现连续字母序列，避免 verify.mjs 被自身 todo-scan 命中
 const TAG_NAMES = [`TO${"D"}O`, `FIXM${"E"}`, `HAC${"K"}`, `X${"X"}X`];
-function checkTodos(targetPath) {
+export function checkTodos(targetPath) {
   const files = listFiles(targetPath, ALL_EXTS);
   // 大小写敏感 + 词边界：标记惯例全大写，避免误伤 todowrite/todo list 等正常词；
   // \b 防止命中标记后接字母的粘连词；捕获组保持 m[1] 供 tag 字段使用（\b 为零宽，不影响组编号）
@@ -196,7 +196,7 @@ function checkTodos(targetPath) {
 }
 
 // 3. 产物存在性
-function checkExists(targetPath) {
+export function checkExists(targetPath) {
   if (!fs.existsSync(targetPath)) {
     return { id: "output-exists", status: "FAIL", evidence: "目标不存在", details: targetPath };
   }
@@ -375,7 +375,7 @@ function checkGate(targetPath) {
 }
 
 // 6. config/models.json schema 校验（全局配置检查，不依赖 targetPath）
-function checkModelsSchema() {
+export function checkModelsSchema() {
   const cfgPath = path.join(ROOT, "config", "models.json");
   if (!fs.existsSync(cfgPath)) {
     return { id: "models-schema", status: "SKIP", evidence: "config/models.json 不存在，跳过", details: "" };
@@ -482,7 +482,7 @@ function checkModelsSchema() {
 }
 
 // 7. bin/exports 目标存在性（package.json 声明的入口必须真实存在）
-function checkBinExportsTargets(targetPath) {
+export function checkBinExportsTargets(targetPath) {
   const st = fs.statSync(targetPath);
   let pkgDir = st.isDirectory() ? targetPath : path.dirname(targetPath);
   // 向上收集候选 package.json（从近到远），优先选含 bin 或 exports 字段的（参照 checkGate 逻辑）
@@ -549,7 +549,7 @@ function checkBinExportsTargets(targetPath) {
 
 // 8. 依赖引用一致性（根 package.json.dependencies 必须在代码中被引用，或位于白名单）
 const DEP_IMPORT_WHITELIST = ["@opencode-ai/plugin"];
-function checkDepsImportConsistency(targetPath) {
+export function checkDepsImportConsistency(targetPath) {
   const rootPkgPath = path.join(ROOT, "package.json");
   if (!fs.existsSync(rootPkgPath)) {
     return { id: "deps-import-consistency", status: "SKIP", evidence: "根 package.json 不存在，跳过", details: "" };
@@ -598,9 +598,227 @@ function checkDepsImportConsistency(targetPath) {
   };
 }
 
+// 9. code-hygiene 静态扫描（Wave 4：空 catch / 无 timeout spawnSync / 裸 console.log 不可回归）
+// 实现策略：先在"脱敏文本"上定位结构（注释与字符串抹为空格，保留换行/行号/括号），
+// 再回到原文本提取内容判断——避免注释/字符串中的 `catch`、`spawnSync(`、`console.log(` 字样误报，
+// 同时能区分"完全空块"与"只含注释的空块"（后者视为合规）。
+
+// 等长脱敏：注释与字符串字面量替换为空格（保留换行与位置），防止非代码文本干扰结构扫描
+function maskNonCode(code) {
+  let out = "";
+  let i = 0;
+  const n = code.length;
+  let inLineComment = false;
+  let inBlockComment = false;
+  let strQuote = null; // '"' | "'" | "`" | null
+  while (i < n) {
+    const c = code[i];
+    const next = code[i + 1];
+    if (inLineComment) {
+      out += c === "\n" ? "\n" : " ";
+      if (c === "\n") inLineComment = false;
+      i++;
+      continue;
+    }
+    if (inBlockComment) {
+      if (c === "*" && next === "/") { out += "  "; i += 2; inBlockComment = false; }
+      else { out += c === "\n" ? "\n" : " "; i++; }
+      continue;
+    }
+    if (strQuote) {
+      if (c === "\\") { out += "  "; i += 2; continue; }
+      if (c === "\n") { out += "\n"; i++; continue; } // 防御：未闭合字符串按行处理
+      out += c === strQuote ? " " : (c === "\n" ? "\n" : " ");
+      if (c === strQuote) strQuote = null;
+      i++;
+      continue;
+    }
+    if (c === "/" && next === "/") { out += "  "; i += 2; inLineComment = true; continue; }
+    if (c === "/" && next === "*") { out += "  "; i += 2; inBlockComment = true; continue; }
+    if (c === '"' || c === "'" || c === "`") { out += " "; strQuote = c; i++; continue; }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
+// 在脱敏文本上找配对括号（从 openIdx 起，openCh/closeCh 配对），返回闭合位置或 -1
+function findMatchingParen(text, openIdx, openCh, closeCh) {
+  let depth = 0;
+  for (let i = openIdx; i < text.length; i++) {
+    if (text[i] === openCh) depth++;
+    else if (text[i] === closeCh) { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+// 计算 idx 所在行号（1-based）
+function lineAt(code, idx) {
+  let line = 1;
+  for (let i = 0; i < idx && i < code.length; i++) {
+    if (code[i] === "\n") line++;
+  }
+  return line;
+}
+
+// 空 catch 扫描：`catch` 后块内无任何语句（允许块内只有注释）
+export function scanEmptyCatchesInText(code) {
+  const masked = maskNonCode(code);
+  const hits = [];
+  const re = /\bcatch\b/g;
+  let m;
+  while ((m = re.exec(masked)) !== null) {
+    const catIdx = m.index;
+    // 排除方法调用 .catch / obj$catch：前一个字符是 . 或标识符字符
+    const prev = masked[catIdx - 1];
+    if (prev && /[.\w$]/.test(prev)) continue;
+    // 跳过可选的 (err) 参数
+    let i = catIdx + 5;
+    while (i < masked.length && /\s/.test(masked[i])) i++;
+    if (masked[i] === "(") {
+      const closeParen = findMatchingParen(masked, i, "(", ")");
+      if (closeParen === -1) continue;
+      i = closeParen + 1;
+      while (i < masked.length && /\s/.test(masked[i])) i++;
+    }
+    if (masked[i] !== "{") continue; // 非 catch 块（防御）
+    const braceOpen = i;
+    const braceClose = findMatchingParen(masked, braceOpen, "{", "}");
+    if (braceClose === -1) continue;
+    // 取原文本块内容：去掉注释后为空 且 原块无任何内容 → 完全空块（违规）；
+    // 块内只有注释 → stripped 为空但 raw 非空 → 合规（放行）
+    const rawBlock = code.slice(braceOpen + 1, braceClose);
+    const stripped = rawBlock.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "").trim();
+    if (stripped === "" && rawBlock.trim() === "") {
+      hits.push({
+        line: lineAt(code, catIdx),
+        snippet: code.slice(Math.max(0, catIdx - 12), braceClose + 1).replace(/\s+/g, " ").trim().slice(0, 80),
+      });
+    }
+  }
+  return hits;
+}
+
+// 无 timeout 的 spawnSync 扫描：`spawnSync(` 调用但参数区无 `timeout` 键
+export function scanSpawnNoTimeoutInText(code) {
+  const masked = maskNonCode(code);
+  const hits = [];
+  const re = /\bspawnSync\s*\(/g;
+  let m;
+  while ((m = re.exec(masked)) !== null) {
+    const openIdx = m.index + m[0].length - 1; // 指向 (
+    const closeIdx = findMatchingParen(masked, openIdx, "(", ")");
+    if (closeIdx === -1) continue;
+    const callText = code.slice(m.index, closeIdx + 1);
+    if (!/\btimeout\s*[:=]/.test(callText)) {
+      hits.push({
+        line: lineAt(code, m.index),
+        snippet: callText.replace(/\s+/g, " ").trim().slice(0, 80),
+      });
+    }
+    re.lastIndex = closeIdx + 1;
+  }
+  return hits;
+}
+
+// 判断 console.log 位置是否位于含 MEN_DEBUG 条件的 if 块内（门控 dbg 放行）
+function isMenDebugGated(masked, logIdx) {
+  const ifRe = /\bif\s*\(/g;
+  let lastIf = null;
+  let m;
+  while ((m = ifRe.exec(masked)) !== null) {
+    if (m.index > logIdx) break;
+    lastIf = m;
+  }
+  if (!lastIf) return false;
+  const openIdx = lastIf.index + lastIf[0].length - 1; // '('
+  const closeIdx = findMatchingParen(masked, openIdx, "(", ")");
+  if (closeIdx === -1) return false;
+  const cond = masked.slice(openIdx + 1, closeIdx);
+  if (!cond.includes("MEN_DEBUG")) return false;
+  let braceIdx = closeIdx + 1;
+  while (braceIdx < masked.length && /\s/.test(masked[braceIdx])) braceIdx++;
+  if (masked[braceIdx] !== "{") return false;
+  const braceClose = findMatchingParen(masked, braceIdx, "{", "}");
+  if (braceClose === -1) return false;
+  return braceIdx < logIdx && logIdx < braceClose;
+}
+
+// 裸 console.log 扫描：未含 MEN_DEBUG 门控的 `console.log(`（console.error/warn/debug 可保留）
+export function scanBareConsoleLogInText(code) {
+  const masked = maskNonCode(code);
+  const hits = [];
+  const re = /\bconsole\.log\s*\(/g;
+  let m;
+  while ((m = re.exec(masked)) !== null) {
+    const idx = m.index;
+    if (isMenDebugGated(masked, idx)) continue;
+    hits.push({
+      line: lineAt(code, idx),
+      snippet: code.slice(idx, idx + 60).replace(/\s+/g, " ").trim().slice(0, 80),
+    });
+  }
+  return hits;
+}
+
+// checkCodeHygiene：扫描仓库源文件，发现违规即 FAIL（不可回归）
+export function checkCodeHygiene() {
+  const scriptsDir = path.join(ROOT, "scripts");
+  const pluginsDir = path.join(ROOT, ".opencode", "plugins");
+  const hits = [];
+
+  // 空 catch：scripts/*.mjs + .opencode/plugins/**/*.{mjs,js,ts}
+  const catchTargets = [];
+  walk(scriptsDir, new Set([".mjs"]), catchTargets);
+  walk(pluginsDir, new Set([".mjs", ".js", ".ts"]), catchTargets);
+
+  // 无 timeout spawnSync：scripts/*.mjs + .opencode/plugins/**/*.mjs
+  const spawnTargets = [];
+  walk(scriptsDir, new Set([".mjs"]), spawnTargets);
+  walk(pluginsDir, new Set([".mjs"]), spawnTargets);
+
+  // 裸 console.log：.opencode/plugins/**/*.{mjs,js,ts}
+  const logTargets = [];
+  walk(pluginsDir, new Set([".mjs", ".js", ".ts"]), logTargets);
+
+  for (const f of new Set(catchTargets)) {
+    const code = fs.readFileSync(f, "utf-8");
+    for (const h of scanEmptyCatchesInText(code)) {
+      hits.push({ file: path.relative(ROOT, f), type: "empty-catch", line: h.line, snippet: h.snippet });
+    }
+  }
+  for (const f of new Set(spawnTargets)) {
+    const code = fs.readFileSync(f, "utf-8");
+    for (const h of scanSpawnNoTimeoutInText(code)) {
+      hits.push({ file: path.relative(ROOT, f), type: "spawn-sync-no-timeout", line: h.line, snippet: h.snippet });
+    }
+  }
+  for (const f of new Set(logTargets)) {
+    const code = fs.readFileSync(f, "utf-8");
+    for (const h of scanBareConsoleLogInText(code)) {
+      hits.push({ file: path.relative(ROOT, f), type: "bare-console-log", line: h.line, snippet: h.snippet });
+    }
+  }
+
+  if (hits.length === 0) {
+    return {
+      id: "code-hygiene",
+      status: "PASS",
+      evidence: "未发现空 catch / 无 timeout spawnSync / 裸 console.log",
+      details: `${new Set(catchTargets).size} 个文件扫描通过`,
+    };
+  }
+  return {
+    id: "code-hygiene",
+    status: "FAIL",
+    evidence: `${hits.length} 处 code-hygiene 违规`,
+    details: JSON.stringify(hits.slice(0, 30), null, 2),
+  };
+}
+
 // ─────────────────────────── 主流程 ───────────────────────────
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const args = argv.slice(2);
   const out = { target: null, json: false, sid: `verify-${Date.now()}` };
   for (let i = 0; i < args.length; i++) {
@@ -612,16 +830,16 @@ function parseArgs(argv) {
   return out;
 }
 
-function run() {
+export function main(argv = process.argv) {
   // --help / -h 短路径：在任何参数解析与目标校验之前
-  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  if (argv.includes("--help") || argv.includes("-h")) {
     console.log(USAGE_TEXT);
-    process.exit(0);
+    return { ok: true, exitCode: 0, help: true };
   }
-  const cfg = parseArgs(process.argv);
+  const cfg = parseArgs(argv);
   if (!cfg.target) {
     eprintf("用法: node scripts/verify.mjs <目标路径或角色名> [--json] [--sid <sid>]");
-    process.exit(2);
+    return { ok: false, exitCode: 2, error: "缺少目标" };
   }
 
   // 解析目标路径
@@ -630,7 +848,7 @@ function run() {
     const roleMd = path.join(AGENT_DIR, `${cfg.target}.md`);
     if (!fs.existsSync(roleMd)) {
       eprintf(`角色 ${cfg.target} 的 agent 定义不存在：${roleMd}`);
-      process.exit(2);
+      return { ok: false, exitCode: 2, error: `角色 ${cfg.target} 定义不存在` };
     }
     // 优先直接验证该 .md 自身；同时把 Success criteria 里的路径并入
     const paths = extractSuccessPaths(roleMd);
@@ -662,6 +880,7 @@ function run() {
     try { checks.push(checkModelsSchema()); } catch (e) { checks.push({ id: "models-schema", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkBinExportsTargets(targetPath)); } catch (e) { checks.push({ id: "bin-exports-targets", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkDepsImportConsistency(targetPath)); } catch (e) { checks.push({ id: "deps-import-consistency", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
+    try { checks.push(checkCodeHygiene()); } catch (e) { checks.push({ id: "code-hygiene", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
   }
 
   const passed = checks.filter(c => c.status === "PASS").length;
@@ -704,7 +923,11 @@ function run() {
     checks: checks.map(c => ({ id: c.id, status: c.status })),
   });
 
-  if (hasFail) process.exit(1);
+  return { ok: !hasFail, exitCode: hasFail ? 1 : 0, report };
 }
 
-run();
+// 入口守卫：仅直接执行时运行 CLI，被 import 时不触发
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const res = main(process.argv);
+  if (res && typeof res.exitCode === "number") process.exit(res.exitCode);
+}

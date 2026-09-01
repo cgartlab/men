@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/cgartlab/men#readme",
   "scripts": {
-    "test": "node scripts/learning.test.mjs",
+    "test": "node --test",
     "verify": "node scripts/verify.mjs men",
     "release": "node scripts/release.mjs",
     "release:patch": "node scripts/release.mjs patch",

@@ -16,7 +16,12 @@ import { runUpdateCheck } from "./update-check.mjs";
 // 版本号统一变量：跟随项目根 package.json 的真实发布版本；
 // 从插件目录向上遍历找最近的祖先 package.json（跳过插件自身），找不到才兜底用插件本地版本。
 const __dirname = dirname(fileURLToPath(import.meta.url));
-function readPkg(p) { try { return JSON.parse(readFileSync(p, "utf8")); } catch { return null; } }
+
+// 调试日志门控：MEN_DEBUG=1（或 true）时输出，默认静默，避免污染 host stdout
+// （置于 readPkg 之前：PKG 初始化期间 readPkg 即会被调用，此处必须先于其定义，否则触发 TDZ）
+const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEBUG === "true") { console.log(...a); } };
+
+function readPkg(p) { try { return JSON.parse(readFileSync(p, "utf8")); } catch (e) { dbg(`[men-sidebar] readPkg 失败: ${p} — ${e?.message ?? e}`); return null; } }
 const PKG = (() => {
   let d = dirname(__dirname);
   for (let i = 0; i < 10 && d !== dirname(d); i++) {
@@ -29,10 +34,7 @@ const PKG = (() => {
 })();
 const VERSION = PKG.version;
 
-// 调试日志门控：MEN_DEBUG=1（或 true）时输出，默认静默，避免污染 host stdout
-const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEBUG === "true") { console.log(...a); } };
 dbg(`[men-sidebar] version source: ${PKG.source} -> ${PKG.name || "?"}@v${VERSION || "?"}`);
-
 function readAgents(dir) {
   // 合并链：全局在前、项目在后（项目覆盖全局），与 OpenCode 语义一致
   const home = process.env.USERPROFILE || process.env.HOME || "";

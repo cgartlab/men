@@ -14,6 +14,12 @@
  *   - 插件进程内不执行 shell / git / npm —— 更新动作委托给 men-update skill
  */
 
+// 调试日志门控：MEN_DEBUG=1（或 true）时输出，默认静默（与 ../tui.js 一致），避免污染 host stdout
+const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEBUG === "true") { console.log(...a); } };
+
+// fetch 兜底超时（ms）：超过此时间仍未响应则 abort，避免插件启动被网络阻塞
+const FETCH_TIMEOUT_MS = 10_000;
+
 // ─────────────────────────── 纯函数 ───────────────────────────
 
 /**
@@ -121,10 +127,10 @@ export async function runUpdateCheck(api, meta, currentVersion) {
     const lastCheck = api.kv?.get ? Number(api.kv.get("men:lastCheck", 0)) : 0;
     if (api.kv?.ready && Date.now() - lastCheck < 24 * 3600 * 1000) return;
 
-    // c. 用 ctrl.signal 做 fetch 超时/中断（生命周期销毁 + 10s 兜底超时）
+    // c. 用 ctrl.signal 做 fetch 超时/中断（生命周期销毁 + FETCH_TIMEOUT_MS 兜底超时）
     const ctrl = new AbortController();
     api.lifecycle?.onDispose?.(() => ctrl.abort());
-    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
 
     let resp;
     try {
@@ -138,14 +144,20 @@ export async function runUpdateCheck(api, meta, currentVersion) {
     }
 
     // e. 仅当 3xx 重定向时解析 Location；其余状态静默 return
-    if (!resp || resp.status < 300 || resp.status >= 400) return;
+    if (!resp || resp.status < 300 || resp.status >= 400) {
+      dbg(`[men-update-check] 跳过：非 3xx 重定向（status=${resp ? resp.status : "no-response"}）`);
+      return;
+    }
 
     // f. 解析最新 tag；为 null → return
     const latest = parseLatestTag(resp.headers.get("location"));
     if (!latest) return;
 
     // g. 仅在成功拿到 latest 后缓存检查时间（网络错误可更快重试）
-    try { api.kv?.set?.("men:lastCheck", Date.now()); } catch { /* 缓存失败不阻塞 */ }
+    try { api.kv?.set?.("men:lastCheck", Date.now()); } catch (e) {
+      /* 缓存失败不阻塞 */
+      dbg(`[men-update-check] 缓存写入失败: ${e.message}`);
+    }
 
     // h. 已被忽略或非更新 → return
     const dismissed = api.kv?.get ? String(api.kv.get("men:dismissed", "")) : "";
@@ -163,12 +175,16 @@ export async function runUpdateCheck(api, meta, currentVersion) {
         },
         onCancel: () => {
           api.ui.dialog.clear();
-          try { api.kv.set("men:dismissed", latest); } catch { /* 忽略失败不阻塞 */ }
+          try { api.kv.set("men:dismissed", latest); } catch (e) {
+            /* 忽略失败不阻塞 */
+            dbg(`[men-update-check] 记录忽略失败: ${e.message}`);
+          }
         },
       })
     );
   } catch (e) {
     // j. 任何错误只打日志，绝不向上抛
     console.error("[men-update-check] skipped:", e?.message ?? e);
+    dbg("[men-update-check] skipped detail:", e?.stack ?? e);
   }
 }

@@ -5,12 +5,15 @@
  * TUI 插件在 ./tui 子路径导出。
  */
 
-console.log("[men-sidebar] === SERVER ENTRY LOADED (V8) ===");
+// 调试日志门控：MEN_DEBUG=1（或 true）时输出，默认静默（与 ./tui.js 一致），避免污染 host stdout
+const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEBUG === "true") { console.log(...a); } };
+
+dbg("[men-sidebar] === SERVER ENTRY LOADED (V8) ===");
 
 export default {
   id: "men-sidebar",
   server: async () => {
-    console.log("[men-sidebar] server() called — no hooks, TUI handled by ./tui export");
+    dbg("[men-sidebar] server() called — no hooks, TUI handled by ./tui export");
     return {};
   },
 };
