@@ -712,7 +712,10 @@ export function main(argv = process.argv) {
 }
 
 // 入口守卫：仅直接执行时运行 CLI，被 import 时不触发
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// 注意：macOS 上 /tmp 是 /private/tmp 的软链接，需 realpath 归一化后比较
+const _argv1 = process.argv[1];
+const _isDirect = _argv1 && import.meta.url === pathToFileURL(fs.realpathSync(_argv1)).href;
+if (_isDirect) {
   const res = main(process.argv);
   if (res && typeof res.exitCode === "number") process.exit(res.exitCode);
 }
