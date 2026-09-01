@@ -160,7 +160,7 @@ const seealso = [
         安装流程共 6 步：<strong>1.</strong> Node 版本检查 → <strong>2.</strong> 确定目标目录（就地或复制）→ <strong>3.</strong> 安装 <code>.opencode/</code> 依赖 → <strong>4.</strong> 环境配置（<code>.env</code> 不存在时从 <code>.env.example</code> 复制）→ <strong>5.</strong> 端到端验证 → <strong>6.</strong> 检测运行环境（opencode 命令、模型配置）。第 3、5 步分别由 <code>--skip-deps</code>、<code>--skip-verify</code> 跳过。
       </div>
       <div class="wiki-note">
-        <strong>MCP 依赖说明</strong>：<code>opencode.json</code> 声明 7 个 MCP 服务器，首次启动 <code>opencode</code> 时需要联网（<code>fetch</code>/<code>memory</code>/<code>sequential-thinking</code> 由 <code>npx</code> 自动拉取；<code>exa</code>/<code>context7</code>/<code>grep_app</code> 为远程服务）。其中 <code>github-mcp-server</code> 需要环境变量 <code>GITHUB_TOKEN</code>（未设置时该 MCP 不可用，不影响其余功能）。MCP 连接失败通常只是降级提示，不阻塞核心使用。
+        <strong>MCP 依赖说明</strong>：Men 仓库的 <code>opencode.json</code> <strong>不含 mcp 配置</strong>——MCP 由 <strong>CC Switch</strong> 统一管理（模型 / 密钥 / MCP 均本地托管）。需联网的 MCP 服务（Exa / Context7 / grep.app / GitHub / memory / sequential-thinking 等）由你的 OpenCode 运行环境按需提供并注入；MCP 连接失败通常只是降级提示，不阻塞核心使用。
       </div>
       <SrcRef files={['D:\github-repos\men\scripts\install.mjs']} />
     </section>

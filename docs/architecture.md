@@ -117,7 +117,7 @@ men/
 ├── install.sh                  ← Linux/macOS 一键安装引导
 ├── install.ps1                 ← Windows 一键安装引导
 │
-├── opencode.json               ← default_agent: men + MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking）
+├── opencode.json               ← default_agent: men；不含 MCP 配置（由 CC Switch 统一管理）
 ├── config/
 │   └── models.json            ← 模型知识基（setup.mjs 数据源）
 │

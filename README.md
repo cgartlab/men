@@ -198,7 +198,7 @@ flowchart LR
 
 ```
 men/
-|-- opencode.json              # OpenCode 根配置（default_agent: men, MCP x7）
+|-- opencode.json              # OpenCode 根配置（default_agent: men；不含 MCP 配置，由 CC Switch 统一管理）
 |-- AGENTS.md                  # 项目级共享规则（角色表/拓扑/红线/验证体系）
 |-- package.json               # 根配置（name/version/scripts，npm 发布载体）
 |-- README.md                  # 项目说明（本文件）
@@ -294,7 +294,7 @@ men/
 | Agent 框架 | [OpenCode](https://opencode.ai/) 原生 agent 定义 + 自定义 command |
 | 运行时 | Node.js >= 18 |
 | 验证体系 | 纯 Node 脚本（`verify.mjs` / `gate.mjs` / `event.mjs`），零第三方依赖 |
-| MCP 工具 | Exa / Context7 / grep.app / fetch / GitHub / memory / sequential-thinking（MCP x7，均在 `opencode.json` 声明） |
+| MCP 工具 | 由 CC Switch 统一管理（仓库不携带 mcp 配置；模型/密钥/MCP 均本地托管） |
 | 设计理念 | 机械验证优先 / 不信自述 / 低置信确认 / 事件可回溯 |
 
 ---

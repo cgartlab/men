@@ -40,15 +40,30 @@ node <ROOT>/scripts/install.mjs
 
 重装 `.opencode` 依赖与配置。
 
-### 4. 报告新版本号
+### 4. 强制刷新 opencode 的 npm 包缓存
+
+opencode 会把 `@cgartlab/men`（npm 包）缓存到本地，侧边栏插件从此缓存加载版本。**若只更新本地仓库而不刷新缓存，侧边栏会继续显示旧版本**（例如仓库已 v0.3.4 但侧边栏仍显示 v0.3.2）。更新后必须删除该缓存，强制下次启动重新拉取最新包：
+
+- Windows：`C:\Users\<user>\.cache\opencode\packages\@cgartlab\men@latest`
+- macOS/Linux：`~/.cache/opencode/packages/@cgartlab/men@latest`
+
+```bash
+# 定位缓存目录（存在才删，用 rm -rf 语义；PowerShell 用 Remove-Item -Recurse -Force）
+$CACHE = "$env:USERPROFILE\.cache\opencode\packages\@cgartlab\men@latest"
+if (Test-Path $CACHE) { Remove-Item $CACHE -Recurse -Force }
+```
+
+- 若用户是**本地仓库开发**（非 npx 安装），同时确认全局 `~/.config/opencode/tui.json` 的 `plugin` 列表：若引用 `@cgartlab/men`，建议改指向本地仓库插件（`.opencode/plugins/men-sidebar`），彻底脱离 npm 缓存滞后问题。
+
+### 5. 报告新版本号
 
 读取 `<ROOT>/package.json` 的 `version` 字段，向用户报告。
 
-### 5. 提示重启
+### 6. 提示重启
 
 提示用户：**重启 OpenCode** 才能让新插件加载生效。
 
-### 6. 全程遵循全员红线
+### 7. 全程遵循全员红线
 
 - 破坏性/外部操作（pull 改写本地状态、rebase、stash）需用户已通过"调用本 skill"授权；分叉处置必须再征得同意。
 - 汇报须有机械证据：命令退出码 / 输出。

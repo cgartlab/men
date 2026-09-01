@@ -18,7 +18,7 @@
 - 插件仓库的 `opencode.json` 只声明各 agent 使用的模型 ID（如 `opencode-go/hy3`、`sensenova/glm-5.2`），**不内置任何 API 密钥**。
 - 模型推理所需的密钥与端点，全部由你的 OpenCode 运行环境（CC Switch）在本机提供；**安装流程不需要你提供任何密钥**。
 - 因此仓库自带的 `node scripts/setup.mjs` 只是"未使用 CC Switch、需手动把模型分配到 opencode.json"时的可选辅助，**并非必选步骤**。
-- 网络方面：插件本体安装（git clone + `npm install`）需一次性联网；MCP 工具服务器中，`exa`/`context7`/`grep_app`/`github-mcp-server` 为远程 MCP（需对应服务可达），`fetch`/`memory`/`sequential-thinking` 为 stdio 服务器（首次启动 OpenCode 时由 `npx` 拉取，需联网一次）。模型调用流量走 CC Switch 本地托管，插件本身不直连外网密钥。
+- 网络方面：插件本体安装（git clone + `npm install`）需一次性联网。**MCP 由 CC Switch 统一管理**，仓库的 `opencode.json` 不含 mcp 配置——需联网的 MCP 服务（如 Exa / Context7 / grep.app / GitHub / memory / sequential-thinking）由你的 OpenCode 运行环境（CC Switch）按需提供并注入。模型调用流量走 CC Switch 本地托管，插件本身不直连外网密钥。
 
 ---
 

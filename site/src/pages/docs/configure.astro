@@ -120,24 +120,13 @@ model: <model-id>
     <section id="mcp" class="doc-section">
       <h2>MCP 服务</h2>
       <p>
-        <code>opencode.json</code> 的 <code>mcp</code> 字段启用了 <strong>7 个 MCP 服务</strong>。
-        其中 exa / context7 / grep_app 为 <strong>remote</strong>（配置远程 URL），
-        fetch / memory / sequential-thinking 为<strong>本地</strong>（<code>type: local</code> + npx 命令），github-mcp-server 为<strong>remote</strong>（GitHub MCP 端点 + Bearer token）。
+        <strong>Men 不携带任何 MCP 配置</strong>——MCP 由 <strong>CC Switch</strong> 统一管理（模型 / 密钥 / MCP 均本地托管），
+        <code>opencode.json</code> 不含 <code>mcp</code> 字段。这样 Men 保持"纯 Agent + 协作代码"定位，MCP 工具集由你的运行环境按需提供。
       </p>
-      <div class="wiki-table">
-        <table>
-          <thead><tr><th>服务</th><th>类型</th><th>配置</th><th>用途</th></tr></thead>
-          <tbody>
-            <tr><td><code>exa</code></td><td><strong>remote</strong></td><td><code>https://mcp.exa.ai/mcp</code></td><td>网页搜索</td></tr>
-            <tr><td><code>context7</code></td><td><strong>remote</strong></td><td><code>https://mcp.context7.com/mcp</code></td><td>库 / 框架文档查询</td></tr>
-            <tr><td><code>grep_app</code></td><td><strong>remote</strong></td><td><code>https://mcp.grep.app</code></td><td>GitHub 代码搜索</td></tr>
-            <tr><td><code>fetch</code></td><td>本地</td><td><code>type: local · npx @modelcontextprotocol/server-fetch</code></td><td>URL 内容抓取</td></tr>
-            <tr><td><code>github-mcp-server</code></td><td><strong>remote</strong></td><td><code>type: remote · https://api.githubcopilot.com/mcp/ · Bearer {'{env:GITHUB_TOKEN}'}</code></td><td>GitHub 仓库操作</td></tr>
-            <tr><td><code>memory</code></td><td>本地</td><td><code>type: local · npx @modelcontextprotocol/server-memory</code></td><td>持久化记忆</td></tr>
-            <tr><td><code>sequential-thinking</code></td><td>本地</td><td><code>type: local · npx @modelcontextprotocol/server-sequential-thinking</code></td><td>推理链</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <p>
+        若需要在 OpenCode 中启用 MCP（如 Exa / Context7 / grep.app / GitHub / memory / sequential-thinking），
+        请在 <strong>CC Switch</strong> 中配置并确保其注入到 OpenCode 的全局配置；仓库不会也不应声明 MCP。
+      </p>
       <SrcRef files={['opencode.json']} />
     </section>
 

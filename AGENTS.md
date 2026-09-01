@@ -6,7 +6,7 @@
 
 - **M0–M7 全部完成**（调研/骨架/单兵/编排/机械验证/文档/GitHub 基础设施/自主学习回路），项目 v0.3.4（npm 包 `@cgartlab/men` 已发布，支持 `npx @cgartlab/men` 一行安装）
 - **自主学习回路已验证**：learn.mjs 正确识别 ultrawork 事件并写入 errors/，eval-metrics.mjs 计算 8 项 KPI 正常
-- **MCP×7 全部启用**：exa / context7 / grep_app / fetch / github-mcp-server / memory / sequential-thinking
+- **MCP 由 CC Switch 统一管理**：仓库不携带任何 mcp 配置（模型/密钥/MCP 均在本地 CC Switch 托管），Men 定位为纯 Agent + 协作代码
 - **GitHub 私有仓库**：`cgartlab/men`（main 分支），MIT 许可证
 - **CI + 机械验证**：GitHub Actions（ci.yml）执行脚本语法检查 + verify + release dry-run + installer smoke
 
@@ -14,7 +14,7 @@
 
 | 路径 | 用途 |
 |------|------|
-| `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，MCP×7（exa/context7/grep_app/fetch/github/memory/sequential-thinking） |
+| `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，**不含 MCP 配置**（MCP 由 CC Switch 统一管理） |
 | `.opencode/agent/*.md` | **6 个 agent 定义**（唯一源代码）。每次编辑必须先 read 再 edit |
 | `.opencode/skills/*/SKILL.md` | 15 个技能包（ji×4/si×2/xun×3/chi×2/yi×2/men×2） |
 | `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
