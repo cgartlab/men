@@ -54,7 +54,12 @@ const seealso = [
         <table>
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
-                                                <tr>
+                                                            <tr>
+              <td><strong>v0.3.7</strong></td>
+              <td>2026-09-02</td>
+              <td>发布主题「v0.3.7」。</td>
+            </tr>
+<tr>
               <td><strong>v0.3.6</strong></td>
               <td>2026-09-02</td>
               <td>发布主题「v0.3.6」。</td>
@@ -113,7 +118,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-08-29，共发布 <strong>10 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6）。
+        截至 2026-08-29，共发布 <strong>11 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -121,12 +126,11 @@ const seealso = [
 
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
-                        <p>
-        当前版本 <code>v0.3.6</code> 于 2026-09-02 发布，主题为「v0.3.6」。
+                              <p>
+        当前版本 <code>v0.3.7</code> 于 2026-09-02 发布，主题为「v0.3.7」。
       </p>
-      <h3>v0.3.6「v0.3.6」</h3>
+      <h3>v0.3.7「v0.3.7」</h3>
       <ul>
-        <li><strong>install.mjs 全局安装/卸载</strong>：新增 <code>--global</code> 完整全局安装（部署 agents/commands/skills 到 <code>~/.config/opencode</code>，含 opencode.json 与 TUI 注册，任意目录生效）；新增 <code>--global-remove</code> 一键卸载（删除部署资产 + 还原 opencode.json + 注销 TUI 插件）——补齐 v0.3.2 侧边栏全局化（仅注册 tui.json）未覆盖的完整全局能力</li>
       </ul>
       <h3>v0.3.2「侧边栏全局化」</h3>
       <ul>
