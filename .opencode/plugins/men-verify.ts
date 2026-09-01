@@ -126,7 +126,10 @@ const plugin: Plugin = async (input) => {
         logToFile(`spawn 失败: ${err.message}`);
       });
       child.on("close", (code) => {
-        const failed = code !== 0 && reportHasFail(stdout);
+        // verify.mjs 契约：非 0 退出 = 有检查项失败。以退出码为主信号，
+        // JSON 报告兜底（覆盖 spawn 崩溃/stdout 缺失等 code≠0 但无 FAIL 计数、
+        // 以及 code=0 但 JSON 异常含 FAIL 的边界）。任一命中即视为未通过。
+        const failed = code !== 0 || reportHasFail(stdout);
         if (failed) {
           // 非阻塞约定：仅写日志提示。不修改 toolOutput——spawn 后 async hook 立即
           // resolve，close 回调触发时 output 已被消费，写入无效（M5/D4 修复）。
