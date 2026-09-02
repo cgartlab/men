@@ -63,6 +63,34 @@ jobs:
           git config user.name "men-agent[bot]"
           git config user.email "men-agent[bot]@users.noreply.github.com"
 
+      # ---- 配置 opencode provider（CI 无 CC Switch 本地配置，需显式声明）----
+      # opencode-go 是 openai-compatible provider，baseURL 默认 opencode zen/go，
+      # API key 从 secret 读取（复用 OPENCODE_API_KEY，或用 OPENCODE_GO_API_KEY 覆盖）。
+      - name: 配置 opencode provider
+        env:
+          OPENCODE_GO_BASEURL: ${{ secrets.OPENCODE_GO_BASEURL || 'https://opencode.ai/zen/go/v1' }}
+          OPENCODE_GO_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY || secrets.OPENCODE_API_KEY }}
+        run: |
+          if [ -z "$OPENCODE_GO_API_KEY" ]; then
+            echo "::error::缺少 opencode-go API key。请配置 secret: OPENCODE_API_KEY（或 OPENCODE_GO_API_KEY）。"
+            exit 1
+          fi
+          mkdir -p "$HOME/.config/opencode"
+          cat > "$HOME/.config/opencode/opencode.json" <<EOF
+          {
+            "provider": {
+              "opencode-go": {
+                "npm": "@ai-sdk/openai-compatible",
+                "options": {
+                  "baseURL": "${OPENCODE_GO_BASEURL}",
+                  "apiKey": "${OPENCODE_GO_API_KEY}"
+                }
+              }
+            }
+          }
+          EOF
+          echo "已生成 opencode-go provider 配置 (baseURL=${OPENCODE_GO_BASEURL})"
+
       # ---- 云端 agent 执行（超时 30min，失败自动重试 1 次）----
       - name: 云端 agent 执行
         id: agent
@@ -82,7 +110,8 @@ jobs:
           exec_failed=1
           for attempt in 1 2; do
             echo "===== 执行尝试 $attempt/2 ====="
-            opencode run --model "$OPENCODE_MODEL" --auto --format json "
+            # --print-logs: 输出运行日志到 stderr，便于 CI 排查；输出同时存 agent-output.log 供失败回写。
+            opencode run --model "$OPENCODE_MODEL" --auto --print-logs --format json "
             你是云端执行 agent。请处理当前仓库的 issue #${{ github.event.issue.number }}。
 
             约束（硬性）：
@@ -102,8 +131,8 @@ jobs:
             4. 本地验证：跑仓库要求的 verify/gate/test
             5. push 分支
             6. 开 PR：标题 '<issue 标题>'，描述含改动清单+验证结果+风险，关联 Closes #${{ github.event.issue.number }}
-            "
-            if [ $? -eq 0 ]; then
+            " 2>&1 | tee agent-output.log
+            if [ ${PIPESTATUS[0]} -eq 0 ]; then
               exec_failed=0
               break
             fi
@@ -144,13 +173,22 @@ jobs:
           #   agent step 失败（continue-on-error）→ marker 存在且为 FAILED，或超时无 marker
           #   前置步骤失败（读取 issue/检出/安装）→ job 级 failure()
           if [ -f agent-exec-marker.txt ]; then
-            SUMMARY="云端 agent 两次尝试均失败（详见 Actions 日志）"
+            SUMMARY="云端 agent 两次尝试均失败"
           elif [ "${{ steps.agent.outcome }}" == "skipped" ]; then
-            SUMMARY="前置步骤失败（读取 issue / 检出 / 安装 opencode），可能是配置错误"
+            SUMMARY="前置步骤失败（读取 issue / 检出 / 安装 opencode / 配置 provider），可能是配置错误"
           else
             SUMMARY="执行超时被中断（超过 30 分钟护栏）或未知错误"
           fi
-          gh issue comment ${{ github.event.issue.number }} --body "⚠️ **云端执行失败**：$SUMMARY。请检查 Actions 日志（workflow: Agent Run），修复后重新触发（re-run job，或移除再添加 agent-execute label）。"
+          # 附上 agent 输出尾部作为错误线索（best-effort）
+          ERR_DETAIL=""
+          if [ -f agent-output.log ]; then
+            ERR_DETAIL=$(tail -c 1500 agent-output.log || true)
+          fi
+          if [ -n "$ERR_DETAIL" ]; then
+            gh issue comment ${{ github.event.issue.number }} --body "⚠️ **云端执行失败**：$SUMMARY。\n\n错误线索：\n\`\`\`\n$ERR_DETAIL\n\`\`\`\n\n请检查 Actions 日志（workflow: Agent Run），修复后重新触发（re-run job，或移除再添加 agent-execute label）。"
+          else
+            gh issue comment ${{ github.event.issue.number }} --body "⚠️ **云端执行失败**：$SUMMARY。请检查 Actions 日志（workflow: Agent Run），修复后重新触发（re-run job，或移除再添加 agent-execute label）。"
+          fi
           echo "已回写失败摘要到 issue"
 
       - name: 清理执行中标记
