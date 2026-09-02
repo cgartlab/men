@@ -148,7 +148,8 @@ const seealso = [
           <thead><tr><th>选项</th><th>PowerShell</th><th>说明</th></tr></thead>
           <tbody>
             <tr><td><code>--dir &lt;path&gt;</code></td><td><code>-Dir &lt;path&gt;</code></td><td>安装目标目录。默认当前目录；指向不存在的目录时从当前仓库根复制源码（排除 <code>node_modules</code>、<code>.env</code> 等运行态路径）。</td></tr>
-            <tr><td><code>--global</code></td><td>—（仅 npm 通道）</td><td>注册为 OpenCode 全局 TUI 插件（写入全局 <code>tui.json</code>），重启 OpenCode 后<strong>任意目录</strong>显示侧边栏；不触碰 <code>opencode.json</code>。用法：<code>npx @cgartlab/men --global</code>。</td></tr>
+            <tr><td><code>--global</code></td><td>—（仅 npm 通道）</td><td>完整全局安装：部署 agents/commands/skills 到 <code>~/.config/opencode/</code>，备份并合并全局 <code>opencode.json</code>（<code>default_agent: men</code> + 追加 plugin，<strong>不动 mcp</strong>），注册 TUI 插件；重启 OpenCode 后<strong>任意目录</strong>生效。用法：<code>npx @cgartlab/men --global</code>。</td></tr>
+            <tr><td><code>--global-remove</code></td><td>—（仅 npm 通道）</td><td>卸载全局安装：删除部署的 agents/commands/skills，还原 <code>opencode.json</code>（有备份则从备份还原；无备份则移除 <code>default_agent</code> / plugin 中的 men 条目），从 <code>tui.json</code> 注销（插件清空时删除文件）。幂等，重复执行安全。用法：<code>npx @cgartlab/men --global-remove</code>。</td></tr>
             <tr><td><code>--skip-deps</code></td><td><code>-SkipDeps</code></td><td>跳过 <code>.opencode/</code> 依赖安装（<code>npm install --prefix .opencode</code>）。</td></tr>
             <tr><td><code>--skip-verify</code></td><td><code>-SkipVerify</code></td><td>跳过端到端验证（<code>scripts/verify.mjs men --json</code>）。</td></tr>
             <tr><td><code>--json</code></td><td><code>-Json</code></td><td>以 JSON 格式输出安装摘要。</td></tr>
