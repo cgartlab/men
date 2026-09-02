@@ -287,14 +287,20 @@ function globalConfigDir() {
 }
 
 // 全局安装时部署的运行时资产白名单：<men 相对路径> -> <全局子目录>
-// agents/commands 是单个 md 文件；skills 是「技能名目录/SKILL.md」目录。
+// agents/commands 是单个 md 文件；skills 是「技能名目录/SKILL.md」目录；plugins 是侧边栏插件目录。
+// 侧边栏插件部署到本地后 tui.json 用相对路径注册——不依赖 opencode 的 npm 缓存（men@latest），
+// 避免缓存锁死在旧版导致侧边栏版本号不更新；CC Switch 覆盖 opencode.json 也不影响已部署文件。
 const GLOBAL_ASSETS = [
   { name: "agents",   src: path.join(ROOT, ".opencode", "agent"),   dest: "agent" },
   { name: "commands", src: path.join(ROOT, ".opencode", "command"), dest: "command" },
   { name: "skills",   src: path.join(ROOT, ".opencode", "skills"),  dest: "skills" },
+  { name: "plugins",  src: path.join(ROOT, ".opencode", "plugins", "men-sidebar"), dest: "plugins/men-sidebar" },
 ];
 
+// 旧版注册名（npm 包名 @cgartlab/men）：升级后写入 tui.json 的已是相对路径。
+// 卸载/清理时两种 spec 都要移除，避免残留旧注册。
 const MEN_PLUGIN_SPEC = "@cgartlab/men";
+const MEN_TUI_SPEC = "./plugins/men-sidebar/tui.js";
 const MEN_DEFAULT_AGENT = "men";
 const GLOBAL_BACKUP_NAME = "opencode.json.men-backup";
 
@@ -346,9 +352,10 @@ function backupGlobalOpencodeJson(dir) {
   return { existed: true, backedUp: true };
 }
 
-// 合并全局 opencode.json：default_agent=men + plugin 追加 men（幂等去重）。
-// 不改动 mcp 等其余字段（MCP 由 CC Switch 统一管理）。
-function mergeGlobalOpencodeJson(dir, spec) {
+// 合并全局 opencode.json：仅设置 default_agent=men（幂等）。
+// 不改动 mcp / plugin 等其余字段——MCP 与 plugin 由 CC Switch 统一管理，
+// 全局 TUI 插件已通过 tui.json 相对路径注册，无需在 opencode.json 写入 plugin。
+function mergeGlobalOpencodeJson(dir) {
   const p = path.join(dir, "opencode.json");
   const cfg = readJsonSafe(p) || {};
   let changed = false;
@@ -357,33 +364,43 @@ function mergeGlobalOpencodeJson(dir, spec) {
     cfg.default_agent = MEN_DEFAULT_AGENT;
     changed = true;
   }
-  const plugins = Array.isArray(cfg.plugin) ? cfg.plugin.slice() : [];
-  if (!plugins.includes(spec)) {
-    plugins.push(spec);
-    cfg.plugin = plugins;
-    changed = true;
-  }
 
   if (changed) fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + "\n");
   return { path: p, changed };
 }
 
-// 注册全局 TUI 插件（写 tui.json）
+// 注册全局 TUI 插件（写 tui.json）；从 v0.3.4 起迁移：写入相对路径时移除旧 npm 包名注册，避免重复加载侧边栏
 function writeTuiPlugin(dir, spec) {
   const tuiPath = path.join(dir, "tui.json");
   const tui = readJsonSafe(tuiPath) || {};
   const plugins = Array.isArray(tui.plugin) ? tui.plugin.slice() : [];
   const added = !plugins.includes(spec);
   if (added) plugins.push(spec);
-  tui.plugin = plugins;
+  // 旧注册名（npm 包名 @cgartlab/men）与新注册（相对路径）语义等价：移除旧的，只保留新的
+  const migrated = plugins.filter((x) => !(x !== spec && (x === MEN_PLUGIN_SPEC || x === MEN_TUI_SPEC)));
+  tui.plugin = migrated;
   fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
-  return { path: tuiPath, added };
+  return { path: tuiPath, added, migrated: migrated.length !== plugins.length };
+}
+
+// 部署版本标记：让部署的 men-sidebar 能读到真实发布版本（不依赖 npm 缓存包）
+function writeSidebarVersion(dir) {
+  try {
+    const versionFile = path.join(dir, "plugins", "men-sidebar", "VERSION");
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+    if (!rootPkg.version) return false;
+    fs.mkdirSync(path.dirname(versionFile), { recursive: true });
+    fs.writeFileSync(versionFile, String(rootPkg.version) + "\n");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // --global：完整全局安装。
-// 1. 部署 agents/commands/skills 到 ~/.config/opencode/{agent,command,skills}
-// 2. 备份并合并全局 opencode.json（default_agent=men + plugin，不动 mcp）
-// 3. 注册 TUI 插件（tui.json）
+// 1. 部署 agents/commands/skills/plugins 到 ~/.config/opencode/{agent,command,skills,plugins}
+// 2. 备份并合并全局 opencode.json（仅 default_agent=men，不动 mcp / plugin —— CC Switch 统一管理）
+// 3. 注册 TUI 插件（tui.json 相对路径 ./plugins/men-sidebar/tui.js，不依赖 opencode npm 缓存）
 // 幂等：重复执行不产生重复条目。
 function installGlobal(cfg) {
   const dir = globalConfigDir();
@@ -400,19 +417,23 @@ function installGlobal(cfg) {
     assets[a.name] = r.copied;
   }
 
+  // 部署版本标记：让部署的 men-sidebar 能读到真实发布版本（不依赖 npm 缓存包）
+  writeSidebarVersion(dir);
+
   const backup = backupGlobalOpencodeJson(dir);
-  const merged = mergeGlobalOpencodeJson(dir, MEN_PLUGIN_SPEC);
-  const tui = writeTuiPlugin(dir, MEN_PLUGIN_SPEC);
+  const merged = mergeGlobalOpencodeJson(dir);
+  const tui = writeTuiPlugin(dir, MEN_TUI_SPEC);
 
   const result = {
     ok: true,
-    summary: "全局安装完成（agents/commands/skills 已部署，opencode.json 已合并）",
+    summary: "全局安装完成（agents/commands/skills/plugins 已部署，opencode.json 已合并 default_agent）",
     mode: "global",
     dir,
     assets: {
       agents: assets.agents,
       commands: assets.commands,
       skills: assets.skills,
+      plugins: assets.plugins,
     },
     opencodeJson: {
       path: path.join(dir, "opencode.json"),
@@ -420,7 +441,7 @@ function installGlobal(cfg) {
       backup: backup.backedUp ? path.join(dir, GLOBAL_BACKUP_NAME) : null,
     },
     tuiJson: tui.path,
-    plugin: MEN_PLUGIN_SPEC,
+    plugin: MEN_TUI_SPEC,
     defaultAgent: MEN_DEFAULT_AGENT,
     opencodeDetected: hasOpencode,
     warning: hasOpencode ? null : "未检测到 opencode 命令，注册暂不生效",
@@ -436,18 +457,20 @@ function installGlobal(cfg) {
     process.stdout.write(`  agents    ${assets.agents} 个 → ${path.join(dir, "agent")}\n`);
     process.stdout.write(`  commands  ${assets.commands} 个 → ${path.join(dir, "command")}\n`);
     process.stdout.write(`  skills    ${assets.skills} 个 → ${path.join(dir, "skills")}\n`);
-    process.stdout.write(`  opencode.json  ${merged.changed ? "已合并（default_agent=men + plugin）" : "已就绪（无需变更）"}\n`);
+    process.stdout.write(`  plugins   ${assets.plugins} 个 → ${path.join(dir, "plugins", "men-sidebar")}\n`);
+    process.stdout.write(`  opencode.json  ${merged.changed ? "已合并（default_agent=men）" : "已就绪（无需变更）"}\n`);
     if (backup.backedUp) process.stdout.write(`  （原 opencode.json 已备份: ${path.join(dir, GLOBAL_BACKUP_NAME)}）\n`);
-    process.stdout.write(`  tui.json  插件已${tui.added ? "新增注册" : "注册（幂等）"}\n`);
+    process.stdout.write(`  tui.json  插件已${tui.added ? "新增注册" : "注册（幂等）"}（${MEN_TUI_SPEC}）\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
     process.stdout.write(`  ✓ 重启 OpenCode 后任意目录生效。卸载: node scripts/install.mjs --global-remove\n`);
+    process.stdout.write(`  ℹ 已部署到本地（非 npm 缓存），侧边栏版本号直接读取部署目录，不再受 opencode 缓存影响\n`);
   }
   return result;
 }
 
 // 从全局目录删除 men 部署的资产（仅删除 men 源里存在的同名条目，避免误删其它插件的文件）
 function removeGlobalAssets(dir) {
-  const removed = { agents: 0, commands: 0, skills: 0 };
+  const removed = { agents: 0, commands: 0, skills: 0, plugins: 0 };
   for (const a of GLOBAL_ASSETS) {
     if (!fs.existsSync(a.src)) continue;
     const destDir = path.join(dir, a.dest);
@@ -463,10 +486,16 @@ function removeGlobalAssets(dir) {
       }
     }
   }
+  // 清理整个 men-sidebar 插件目录（该目录全部由 men 部署；文件级计数已在上面循环完成）
+  try {
+    const sidebarDir = path.join(dir, "plugins", "men-sidebar");
+    if (fs.existsSync(sidebarDir)) fs.rmSync(sidebarDir, { recursive: true, force: true });
+  } catch { /* best-effort */ }
   return removed;
 }
 
-// 还原全局 opencode.json：有备份则恢复；无备份则移除 default_agent 与 plugin 中的 men 条目
+// 还原全局 opencode.json：有备份则恢复；无备份则移除 default_agent（仅限 =men 的条目）。
+// plugin 数组不在此处处理——CC Switch 统一管理，避免误删用户/CC Switch 配置。
 function restoreGlobalOpencodeJson(dir) {
   const p = path.join(dir, "opencode.json");
   const bak = path.join(dir, GLOBAL_BACKUP_NAME);
@@ -482,24 +511,18 @@ function restoreGlobalOpencodeJson(dir) {
     delete cfg.default_agent;
     changed = true;
   }
-  if (Array.isArray(cfg.plugin)) {
-    const next = cfg.plugin.filter((x) => x !== MEN_PLUGIN_SPEC);
-    if (next.length !== cfg.plugin.length) {
-      cfg.plugin = next;
-      changed = true;
-    }
-  }
   if (changed) fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + "\n");
-  return { restored: changed, note: changed ? "已移除 men 的 default_agent/plugin" : "未发现 men 相关字段" };
+  return { restored: changed, note: changed ? "已移除 default_agent=men" : "未发现 men 相关字段" };
 }
 
-// 从 tui.json 注销 men 插件；插件为空时删除整个文件（避免残留空数组）
-function unregisterTuiPlugin(dir, spec) {
+// 从 tui.json 注销 men 插件（兼容新旧注册名：npm 包名 @cgartlab/men 与相对路径 ./plugins/men-sidebar/tui.js）；
+// 插件为空时删除整个文件（避免残留空数组）
+function unregisterTuiPlugin(dir) {
   const tuiPath = path.join(dir, "tui.json");
   const tui = readJsonSafe(tuiPath);
   if (!tui) return { path: tuiPath, removed: false };
   if (Array.isArray(tui.plugin)) {
-    const next = tui.plugin.filter((x) => x !== spec);
+    const next = tui.plugin.filter((x) => x !== MEN_TUI_SPEC && x !== MEN_PLUGIN_SPEC);
     if (next.length !== tui.plugin.length) {
       if (next.length === 0) {
         fs.rmSync(tuiPath, { force: true });
@@ -518,7 +541,7 @@ function removeGlobal(cfg) {
   const dir = globalConfigDir();
   const removed = removeGlobalAssets(dir);
   const opencode = restoreGlobalOpencodeJson(dir);
-  const tui = unregisterTuiPlugin(dir, MEN_PLUGIN_SPEC);
+  const tui = unregisterTuiPlugin(dir);
 
   const result = {
     ok: true,
@@ -538,6 +561,7 @@ function removeGlobal(cfg) {
     process.stdout.write(`  删除 agents    ${removed.agents} 个\n`);
     process.stdout.write(`  删除 commands  ${removed.commands} 个\n`);
     process.stdout.write(`  删除 skills    ${removed.skills} 个\n`);
+    process.stdout.write(`  删除 plugins   ${removed.plugins} 个\n`);
     process.stdout.write(`  opencode.json  ${opencode.note}\n`);
     process.stdout.write(`  tui.json       ${tui.removed ? (tui.deleted ? "已删除（无剩余插件）" : "已注销 men 插件") : "无需变更"}\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
@@ -623,6 +647,17 @@ export function main(argv = process.argv) {
         copyMode = "scaffolded";
       } catch (e) {
         fail(`scaffold 到 ${targetDir} 失败：${e.message}`);
+      }
+      // scaffold 也写入 VERSION 标记：本地 men-sidebar 插件可读到真实发布版本（不依赖 npm 缓存）
+      try {
+        const versionFile = path.join(targetDir, ".opencode", "plugins", "men-sidebar", "VERSION");
+        const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+        if (rootPkg.version) {
+          fs.mkdirSync(path.dirname(versionFile), { recursive: true });
+          fs.writeFileSync(versionFile, String(rootPkg.version) + "\n");
+        }
+      } catch {
+        /* best-effort：版本标记失败不影响安装 */
       }
     }
   } else if (!isMenRepoRoot(targetDir)) {
