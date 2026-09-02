@@ -2,6 +2,118 @@
   "$schema": "https://raw.githubusercontent.com/cgartlab/men/main/config/models.schema.json",
   "version": "1.0.0",
   "providers": {
+    "opencode-zen": {
+      "name": "OpenCode Zen（免费 + 按量付费）",
+      "description": "OpenCode 官方模型网关：旋转免费模型 + 付费模型按量计费。无需订阅，适合新用户。",
+      "homepage": "https://opencode.ai/zen",
+      "registerUrl": "https://opencode.ai/zen",
+      "models": [
+        {
+          "id": "opencode-zen/deepseek-v4-flash-free",
+          "name": "DeepSeek V4 Flash Free",
+          "tier": "free",
+          "description": "OpenCode Zen 免费 DeepSeek V4 Flash，旋转免费模型，适合编排、写作、代码",
+          "bestFor": ["men", "si", "ji", "chi"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        },
+        {
+          "id": "opencode-zen/hy3-free",
+          "name": "Hy3 Free",
+          "tier": "free",
+          "description": "OpenCode Zen 免费 Hy3，高级推理，适合编排和复杂推理",
+          "bestFor": ["men", "si", "ji"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        },
+        {
+          "id": "opencode-zen/mimo-v2.5-free",
+          "name": "MiMo-V2.5 Free",
+          "tier": "free",
+          "description": "OpenCode Zen 免费 MiMo-V2.5，综合能力均衡，适合编排、评审",
+          "bestFor": ["men", "si", "ji", "chi"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        },
+        {
+          "id": "opencode-zen/big-pickle",
+          "name": "Big Pickle",
+          "tier": "free",
+          "description": "OpenCode Zen 免费 Big Pickle，通用任务模型，适合所有角色",
+          "bestFor": ["men", "si", "ji", "chi", "yi", "xun"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        },
+        {
+          "id": "opencode-zen/north-mini-code-free",
+          "name": "North Mini Code Free",
+          "tier": "free",
+          "description": "OpenCode Zen 免费代码模型，专注代码生成与工程任务",
+          "bestFor": ["ji", "si"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        },
+        {
+          "id": "opencode-zen/nemotron-3-ultra-free",
+          "name": "Nemotron 3 Ultra Free",
+          "tier": "free",
+          "description": "OpenCode Zen 免费 Nemotron 3 Ultra，适合搜索、研究、设计",
+          "bestFor": ["xun", "yi"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        },
+        {
+          "id": "opencode-zen/nemotron-3.5-lightning-free",
+          "name": "Nemotron 3.5 Lightning Free",
+          "tier": "free",
+          "description": "OpenCode Zen 免费 Nemotron 3.5 Lightning，轻量快速，适合研究、设计",
+          "bestFor": ["xun", "yi"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        },
+        {
+          "id": "opencode-zen/muse-spark-1.2-contributor-free",
+          "name": "Muse Spark 1.2 Free",
+          "tier": "free",
+          "description": "OpenCode Zen 免费 Muse Spark 1.2，创意与设计辅助，适合研究、设计",
+          "bestFor": ["xun", "yi"],
+          "free": true,
+          "registerUrl": "https://opencode.ai/zen",
+          "limits": {
+            "type": "rotating_free",
+            "description": "限免期间免费，模型可能随时变动"
+          }
+        }
+      ]
+    },
     "opencode-go": {
       "name": "OpenCode 套餐",
       "description": "OpenCode 官方提供的模型套餐，覆盖多种主流模型",
@@ -132,6 +244,8 @@
       "roleName": "编排核心（men）",
       "description": "接收用户指令、路由任务、汇总结果，需要强力推理和代码理解",
       "priority": [
+        "opencode-zen/hy3-free",
+        "opencode-zen/deepseek-v4-flash-free",
         "opencode-go/hy3",
         "opencode-go/deepseek-v4-flash",
         "sensenova/deepseek-v4-flash",
@@ -144,6 +258,8 @@
       "roleName": "规划与写作（si）",
       "description": "深度推理、任务拆解、文章写作，需要最强推理和写作能力",
       "priority": [
+        "opencode-zen/deepseek-v4-flash-free",
+        "opencode-zen/mimo-v2.5-free",
         "opencode-go/deepseek-v4-flash",
         "sensenova/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash",
@@ -156,6 +272,8 @@
       "roleName": "代码与工程（ji）",
       "description": "代码实现、前端开发、Git 操作，需要强代码能力",
       "priority": [
+        "opencode-zen/north-mini-code-free",
+        "opencode-zen/deepseek-v4-flash-free",
         "opencode-go/deepseek-v4-flash",
         "sensenova/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash",
@@ -168,6 +286,7 @@
       "roleName": "投资分析与评审（chi）",
       "description": "独立评审其他 agent 产物，需要客观、逻辑分析能力",
       "priority": [
+        "opencode-zen/mimo-v2.5-free",
         "sensenova/glm-5.2",
         "opencode-go/deepseek-v4-flash",
         "opencode-go/claude-3.5-sonnet",
@@ -179,6 +298,9 @@
       "roleName": "视觉与设计（yi）",
       "description": "设计决策、Token 定义、生图，偏向轻量推理",
       "priority": [
+        "opencode-zen/nemotron-3-ultra-free",
+        "opencode-zen/nemotron-3.5-lightning-free",
+        "opencode-zen/muse-spark-1.2-contributor-free",
         "sensenova/sensenova-6.8-flash-lite",
         "huoshan/doubao-lite",
         "opencode-go/deepseek-v4-flash"
@@ -189,6 +311,9 @@
       "roleName": "研究助理（xun）",
       "description": "搜索、事实核查、RSS 聚合，偏向轻量推理",
       "priority": [
+        "opencode-zen/nemotron-3-ultra-free",
+        "opencode-zen/nemotron-3.5-lightning-free",
+        "opencode-zen/muse-spark-1.2-contributor-free",
         "sensenova/sensenova-6.8-flash-lite",
         "huoshan/doubao-lite",
         "opencode-go/deepseek-v4-flash"
@@ -208,14 +333,14 @@
       "xun": "sensenova/sensenova-6.8-flash-lite"
     },
     "free": {
-      "name": "全免费方案",
-      "description": "全部使用免费模型，能力有限但有基础可用",
-      "men": "sensenova/sensenova-6.8-flash-lite",
-      "si": "sensenova/sensenova-6.8-flash-lite",
-      "ji": "sensenova/sensenova-6.8-flash-lite",
-      "chi": "sensenova/sensenova-6.8-flash-lite",
-      "yi": "sensenova/sensenova-6.8-flash-lite",
-      "xun": "sensenova/sensenova-6.8-flash-lite"
+      "name": "OpenCode Zen 全免费",
+      "description": "使用 OpenCode Zen 免费模型，无需订阅，适合新用户",
+      "men": "opencode-zen/hy3-free",
+      "si": "opencode-zen/deepseek-v4-flash-free",
+      "ji": "opencode-zen/north-mini-code-free",
+      "chi": "opencode-zen/mimo-v2.5-free",
+      "yi": "opencode-zen/nemotron-3-ultra-free",
+      "xun": "opencode-zen/nemotron-3.5-lightning-free"
     }
   }
 }

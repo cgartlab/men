@@ -31,14 +31,14 @@ const BACKUP_PATH = path.join(ROOT, "opencode.json.bak");
 const ROLES = ["men", "si", "ji", "chi", "yi", "xun"];
 
 const PROVIDER_OPTIONS = [
-  { key: "opencode-go", label: "OpenCode 套餐（opencode-go）", emoji: "1️⃣" },
+  { key: "opencode-zen", label: "OpenCode Zen（免费+按量付费）", emoji: "1️⃣" },
   { key: "sensenova", label: "SenseNova（商汤）", emoji: "2️⃣" },
   { key: "huoshan", label: "火山引擎（豆包 / 方舟）", emoji: "3️⃣" },
   { key: "deepseek", label: "DeepSeek 官方", emoji: "4️⃣" },
 ];
 
 const REGISTER_URLS = {
-  "opencode-go": "https://opencode.ai/pricing",
+  "opencode-zen": "https://opencode.ai/zen",
   sensenova: "https://console.sensenova.cn",
   huoshan: "https://console.volcengine.com",
   deepseek: "https://platform.deepseek.com",
@@ -267,6 +267,8 @@ function filterModels(subscriptions, hasPaid, models) {
     const provider = models.providers[providerKey];
     if (!provider) continue;
     for (const m of provider.models) {
+      // 老用户：选了 opencode-zen 且已有付费套餐时，把 Zen 的付费模型也纳入候选
+      if (providerKey === "opencode-zen" && !hasPaid && m.tier !== "free") continue;
       candidates.push(m);
     }
   }
@@ -284,6 +286,19 @@ function recommendModel(role, candidates, roleDefaults, preferFree = false) {
     for (const modelId of priority) {
       const m = candidateMap[modelId];
       if (m && m.bestFor?.includes(role) && m.free === true) return modelId;
+    }
+  }
+
+  // OpenCode Zen 付费启发式：若候选池含 Zen 的非免费（按量付费）模型，优先推荐
+  // （models.json 后续加入 Zen 付费模型后，这里会自动优先采用）
+  for (const m of candidates) {
+    if (
+      providerOf(m.id) === "opencode-zen" &&
+      m.tier !== "free" &&
+      m.free !== true &&
+      m.bestFor?.includes(role)
+    ) {
+      return m.id;
     }
   }
 
@@ -454,7 +469,7 @@ function printIntro() {
   blank();
   menSay("👋 你好！我是 **men（门）**，Men Agent 团队的编排核心。");
   blank();
-  menSay("我看到你是第一次使用这个项目，需要先配置 AI 模型才能让整个团队跑起来。");
+  menSay("我们重新配置模型分配，让 Men Agent 团队以最合适的模型组合运行。");
   blank();
   menSay("我会问你几个简单的问题，帮你找到最适合你手上资源的模型组合。");
   menSay("整个过程大概 2-3 分钟，准备好了我们就开始。");
@@ -631,55 +646,77 @@ async function manualPick(rl, subscriptions, hasPaid, models) {
   return assignment;
 }
 
-/** 无套餐用户处理 */
+/** 新用户免费路径：首次配置直接应用 OpenCode Zen 免费方案 */
+async function handleNewUser(rl, models) {
+  const preset = models.presets.free;
+  const assignment = {};
+  for (const role of ROLES) assignment[role] = preset[role];
+
+  menSay("👋 你好！我是 **men（门）**，Men Agent 团队的编排核心。");
+  blank();
+  menSay("检测到您是首次配置，将自动应用 **OpenCode Zen 免费模型**方案。");
+  menSay("OpenCode Zen 是 OpenCode 官方模型网关，无需订阅即可使用免费模型，适合新用户快速上手。");
+  blank();
+  menSay("以下是 6 个角色的推荐模型：");
+  blank();
+  const table = renderAssignmentTable(assignment, models, true, true);
+  for (const line of table.split("\n")) {
+    menSay(line, "     ");
+  }
+  blank();
+
+  menSay("⚠️ 免费模型限制说明：");
+  menSay("• OpenCode Zen 免费模型在限免期间提供，可能随时变动", "     ");
+  menSay("• 免费模型在复杂推理、长文写作、代码生成等任务上能力有限", "     ");
+  blank();
+
+  menSay("后续如需升级到付费模型，可选择：");
+  menSay("1️⃣ OpenCode Zen 订阅（按量付费，https://opencode.ai/zen）", "     ");
+  menSay("2️⃣ 其他 provider 注册（SenseNova / 火山引擎 / DeepSeek）", "     ");
+  menSay("   届时可运行 node scripts/setup.mjs --reset 重新配置。", "     ");
+  blank();
+
+  while (true) {
+    const answer = await question(rl, "确认使用此免费方案写入 opencode.json？(y/n) ");
+    const low = answer.toLowerCase();
+    if (low === "y" || low === "yes") return assignment;
+    if (low === "n" || low === "no") {
+      menSay("已取消配置。你可以随时重新运行 node scripts/setup.mjs。");
+      process.exit(0);
+    }
+    menSay("请输入 y 或 n。");
+  }
+}
+
+/** 无套餐用户处理（兜底路径：老用户 Q1 未选 5/6 之外资源的免费方案） */
 async function handleFreeUser(rl, models) {
-  const assignment = models.presets.free;
+  const preset = models.presets.free;
+  const assignment = {};
+  for (const role of ROLES) assignment[role] = preset[role];
 
   menSay("没问题，没有套餐也可以使用这个项目。以下是推荐给你的免费模型组合：");
   blank();
-  const table = renderSimpleTable(
-    { men: "men", si: "si", ji: "ji", chi: "chi", yi: "yi", xun: "xun" },
-    models,
-  );
-  // 用实际模型 id 重新渲染
-  const realTable = renderSimpleTable(
-    {
-      men: "sensenova/sensenova-6.8-flash-lite（免费）",
-      si: "sensenova/sensenova-6.8-flash-lite（免费）",
-      ji: "sensenova/sensenova-6.8-flash-lite（免费）",
-      chi: "sensenova/sensenova-6.8-flash-lite（免费）",
-      yi: "sensenova/sensenova-6.8-flash-lite（免费）",
-      xun: "sensenova/sensenova-6.8-flash-lite（免费）",
-    },
-    { providers: {} },
-  );
+  const realTable = renderSimpleTable(assignment, models);
   for (const line of realTable.split("\n")) {
     menSay(line, "     ");
   }
   blank();
 
   menSay("⚠️ 注意：免费模型在复杂推理、长文写作、代码生成等任务上");
-  menSay("能力有限。如果你遇到以下场景，建议升级套餐：");
+  menSay("能力有限，且 OpenCode Zen 免费模型为限免期间提供、可能随时变动。");
+  menSay("如果你遇到以下场景，建议升级到按量付费：");
   blank();
-  menSay("• 深度推理 → 推荐 OpenCode 套餐", "     ");
-  menSay("• 代码生成 → 推荐火山引擎（有免费额度）", "     ");
+  menSay("• 深度推理 / 代码生成 → 推荐 OpenCode Zen 订阅（按量计费）", "     ");
   menSay("• 高质量写作 → 推荐 SenseNova 或 DeepSeek", "     ");
   blank();
   menSay("🔗 注册链接：", "     ");
-  menSay("• OpenCode 套餐：https://opencode.ai/pricing", "     ");
+  menSay("• OpenCode Zen：https://opencode.ai/zen", "     ");
   menSay("• SenseNova 控制台：https://console.sensenova.cn", "     ");
   menSay("• 火山引擎：https://console.volcengine.com", "     ");
   menSay("• DeepSeek：https://platform.deepseek.com", "     ");
   blank();
 
-  return {
-    men: "sensenova/sensenova-6.8-flash-lite",
-    si: "sensenova/sensenova-6.8-flash-lite",
-    ji: "sensenova/sensenova-6.8-flash-lite",
-    chi: "sensenova/sensenova-6.8-flash-lite",
-    yi: "sensenova/sensenova-6.8-flash-lite",
-    xun: "sensenova/sensenova-6.8-flash-lite",
-  };
+  return assignment;
 }
 
 /** Q4: 确认分配 */
@@ -786,7 +823,8 @@ async function main(argv = process.argv) {
   if (cfg.json) {
     let assignment;
     let mode;
-    if (configured && !cfg.reset) {
+    // dry-run 时始终输出默认推荐（OpenCode Zen 免费预设），便于自动化校验 free 预设
+    if (configured && !cfg.reset && !cfg.dryRun) {
       assignment = currentAssignment(config);
       mode = "current";
     } else {
@@ -868,39 +906,45 @@ async function main(argv = process.argv) {
       blank();
     }
 
-    printIntro();
-
-    // Q1: 订阅
-    const subscriptions = await askQ1(rl, models);
-    blank();
-
     let assignment;
     let confirmed = false;
 
-    if (subscriptions.size === 0) {
-      // 无套餐用户
-      assignment = await handleFreeUser(rl, models);
-      confirmed = await confirmAssignment(rl, assignment, models);
+    if (!configured) {
+      // 新用户：直接进入免费路径，跳过 Q1-Q4
+      assignment = await handleNewUser(rl, models);
+      confirmed = true;
     } else {
-      // Q2: 付费情况
-      const hasPaid = await askQ2(rl, subscriptions);
+      // 老用户（--reset）：走完整问答流程
+      printIntro();
+      // Q1: 订阅
+      const subscriptions = await askQ1(rl, models);
       blank();
 
-      while (!confirmed) {
-        // Q3: 推荐 or 手动
-        const mode = await askQ3(rl);
+      if (subscriptions.size === 0) {
+        // Q1 选 5（无套餐）或 6（不确定）→ 兜底免费路径（OpenCode Zen 免费方案）
+        assignment = await handleFreeUser(rl, models);
+        confirmed = await confirmAssignment(rl, assignment, models);
+      } else {
+        // Q2: 付费情况
+        const hasPaid = await askQ2(rl, subscriptions);
         blank();
 
-        if (mode === "auto") {
-          assignment = await autoRecommend(rl, subscriptions, hasPaid, models);
-        } else {
-          assignment = await manualPick(rl, subscriptions, hasPaid, models);
-        }
-
-        confirmed = await confirmAssignment(rl, assignment, models);
-        if (!confirmed) {
-          menSay("好的，我们重新选择。");
+        while (!confirmed) {
+          // Q3: 推荐 or 手动
+          const mode = await askQ3(rl);
           blank();
+
+          if (mode === "auto") {
+            assignment = await autoRecommend(rl, subscriptions, hasPaid, models);
+          } else {
+            assignment = await manualPick(rl, subscriptions, hasPaid, models);
+          }
+
+          confirmed = await confirmAssignment(rl, assignment, models);
+          if (!confirmed) {
+            menSay("好的，我们重新选择。");
+            blank();
+          }
         }
       }
     }
