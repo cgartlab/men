@@ -4,7 +4,7 @@
 
 ## 项目状态
 
-v0.3.7（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/men` 一行安装）。GitHub 私有仓库 `cgartlab/men`，MIT 许可证。
+v0.4.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/men` 一行安装）。GitHub 私有仓库 `cgartlab/men`，MIT 许可证。
 
 ## 关键文件
 

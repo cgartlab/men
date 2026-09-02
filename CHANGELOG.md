@@ -16,11 +16,25 @@
 
 ### Fixed
 
+## [v0.4.0] - 2026-09-03
+
+### Added
+
+- **半自动化 GitHub 开发工作流**：新增 `/gh-issue` 命令、`gh-flow/` 远程工作区模板与 `.github/workflows/agent-run.yml` + issue 模板，实现「本地意图 → 云端执行 → 人工 merge」的轻量远端执行流程（#77）
+- **新用户默认 OpenCode Zen 免费模型 + 自动引导**：新用户零成本开箱即用，启动时自动引导（#76）
+
+### Changed
+
+- **Agent 提示词与行为规范优化**：重构全 6 角色 system prompt、行为准则与 OpenCode 集成（#75）
+
+### Fixed
+
 - **install.mjs readJsonSafe BOM 兼容**：自动剥离 UTF-8 BOM（`\uFEFF`）——修复 PowerShell `Set-Content` 创建的带 BOM 的 `opencode.json` 在 `--global` 合并时解析失败、原始 mcp/provider 配置全部丢失的问题
 - **卸载时 tui.json 清理**：`--global-remove` 注销插件后若 plugin 数组为空，直接删除 `tui.json`（不再残留 `{"plugin": []}` 空文件）
 - **install.ps1 退出码传播**：直接运行 `./install.ps1` 时传播 node 的退出码（`irm | iex` 管道模式仍 `return` 不关会话）
 - **verify.mjs 路径解析修正**：`extractSuccessPaths` 正则跳过 `//` 注释与单字符路径，修复 Windows 上 `verify.mjs men` 将目标解析为驱动器根目录 `D:\`（导致扫描全盘）的问题
 - **@opencode-ai/plugin 版本同步**：`.opencode/package.json` 缺失时模板 fallback 版本 1.18.23 → 1.18.25，并补充 `@opentui/core` / `@opentui/solid` 兜底依赖
+- **agent-run 工作流三处缺陷修复**（#79/#81/#82/#84）：`actions/checkout` 清空工作目录导致 `issue-body.md` 丢失；gh 命令执行前无法推断仓库（补 `GH_REPO` 环境变量）；CI 缺少 opencode-go provider 配置并增强失败诊断
 
 ## [v0.3.7] - 2026-09-02
 
