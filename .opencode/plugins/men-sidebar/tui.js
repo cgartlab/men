@@ -23,6 +23,15 @@ const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEB
 
 function readPkg(p) { try { return JSON.parse(readFileSync(p, "utf8")); } catch (e) { dbg(`[men-sidebar] readPkg 失败: ${p} — ${e?.message ?? e}`); return null; } }
 const PKG = (() => {
+  // 优先：部署目录里的 VERSION 标记（install.mjs --global 写入，真实发布版本，不依赖 npm 缓存）
+  const versionMark = join(__dirname, "VERSION");
+  try {
+    if (existsSync(versionMark)) {
+      const v = readFileSync(versionMark, "utf8").trim();
+      if (v) return { version: v, name: "men", source: versionMark };
+    }
+  } catch { /* 读取失败回退下一路径 */ }
+  // 其次：从插件目录向上遍历找最近的祖先 package.json（跳过插件自身），找不到才兜底用插件本地版本。
   let d = dirname(__dirname);
   for (let i = 0; i < 10 && d !== dirname(d); i++) {
     const pkg = existsSync(join(d, "package.json")) ? readPkg(join(d, "package.json")) : null;
