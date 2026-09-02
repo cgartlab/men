@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "gh-runner",
+  "instructions": ["AGENTS.md", "gh-flow/AGENTS.gh-flow.md"],
+  "agent": {
+    "gh-runner": {
+      "description": "云端执行 agent：读 issue → 建分支 → 开发 → 验证 → 开 PR。无权 merge。",
+      "mode": "primary",
+      "model": "opencode-go/hy3",
+      "permission": {
+        "bash": {
+          "git push --force*": "deny",
+          "git push origin main*": "deny",
+          "gh pr merge*": "deny",
+          "gh release*": "deny",
+          "npm publish*": "deny",
+          "*": "allow"
+        },
+        "task": {
+          "*": "allow"
+        }
+      }
+    }
+  }
+}
