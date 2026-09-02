@@ -9,7 +9,7 @@ const pageTitle = '路线图 — ' + content.hero.title;
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-09-02 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-09-03 发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -54,6 +54,11 @@ const seealso = [
         <table>
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
+                                                            <tr>
+              <td><strong>v0.4.0</strong></td>
+              <td>2026-09-03</td>
+              <td>发布主题「半自动化 GitHub 开发工作流 + 工程加固」。</td>
+            </tr>
                                                             <tr>
               <td><strong>v0.3.7</strong></td>
               <td>2026-09-02</td>
@@ -118,7 +123,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-08-29，共发布 <strong>11 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7）。
+        截至 2026-09-03，共发布 <strong>12 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7、v0.4.0）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -127,10 +132,14 @@ const seealso = [
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
                               <p>
-        当前版本 <code>v0.3.7</code> 于 2026-09-02 发布，主题为「v0.3.7」。
+        当前版本 <code>v0.4.0</code> 于 2026-09-03 发布，主题为「半自动化 GitHub 开发工作流 + 工程加固」。
       </p>
-      <h3>v0.3.7「v0.3.7」</h3>
+      <h3>v0.4.0「半自动化 GitHub 开发工作流 + 工程加固」</h3>
       <ul>
+        <li><strong>半自动化 GitHub 开发工作流</strong>：新增 <code>/gh-issue</code> 命令、<code>gh-flow/</code> 远程工作区与 <code>.github/workflows/agent-run.yml</code>，实现「本地意图 → 云端执行 → 人工 merge」</li>
+        <li><strong>新用户默认 OpenCode Zen 免费模型 + 自动引导</strong>：零成本开箱即用，降低启动门槛</li>
+        <li><strong>Agent 提示词与行为规范优化</strong>：全 6 角色 system prompt、行为准则与 OpenCode 集成重构</li>
+        <li><strong>安装 / 验证 / 工作流加固</strong>：BOM 兼容、卸载 tui.json 清理、verify 路径解析修正、agent-run 三处缺陷修复</li>
       </ul>
       <h3>v0.3.2「侧边栏全局化」</h3>
       <ul>
