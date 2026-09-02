@@ -297,9 +297,16 @@ const MEN_PLUGIN_SPEC = "@cgartlab/men";
 const MEN_DEFAULT_AGENT = "men";
 const GLOBAL_BACKUP_NAME = "opencode.json.men-backup";
 
-// 安全读 JSON：解析失败返回 null
+// 安全读 JSON：解析失败返回 null（自动处理 UTF-8 BOM）
 function readJsonSafe(p) {
-  try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return null; }
+  try {
+    let raw = fs.readFileSync(p, "utf8");
+    // PowerShell Set-Content 默认写 UTF-8 with BOM（\uFEFF），JSON.parse 无法解析
+    if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 // 部署单类资产：把 src 下的每个条目复制到 destDir/<同名条目>
@@ -485,7 +492,7 @@ function restoreGlobalOpencodeJson(dir) {
   return { restored: changed, note: changed ? "已移除 men 的 default_agent/plugin" : "未发现 men 相关字段" };
 }
 
-// 从 tui.json 注销 men 插件
+// 从 tui.json 注销 men 插件；插件为空时删除整个文件（避免残留空数组）
 function unregisterTuiPlugin(dir, spec) {
   const tuiPath = path.join(dir, "tui.json");
   const tui = readJsonSafe(tuiPath);
@@ -493,12 +500,16 @@ function unregisterTuiPlugin(dir, spec) {
   if (Array.isArray(tui.plugin)) {
     const next = tui.plugin.filter((x) => x !== spec);
     if (next.length !== tui.plugin.length) {
+      if (next.length === 0) {
+        fs.rmSync(tuiPath, { force: true });
+        return { path: tuiPath, removed: true, deleted: true };
+      }
       tui.plugin = next;
       fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
-      return { path: tuiPath, removed: true };
+      return { path: tuiPath, removed: true, deleted: false };
     }
   }
-  return { path: tuiPath, removed: false };
+  return { path: tuiPath, removed: false, deleted: false };
 }
 
 // --global-remove：卸载全局安装（删除部署资产 + 还原 opencode.json + 注销 TUI 插件）
@@ -527,7 +538,7 @@ function removeGlobal(cfg) {
     process.stdout.write(`  删除 commands  ${removed.commands} 个\n`);
     process.stdout.write(`  删除 skills    ${removed.skills} 个\n`);
     process.stdout.write(`  opencode.json  ${opencode.note}\n`);
-    process.stdout.write(`  tui.json       ${tui.removed ? "已注销 men 插件" : "无需变更"}\n`);
+    process.stdout.write(`  tui.json       ${tui.removed ? (tui.deleted ? "已删除（无剩余插件）" : "已注销 men 插件") : "无需变更"}\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
     process.stdout.write(`  ✓ 全局安装已卸载。重启 OpenCode 生效\n`);
   }
