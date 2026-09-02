@@ -6,7 +6,9 @@ name: Agent Run
 
 "on":
   issues:
-    types: [labeled, opened, reopened]
+    # 只监听 labeled：创建带 label 的 issue 或后续补打 label 都会触发一次。
+    # 避免同时监听 opened + labeled 导致同一次创建产生双运行。
+    types: [labeled]
 
 jobs:
   agent-run:
@@ -25,6 +27,8 @@ jobs:
     steps:
       - name: 读取 issue 上下文
         id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
           echo "issue_title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
@@ -126,17 +130,21 @@ jobs:
             echo "未找到关联 PR（可能执行失败），见失败回写步骤"
           fi
 
-      # ---- 失败摘要回写（仅当 agent 执行失败）----
+      # ---- 失败摘要回写（agent 失败 或 job 级失败）----
       - name: 失败摘要回写
-        if: steps.agent.outcome == 'failure'
+        if: always() && (failure() || steps.agent.outcome == 'failure')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # continue-on-error 使 job 不中断，用 marker + outcome 判断失败原因
+          # 区分失败原因：
+          #   agent step 失败（continue-on-error）→ marker 存在且为 FAILED，或超时无 marker
+          #   前置步骤失败（读取 issue/检出/安装）→ job 级 failure()
           if [ -f agent-exec-marker.txt ]; then
-            SUMMARY="两次尝试均失败（详见 Actions 日志）"
+            SUMMARY="云端 agent 两次尝试均失败（详见 Actions 日志）"
+          elif [ "${{ steps.agent.outcome }}" == "skipped" ]; then
+            SUMMARY="前置步骤失败（读取 issue / 检出 / 安装 opencode），可能是配置错误"
           else
-            SUMMARY="执行超时被中断（超过 30 分钟护栏）或配置错误"
+            SUMMARY="执行超时被中断（超过 30 分钟护栏）或未知错误"
           fi
           gh issue comment ${{ github.event.issue.number }} --body "⚠️ **云端执行失败**：$SUMMARY。请检查 Actions 日志（workflow: Agent Run），修复后重新触发（re-run job，或移除再添加 agent-execute label）。"
           echo "已回写失败摘要到 issue"
