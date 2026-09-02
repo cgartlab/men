@@ -211,6 +211,26 @@ npm run eval -- --sid verify-1787295186835 --json
 
 参见 https://github.com/cgartlab/men/releases
 
+### 5.4 半自动化云端工作流（本地意图 → 云端执行 → 人工合并）
+
+本地用 `/gh-issue <任务描述>` 把意图转成结构化 issue；issue 带 `agent-execute` label 后触发 `.github/workflows/agent-run.yml`，云端 agent 无头执行并开 PR。**merge 权始终在维护者手中，agent 不会自行合并。**
+
+| 阶段 | 执行方 | 动作 |
+|------|--------|------|
+| 意图澄清 | 本地 men | `/gh-issue` 六项澄清（目标/验收标准/范围必填）→ 用户确认后 `gh issue create --label agent-execute` |
+| 云端执行 | agent-run workflow | 打 `agent-running` label → 读 issue → 建分支 `agent/issue-<编号>` → 开发 → 本地验证 → push |
+| 交付 | 云端 agent | 开 PR（Conventional Commits 标题 + `Closes #<编号>`），PR 打 `agent-generated` label，issue 收到就绪评论 |
+| 合并 | 维护者 | 人工审查后手动合并；workflow 无 merge 权限 |
+
+**运行边界（写死在 workflow 与规范里）**：
+
+- 权限仅 `contents` / `pull-requests` / `issues` 的 write，**无 merge 权限**；只推 feature 分支，不动 main、不 force push
+- 超时护栏 30 分钟，失败自动重试 1 次；两次均失败时把失败摘要与日志尾部回写到 issue
+- 重新触发方式：Actions 里 re-run job，或移除后重新添加 `agent-execute` label
+- 云端 agent 的行为约束见 [gh-flow/AGENTS.gh-flow.md](../../gh-flow/AGENTS.gh-flow.md)
+
+**CI 前置配置**：需仓库 secret `OPENCODE_API_KEY`（或 `OPENCODE_GO_API_KEY`）提供模型密钥，缺失时 workflow 直接报错退出；模型可用仓库变量 `AGENT_MODEL` 覆盖，默认 `opencode-go/hy3`。
+
 ## 六、常用技能提示
 
 | 技能包 | 所属角色 | 触发场景 |

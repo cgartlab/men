@@ -20,6 +20,10 @@ Thumbs.db
 tmp/
 temp/
 
+# agent-run workflow 运行态产物（写在仓库根，不应入库）
+issue-body.md
+agent-exec-marker.txt
+
 nul
 dist/
 site/dist/
