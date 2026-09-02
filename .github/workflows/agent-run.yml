@@ -103,6 +103,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
+          # checkout 会清空工作目录（git clean），issue body 需在 agent step 内重新拉取
+          gh issue view ${{ github.event.issue.number }} --json body --jq .body > issue-body.md
           ISSUE_BODY="$(cat issue-body.md)"
           # 非交互模式：question/plan 工具默认 deny（无法中途提问），用 --auto 自动批准其余权限。
           # 权限边界由 workflow permissions + 分支保护约束（feature 分支 + 无 merge 权限）。
