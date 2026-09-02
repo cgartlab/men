@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/cgartlab/men/main/config/models.schema.json",
+  "title": "Men Agent Team Model Configuration Schema",
+  "description": "模型知识库 schema：定义 provider、roleDefaults、presets 的结构约束。版本需与 models.json 的 version 字段同步。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "providers", "roleDefaults", "presets"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "const": "https://raw.githubusercontent.com/cgartlab/men/main/config/models.schema.json"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "providers": {
+      "type": "object",
+      "description": "模型服务提供商列表。key 为 provider 标识（如 opencode-zen / sensenova / huoshan / deepseek），value 为 provider 配置。",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "homepage", "models"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "provider 显示名称，如 OpenCode Zen（免费 + 按量付费）"
+          },
+          "description": {
+            "type": "string",
+            "description": "provider 用途描述"
+          },
+          "homepage": {
+            "type": "string",
+            "format": "uri",
+            "description": "provider 官网或注册页"
+          },
+          "models": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/definitions/Model"
+            }
+          }
+        }
+      }
+    },
+    "roleDefaults": {
+      "type": "object",
+      "description": "6 个角色的默认模型优先级配置。key 固定为 men / si / ji / chi / yi / xun。",
+      "additionalProperties": false,
+      "required": ["men", "si", "ji", "chi", "yi", "xun"],
+      "properties": {
+        "men": { "$ref": "#/definitions/RoleDefault" },
+        "si":  { "$ref": "#/definitions/RoleDefault" },
+        "ji":  { "$ref": "#/definitions/RoleDefault" },
+        "chi": { "$ref": "#/definitions/RoleDefault" },
+        "yi":  { "$ref": "#/definitions/RoleDefault" },
+        "xun": { "$ref": "#/definitions/RoleDefault" }
+      }
+    },
+    "presets": {
+      "type": "object",
+      "description": "预设方案：default（全功能推荐）和 free（全免费）。可扩展更多 preset。",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "men", "si", "ji", "chi", "yi", "xun"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "men": { "$ref": "#/definitions/ModelId" },
+          "si":  { "$ref": "#/definitions/ModelId" },
+          "ji":  { "$ref": "#/definitions/ModelId" },
+          "chi": { "$ref": "#/definitions/ModelId" },
+          "yi":  { "$ref": "#/definitions/ModelId" },
+          "xun": { "$ref": "#/definitions/ModelId" }
+        }
+      },
+      "minProperties": 2
+    }
+  },
+  "definitions": {
+    "ModelId": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+/[a-z0-9._-]+$",
+      "description": "模型 ID，格式 provider/model-name，如 opencode-zen/hy3-free"
+    },
+    "RoleKey": {
+      "type": "string",
+      "enum": ["men", "si", "ji", "chi", "yi", "xun"],
+      "description": "角色标识"
+    },
+    "Tier": {
+      "type": "string",
+      "enum": ["free", "premium"],
+      "description": "模型等级：free = 完全免费，premium = 需要付费"
+    },
+    "RateLimit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["rate_limit", "rotating_free"],
+          "description": "rate_limit = 固定频率限制，rotating_free = 限免期间、模型可能随时变动"
+        },
+        "description": { "type": "string" }
+      },
+      "required": ["type", "description"]
+    },
+    "Model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "tier", "description", "bestFor", "free", "registerUrl"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/ModelId"
+        },
+        "name": {
+          "type": "string",
+          "description": "模型展示名，如 DeepSeek V4 Flash Free"
+        },
+        "tier": {
+          "$ref": "#/definitions/Tier"
+        },
+        "description": {
+          "type": "string",
+          "description": "模型能力描述，用于 setup 交互中向用户展示"
+        },
+        "bestFor": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/RoleKey" },
+          "description": "该模型最适合的角色列表，用于推荐算法匹配"
+        },
+        "free": {
+          "type": "boolean",
+          "description": "是否完全免费（不含隐藏费用）"
+        },
+        "registerUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "注册或登录地址"
+        },
+        "limits": {
+          "anyOf": [
+            { "$ref": "#/definitions/RateLimit" },
+            { "type": "null" }
+          ],
+          "description": "限制说明；null 表示无限制；对象则说明具体限制类型"
+        }
+      }
+    },
+    "RoleDefault": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roleName", "description", "priority", "fallback"],
+      "properties": {
+        "roleName": {
+          "type": "string",
+          "description": "角色中文名 + emoji，如 编排与路由（men）"
+        },
+        "description": {
+          "type": "string",
+          "description": "角色职责描述，用于 setup 交互中向用户展示"
+        },
+        "priority": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/ModelId" },
+          "description": "模型优先级列表，推荐算法按此顺序尝试匹配。前部应为免费模型（适合新用户），后部为付费模型"
+        },
+        "fallback": {
+          "$ref": "#/definitions/ModelId",
+          "description": "所有 priority 均不匹配时的兜底模型 ID"
+        }
+      }
+    }
+  }
+}
