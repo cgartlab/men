@@ -14,7 +14,12 @@
 
 ### Changed
 
+- **--global 插件本地部署**：men-sidebar 直接部署到 `~/.config/opencode/plugins/men-sidebar/`，tui.json 改用相对路径 `./plugins/men-sidebar/tui.js` 注册——侧边栏不再依赖 opencode 的 npm 缓存（`men@latest`），升级后无需删缓存即可读到最新版本；同时避免与 CC Switch 管理的全局配置冲突（opencode.json 仅合并 default_agent，不再写 plugin 字段）
+
 ### Fixed
+
+- **侧边栏版本号滞后不更新**：此前 `--global` 用 npm 包名注册，OpenCode 从 `~/.cache/opencode/packages/@cgartlab/men@latest` 加载并锁死在旧版（实测缓存停留 0.3.4），导致 `npx @cgartlab/men` 更新后侧边栏版本号不刷新——现改为部署 VERSION 标记文件（scaffold + global 均写入），tui.js 优先读取真实发布版本
+- **卸载误删风险**：`--global-remove` 不再触碰 opencode.json 的 plugin 数组（CC Switch 统一管理），仅还原 default_agent；tui.json 迁移时移除旧 npm 包名注册避免重复加载侧边栏
 
 ## [v0.4.0] - 2026-09-03
 
