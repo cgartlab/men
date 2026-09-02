@@ -90,8 +90,15 @@ try {
   if ($SkipVerify) { $passArgs += '--skip-verify' }
   if ($Json) { $passArgs += '--json' }
   & node scripts\install.mjs @passArgs
-  # 注意：不用 exit，避免 irm | iex 管道下关闭整个 PowerShell 会话
-  return
+  $installExit = $LASTEXITCODE
+  # 区分执行模式：
+  #   irm | iex（管道安装）→ return 避免关闭 PowerShell 会话（exit code 0 可接受）
+  #   ./install.ps1（直接运行）→ exit 传播 node 的退出码
+  if ($MyInvocation.CommandOrigin -eq 'Internal') {
+    return
+  } else {
+    exit $installExit
+  }
 } finally {
   Pop-Location
 }

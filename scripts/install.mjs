@@ -38,12 +38,13 @@ const ENV_TEMPLATE = ".env.example";
 const ENV_TARGET = ".env";
 
 // .opencode/package.json 缺失时的最小模板：从根 package.json 派生运行时依赖，加 @opencode-ai/plugin 兜底
+// 注意：版本号需与 .opencode/package.json 保持同步（发版时检查）
 export function buildOpencodePkgTemplate() {
   try {
     const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
-    return { dependencies: { "@opencode-ai/plugin": "1.18.23", ...(rootPkg.dependencies || {}) } };
+    return { dependencies: { "@opencode-ai/plugin": "1.18.25", ...(rootPkg.dependencies || {}) } };
   } catch {
-    return { dependencies: { "@opencode-ai/plugin": "1.18.23" } };
+    return { dependencies: { "@opencode-ai/plugin": "1.18.25", "@opentui/core": "^0.5.8", "@opentui/solid": "^0.5.8" } };
   }
 }
 const OPCODE_PKG_TEMPLATE = buildOpencodePkgTemplate();

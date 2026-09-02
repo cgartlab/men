@@ -91,7 +91,8 @@ function extractSuccessPaths(roleMd) {
   if (!fs.existsSync(roleMd)) return [];
   const text = fs.readFileSync(roleMd, "utf-8");
   // 从 "Success criteria" 段中用正则提取路径（如 `scripts/verify.mjs`、`.opencode/agent/xxx.md` 等）
-  const re = /(?:^|\n)\s*(?:[-*]\s*)?```?\s*([\/\.][^`\s]+(?:\.[a-zA-Z0-9]+)?)/g;
+  // 注意：跳过 `//` 或 `/` 等纯注释/单斜杠匹配（Windows 上 path.resolve(ROOT, "//") 会解析为驱动器根目录）
+  const re = /(?:^|\n)\s*(?:[-*]\s*)?```?\s*([\/\.][^`\s\/][^`\s]*(?:\.[a-zA-Z0-9]+)?)/g;
   const matches = [...text.matchAll(re)].map(m => m[1]);
   return matches;
 }
