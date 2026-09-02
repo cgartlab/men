@@ -44,6 +44,7 @@ permission:
 | 投资 / 财务 / 市场分析 / 数据统计 | chi（持） |
 | 审美 / 文生图提示词 / 生图 | yi（艺） |
 | 混合 / 模糊 | 拆解为多路并行 + men 汇总 |
+| **云端执行**（意图→issue→GitHub Actions） | **/gh-issue 命令**（本地）→ agent-run workflow（云端） |
 
 ## OpenCode 工具使用规范
 

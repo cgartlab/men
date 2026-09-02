@@ -1,0 +1,149 @@
+name: Agent Run
+
+# 云端自动执行：issue 打上 agent-execute label 后，用 opencode 无头处理。
+# 权限最小化：只写 feature 分支 + PR/issue，无 merge 权限（PR 必须人工合并）。
+# 失败处理：超时护栏（30min）+ 失败摘要回写 issue + 自动重试 1 次。
+
+"on":
+  issues:
+    types: [labeled, opened, reopened]
+
+jobs:
+  agent-run:
+    if: contains(github.event.issue.labels.*.name, 'agent-execute')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # 建分支 / push（仅 feature 分支）
+      pull-requests: write     # 开 PR / comment
+      issues: write            # issue comment / label
+      # ❌ 无 actions: write / 无 merge 权限 — PR 必须人工合并
+
+    concurrency:
+      group: agent-run-${{ github.event.issue.number }}
+      cancel-in-progress: false
+
+    steps:
+      - name: 读取 issue 上下文
+        id: issue
+        run: |
+          echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          echo "issue_title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
+          gh issue view ${{ github.event.issue.number }} --json body --jq .body > issue-body.md
+          echo "已读取 issue #${{ github.event.issue.number }}"
+
+      - name: 标记执行中
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} --add-label "agent-running" || true
+          gh issue comment ${{ github.event.issue.number }} --body "🤖 云端 agent 已开始处理（自动建分支 → 开发 → 验证 → 开 PR）。merge 权在维护者手中，agent 不会自行合并。"
+
+      - name: 检出仓库
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 安装 Node + opencode
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 安装 opencode CLI
+        run: npm install -g opencode-ai@latest
+
+      - name: 配置 git 身份
+        run: |
+          git config user.name "men-agent[bot]"
+          git config user.email "men-agent[bot]@users.noreply.github.com"
+
+      # ---- 云端 agent 执行（超时 30min，失败自动重试 1 次）----
+      - name: 云端 agent 执行
+        id: agent
+        timeout-minutes: 30
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENCODE_MODEL: ${{ vars.AGENT_MODEL || 'opencode-go/hy3' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: |
+          ISSUE_BODY="$(cat issue-body.md)"
+          # 非交互模式：question/plan 工具默认 deny（无法中途提问），用 --auto 自动批准其余权限。
+          # 权限边界由 workflow permissions + 分支保护约束（feature 分支 + 无 merge 权限）。
+          # 执行结果写入 marker 文件，供后续步骤判断。
+          exec_failed=1
+          for attempt in 1 2; do
+            echo "===== 执行尝试 $attempt/2 ====="
+            opencode run --model "$OPENCODE_MODEL" --auto --format json "
+            你是云端执行 agent。请处理当前仓库的 issue #${{ github.event.issue.number }}。
+
+            约束（硬性）：
+            1. 不 merge 任何 PR、不 force push、不删除 main 分支
+            2. 只在新建的 feature 分支上开发：agent/issue-${{ github.event.issue.number }}
+            3. 严格遵守仓库的验证体系：verify.mjs / gate.mjs 必须通过
+            4. 完成后开 PR（标题用 Conventional Commits），PR 描述里写客观建议
+            5. 不在 PR 里宣称"完成"，只陈述事实（改了什么/验证结果/剩余风险）
+
+            issue 内容：
+            $ISSUE_BODY
+
+            步骤：
+            1. 读 issue 内容，理解验收标准（机械可验证条件）
+            2. 建分支 agent/issue-${{ github.event.issue.number }}
+            3. 实现 issue 要求（按仓库规范，尊重现有代码风格）
+            4. 本地验证：跑仓库要求的 verify/gate/test
+            5. push 分支
+            6. 开 PR：标题 '<issue 标题>'，描述含改动清单+验证结果+风险，关联 Closes #${{ github.event.issue.number }}
+            "
+            if [ $? -eq 0 ]; then
+              exec_failed=0
+              break
+            fi
+            echo "尝试 $attempt 失败，重试..."
+            sleep 5
+          done
+          if [ $exec_failed -ne 0 ]; then
+            echo "云端执行最终失败（两次尝试均未成功）"
+            echo "FAILED" > agent-exec-marker.txt
+            exit 1
+          else
+            echo "OK" > agent-exec-marker.txt
+          fi
+
+      # ---- PR 收尾（label / 通知）----
+      - name: PR 收尾（label / assign / milestone）
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 找到本次 issue 关联的 PR
+          PR_NUM=$(gh pr list --head "agent/issue-${{ github.event.issue.number }}" --json number --jq '.[0].number' || true)
+          if [ -n "$PR_NUM" ] && [ "$PR_NUM" != "null" ]; then
+            gh pr edit "$PR_NUM" --add-label "agent-generated" || true
+            gh issue comment ${{ github.event.issue.number }} --body "🤖 PR #$PR_NUM 已就绪，请审查后手动合并。"
+            echo "已通知 PR #$PR_NUM"
+          else
+            echo "未找到关联 PR（可能执行失败），见失败回写步骤"
+          fi
+
+      # ---- 失败摘要回写（仅当 agent 执行失败）----
+      - name: 失败摘要回写
+        if: steps.agent.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # continue-on-error 使 job 不中断，用 marker + outcome 判断失败原因
+          if [ -f agent-exec-marker.txt ]; then
+            SUMMARY="两次尝试均失败（详见 Actions 日志）"
+          else
+            SUMMARY="执行超时被中断（超过 30 分钟护栏）或配置错误"
+          fi
+          gh issue comment ${{ github.event.issue.number }} --body "⚠️ **云端执行失败**：$SUMMARY。请检查 Actions 日志（workflow: Agent Run），修复后重新触发（re-run job，或移除再添加 agent-execute label）。"
+          echo "已回写失败摘要到 issue"
+
+      - name: 清理执行中标记
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} --remove-label "agent-running" || true
