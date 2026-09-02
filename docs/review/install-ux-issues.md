@@ -3,6 +3,7 @@
 > 审查日期：2026-08-31
 > 方法：si（新用户旅程视角，11 条 UX）+ ji（可执行性实测视角，15 条 IMP），合并去重后 **22 条**。
 > 状态：**P0/P1/P2 全部修复**（分支 `review/install-ux`，按问题域拆分为 4 个 PR 合并回 main）。IMP-08 的 verify 增强项评估后未实施（会导致 CI 因缺少 node_modules 失败，且 install.mjs 摘要已覆盖用户可见警示）；IMP-04 curl 静默以文档提示方式处理。
+> 后续加固（2026-09-03 全平台实测）：`readJsonSafe` BOM 兼容（PowerShell UTF-8 BOM 导致 --global 合并丢配置）、`--global-remove` tui.json 空数组清理、install.ps1 退出码传播（直接运行场景）、verify `extractSuccessPaths` 正则修正（`//` 匹配导致 Windows 上解析到驱动器根目录）、`@opencode-ai/plugin` fallback 版本同步 1.18.25。均已合并 main（PR #74 / #80）。
 
 ---
 

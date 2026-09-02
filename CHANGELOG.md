@@ -16,6 +16,12 @@
 
 ### Fixed
 
+- **install.mjs readJsonSafe BOM 兼容**：自动剥离 UTF-8 BOM（`\uFEFF`）——修复 PowerShell `Set-Content` 创建的带 BOM 的 `opencode.json` 在 `--global` 合并时解析失败、原始 mcp/provider 配置全部丢失的问题
+- **卸载时 tui.json 清理**：`--global-remove` 注销插件后若 plugin 数组为空，直接删除 `tui.json`（不再残留 `{"plugin": []}` 空文件）
+- **install.ps1 退出码传播**：直接运行 `./install.ps1` 时传播 node 的退出码（`irm | iex` 管道模式仍 `return` 不关会话）
+- **verify.mjs 路径解析修正**：`extractSuccessPaths` 正则跳过 `//` 注释与单字符路径，修复 Windows 上 `verify.mjs men` 将目标解析为驱动器根目录 `D:\`（导致扫描全盘）的问题
+- **@opencode-ai/plugin 版本同步**：`.opencode/package.json` 缺失时模板 fallback 版本 1.18.23 → 1.18.25，并补充 `@opentui/core` / `@opentui/solid` 兜底依赖
+
 ## [v0.3.7] - 2026-09-02
 
 ### Added
