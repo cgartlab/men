@@ -11,9 +11,11 @@ v0.4.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 | 路径 | 用途 |
 |------|------|
 | `opencode.json` | OpenCode 根配置：`default_agent: "men"`，加载 `AGENTS.md`，**不含 MCP**（CC Switch 统一管理） |
+| `~/.config/opencode/men.jsonc` | 全局 Agent 模型配置（用户级，preset 切换 + 逐 Agent 覆盖） |
 | `.opencode/agent/*.md` | **6 个 agent 定义（唯一源代码）**。每次编辑必须先 read 再 edit |
 | `.opencode/skills/*/SKILL.md` | 15 个技能包（ji×4/si×2/xun×3/chi×2/yi×2/men×2） |
-| `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` |
+| `.opencode/command/*.md` | 自定义命令：`ultrawork` / `verify` / `hyperplan` / `gh-issue`（本地意图 → issue → 云端执行） |
+| `gh-flow/` | 半自动化 GitHub 工作流模板：`AGENTS.gh-flow.md`（云端执行 agent 约束）+ `opencode.gh-flow.json`；由 `.github/workflows/agent-run.yml` 触发 |
 | `.opencode/plugins/men-verify.ts` | 产物机械验证自动插件（write/edit 后自动跑 verify.mjs） |
 | `.opencode/plugins/men-learn.ts` | 自动学习插件（任务完成后提取经验写入 knowledge/） |
 | `.opencode/plugins/men-sidebar/` | TUI 侧边栏插件；`tui.json` 声明入口，`@opentui/*` 为运行时依赖 |
@@ -42,12 +44,14 @@ v0.4.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 2. **YAML frontmatter 必须保留**：`description`, `mode`, `model`
 3. **`CHARTER_CHECK` 字段**：每个 agent 必须有（Clarification level / Task domain / Must NOT do / Success criteria）
 4. **`全员红线` 段落**：6 个 agent 必须逐字一致（复制粘贴，不修改）
-5. **model 分配**（仓库 `opencode.json` 配置，CC Switch `~/.config/opencode/opencode.json` 会覆盖）：
-   - men: `opencode-go/hy3`
-   - si: `sensenova/deepseek-v4-flash`
-   - ji: `opencode-go/deepseek-v4-flash`
-   - chi: `sensenova/glm-5.2`
-   - yi/xun: `sensenova/sensenova-6.8-flash-lite`
+5. **model 分配**（配置优先级：`~/.config/opencode/men.jsonc` > 仓库 `opencode.json`；`men.jsonc` 不存在时回退到 `opencode.json`，CC Switch `~/.config/opencode/opencode.json` 会覆盖 provider/key）：
+   - **职责划分**：CC Switch 管理 providers/keys，Men 管理 agent 分配（preset 切换 + 逐 Agent 覆盖）
+   - 当前默认分配：
+     - men: `opencode-go/hy3`
+     - si: `sensenova/deepseek-v4-flash`
+     - ji: `opencode-go/deepseek-v4-flash`
+     - chi: `sensenova/glm-5.2`
+     - yi/xun: `sensenova/sensenova-6.8-flash-lite`
 6. **men 输出规范不得删除或弱化**（决策 D20）：`question` 工具交互、人类阅读优先（代号降噪）、todowrite 跟踪
 
 ## 常用命令

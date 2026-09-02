@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/cgartlab/men/main/config/men.schema.json",
+  "title": "Men Agent Team Configuration",
+  "description": "Global configuration for Men agent team model assignments",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["preset", "presets"],
+  "properties": {
+    "preset": {
+      "type": "string",
+      "description": "Name of the active preset"
+    },
+    "presets": {
+      "type": "object",
+      "description": "Named preset definitions, each mapping agent names to model IDs",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["men", "si", "ji", "chi", "yi", "xun"],
+        "properties": {
+          "men": {
+            "type": "string",
+            "description": "Model ID for men (orchestrator)"
+          },
+          "si": {
+            "type": "string",
+            "description": "Model ID for si (thinker)"
+          },
+          "ji": {
+            "type": "string",
+            "description": "Model ID for ji (executor)"
+          },
+          "chi": {
+            "type": "string",
+            "description": "Model ID for chi (judge)"
+          },
+          "yi": {
+            "type": "string",
+            "description": "Model ID for yi (designer)"
+          },
+          "xun": {
+            "type": "string",
+            "description": "Model ID for xun (researcher)"
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "description": "Optional per-agent overrides (override preset values)",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Model ID override"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider name (used with model field)"
+          }
+        }
+      }
+    }
+  }
+}
