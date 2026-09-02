@@ -10,10 +10,16 @@ agent: men
 ## 编排协议（10 步）
 
 ### 1. CERTAINTY —— 需求确认
+
+**todowrite**：创建完整任务清单（10 步 + 预估子任务），标记第 1 步 `in_progress`。
+
 - 任务模糊、有歧义、缺少关键信息时，**先向用户追问**，不要猜测（你的 Clarification level 是 HIGH）
 - 直到需求 100% 明确才允许开工
+- 需求确认后，标记第 1 步 `completed`，标记第 2 步 `in_progress`
 
 ### 2. TRIAGE —— 四类意图判定【升级】
+
+**todowrite**：标记第 2 步 `in_progress`。
 
 按以下四类意图判定任务性质，并选择对应执行策略。**分类置信度低时，向用户确认，不猜。**
 
@@ -35,7 +41,11 @@ agent: men
 
 ### 3. PLAN —— si 规划（team / hyperplan 类必须）
 
+**todowrite**：标记第 2 步 `completed`，标记第 3 步 `in_progress`。
+
 - team 类和 hyperplan 类任务：**必须先 spawn si**（`task` 工具，subagent_type: si），要求产出 `<plan>` envelope
+- si 规划耗时较长，可使用 `background: true` 后台运行，men 继续响应用户
+- si 返回后，将 plan 中的子任务添加到 todowrite 清单中
 - si 的 plan 必须包含：
   - **任务依赖图**：各子任务间的先后依赖关系
   - **并行波次**：哪些任务可并行（Wave 1）、哪些依赖 Wave 1（Wave 2/3…）
@@ -46,8 +56,17 @@ agent: men
 
 ### 4. DISPATCH —— Wave 波次调度【升级】
 
+**todowrite**：标记第 3 步 `completed`，标记第 4 步 `in_progress`。每个子任务在 todowrite 中有对应项。
+
 - 严格按 plan 中的并行波次执行，**不能打乱顺序**（Wave 2 依赖 Wave 1 的产物）
 - **并行上限 ≤ 4 个同时**（避免资源争用与输出混乱）
+- **并行 spawn 模式**：Wave 内多个无依赖子任务，在**单条消息中发起多个 task 调用**：
+  ```
+  // 单消息并行（正确）
+  task(description="查数据", subagent_type="xun", prompt="...", background=true)
+  task(description="设计配图", subagent_type="yi", prompt="...", background=true)
+  ```
+- **后台任务**：长耗时子任务（xun 搜索、chi judge、si 规划、yi 生图）使用 `background: true`，men 继续响应用户，完成后自动通知
 - 每个子任务的 prompt 必须满足以下要求：
   1. **完整自洽**：子 agent 无法追问你，prompt 中要包含所有必要上下文（输入文件路径、预期产出、背景信息）
   2. **引用 skill 名称**：明确写出"使用 xxx skill"（如 "使用 xun-search skill""使用 ji-frontend-design skill"）
@@ -59,6 +78,8 @@ agent: men
 - 一个 Wave 内所有任务 spawn 完成后，**等待全部返回**再进入下一 Wave
 
 ### 5. COLLECT —— 收集产物
+
+**todowrite**：每个子 agent 返回后，立即标记对应子任务 `completed`（或失败时标记 `pending` 并备注原因）。
 
 - 收集所有子 agent 的返回结果和落盘产物文件
 - 检查每个子 agent 是否按 Success criteria 交付了产物文件（文件是否存在、退出码是否为 0）
@@ -101,6 +122,8 @@ node scripts/gate.mjs typecheck --dir <产物所在目录> --sid <sid>
 #### 7.2 chi 语义复核（gate 通过后）
 
 - 机械门禁通过后（或产物不涉及工程时），**必须 spawn chi**（`task` 工具，subagent_type: chi）做 fresh-context judge
+- chi judge 耗时较长，使用 `background: true` 后台运行
+- **重试时使用 task_id 恢复**：chi judge 失败后重试时，传入上次的 `task_id`，chi 可看到之前的验证结果，只需重新验证失败项
 - chi judge 的职责：
   - 只按验收标准**机械核对**（文件存在性 / 退出码 / 命令输出 / 格式校验）
   - **不接受任何子 agent 的自述作为完成证据**——只相信自己的检查结果
@@ -112,6 +135,8 @@ node scripts/gate.mjs typecheck --dir <产物所在目录> --sid <sid>
 - 超限 5 次仍无法通过 → 停止，报"卡住"
 
 ### 8. REPORT —— 汇总汇报 + 产物状态【升级】
+
+**todowrite**：标记第 4-7 步 `completed`，标记第 8 步 `in_progress`。确认清单与最终汇报一致。
 
 按以下模板输出最终报告：
 
@@ -138,12 +163,15 @@ node scripts/gate.mjs typecheck --dir <产物所在目录> --sid <sid>
 ### 9. LOOP —— 循环重试
 
 - 验证失败 → 回到**失败步骤**重试（失败点继续，不从头）
+- **重试时使用 task_id 恢复**：传入上次的 `task_id`，子 agent 保留上下文，只需修复失败项
 - **上限 5 次**，超限停止并报"卡住"，把已完成的中间产物和失败原因交给用户
 - 过程中把关键节点通过 `scripts/event.mjs append` 追加到事件流（best-effort，命令失败不影响主流程）
 
 ### 10. LEARN —— 自主学习触发（M7）
 
-任务完成（第 10 步 LOOP 结束，无论成功还是卡住）后，men 作为编排者触发自主学习回路：
+**todowrite**：标记第 8 步 `completed`，标记第 10 步 `in_progress`。
+
+任务完成（第 9 步 LOOP 结束，无论成功还是卡住）后，men 作为编排者触发自主学习回路：
 
 ```bash
 node scripts/learn.mjs --sid <sid> --json
@@ -171,6 +199,8 @@ node scripts/learn.mjs --sid <sid> --json
 ```
 
 REPORT 完成后立刻触发 LEARN，不要等待用户回复。LEARN 执行结果通过 stdout JSON 输出，men 可在 REPORT 中附加一行："📚 自主学习已触发：X 条经验提取完成"。
+
+LEARN 完成后，标记第 10 步 `completed`，确认 todowrite 清单全部完成。
 
 ## 事件审计
 
