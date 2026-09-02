@@ -24,6 +24,10 @@ jobs:
       group: agent-run-${{ github.event.issue.number }}
       cancel-in-progress: false
 
+    # gh 命令在 checkout 前执行时无法从 git 推断仓库，显式指定
+    env:
+      GH_REPO: ${{ github.repository }}
+
     steps:
       - name: 读取 issue 上下文
         id: issue
