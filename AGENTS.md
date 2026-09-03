@@ -20,7 +20,7 @@ v0.4.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 | `.opencode/plugins/men-learn.ts` | 自动学习插件（任务完成后提取经验写入 knowledge/） |
 | `.opencode/plugins/men-sidebar/` | TUI 侧边栏插件；`tui.json` 声明入口，`@opentui/*` 为运行时依赖 |
 | `scripts/*.mjs` | 验证/门禁/审计/学习/发布脚本，纯 Node 零依赖 |
-| `config/models.json` | 模型知识基（providers/roleDefaults/presets），`setup.mjs` 数据源 |
+| `config/models.json` | 模型知识基（providers/roleDefaults/presets），`setup.mjs` 数据源；`config/men.schema.json` 为 men.jsonc schema |
 | `knowledge/` | 团队知识库（patterns/decisions）；`errors/` 在根目录 |
 | `.opencode/package.json` | `@opencode-ai/plugin` + `@opentui/*` 本地依赖 |
 
@@ -71,8 +71,9 @@ node scripts/learn.mjs --sid <sid> --json          # L0 经验提取
 node scripts/eval-metrics.mjs --sid <sid> --json    # 8 项 KPI
 
 # 发布
-npm run release          # SemVer bump + CHANGELOG + tag
-npm run release:dry-run  # 预览不执行
+npm run release[:patch|:minor|:major]  # SemVer bump + CHANGELOG + 同步版本文件 + 本地 commit/tag
+npm run release:dry-run                # 预览不执行
+npm run release:all                    # = --push + --gh-release + --npm（外部操作，需确认）
 
 # 测试
 npm test                 # node --test（所有 *.test.mjs）
@@ -97,15 +98,16 @@ node scripts/install.mjs --skip-deps --skip-verify --json
 - **本地优先**：内网数据源（192.168.31.x），SenseNova 生图仅 yi 挂载
 - **事件类型归一化**：learn-rules.mjs / eval-metrics.mjs 支持 `men.*` 前缀 → 标准类型映射
 
-## 版本同步缺口（发版后需手动同步）
+## 版本同步缺口（发版步骤）
 
-`scripts/release.mjs` 仅自动同步 JSON 文件与 `site/src/pages/docs/configure.astro`；**以下文档不自动同步**：
+`node scripts/release.mjs` 自动同步版本号到：JSON（`package-lock.json` / `opencode.json` / `site/package.json`）+ 文本（`site/src/pages/docs/configure.astro` / `AGENTS.md` / `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md`）。
 
-- `AGENTS.md`（仓库状态 + CHARTER_CHECK 两处）
-- `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md`
-- `site/src/pages/docs/releases.astro`（发布历史表 + 当前版本亮点）
+**以下两处不在同步列表，发版后必须手动**：
 
-先例：v0.3.2 发版后曾漏 6 处版本引用。发版后请按此清单自查。
+- `site/src/pages/docs/releases.astro`（发布历史表 + 计数 + 当前版本亮点；仅 `--push`/`--gh-release` 时由 `update-release-page.mjs` 自动）
+- `.opencode/skills/men-status/SKILL.md`（`| 版本 | vX.Y.Z |` 硬编码）
+
+先例：v0.3.2 发版漏 6 处版本引用；v0.4.0 修订为真实残留清单（releases.astro + men-status）。
 
 ## 进程管理红线（Windows · 2026-08-24 事故后新增）
 
