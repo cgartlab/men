@@ -9,14 +9,19 @@
  *   node scripts/setup.mjs --help       # 显示帮助
  *   node scripts/setup.mjs --reset      # 强制重新配置
  *   node scripts/setup.mjs --json       # JSON 输出模式
- *   node scripts/setup.mjs --preset <name>  # 使用预设跳过交互
+ *   node scripts/setup.mjs --preset <name>  # 使用预设跳过交互（同时写入全局 men.jsonc）
  *   node scripts/setup.mjs --dry-run    # 模拟运行，不写入文件
  *   node scripts/setup.mjs --no-interactive  # 非交互模式（CI/管道）
+ *
+ * men.jsonc 全局配置（~/.config/opencode/men.jsonc）：
+ *   跨项目统一管理 6 个角色的模型预设；schema 见 config/men.schema.json。
+ *   兼容行为：men.jsonc 不存在时回退到仅写当前项目 opencode.json。
  *
  * 设计文档: docs/guide/onboarding-design.md
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
@@ -27,6 +32,9 @@ const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
 const OPENCODE_JSON = path.join(ROOT, "opencode.json");
 const MODELS_JSON = path.join(ROOT, "config", "models.json");
 const BACKUP_PATH = path.join(ROOT, "opencode.json.bak");
+
+// 全局 men.jsonc（跨项目模型预设），结构见 config/men.schema.json
+const MEN_CONFIG_PATH = path.join(os.homedir(), ".config", "opencode", "men.jsonc");
 
 const ROLES = ["men", "si", "ji", "chi", "yi", "xun"];
 
@@ -93,6 +101,50 @@ function eprintf(...args) {
   process.stderr.write(args.map((a) => `${a}\n`).join(""));
 }
 
+// 剥离 JSONC 注释（// 行注释 与 /* 块注释），保留字符串字面量内的内容。
+// JSON 字符串只用双引号；单引号也按字符串起始处理以兼容常见 JSONC 变体。
+function stripJsoncComments(raw) {
+  let out = "";
+  let i = 0;
+  let inString = false;
+  let quote = "";
+  while (i < raw.length) {
+    const ch = raw[i];
+    const next = raw[i + 1];
+    if (inString) {
+      out += ch;
+      if (ch === "\\" && next !== undefined) {
+        out += next;
+        i += 2;
+        continue;
+      }
+      if (ch === quote) inString = false;
+      i++;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      inString = true;
+      quote = ch;
+      out += ch;
+      i++;
+      continue;
+    }
+    if (ch === "/" && next === "/") {
+      while (i < raw.length && raw[i] !== "\n") i++;
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      i += 2;
+      while (i < raw.length && !(raw[i] === "*" && raw[i + 1] === "/")) i++;
+      i += 2;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
 // ─────────────────────────── 参数解析 ───────────────────────────
 
 function parseArgs(argv) {
@@ -145,10 +197,15 @@ function printHelp() {
    --help, -h          显示帮助信息
    --reset             强制重新配置（忽略已有配置）
    --json              以 JSON 格式输出结果
-   --preset <name>     使用预设方案，跳过交互（default | free）
+   --preset <name>     使用预设方案，跳过交互（default | free）；同时写入全局 men.jsonc
    --dry-run           模拟运行，不修改任何文件
    --verbose           打印详细调试信息
    --no-interactive    非交互模式（适合 CI/管道/自动化，已有配置则打印表；无配置则用 default 预设）
+
+men.jsonc 全局配置:
+   位于 ~/.config/opencode/men.jsonc，可跨项目统一管理 6 个角色的模型预设。
+   交互模式下会检测该文件：已存在则提供预设切换，不存在则询问是否创建。
+   --preset 会同步写入/更新 men.jsonc（不存在则自动创建）。
 
 流程: 检测已有配置 → 交互式问答 → 推荐算法 → 确认写入
 `);
@@ -448,6 +505,197 @@ function writeConfig(assignment, models, dryRun = false) {
   return result;
 }
 
+// ─────────────────────────── men.jsonc 全局配置 ───────────────────────────
+// 全局模型预设文件：~/.config/opencode/men.jsonc（结构见 config/men.schema.json）。
+// 兼容行为：文件不存在时返回 null，调用方回退到仅写当前项目 opencode.json。
+
+// 读取 men.jsonc：解析失败打印警告并返回 null（视为无配置）
+function readMenConfig() {
+  if (!fs.existsSync(MEN_CONFIG_PATH)) return null;
+  try {
+    const raw = fs.readFileSync(MEN_CONFIG_PATH, "utf8");
+    return JSON.parse(stripJsoncComments(raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw));
+  } catch (e) {
+    eprintf(`警告: 解析 men.jsonc 失败（${MEN_CONFIG_PATH}）：${e.message}`);
+    return null;
+  }
+}
+
+// 写入 men.jsonc：自动创建目录；覆盖前备份为 men.jsonc.bak；失败回滚
+function writeMenConfig(config, dryRun = false) {
+  const result = { ok: false, path: MEN_CONFIG_PATH, backupPath: null, written: false, error: null };
+  if (dryRun) {
+    result.ok = true;
+    return result;
+  }
+  try {
+    fs.mkdirSync(path.dirname(MEN_CONFIG_PATH), { recursive: true });
+  } catch (e) {
+    result.error = `创建配置目录失败：${e.message}`;
+    return result;
+  }
+  if (fs.existsSync(MEN_CONFIG_PATH)) {
+    const bak = `${MEN_CONFIG_PATH}.bak`;
+    try {
+      fs.copyFileSync(MEN_CONFIG_PATH, bak);
+      result.backupPath = bak;
+    } catch (e) {
+      eprintf(`警告: 备份 men.jsonc 失败：${e.message}`);
+    }
+  }
+  try {
+    fs.writeFileSync(MEN_CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+    result.written = true;
+    result.ok = true;
+  } catch (e) {
+    result.error = `写入 men.jsonc 失败：${e.message}`;
+    if (result.backupPath) {
+      try {
+        fs.copyFileSync(result.backupPath, MEN_CONFIG_PATH);
+        eprintf("已回滚 men.jsonc 到备份");
+      } catch (rb) {
+        eprintf(`回滚失败：${rb.message}`);
+      }
+    }
+  }
+  return result;
+}
+
+// 从 models.json 的预设提取 6 角色 model 映射（men.schema.json 要求 preset 只含角色 key）
+function presetEntryFromModels(p) {
+  const entry = {};
+  for (const role of ROLES) {
+    if (p?.[role]) entry[role] = p[role];
+  }
+  return entry;
+}
+
+// 用 models.json 的预设构建全新 men.jsonc 配置（仅角色 key，符合 schema）
+function buildDefaultMenConfig(presetName, models) {
+  const presets = {};
+  for (const [name, p] of Object.entries(models.presets ?? {})) {
+    presets[name] = presetEntryFromModels(p);
+  }
+  return { preset: presetName, presets, agents: {} };
+}
+
+// 把指定预设记录进 men.jsonc：已存在则更新 preset 字段并补入缺失的预设定义；不存在则创建。
+// 仅操作 men.jsonc，不动 opencode.json（由调用方负责同步）。
+function syncMenConfigPreset(presetName, models, dryRun = false) {
+  const existing = readMenConfig();
+  let cfg;
+  let created = false;
+  if (existing) {
+    cfg = existing;
+    if (!cfg.presets) cfg.presets = {};
+    if (!cfg.presets[presetName] && models.presets?.[presetName]) {
+      cfg.presets[presetName] = presetEntryFromModels(models.presets[presetName]);
+    }
+    cfg.preset = presetName;
+  } else {
+    cfg = buildDefaultMenConfig(presetName, models);
+    created = true;
+  }
+  const wr = writeMenConfig(cfg, dryRun);
+  return { ok: wr.ok, created, path: wr.path, backupPath: wr.backupPath, error: wr.error };
+}
+
+// 创建 men.jsonc（default/free 预设）并同步当前项目 opencode.json。先写 opencode.json（主目标），再写 men.jsonc。
+function createMenConfigWithPreset(presetName, models, dryRun = false) {
+  const preset = models.presets?.[presetName];
+  if (!preset) {
+    return { ok: false, error: `未知预设 "${presetName}"（models.json 中不存在）` };
+  }
+  const assignment = {};
+  for (const role of ROLES) assignment[role] = preset[role];
+  const owr = writeConfig(assignment, models, dryRun);
+  if (!owr.ok) return { ok: false, error: owr.error };
+
+  const cfg = buildDefaultMenConfig(presetName, models);
+  const wr = writeMenConfig(cfg, dryRun);
+  return {
+    ok: wr.ok,
+    created: true,
+    path: wr.path,
+    backupPath: wr.backupPath,
+    opencodeJson: owr.ok,
+    error: wr.ok ? null : wr.error,
+  };
+}
+
+// 切换 men.jsonc 中的活动预设，并同步当前项目 opencode.json（agents 覆盖优先）。
+function switchPreset(presetName, models, dryRun = false) {
+  const result = { ok: false, preset: presetName, menFile: null, opencodeJson: false, backupPath: null, error: null };
+  const menCfg = readMenConfig();
+  if (!menCfg) {
+    result.error = `men.jsonc 不存在（${MEN_CONFIG_PATH}），无法切换预设`;
+    return result;
+  }
+  if (!menCfg.presets) menCfg.presets = {};
+  let preset = menCfg.presets[presetName];
+  if (!preset && models.presets?.[presetName]) {
+    // men.jsonc 缺少该预设定义时，从 models.json 补入
+    preset = presetEntryFromModels(models.presets[presetName]);
+    menCfg.presets[presetName] = preset;
+  }
+  if (!preset) {
+    result.error = `未知预设 "${presetName}"（men.jsonc 与 models.json 中均不存在）`;
+    return result;
+  }
+
+  menCfg.preset = presetName;
+  const wr = writeMenConfig(menCfg, dryRun);
+  if (!wr.ok) {
+    result.error = wr.error;
+    return result;
+  }
+  result.menFile = wr.path;
+  result.backupPath = wr.backupPath;
+
+  // 同步 opencode.json：agents 显式覆盖优先于预设值
+  const assignment = {};
+  for (const role of ROLES) {
+    assignment[role] =
+      menCfg.agents?.[role]?.model ?? preset[role] ?? models.presets?.[presetName]?.[role] ?? "";
+  }
+  const missing = ROLES.filter((r) => !assignment[r]);
+  if (missing.length > 0) {
+    result.error = `预设 "${presetName}" 缺少角色模型：${missing.join(", ")}`;
+    return result;
+  }
+  const owr = writeConfig(assignment, models, dryRun);
+  result.opencodeJson = owr.ok;
+  if (!owr.ok) {
+    result.error = owr.error;
+    return result;
+  }
+  result.ok = true;
+  return result;
+}
+
+// 解析预设的有效分配：men.jsonc 中该预设优先（含 agents 覆盖），其次 models.json 预设。
+// 未知预设时打印错误并退出（与 applyPreset 行为一致，供 --preset 路径使用）。
+function resolveAssignment(presetName, models, menCfg = null) {
+  const menPreset = menCfg?.presets?.[presetName];
+  const modelPreset = models.presets?.[presetName];
+  if (!menPreset && !modelPreset) {
+    const supported = Object.keys(models.presets ?? {}).join(", ");
+    eprintf(`错误: 未知预设 "${presetName}"（支持: ${supported}）`);
+    process.exit(2);
+  }
+  const assignment = {};
+  for (const role of ROLES) {
+    assignment[role] =
+      menCfg?.agents?.[role]?.model ?? menPreset?.[role] ?? modelPreset?.[role] ?? "";
+  }
+  const missing = ROLES.filter((r) => !assignment[r]);
+  if (missing.length > 0) {
+    eprintf(`错误: 预设 "${presetName}" 缺少角色模型：${missing.join(", ")}`);
+    process.exit(2);
+  }
+  return assignment;
+}
+
 // ─────────────────────────── 交互式输入 ───────────────────────────
 
 function createRL() {
@@ -461,6 +709,110 @@ function question(rl, prompt) {
   return new Promise((resolve) => {
     rl.question(prompt, (answer) => resolve(answer.trim()));
   });
+}
+
+// ─────────────────────────── men.jsonc 交互 ───────────────────────────
+
+// 已存在 men.jsonc：展示当前预设 + 分配，提供切换。返回 { status: "switched" | "skip" }
+async function offerPresetSwitch(rl, menCfg, models, cfg) {
+  const presetName = menCfg.preset ?? "default";
+  const presetNames = Object.keys(menCfg.presets ?? {});
+
+  menSay("检测到全局配置 men.jsonc。");
+  blank();
+  menSay(`当前预设: ${presetName}`);
+  blank();
+
+  const assignment = {};
+  for (const role of ROLES) {
+    assignment[role] =
+      menCfg.agents?.[role]?.model ??
+      menCfg.presets?.[presetName]?.[role] ??
+      models.presets?.[presetName]?.[role] ??
+      "";
+  }
+  const table = renderAssignmentTable(assignment, models, true, true);
+  for (const line of table.split("\n")) menSay(line, "     ");
+  blank();
+
+  if (presetNames.length === 0) {
+    menSay("men.jsonc 中没有任何预设定义，跳过。");
+    return { status: "skip" };
+  }
+
+  menSay("可用预设：");
+  for (let i = 0; i < presetNames.length; i++) {
+    const name = presetNames[i];
+    const label = models.presets?.[name]?.name ?? name;
+    const current = name === presetName ? " ← 当前" : "";
+    menSay(`${i + 1}️⃣ ${name}（${label}）${current}`, "     ");
+  }
+  blank();
+  menSay("输入序号切换预设，或直接回车跳过。");
+  blank();
+
+  while (true) {
+    const answer = await question(rl, "你的选择: ");
+    if (answer.trim() === "") return { status: "skip" };
+    const idx = parseInt(answer, 10);
+    if (!isNaN(idx) && idx >= 1 && idx <= presetNames.length) {
+      const target = presetNames[idx - 1];
+      if (target === presetName) {
+        menSay("当前已是该预设，无需切换。");
+        return { status: "skip" };
+      }
+      const sw = switchPreset(target, models, cfg.dryRun);
+      if (!sw.ok) {
+        eprintf(`错误: 切换预设失败：${sw.error}`);
+        return { status: "skip" };
+      }
+      if (cfg.dryRun) {
+        menSay(`[DRY RUN] 将切换预设: ${presetName} → ${target}`);
+      } else {
+        menSay(`✅ 已切换预设: ${presetName} → ${target}`);
+        menSay("已同步 men.jsonc 与当前项目 opencode.json");
+      }
+      blank();
+      return { status: "switched" };
+    }
+    menSay(`请输入 1-${presetNames.length}，或回车跳过。`);
+  }
+}
+
+// 无 men.jsonc：询问是否创建（default / free 预设）。返回 { status: "created" | "declined" }
+async function offerPresetCreate(rl, models, cfg) {
+  menSay("未检测到全局配置 men.jsonc（~/.config/opencode/men.jsonc）。");
+  blank();
+  menSay("men.jsonc 是全局模型预设文件，可跨项目统一管理 6 个角色的模型分配，");
+  menSay("创建后会以所选预设同步当前项目 opencode.json。");
+  blank();
+  menSay("是否现在创建？");
+  menSay("1️⃣ default 预设（全功能推荐，需已有对应 provider 订阅）", "     ");
+  menSay("2️⃣ free 预设（OpenCode Zen 全免费，适合新用户）", "     ");
+  menSay("3️⃣ 跳过（不创建 men.jsonc）", "     ");
+  blank();
+
+  while (true) {
+    const answer = await question(rl, "你的选择 (1-3): ");
+    if (answer === "1" || answer === "2") {
+      const presetName = answer === "1" ? "default" : "free";
+      const created = createMenConfigWithPreset(presetName, models, cfg.dryRun);
+      if (!created.ok) {
+        eprintf(`错误: 创建 men.jsonc 失败：${created.error}`);
+        return { status: "declined" };
+      }
+      if (cfg.dryRun) {
+        menSay(`[DRY RUN] 将创建 men.jsonc（预设: ${presetName}）并同步 opencode.json`);
+      } else {
+        menSay(`✅ 已创建 men.jsonc（预设: ${presetName}）`);
+        menSay("已同步写入当前项目 opencode.json");
+      }
+      blank();
+      return { status: "created" };
+    }
+    if (answer === "3") return { status: "declined" };
+    menSay("请输入 1、2 或 3。");
+  }
 }
 
 // ─────────────────────────── 对话流程 ───────────────────────────
@@ -770,23 +1122,34 @@ async function main(argv = process.argv) {
 
   // ── 预设模式：直接应用，跳过交互 ──
   if (cfg.preset) {
-    const assignment = applyPreset(cfg.preset, models);
+    // 有效分配 = men.jsonc 自定义预设优先（含 agents 覆盖），其次 models.json 预设
+    const assignment = resolveAssignment(cfg.preset, models, readMenConfig());
     const stats = calcStats(assignment, models);
+
+    let wr = null;
+    let menSync = null;
+    if (!cfg.dryRun) {
+      wr = writeConfig(assignment, models, false);
+      if (wr.ok) menSync = syncMenConfigPreset(cfg.preset, models, false);
+    }
 
     if (cfg.json) {
       const result = {
-        ok: true,
+        ok: wr ? wr.ok : true,
         mode: "preset",
         preset: cfg.preset,
         assignment,
         stats,
         warnings: stats.warnings,
         fileWritten: cfg.dryRun ? null : "opencode.json",
+        menJsonc: !cfg.dryRun ? (menSync?.ok ? (menSync.created ? "created" : "updated") : "failed") : null,
       };
-      if (!cfg.dryRun) {
-        const wr = writeConfig(assignment, models, false);
-        result.ok = wr.ok;
-        if (!wr.ok) result.error = wr.error;
+      if (!cfg.dryRun && !wr.ok) {
+        result.ok = false;
+        result.error = wr.error;
+      } else if (!cfg.dryRun && menSync && !menSync.ok) {
+        result.ok = false;
+        result.error = menSync.error;
       }
       process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       process.exit(result.ok ? 0 : 1);
@@ -803,7 +1166,6 @@ async function main(argv = process.argv) {
       process.exit(0);
     }
 
-    const wr = writeConfig(assignment, models, false);
     if (!wr.ok) {
       eprintf(`错误: ${wr.error}`);
       process.exit(1);
@@ -811,6 +1173,11 @@ async function main(argv = process.argv) {
     process.stdout.write(`✅ 预设方案已应用，已写入 opencode.json\n`);
     if (wr.backupPath) {
       process.stdout.write(`   原文件已备份为 opencode.json.bak\n`);
+    }
+    if (menSync?.ok) {
+      process.stdout.write(`✅ men.jsonc 已${menSync.created ? "创建" : "更新"}（全局预设: ${cfg.preset}）\n`);
+    } else if (menSync) {
+      eprintf(`警告: men.jsonc 同步失败：${menSync.error ?? "未知错误"}`);
     }
     process.exit(0);
   }
@@ -887,6 +1254,28 @@ async function main(argv = process.argv) {
 
   // ── 已配置 & 未 reset → 打印当前并退出 ──
   if (configured && !cfg.reset) {
+    const menCfg = readMenConfig();
+    if (menCfg) {
+      // 有 men.jsonc → 展示当前预设并提供切换
+      const rl = createRL();
+      try {
+        const outcome = await offerPresetSwitch(rl, menCfg, models, cfg);
+        if (outcome.status === "switched") process.exit(0);
+      } finally {
+        rl.close();
+      }
+      blank();
+    } else {
+      // 无 men.jsonc → 询问是否创建（default / free 预设）
+      const rl = createRL();
+      try {
+        const outcome = await offerPresetCreate(rl, models, cfg);
+        if (outcome.status === "created") process.exit(0);
+      } finally {
+        rl.close();
+      }
+      blank();
+    }
     const assignment = currentAssignment(config);
     process.stdout.write(`men（门）Agent 团队 — 当前模型配置\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
@@ -906,10 +1295,27 @@ async function main(argv = process.argv) {
       blank();
     }
 
+    // ① men.jsonc 全局预设管理（可选）：仅非 reset 场景询问。
+    //    新用户/未配置 → 询问是否创建；已有 men.jsonc（如换机同步）→ 展示并提供切换。
+    let menOutcome = null;
+    if (!cfg.reset) {
+      const menCfg = readMenConfig();
+      if (menCfg) {
+        menOutcome = await offerPresetSwitch(rl, menCfg, models, cfg);
+      } else {
+        menOutcome = await offerPresetCreate(rl, models, cfg);
+      }
+    }
+
     let assignment;
     let confirmed = false;
 
-    if (!configured) {
+    if (menOutcome?.status === "switched" || menOutcome?.status === "created") {
+      // 已通过 men.jsonc 完成预设应用并同步 opencode.json → 无需再走引导流程
+      const fresh = readOpencodeJson();
+      assignment = currentAssignment(fresh);
+      confirmed = true;
+    } else if (!configured) {
       // 新用户：直接进入免费路径，跳过 Q1-Q4
       assignment = await handleNewUser(rl, models);
       confirmed = true;
@@ -988,4 +1394,27 @@ if (process.argv[1] && process.argv[1].includes("setup.mjs")) {
   });
 }
 
-export { main, parseArgs, loadModels, generateAssignment, filterModels, recommendModel, findModel, calcStats, writeConfig, applyPreset, isConfigured, currentAssignment, renderAssignmentTable };
+export {
+  main,
+  parseArgs,
+  loadModels,
+  generateAssignment,
+  filterModels,
+  recommendModel,
+  findModel,
+  calcStats,
+  writeConfig,
+  applyPreset,
+  resolveAssignment,
+  isConfigured,
+  currentAssignment,
+  renderAssignmentTable,
+  stripJsoncComments,
+  readMenConfig,
+  writeMenConfig,
+  switchPreset,
+  syncMenConfigPreset,
+  createMenConfigWithPreset,
+  buildDefaultMenConfig,
+  MEN_CONFIG_PATH,
+};

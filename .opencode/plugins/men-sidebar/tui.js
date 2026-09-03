@@ -1,5 +1,9 @@
 /**
- * men-sidebar — TUI entry (V8)
+ * men-sidebar — TUI entry (V9)
+ *
+ * V9 变更：agent 模型分配读取优先 men.jsonc
+ *   （~/.config/opencode/men.jsonc：preset → presets[preset] → agents 覆盖），
+ *   不存在或无效时回退到运行时配置 / 磁盘 opencode.json（行为同 V8）。
  *
  * 修复：
  *   1. 所有 static import 放文件顶部（ESM 规范）
@@ -11,6 +15,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
 import { runUpdateCheck } from "./update-check.mjs";
 
 // 版本号统一变量：跟随项目根 package.json 的真实发布版本；
@@ -44,37 +49,145 @@ const PKG = (() => {
 const VERSION = PKG.version;
 
 dbg(`[men-sidebar] version source: ${PKG.source} -> ${PKG.name || "?"}@v${VERSION || "?"}`);
-function readAgents(dir, runtimeAgents) {
-  // 优先：opencode 运行时合并后的配置（全局 + 项目 + 插件注册的 agents）。
-  // 兜底：磁盘 opencode.json（合并链：全局在前、项目在后，项目覆盖全局）。
-  if (runtimeAgents && typeof runtimeAgents === "object") {
-    const keys = Object.keys(runtimeAgents);
+// ─────────────────────────── JSONC / men.jsonc 读取 ───────────────────────────
+
+/** 去除 JSONC 注释（// 行注释与块注释），保留字符串字面量内部的内容 */
+function stripJsoncComments(src) {
+  let out = "";
+  let i = 0;
+  const n = src.length;
+  let inString = false;
+  while (i < n) {
+    const ch = src[i];
+    if (inString) {
+      out += ch;
+      if (ch === "\\") { if (i + 1 < n) out += src[++i]; i++; continue; }
+      if (ch === '"') inString = false;
+      i++;
+      continue;
+    }
+    if (ch === '"') { inString = true; out += ch; i++; continue; }
+    if (ch === "/" && src[i + 1] === "/") {
+      while (i < n && src[i] !== "\n") i++;
+      continue;
+    }
+    if (ch === "/" && src[i + 1] === "*") {
+      i += 2;
+      while (i < n && !(src[i] === "*" && src[i + 1] === "/")) i++;
+      i += 2;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+/** 安全读取 JSON / JSONC 文件；文件不存在或解析失败返回 null */
+function readJsonSafe(p, isJsonc = false) {
+  try {
+    if (!existsSync(p)) return null;
+    let src = readFileSync(p, "utf8");
+    if (isJsonc) src = stripJsoncComments(src);
+    return JSON.parse(src);
+  } catch (e) {
+    dbg(`[men-sidebar] readJsonSafe 失败: ${p} — ${e?.message ?? e}`);
+    return null;
+  }
+}
+
+/**
+ * 从 ~/.config/opencode/men.jsonc 读取 per-agent 模型分配：
+ *   1) preset 字段 → 激活预设名
+ *   2) presets[activePreset] → 各 agent 的模型分配
+ *   3) agents 字段 → 覆盖预设分配
+ * 返回归一化后的 { role: { model } } 结构（与 opencode.json agent 结构一致）；
+ * men.jsonc 不存在 / 解析失败 / 无有效分配时返回 null（调用方回退下一来源）。
+ */
+function readMenJsoncAgents() {
+  const home = homedir() || process.env.USERPROFILE || process.env.HOME || "";
+  if (!home) return null;
+  const p = join(home, ".config", "opencode", "men.jsonc");
+  if (!existsSync(p)) { dbg("[men-sidebar] men.jsonc NOT FOUND:", p); return null; }
+
+  const cfg = readJsonSafe(p, true);
+  if (!cfg || typeof cfg !== "object") { dbg("[men-sidebar] men.jsonc 解析失败:", p); return null; }
+
+  // 1) 激活预设
+  const presetName = typeof cfg.preset === "string" && cfg.preset ? cfg.preset : null;
+  let raw = {};
+  if (presetName && cfg.presets && typeof cfg.presets === "object") {
+    const preset = cfg.presets[presetName];
+    if (preset && typeof preset === "object") {
+      raw = Object.assign({}, preset);
+    } else {
+      dbg(`[men-sidebar] men.jsonc 预设 "${presetName}" 不存在，忽略预设分配`);
+    }
+  } else {
+    dbg("[men-sidebar] men.jsonc 无 preset/presets 字段，仅使用 agents 覆盖");
+  }
+
+  // 2) agents 覆盖
+  if (cfg.agents && typeof cfg.agents === "object") {
+    const keys = Object.keys(cfg.agents).filter((k) => cfg.agents[k] != null);
     if (keys.length) {
-      dbg("[men-sidebar] readAgents from runtime config:", keys.join(", "));
-      return Object.assign({}, runtimeAgents);
+      raw = Object.assign({}, raw, cfg.agents);
+      dbg("[men-sidebar] men.jsonc agents overrides:", keys.join(", "));
     }
   }
-  const home = process.env.USERPROFILE || process.env.HOME || "";
-  const candidates = [];
-  if (home) candidates.push(join(home, ".config", "opencode", "opencode.json"));
-  candidates.push(join(dir, "opencode.json"));
-  let merged = {};
-  for (const p of candidates) {
-    try {
-      if (!existsSync(p)) { dbg("[men-sidebar] opencode.json NOT FOUND:", p); continue; }
-      const cfg = JSON.parse(readFileSync(p, "utf8"));
-      const a = cfg.agent ?? {};
-      const keys = Object.keys(a);
-      if (keys.length) {
-        dbg("[men-sidebar] readAgents from " + p + ":", keys.join(", "));
-        merged = Object.assign({}, merged, a); // 后读的覆盖先读的 → 全局在前、项目在后（项目优先）
+
+  // 归一化：扁平 "role": "modelId" → { role: { model: "modelId" } }；已是对象则原样保留
+  const agents = {};
+  for (const [name, val] of Object.entries(raw)) {
+    if (typeof val === "string" && val) agents[name] = { model: val };
+    else if (val && typeof val === "object" && (val.model || val.provider)) agents[name] = val;
+  }
+
+  if (!Object.keys(agents).length) { dbg("[men-sidebar] men.jsonc 无有效 agent 分配"); return null; }
+  dbg(`[men-sidebar] readAgents from men.jsonc (preset: ${presetName ?? "(无)"}):`, Object.keys(agents).join(", "));
+  return agents;
+}
+
+function readAgents(dir, runtimeAgents) {
+  // 优先：men.jsonc（men 专属配置：preset → presets[preset] → agents 覆盖），
+  // 合并：runtime/disk agents 作为兜底（men.jsonc 未列出的 role 保留完整 6 角色）。
+  const menAgents = readMenJsoncAgents();
+
+  // 收集兜底 agents（runtime → global opencode.json → local opencode.json）
+  let fallbackAgents = {};
+  if (runtimeAgents && typeof runtimeAgents === "object" && Object.keys(runtimeAgents).length) {
+    dbg("[men-sidebar] readAgents fallback from runtime config:", Object.keys(runtimeAgents).join(", "));
+    fallbackAgents = Object.assign({}, runtimeAgents);
+  } else {
+    const home = process.env.USERPROFILE || process.env.HOME || "";
+    const candidates = [];
+    if (home) candidates.push(join(home, ".config", "opencode", "opencode.json"));
+    candidates.push(join(dir, "opencode.json"));
+    for (const p of candidates) {
+      try {
+        if (!existsSync(p)) { dbg("[men-sidebar] opencode.json NOT FOUND:", p); continue; }
+        const cfg = JSON.parse(readFileSync(p, "utf8"));
+        const a = cfg.agent ?? {};
+        const keys = Object.keys(a);
+        if (keys.length) {
+          dbg("[men-sidebar] readAgents fallback from " + p + ":", keys.join(", "));
+          fallbackAgents = Object.assign({}, fallbackAgents, a);
+        }
+      } catch (e) {
+        console.error("[men-sidebar] readAgents fallback ERROR:", e && e.message ? e.message : String(e));
       }
-    } catch (e) {
-      console.error("[men-sidebar] readAgents ERROR:", e && e.message ? e.message : String(e));
     }
   }
-  if (!Object.keys(merged).length) dbg("[men-sidebar] WARN: no agents found in any candidate path");
-  return merged;
+
+  // 合并：men.jsonc 覆盖 fallback 中的同名 role，fallback 保留 men.jsonc 未列出的 role
+  if (menAgents) {
+    const merged = Object.assign({}, fallbackAgents, menAgents);
+    dbg("[men-sidebar] readAgents merged:", Object.keys(merged).join(", "));
+    return merged;
+  }
+
+  if (!Object.keys(fallbackAgents).length) dbg("[men-sidebar] WARN: no agents found in any source");
+  return fallbackAgents;
 }
 
 function modelStr(m) {
@@ -130,7 +243,7 @@ function renderSidebar(dir, theme, el_fn, box_fn, txt_fn, runtimeAgents) {
   );
 }
 
-dbg("[men-sidebar] === ① TUI ENTRY LOADED (V8) ===");
+dbg("[men-sidebar] === ① TUI ENTRY LOADED (V9) ===");
 
 export default {
   id: "men-sidebar:tui",

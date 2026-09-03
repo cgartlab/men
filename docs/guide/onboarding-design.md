@@ -1,7 +1,7 @@
 # 新用户引导式模型配置流程 — 设计文档
 
-> 目标：新用户首次运行 `node scripts/setup.mjs` 后，通过和 men 的**对话式交互**完成模型配置，自动写入 `opencode.json`。
-> 设计版本：v1.0
+> 目标：新用户首次运行 `node scripts/setup.mjs` 后，通过和 men 的**对话式交互**完成模型配置，自动写入 `opencode.json`，并可创建全局 `~/.config/opencode/men.jsonc` 跨项目统一管理模型预设。
+> 设计版本：v2.0
 > 对应 SID：ultrawork-20260822-190626
 
 ---
@@ -13,6 +13,10 @@
 3. [推荐算法逻辑](#3-推荐算法逻辑)
 4. [自动配置写入](#4-自动配置写入)
 5. [脚本入口设计](#5-脚本入口设计)
+6. [全局配置文件（men.jsonc）](#6-全局配置文件menjsonc)
+7. [配置解析优先级](#7-配置解析优先级)
+8. [预设切换](#8-预设切换)
+9. [使用示例](#9-使用示例)
 
 ---
 
@@ -921,13 +925,13 @@ Usage:
   node scripts/setup.mjs --help       # 显示帮助
   node scripts/setup.mjs --reset      # 强制重新配置（忽略已有配置）
   node scripts/setup.mjs --json       # JSON 输出模式（供 CI/自动化使用）
-  node scripts/setup.mjs --preset <name>  # 使用预设跳过交互
+  node scripts/setup.mjs --preset <name>  # 使用预设跳过交互（同时写入全局 men.jsonc）
 
 Options:
   --help         显示帮助信息
   --reset        强制重新配置（忽略已有的 opencode.json 配置）
   --json         以 JSON 格式输出结果（供自动化脚本消费）
-  --preset <name> 使用预设方案（default | free），跳过交互
+  --preset <name> 使用预设方案（default | free），跳过交互；同时写入全局 men.jsonc
   --dry-run      模拟运行，不写入文件
   --verbose      打印详细调试信息
 ```
@@ -1012,6 +1016,8 @@ function main():
 | `default` | 全功能推荐，使用用户所有可用模型的组合 | 已配置多 provider 的付费用户 |
 | `free` | OpenCode Zen 全免费方案，全部使用 `opencode-zen/*-free` 模型 | 新用户默认、无套餐用户、CI 环境 |
 
+> 预设可在 `men.jsonc` 中扩展：新增 `presets.<name>` 定义后，即可通过 `--preset <name>` 使用（详见[第 6 章](#6-全局配置文件menjsonc)）。
+
 ### 5.5 JSON 输出格式
 
 `--json` 模式下，输出（未配置或 `--dry-run` 时为 OpenCode Zen 免费预设）：
@@ -1061,6 +1067,204 @@ function main():
 | 写入 | `opencode.json` | 写入新配置 |
 | 读取 | `config/models.json` | 读取模型知识基 |
 | 验证 | `opencode.json` | 写入后读取验证 |
+| 读取 | `~/.config/opencode/men.jsonc` | 读取全局预设配置（不存在视为无配置） |
+| 备份/写入 | `~/.config/opencode/men.jsonc`（`.bak`） | 同步全局预设，覆盖前备份、失败回滚 |
+
+---
+
+## 6. 全局配置文件（men.jsonc）
+
+### 6.1 文件位置与用途
+
+**位置：** `~/.config/opencode/men.jsonc`（用户级全局配置，跨项目生效）
+
+| 平台 | 路径 |
+|------|------|
+| macOS / Linux | `~/.config/opencode/men.jsonc` |
+| Windows | `%USERPROFILE%\.config\opencode\men.jsonc` |
+
+**用途：** 用户可编辑的全局模型预设文件，跨项目统一管理 6 个角色的模型分配。schema 定义见 `config/men.schema.json`，脚本实现见 `scripts/setup.mjs`。
+
+- 解决了 `opencode.json` 只能配置当前项目的局限：换项目或换机器后，模型分配可一键恢复
+- 是 `--preset` 与交互式配置的写入目标之一（与 `opencode.json` 同步双写）
+- **兼容行为**：`men.jsonc` 不存在时，setup.mjs 回退到仅写当前项目 `opencode.json`，不影响旧流程
+
+### 6.2 配置结构
+
+men.jsonc 采用 `preset + presets + agents` 三段式结构：
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `preset` | string | ✅ | 当前活动预设名称，如 `"default"` / `"free"` |
+| `presets` | object | ✅ | 命名预设定义：每个预设将 6 个角色（men/si/ji/chi/yi/xun）映射到模型 ID |
+| `agents` | object | ❌ | 可选单角色覆盖：`{ "<role>": { "model": "..." } }`，优先级高于预设值 |
+
+**预设定义要求：** 每个预设必须完整包含 6 个角色 key（men、si、ji、chi、yi、xun），缺省会触发校验错误。
+
+```jsonc
+{
+  "preset": "default",
+  "presets": {
+    "default": {
+      "men": "opencode-go/hy3",
+      "si": "opencode-go/deepseek-v4-flash",
+      "ji": "opencode-go/deepseek-v4-flash",
+      "chi": "sensenova/glm-5.2",
+      "yi": "sensenova/sensenova-6.8-flash-lite",
+      "xun": "sensenova/sensenova-6.8-flash-lite"
+    }
+  },
+  "agents": {}
+}
+```
+
+### 6.3 与 opencode.json 的关系
+
+| 维度 | `men.jsonc` | `opencode.json` |
+|------|------------|-----------------|
+| 作用域 | 用户级全局（所有项目） | 项目级（当前仓库） |
+| 内容 | 预设定义 + 活动预设 + 单角色覆盖 | `agent.<角色>.model` 直接分配 |
+| 优先级 | **更高**（配置解析时优先读取） | 次之（men.jsonc 不存在时使用） |
+| 写入方式 | `setup.mjs` 自动同步 / 手动编辑 | `setup.mjs` 写入 / 手动编辑 |
+
+**优先级关系：** `men.jsonc` 存在时以其为准（含 `agents` 覆盖）；不存在时回退到项目 `opencode.json`；两者都没有时使用默认值。`--preset` 路径会**先写 `opencode.json`（主目标），再同步 `men.jsonc`**，保证两个文件一致。
+
+---
+
+## 7. 配置解析优先级
+
+### 7.1 配置文件解析顺序
+
+```
+~/.config/opencode/men.jsonc（用户级全局）
+  ↓ 不存在时回退
+./opencode.json（项目级）
+  ↓ 不存在时回退
+默认值（models.json presets.default）
+```
+
+### 7.2 预设内角色分配解析顺序
+
+选定预设后，单个角色的有效模型按以下顺序解析（对应 `resolveAssignment` / `switchPreset`）：
+
+```
+1. men.jsonc agents.<role>.model          ← 单角色显式覆盖（最高）
+2. men.jsonc presets.<preset>.<role>      ← 全局预设值
+3. models.json presets.<preset>.<role>    ← 知识基预设兜底
+4. 全部缺失 → 报错退出（未知预设 / 缺角色）
+```
+
+> 典型场景：用户在 `agents.chi` 显式指定 `sensenova/glm-5.2`，则无论当前预设如何切换，chi 角色始终使用该覆盖模型。
+
+---
+
+## 8. 预设切换
+
+### 8.1 CLI 直接应用（跳过交互）
+
+```bash
+node scripts/setup.mjs --preset free      # 应用 free 预设（OpenCode Zen 全免费）
+node scripts/setup.mjs --preset default   # 应用 default 预设（全功能推荐）
+node scripts/setup.mjs --preset <name> --dry-run   # 预览不写入
+```
+
+行为：解析有效分配 → 写入当前项目 `opencode.json` → 同步 `men.jsonc`（不存在则自动创建，`preset` 字段更新为所选预设）。
+
+### 8.2 交互式切换
+
+```bash
+node scripts/setup.mjs
+```
+
+- **已存在 men.jsonc**：展示当前预设与分配表，列出可用预设，输入序号切换（同时同步 opencode.json），直接回车跳过
+- **不存在 men.jsonc**：询问是否创建（1️⃣ default / 2️⃣ free / 3️⃣ 跳过），创建后以所选预设同步 opencode.json
+
+### 8.3 手动编辑
+
+直接编辑 `~/.config/opencode/men.jsonc`：
+
+- 修改 `preset` 字段切换活动预设
+- 修改 `presets.<name>` 调整预设内角色分配
+- 修改 `agents` 添加/移除单角色覆盖
+
+> 手动编辑后，需重新运行 `node scripts/setup.mjs --preset <name>`（或重启 OpenCode）使当前项目 opencode.json 与新预设同步。
+
+---
+
+## 9. 使用示例
+
+### 9.1 men.jsonc 完整示例
+
+```jsonc
+{
+  // 当前活动预设
+  "preset": "default",
+
+  // 预设定义：6 个角色 → 模型 ID
+  "presets": {
+    "default": {
+      "men": "opencode-go/hy3",
+      "si": "opencode-go/deepseek-v4-flash",
+      "ji": "opencode-go/deepseek-v4-flash",
+      "chi": "sensenova/glm-5.2",
+      "yi": "sensenova/sensenova-6.8-flash-lite",
+      "xun": "sensenova/sensenova-6.8-flash-lite"
+    },
+    "free": {
+      "men": "opencode-zen/hy3-free",
+      "si": "opencode-zen/deepseek-v4-flash-free",
+      "ji": "opencode-zen/north-mini-code-free",
+      "chi": "opencode-zen/mimo-v2.5-free",
+      "yi": "opencode-zen/nemotron-3-ultra-free",
+      "xun": "opencode-zen/nemotron-3.5-lightning-free"
+    }
+  },
+
+  // 单角色覆盖（可选，优先级最高）
+  "agents": {
+    "chi": { "model": "sensenova/glm-5.2" }
+  }
+}
+```
+
+### 9.2 切换预设
+
+```bash
+# 应用 free 预设并同步（opencode.json + men.jsonc 双写）
+node scripts/setup.mjs --preset free
+
+# 切回 default 预设
+node scripts/setup.mjs --preset default
+
+# 交互式：运行后按提示选择切换
+node scripts/setup.mjs
+```
+
+### 9.3 覆盖单个角色模型
+
+方法一（CLI + 手动编辑组合）：
+
+```jsonc
+// 在 men.jsonc 的 agents 中指定覆盖
+"agents": {
+  "ji": { "model": "opencode-go/deepseek-v4-flash" }
+}
+```
+
+```bash
+# 重新应用预设，让覆盖生效并同步 opencode.json
+node scripts/setup.mjs --preset default
+```
+
+方法二（直接改 opencode.json，仅影响当前项目）：
+
+```json
+{
+  "agent": {
+    "ji": { "model": "opencode-go/deepseek-v4-flash" }
+  }
+}
+```
 
 ---
 
@@ -1073,5 +1277,9 @@ function main():
 | 3. 推荐算法逻辑 | 伪代码 + 决策表 + 6 条优先级规则（含 Zen 付费启发式） | ✅ |
 | 4. 自动配置写入 | 写入流程、内容、显示格式、错误处理 | ✅ |
 | 5. 脚本入口设计 | CLI 接口、行为逻辑、预设、JSON 输出、依赖 | ✅ |
+| 6. 全局配置文件（men.jsonc） | 位置、三段式结构（preset/presets/agents）、与 opencode.json 的关系 | ✅ |
+| 7. 配置解析优先级 | 文件级回退链 + 预设内角色分配解析顺序 | ✅ |
+| 8. 预设切换 | CLI `--preset`、交互式切换、手动编辑 | ✅ |
+| 9. 使用示例 | men.jsonc 完整示例、切换预设、覆盖单角色 | ✅ |
 
 **产出文件：** `docs/guide/onboarding-design.md`
