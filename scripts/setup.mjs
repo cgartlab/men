@@ -197,15 +197,23 @@ function printHelp() {
    --help, -h          显示帮助信息
    --reset             强制重新配置（忽略已有配置）
    --json              以 JSON 格式输出结果
-   --preset <name>     使用预设方案，跳过交互（default | free）；同时写入全局 men.jsonc
+   --preset <name>     使用预设方案，跳过交互（default | free）；
+    --preset free 会实时拉取 OpenCode Zen 可用免费模型（无 men.jsonc 自定义预设时）
+    --preset default 写入并同步 men.jsonc
    --dry-run           模拟运行，不修改任何文件
    --verbose           打印详细调试信息
    --no-interactive    非交互模式（适合 CI/管道/自动化，已有配置则打印表；无配置则用 default 预设）
 
 men.jsonc 全局配置:
-   位于 ~/.config/opencode/men.jsonc，可跨项目统一管理 6 个角色的模型预设。
-   交互模式下会检测该文件：已存在则提供预设切换，不存在则询问是否创建。
-   --preset 会同步写入/更新 men.jsonc（不存在则自动创建）。
+    位于 ~/.config/opencode/men.jsonc，可跨项目统一管理 6 个角色的模型预设。
+    交互模式下会检测该文件：已存在则提供预设切换，不存在则询问是否创建。
+    --preset 会同步写入/更新 men.jsonc（不存在则自动创建）。
+
+动态免费模型:
+    --preset free 会从 https://opencode.ai/zen/v1/models 实时拉取当前可用免费模型。
+    若 men.jsonc 中已定义自定义 free 预设，则使用自定义预设（不拉取）。
+    动态免费预设不写入 men.jsonc（每次拉取最新列表），仅写入项目 opencode.json。
+    API 不可用时自动回退到 models.json 缓存的 free 预设。
 
 流程: 检测已有配置 → 交互式问答 → 推荐算法 → 确认写入
 `);
@@ -1094,6 +1102,77 @@ async function confirmAssignment(rl, assignment, models) {
   }
 }
 
+// ─────────────────────────── OpenCode Zen 动态免费模型 ───────────────────────────
+// OpenCode Zen 免费模型轮换：通过 API 获取当前可用免费模型列表，动态构建 free 预设。
+// API: https://opencode.ai/zen/v1/models — 返回所有模型 ID（仅 id/object/created/owned_by）
+// 免费模型判定：ID 含 -free 或已知免费模型（big-pickle 等）
+
+const ZEN_MODELS_API = "https://opencode.ai/zen/v1/models";
+
+// 从 OpenCode Zen API 获取当前可用免费模型名称集合
+async function fetchFreeModels() {
+  try {
+    const res = await fetch(ZEN_MODELS_API, {
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const models = data.data || [];
+    const freeNames = new Set();
+    for (const m of models) {
+      if (m.id.includes("-free") || m.id === "big-pickle") {
+        freeNames.add(m.id);
+      }
+    }
+    return freeNames;
+  } catch (e) {
+    return null;
+  }
+}
+
+// 从 live 免费模型 + roleDefaults 优先级构建动态 free 分配
+// 每个角色：遍历其 priority 列表，取第一个在 live free 集合中的模型；无匹配则取首个 free 模型
+function buildDynamicFreeAssignment(models, freeNames, menCfg) {
+  const assignment = {};
+  const agents = menCfg?.agents || {};
+
+  for (const role of ROLES) {
+    // 优先使用 agents 覆盖
+    if (agents[role]?.model) {
+      assignment[role] = agents[role].model;
+      continue;
+    }
+
+    const priority = models.roleDefaults?.[role]?.priority || [];
+    let assigned = null;
+
+    // 遍历优先级列表，找第一个可用免费模型
+    for (const modelId of priority) {
+      if (!modelId.startsWith("opencode-zen/")) continue;
+      const name = modelId.slice("opencode-zen/".length);
+      if (freeNames.has(name)) {
+        assigned = modelId;
+        break;
+      }
+    }
+
+    // 优先级列表无匹配 → 取 live free 列表中第一个可用模型
+    if (!assigned) {
+      for (const name of freeNames) {
+        if (name) {
+          assigned = `opencode-zen/${name}`;
+          break;
+        }
+      }
+    }
+
+    assignment[role] = assigned || "";
+  }
+
+  return assignment;
+}
+
 // ─────────────────────────── 预设方案 ───────────────────────────
 
 function applyPreset(presetName, models) {
@@ -1122,15 +1201,35 @@ async function main(argv = process.argv) {
 
   // ── 预设模式：直接应用，跳过交互 ──
   if (cfg.preset) {
-    // 有效分配 = men.jsonc 自定义预设优先（含 agents 覆盖），其次 models.json 预设
-    const assignment = resolveAssignment(cfg.preset, models, readMenConfig());
+    let assignment;
+    let source = "cached";
+    const menCfg = readMenConfig();
+
+    if (cfg.preset === "free") {
+      // free 预设：优先动态拉取，无 men.jsonc 自定义预设时才启用动态
+      const menFreePreset = menCfg?.presets?.["free"];
+      if (!menFreePreset) {
+        const freeNames = await fetchFreeModels();
+        if (freeNames) {
+          assignment = buildDynamicFreeAssignment(models, freeNames, menCfg);
+          source = "dynamic-free";
+        } else {
+          assignment = resolveAssignment("free", models, menCfg);
+        }
+      } else {
+        assignment = resolveAssignment("free", models, menCfg);
+      }
+    } else {
+      assignment = resolveAssignment(cfg.preset, models, menCfg);
+    }
     const stats = calcStats(assignment, models);
 
     let wr = null;
     let menSync = null;
+    const skipMenSync = source === "dynamic-free"; // 动态免费预设不写入 men.jsonc（每次拉取）
     if (!cfg.dryRun) {
       wr = writeConfig(assignment, models, false);
-      if (wr.ok) menSync = syncMenConfigPreset(cfg.preset, models, false);
+      if (wr.ok && !skipMenSync) menSync = syncMenConfigPreset(cfg.preset, models, false);
     }
 
     if (cfg.json) {
@@ -1138,11 +1237,14 @@ async function main(argv = process.argv) {
         ok: wr ? wr.ok : true,
         mode: "preset",
         preset: cfg.preset,
+        source,
         assignment,
         stats,
         warnings: stats.warnings,
         fileWritten: cfg.dryRun ? null : "opencode.json",
-        menJsonc: !cfg.dryRun ? (menSync?.ok ? (menSync.created ? "created" : "updated") : "failed") : null,
+        menJsonc: skipMenSync
+          ? "skipped-dynamic"
+          : (!cfg.dryRun ? (menSync?.ok ? (menSync.created ? "created" : "updated") : "failed") : null),
       };
       if (!cfg.dryRun && !wr.ok) {
         result.ok = false;
@@ -1155,7 +1257,7 @@ async function main(argv = process.argv) {
       process.exit(result.ok ? 0 : 1);
     }
 
-    process.stdout.write(`men（门）Agent 团队 — 应用预设：${cfg.preset}\n`);
+    process.stdout.write(`men（门）Agent 团队 — 应用预设：${cfg.preset}${source === "dynamic-free" ? "（动态，从 OpenCode Zen 实时拉取）" : ""}\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
     const table = renderAssignmentTable(assignment, models);
     process.stdout.write(table + "\n");
@@ -1174,7 +1276,9 @@ async function main(argv = process.argv) {
     if (wr.backupPath) {
       process.stdout.write(`   原文件已备份为 opencode.json.bak\n`);
     }
-    if (menSync?.ok) {
+    if (source === "dynamic-free") {
+      process.stdout.write("   免费模型为实时拉取，下次运行 `--preset free` 将自动更新\n");
+    } else if (menSync?.ok) {
       process.stdout.write(`✅ men.jsonc 已${menSync.created ? "创建" : "更新"}（全局预设: ${cfg.preset}）\n`);
     } else if (menSync) {
       eprintf(`警告: men.jsonc 同步失败：${menSync.error ?? "未知错误"}`);
@@ -1195,9 +1299,22 @@ async function main(argv = process.argv) {
       assignment = currentAssignment(config);
       mode = "current";
     } else {
-      // JSON 模式下无交互 → 使用 free 预设作为默认
-      assignment = applyPreset("free", models);
-      mode = "default-free";
+      // JSON 模式下无交互 → 使用 free 预设作为默认（动态拉取）
+      const menCfg = readMenConfig();
+      const menFreePreset = menCfg?.presets?.["free"];
+      let source = "cached";
+      if (!menFreePreset) {
+        const freeNames = await fetchFreeModels();
+        if (freeNames) {
+          assignment = buildDynamicFreeAssignment(models, freeNames, menCfg);
+          source = "dynamic-free";
+        } else {
+          assignment = applyPreset("free", models);
+        }
+      } else {
+        assignment = applyPreset("free", models);
+      }
+      mode = source === "dynamic-free" ? "default-dynamic-free" : "default-free";
       if (!cfg.dryRun) {
         writeConfig(assignment, models, false);
       }
@@ -1416,5 +1533,7 @@ export {
   syncMenConfigPreset,
   createMenConfigWithPreset,
   buildDefaultMenConfig,
+  fetchFreeModels,
+  buildDynamicFreeAssignment,
   MEN_CONFIG_PATH,
 };

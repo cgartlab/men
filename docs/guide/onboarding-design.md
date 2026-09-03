@@ -1189,6 +1189,44 @@ node scripts/setup.mjs
 
 > 手动编辑后，需重新运行 `node scripts/setup.mjs --preset <name>`（或重启 OpenCode）使当前项目 opencode.json 与新预设同步。
 
+### 8.4 动态免费预设
+
+`--preset free` 会实时从 OpenCode Zen API（`https://opencode.ai/zen/v1/models`）拉取当前可用免费模型列表，动态构建分配方案，**不再依赖 `models.json` 中硬编码的 free 预设**。
+
+**工作原理：**
+
+1. 检测 `men.jsonc` 是否存在自定义 `free` 预设
+   - **有** → 使用自定义预设（不拉取 API，行为同 cached）
+   - **无** → 继续下一步
+2. 调用 `fetchFreeModels()` 从 API 获取所有模型 ID，筛选含 `-free` 后缀或已知免费模型（如 `big-pickle`）
+3. 调用 `buildDynamicFreeAssignment()` 对每个角色遍历其 `roleDefaults.priority` 列表，取第一个在 live free 集合中的模型
+4. 写入项目 `opencode.json`（不写入 `men.jsonc`，因为每次拉取结果可能不同）
+
+**与 cached 预设的对比：**
+
+| 维度 | Cached（`--preset free` 无 API） | Dynamic（`--preset free` 有 API） |
+|------|-------------------------------|-------------------------------|
+| 模型来源 | `models.json` 硬编码 | API 实时拉取 |
+| 是否写 men.jsonc | 是 | 否（每次拉取） |
+| 是否随免费模型轮换更新 | 否（需手动更新 models.json） | 是（自动） |
+| 网络依赖 | 无 | 有（失败时回退到 cached） |
+| `source` 字段 | `"cached"` | `"dynamic-free"` |
+
+**API 不可用时的回退行为：** 当 API 超时（15s）或返回非 200 时，自动回退到 `models.json` 缓存的 `presets.free`，行为与旧版本一致。
+
+**推荐用法：**
+
+```bash
+# 日常使用：自动获取最新免费模型
+node scripts/setup.mjs --preset free
+
+# 预览不写入
+node scripts/setup.mjs --preset free --dry-run
+
+# 已定义自定义 free 预设（men.jsonc 中）：使用自定义，不拉取 API
+# 编辑 ~/.config/opencode/men.jsonc 添加 presets.free 即可
+```
+
 ---
 
 ## 9. 使用示例
@@ -1279,7 +1317,7 @@ node scripts/setup.mjs --preset default
 | 5. 脚本入口设计 | CLI 接口、行为逻辑、预设、JSON 输出、依赖 | ✅ |
 | 6. 全局配置文件（men.jsonc） | 位置、三段式结构（preset/presets/agents）、与 opencode.json 的关系 | ✅ |
 | 7. 配置解析优先级 | 文件级回退链 + 预设内角色分配解析顺序 | ✅ |
-| 8. 预设切换 | CLI `--preset`、交互式切换、手动编辑 | ✅ |
+| 8. 预设切换 | CLI `--preset`、交互式切换、手动编辑、动态免费预设 | ✅ |
 | 9. 使用示例 | men.jsonc 完整示例、切换预设、覆盖单角色 | ✅ |
 
 **产出文件：** `docs/guide/onboarding-design.md`
