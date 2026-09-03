@@ -120,6 +120,16 @@
       "homepage": "https://opencode.ai/pricing",
       "models": [
         {
+          "id": "opencode-go/mimo-v2.5",
+          "name": "MiMo-V2.5",
+          "tier": "premium",
+          "description": "OpenCode MiMo-V2.5，综合能力均衡，适合编排、推理、评审、代码",
+          "bestFor": ["men", "si", "ji", "chi"],
+          "free": false,
+          "registerUrl": "https://opencode.ai/pricing",
+          "limits": null
+        },
+        {
           "id": "opencode-go/deepseek-v4-flash",
           "name": "DeepSeek V4 Flash",
           "tier": "premium",
@@ -244,6 +254,7 @@
       "roleName": "编排核心（men）",
       "description": "接收用户指令、路由任务、汇总结果，需要强力推理和代码理解",
       "priority": [
+        "opencode-go/mimo-v2.5",
         "opencode-zen/hy3-free",
         "opencode-zen/deepseek-v4-flash-free",
         "opencode-go/hy3",
@@ -252,7 +263,7 @@
         "deepseek/deepseek-v4-flash",
         "sensenova/sensenova-6.8-flash-lite"
       ],
-      "fallback": "opencode-go/hy3"
+      "fallback": "opencode-go/mimo-v2.5"
     },
     "si": {
       "roleName": "规划与写作（si）",
@@ -325,7 +336,7 @@
     "default": {
       "name": "全功能推荐",
       "description": "使用用户所有可用模型的最佳组合",
-      "men": "opencode-go/hy3",
+      "men": "opencode-go/mimo-v2.5",
       "si": "opencode-go/deepseek-v4-flash",
       "ji": "opencode-go/deepseek-v4-flash",
       "chi": "sensenova/glm-5.2",
