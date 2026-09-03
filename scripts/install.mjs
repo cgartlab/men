@@ -34,8 +34,94 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
 const MIN_NODE_MAJOR = 18;
+const MIN_OPENCODE_VERSION = "1.18.25";  // Men 依赖：plugin API + TUI 插件系统 + agent 权限
 const ENV_TEMPLATE = ".env.example";
 const ENV_TARGET = ".env";
+
+// ─────────────────────────── 前置条件检查 ───────────────────────────
+
+// 检测 OpenCode 是否已安装，返回 { installed, version, path }
+export function checkOpenCode() {
+  const result = { installed: false, version: null, path: null, error: null };
+  try {
+    const r = spawnSync("opencode", ["--version"], { encoding: "utf-8", shell: false, timeout: 10_000 });
+    if (r.status === 0 && r.stdout) {
+      const ver = r.stdout.trim().split("\n")[0].trim();
+      result.installed = true;
+      result.version = ver;
+      // 获取安装路径
+      const r2 = spawnSync(
+        process.platform === "win32" ? "where" : "which",
+        ["opencode"],
+        { encoding: "utf-8", shell: false, timeout: 5_000 },
+      );
+      if (r2.status === 0 && r2.stdout) result.path = r2.stdout.trim().split("\n")[0].trim();
+    }
+  } catch (e) {
+    result.error = e.message;
+  }
+  return result;
+}
+
+// 比较版本号：返回 1(a>b) / 0(相等) / -1(a<b)。自动剥离前缀/后缀，仅比较语义化 x.y.z
+export function compareVersions(a, b) {
+  const extract = (s) => String(s).match(/(\d+(?:\.\d+)*)/)?.[1] || "0";
+  const pa = extract(a).split(".").map(Number);
+  const pb = extract(b).split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0, nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+
+// 检测 OpenCode 版本是否满足最低要求
+export function checkOpenCodeVersion(version) {
+  if (!version) return { ok: false, current: null, required: MIN_OPENCODE_VERSION };
+  return {
+    ok: compareVersions(version, MIN_OPENCODE_VERSION) >= 0,
+    current: version,
+    required: MIN_OPENCODE_VERSION,
+  };
+}
+
+// 检测 CC Switch / opencode.json 配置状态
+// 返回 { exists, managedByCCSwitch, hasModel, hasMCP, hasAgent, fields }
+export function checkCCSwitch() {
+  const result = { exists: false, managedByCCSwitch: false, hasModel: false, hasMCP: false, hasAgent: false, fields: [] };
+  const candidates = [];
+  // 全局配置
+  const home = process.env.USERPROFILE || process.env.HOME || "";
+  if (home) candidates.push(path.join(home, ".config", "opencode", "opencode.json"));
+  // 环境变量
+  if (process.env.OPENCODE_CONFIG_DIR) candidates.push(path.resolve(process.env.OPENCODE_CONFIG_DIR, "opencode.json"));
+  // 当前目录（项目级）
+  candidates.push(path.join(process.cwd(), "opencode.json"));
+
+  for (const p of candidates) {
+    if (!fs.existsSync(p)) continue;
+    try {
+      let raw = fs.readFileSync(p, "utf8");
+      if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+      const cfg = JSON.parse(raw);
+      result.exists = true;
+      result.fields = Object.keys(cfg).filter((k) => k !== "$schema");
+      // CC Switch 特征：有 disabled_providers / enabled_providers / 大量 provider 字段
+      if (cfg.disabled_providers || cfg.enabled_providers) result.managedByCCSwitch = true;
+      // 模型配置
+      if (cfg.model || cfg.provider || Object.keys(cfg.agent || {}).length > 0) result.hasModel = true;
+      // MCP
+      if (cfg.mcp && Object.keys(cfg.mcp).length > 0) result.hasMCP = true;
+      // Agent
+      if (cfg.agent && Object.keys(cfg.agent).length > 0) result.hasAgent = true;
+      break; // 找到一个就停
+    } catch {
+      // 解析失败跳过
+    }
+  }
+  return result;
+}
 
 // .opencode/package.json 缺失时的最小模板：从根 package.json 派生运行时依赖，加 @opencode-ai/plugin 兜底
 // 注意：版本号需与 .opencode/package.json 保持同步（发版时检查）
@@ -81,12 +167,13 @@ export function parseArgs(argv) {
   const args = argv.slice(2);
   const out = {
     dir: null, skipDeps: false, skipVerify: false, json: false, help: false,
-    global: false, globalRemove: false,
+    global: false, globalRemove: false, setup: false,
   };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--dir") out.dir = args[++i] || null;
     else if (a === "--skip-deps") out.skipDeps = true;
+    else if (a === "--setup") out.setup = true;
     else if (a === "--skip-verify") out.skipVerify = true;
     else if (a === "--global") out.global = true;
     else if (a === "--global-remove") out.globalRemove = true;
@@ -121,6 +208,7 @@ npm 一键安装（推荐，scaffold 到当前目录）:
                      还原 opencode.json（有备份还原 / 仅移除 default_agent），并从 tui.json 注销
   --skip-deps       跳过 .opencode/ 依赖安装（npm install）
   --skip-verify     跳过端到端验证（scripts/verify.mjs men）
+  --setup           安装完成后立即进入模型配置引导（对话式，约 2 分钟）
   --json            输出 JSON 摘要
   --help, -h        显示本帮助
 
@@ -598,12 +686,88 @@ export function main(argv = process.argv) {
 
   try {
 
-  // ── 1. Node 版本检查 ──
-  eprintf(">> [1/6] 检查 Node.js 版本 ...");
+  // ── 0. 检测 OpenCode 是否已安装 ──
+  eprintf(">> [0/7] 检测 OpenCode CLI ...");
+  const oc = checkOpenCode();
+  if (!oc.installed) {
+    // OpenCode 不是安装的必要条件（文件可装），但使用时需要。非阻断，仅警告+引导。
+    eprintf("⚠ 未检测到 OpenCode CLI（Men 是 OpenCode 插件，使用时需要 OpenCode）\n");
+    eprintf("  安装 OpenCode: npm install -g @opencode-ai/cli\n");
+    eprintf("  参考: https://opencode.ai/docs/installation\n");
+    if (process.stdin.isTTY && !cfg.json) {
+      process.stdout.write("\n  是否现在自动安装 OpenCode？[Y/n] ");
+      const r = spawnSync(
+        process.execPath,
+        ["-e", `const rl=require('readline').createInterface({input:process.stdin,output:process.stdout});rl.question('',a=>{rl.close();process.exit(/^n/i.test(String(a).trim())?1:0)});`],
+        { encoding: "utf-8", shell: false, stdio: "inherit", timeout: 30_000 },
+      );
+      if (r.status === 0) {
+        eprintf(">> 正在安装 @opencode-ai/cli ...\n");
+        const installR = spawnSync("npm", ["install", "-g", "@opencode-ai/cli"], {
+          encoding: "utf-8", shell: false, stdio: "inherit", timeout: 120_000,
+        });
+        if (installR.status === 0) {
+          const oc2 = checkOpenCode();
+          if (oc2.installed) {
+            eprintf(`✓ OpenCode ${oc2.version} 已安装\n`);
+            Object.assign(oc, oc2);
+          }
+        } else {
+          eprintf("⚠ OpenCode 安装失败，可稍后手动执行: npm install -g @opencode-ai/cli\n");
+        }
+      }
+    }
+  } else {
+    eprintf(`✓ OpenCode ${oc.version}（${oc.path || "已安装"}）\n`);
+  }
+
+  // ── 1. 检测 OpenCode 版本 ──
+  eprintf(">> [1/7] 检测 OpenCode 版本 ...");
+  const ocVer = checkOpenCodeVersion(oc.version);
+  if (!oc.installed) {
+    eprintf("⏭ 跳过（OpenCode 未安装）\n");
+  } else if (!ocVer.ok) {
+    eprintf(`⚠ OpenCode 版本偏低：${ocVer.current}（Men 推荐 >= ${ocVer.required}）\n`);
+    eprintf("  部分功能可能受限（TUI 插件系统、agent 权限控制等）\n");
+    if (process.stdin.isTTY && !cfg.json) {
+      process.stdout.write("  是否现在升级 OpenCode？[Y/n] ");
+      const r = spawnSync(
+        process.execPath,
+        ["-e", `const rl=require('readline').createInterface({input:process.stdin,output:process.stdout});rl.question('',a=>{rl.close();process.exit(/^n/i.test(String(a).trim())?1:0)});`],
+        { encoding: "utf-8", shell: false, stdio: "inherit", timeout: 30_000 },
+      );
+      if (r.status === 0) {
+        eprintf(">> 正在升级 OpenCode ...\n");
+        spawnSync("opencode", ["upgrade"], { encoding: "utf-8", shell: false, stdio: "inherit", timeout: 120_000 });
+      }
+    }
+  } else {
+    eprintf(`✓ OpenCode ${ocVer.current} >= ${ocVer.required}\n`);
+  }
+
+  // ── 2. 检测 CC Switch / opencode.json 配置 ──
+  eprintf(">> [2/7] 检测 OpenCode 配置环境 ...");
+  const cc = checkCCSwitch();
+  if (cc.exists) {
+    if (cc.managedByCCSwitch) {
+      eprintf(`✓ 检测到 CC Switch 管理的 opencode.json（${cc.fields.length} 个字段）\n`);
+      eprintf("  CC Switch 统一管理 MCP / provider / plugin，Men 的 --global 不会修改这些字段\n");
+    } else {
+      eprintf(`✓ 检测到 opencode.json（${cc.fields.length} 个字段，非 CC Switch 管理）\n`);
+      if (cc.hasModel) eprintf("  模型配置已存在\n");
+      if (cc.hasMCP) eprintf("  MCP 配置已存在\n");
+    }
+  } else {
+    eprintf("⚠ 未检测到 opencode.json（全局配置不存在）\n");
+    eprintf("  首次启动 OpenCode 时会自动创建；或运行 opencode providers 配置模型\n");
+  }
+
+  // ── 3. Node.js 版本检查 ──
+  eprintf(">> [3/7] 检查 Node.js 版本 ...");
   const node = checkNode();
   if (!node.ok) fail(`Node.js 版本过低：${node.version}（要求 >= v${MIN_NODE_MAJOR}）`);
 
-  // ── 1.5 前置命令检测（best-effort，仅提示不阻断）──
+  // ── 3.5 前置命令检测（best-effort，仅提示不阻断）──
   const envCmds = {
     npm: commandExists("npm"),
     git: commandExists("git"),
@@ -611,7 +775,7 @@ export function main(argv = process.argv) {
   if (!envCmds.npm) eprintf("警告: 未检测到 npm，依赖安装将失败（可用 --skip-deps 跳过依赖步骤）\n");
   if (!envCmds.git) eprintf("提示: 未检测到 git（仅一键脚本 git clone 需要；scaffold 安装不需要）\n");
 
-  // ── 2. 目标目录 ──
+  // ── 4. 目标目录 ──
   let copyMode = "in-place";
   let conflicts = [];
   const inRepo = path.resolve(process.cwd()) === ROOT;
@@ -641,7 +805,7 @@ export function main(argv = process.argv) {
     } else {
       // 冲突保护：已有 opencode.json / AGENTS.md / .opencode 配置时先备份，绝不静默覆盖
       conflicts = backupConflicts(targetDir, scaffoldConflictPaths(SCAFFOLD_ENTRIES));
-      eprintf(">> [2/6] scaffold 运行时资产到当前目录 ...");
+      eprintf(">> [4/7] scaffold 运行时资产到当前目录 ...");
       try {
         copyAllowlist(ROOT, targetDir, SCAFFOLD_ENTRIES, COPY_EXCLUDES);
         copyMode = "scaffolded";
@@ -669,7 +833,7 @@ export function main(argv = process.argv) {
   const deps = { skipped: cfg.skipDeps, ok: null, command: null, exitCode: null, note: null, warning: null };
   if (opcodePkgCreated) deps.note = ".opencode/package.json 缺失，已写入最小模板";
   if (!cfg.skipDeps) {
-    eprintf(">> [3/6] 安装 .opencode/ 依赖 ...");
+    eprintf(">> [5/7] 安装 .opencode/ 依赖 ...");
     deps.command = "npm install --prefix .opencode";
     const r = runNpm(targetDir, ["install", "--prefix", ".opencode"]);
     deps.exitCode = r.status ?? -1;
@@ -682,7 +846,7 @@ export function main(argv = process.argv) {
   }
 
   // ── 4. 环境配置 ──
-  eprintf(">> [4/6] 配置 .env ...");
+  eprintf(">> [6/7] 配置 .env ...");
   const envSrc = path.join(targetDir, ENV_TEMPLATE);
   const envDst = path.join(targetDir, ENV_TARGET);
   const env = { created: false, existing: false, source: ENV_TEMPLATE, warning: null };
@@ -702,7 +866,7 @@ export function main(argv = process.argv) {
   // ── 5. 端到端验证 ──
   const verify = { skipped: cfg.skipVerify, ok: null, exitCode: null, summary: null };
   if (!cfg.skipVerify) {
-    eprintf(">> [5/6] 端到端验证 ...");
+    eprintf(">> [7/7] 端到端验证 ...");
     const r = runVerify(targetDir);
     verify.exitCode = r.status ?? -1;
     try {
@@ -722,12 +886,66 @@ export function main(argv = process.argv) {
     }
   }
 
-  // ── 5.5 运行环境检测（best-effort，仅预警不阻断）──
-  eprintf(">> [6/6] 检测运行环境（opencode / 模型配置） ...");
+  // ── 7.5 运行环境检测（与验证合并，不再单独编号）──
+  // OpenCode 命令已由 [0/7] 检测；模型配置已由 [2/7] 检测。此处补充详细信息供摘要使用。
   const runtime = {
-    opencode: commandExists("opencode"),
+    opencode: oc.installed,
     modelConfig: detectModelConfig(),
   };
+
+  // ── 5.6 模型配置引导（对齐 OMO 安装交互：检测未配置 → 询问用户是否立即引导）──
+  // 仅交互模式（非 --json）且未检测到模型配置时触发；--setup 强制进入引导。
+  // main 是同步函数，用 spawnSync 内联读取 stdin 保持同步，避免把整个流程改 async。
+    let setup = { skipped: false, reason: null, started: false };
+  if (cfg.json) {
+    setup.skipped = true;
+    setup.reason = "--json 模式跳过交互";
+  } else if (!runtime.modelConfig.configured || cfg.setup) {
+    // 仅在真正可能进入引导时才打印提示；非 TTY 时跳过，不在摘要后留多余行
+    let proceed = cfg.setup;
+    if (!proceed && process.stdin.isTTY) {
+      eprintf("⚠ 未检测到模型配置（首次启动会提示模型不存在）。\n");
+      process.stdout.write("  是否现在配置模型（推荐，约 2 分钟）？[Y/n] ");
+      const r = spawnSync(
+        process.execPath,
+        [
+          "-e",
+          `const rl=require('readline').createInterface({input:process.stdin,output:process.stdout});rl.question('',a=>{rl.close();process.exit(/^n/i.test(String(a).trim())?1:0)});`,
+        ],
+        { encoding: "utf-8", shell: false, stdio: "inherit", timeout: 30_000 },
+      );
+      proceed = r.status === 0;
+      if (!proceed) {
+        setup.skipped = true;
+        setup.reason = "用户选择跳过（可稍后运行 node scripts/setup.mjs 配置）";
+      }
+    } else if (!proceed) {
+      // 非 TTY：不打印警告（摘要里已有环境行提示），仅记录跳过原因
+      setup.skipped = true;
+      setup.reason = "未检测到模型配置（非 TTY 环境跳过，可稍后运行 node scripts/setup.mjs）";
+    } else {
+      // --setup 强制：打印提示
+      eprintf("⚠ 未检测到模型配置（首次启动会提示模型不存在）。\n");
+    }
+    if (proceed) {
+      setup.started = true;
+      eprintf(">> 调用 setup.mjs 引导模型配置 ...\n");
+      const setupPkg = path.join(targetDir, "scripts", "setup.mjs");
+      const setupSrc = path.join(ROOT, "scripts", "setup.mjs");
+      const setupFile = fs.existsSync(setupPkg) ? setupPkg : setupSrc;
+      if (fs.existsSync(setupFile)) {
+        const r = spawnSync(process.execPath, [setupFile], {
+          cwd: targetDir, encoding: "utf-8", shell: false, stdio: "inherit", timeout: 600_000,
+        });
+        setup.exitCode = r.status ?? -1;
+      } else {
+        setup.reason = "setup.mjs 不存在，跳过引导（可稍后运行 node scripts/setup.mjs）";
+      }
+    }
+  } else {
+    setup.skipped = true;
+    setup.reason = "已检测到模型配置";
+  }
 
   // ── 6. 摘要 ──
   const result = {
@@ -739,6 +957,7 @@ export function main(argv = process.argv) {
     conflicts,
     envCmds,
     runtime,
+    setup,
     node: { ok: node.ok, version: node.version, required: `>=${MIN_NODE_MAJOR}` },
     deps,
     env,
@@ -806,6 +1025,20 @@ function printSummary(r) {
       process.stdout.write(`  环境   opencode ✓ · 模型配置 ✓\n`);
     }
   }
+  if (r.setup) {
+    // started：引导已触发 → 显示结果或原因；skipped 但 reason 有提醒价值（非 json / 非 TTY / 用户选择跳过）才显示
+    if (r.setup.started) {
+      if (r.setup.exitCode === 0) {
+        process.stdout.write(`  模型   已引导配置完成（setup.mjs exit 0）\n`);
+      } else if (r.setup.exitCode != null) {
+        process.stdout.write(`  模型   ⚠ setup.mjs 退出码 ${r.setup.exitCode}：配置未完成，可稍后重跑 node scripts/setup.mjs\n`);
+      } else if (r.setup.reason && r.setup.reason !== "用户选择跳过（可稍后运行 node scripts/setup.mjs 配置）") {
+        process.stdout.write(`  模型   ⚠ ${r.setup.reason}\n`);
+      }
+    } else if (r.setup.skipped && r.setup.reason && r.setup.reason !== "--json 模式跳过交互" && r.setup.reason !== "已检测到模型配置") {
+      process.stdout.write(`  模型   ${r.setup.reason}\n`);
+    }
+  }
   if (Array.isArray(r.conflicts) && r.conflicts.length > 0) {
     process.stdout.write(`  冲突   ${r.conflicts.join("；")}\n`);
   }
@@ -815,6 +1048,10 @@ function printSummary(r) {
     nextStep =
       "  ⚠ 安装完成但 .opencode/ 依赖未安装：侧边栏/插件可能不可用。\n" +
       "    请修复后重试：npm install --prefix .opencode，然后重启 opencode\n";
+  } else if (r.runtime && !r.runtime.modelConfig.configured && (!r.setup || !r.setup.started || r.setup.exitCode != null && r.setup.exitCode !== 0)) {
+    nextStep =
+      "  ✓ 安装完成。还差一步：配置模型（对话式引导，约 2 分钟）：\n" +
+      "    node scripts/setup.mjs     （或 npx @cgartlab/men --setup）\n";
   } else if (r.copyMode === "scaffolded") {
     nextStep = "  安装成功 ✓  下一步：在当前目录运行 opencode（注意：men 仅对当前目录生效）\n";
   } else {
