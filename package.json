@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cgartlab/men.git"
+    "url": "git+https://github.com/cgartlab/men.git"
   },
   "bugs": {
     "url": "https://github.com/cgartlab/men/issues"

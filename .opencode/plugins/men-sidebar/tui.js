@@ -35,7 +35,10 @@ const PKG = (() => {
       const v = readFileSync(versionMark, "utf8").trim();
       if (v) return { version: v, name: "men", source: versionMark };
     }
-  } catch { /* 读取失败回退下一路径 */ }
+  } catch {
+    /* VERSION 标记读取失败，回退下一路径 */
+    dbg(`[men-sidebar] VERSION 读取失败: ${versionMark}`);
+  }
   // 其次：从插件目录向上遍历找最近的祖先 package.json（跳过插件自身），找不到才兜底用插件本地版本。
   let d = dirname(__dirname);
   for (let i = 0; i < 10 && d !== dirname(d); i++) {
@@ -293,7 +296,7 @@ export default {
       dbg("[men-sidebar] ⑤ SLOT REGISTERED OK");
 
       // 自动版本检查：fire-and-forget，不 await，避免阻塞 UI 启动
-      runUpdateCheck(api, meta, VERSION).catch(() => {});
+      runUpdateCheck(api, meta, VERSION).catch(e => console.error("[men-sidebar] update check failed:", e && e.message ? e.message : String(e)));
     } catch (e) {
       console.error("[men-sidebar] SLOT REGISTER FAILED:", e && e.message ? e.message : String(e));
     }

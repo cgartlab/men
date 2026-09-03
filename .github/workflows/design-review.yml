@@ -1,0 +1,28 @@
+name: Argus Design Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  argus-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.ARGUS_FLASH_APP_ID }}
+          private-key: ${{ secrets.ARGUS_FLASH_PRIVATE_KEY }}
+
+      - name: Run Argus Design Review
+        uses: cgartlab/argus/.github/actions/argus-review@main
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          api-key: ${{ secrets.OPENCODE_API_KEY }}

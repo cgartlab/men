@@ -25,6 +25,21 @@ function ensureDir(d) {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 }
 
+/** 从 markdown 文件头部解析 YAML frontmatter（--- 包裹） */
+function parseFrontmatter(content) {
+  const m = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!m) return {};
+  const out = {};
+  for (const line of m[1].split('\n')) {
+    const i = line.indexOf(':');
+    if (i < 0) continue;
+    const k = line.slice(0, i).trim();
+    const v = line.slice(i + 1).trim();
+    if (k) out[k] = v;
+  }
+  return out;
+}
+
 /** 读取会话的 events.jsonl */
 function readEvents(sid) {
   const file = `${EVENTS_DIR}/${sid}/events.jsonl`;
@@ -63,6 +78,7 @@ function writeError(action, sid) {
   const content = `---\nid: ${id}\nagent: ${action.agent || 'unknown'}\ncreated: ${new Date().toISOString().slice(0, 10)}\n---\n\n## 错误\n\n${action.lesson || 'runtime-error'}\n\n## 详情\n\n${String(action.detail || '')}\n\n## 来源\n\nsid: ${sid}\n`;
   const file = `${ERRORS_DIR}/${id}.md`;
   fs.writeFileSync(file, content, 'utf8');
+  rebuildIndex();
   return { ok: true, file, id };
 }
 
@@ -74,7 +90,49 @@ function writePattern(action, sid) {
   const content = `---\nid: ${id}\ntype: ${action.pattern || 'anti-pattern'}\ncreated: ${new Date().toISOString().slice(0, 10)}\nstatus: active\n---\n\n## 模式\n\n${String(action.detail || '')}\n\n## 来源\n\nsid: ${sid}\n`;
   const file = `${PATTERNS_DIR}/${id}.md`;
   fs.writeFileSync(file, content, 'utf8');
+  rebuildIndex();
   return { ok: true, file, id };
+}
+
+/** 重建 knowledge/patterns/index.md（重扫目录 + 按 frontmatter 生成索引表） */
+export function rebuildIndex() {
+  if (!fs.existsSync(PATTERNS_DIR)) return;
+  const files = fs.readdirSync(PATTERNS_DIR).filter(f => f.endsWith('.md') && f !== 'index.md');
+  const patterns = [];
+  for (const file of files) {
+    const content = fs.readFileSync(`${PATTERNS_DIR}/${file}`, 'utf8');
+    const fm = parseFrontmatter(content);
+    patterns.push({ file, ...fm });
+  }
+  patterns.sort((a, b) => (b.created || '').localeCompare(a.created || ''));
+
+  let errorCount = 0;
+  if (fs.existsSync(ERRORS_DIR)) {
+    errorCount = fs.readdirSync(ERRORS_DIR).filter(f => f.endsWith('.md')).length;
+  }
+
+  const lines = [
+    '# Knowledge Patterns Index',
+    '',
+    `> 自动维护，勿手动编辑。由 learn.mjs 生成，route-hint.mjs 消费。`,
+    `> 最后更新：${new Date().toISOString().slice(0, 10)}`,
+    '',
+    '## 模式',
+    '',
+    '| ID | 描述 | 创建日期 | 状态 | 文件 |',
+    '|----|------|----------|------|------|',
+  ];
+  for (const p of patterns) {
+    const title = (p.id || p.file.replace(/\.md$/, '').replace(/^pattern-/, '')).replace(/^pattern-/, '');
+    const status = p.status || 'active';
+    lines.push(`| ${p.id || p.file} | ${title} | ${p.created || ''} | ${status} | [link](${p.file}) |`);
+  }
+  lines.push('', '## 统计', '', `- 模式：${patterns.length} 个`, `- 错误：${errorCount} 个`);
+
+  const indexFile = `${PATTERNS_DIR}/index.md`;
+  const tmp = indexFile + '.tmp';
+  fs.writeFileSync(tmp, lines.join('\n') + '\n');
+  fs.renameSync(tmp, indexFile);
 }
 
 /** 标记 human-gate 待确认 */
@@ -103,21 +161,19 @@ function usage() {
   return `learn — 学习循环主入口
 
 用法:
-  learn [--sid <session-id>] [--dry-run] [--json] [--apply]
+  learn [--sid <session-id>] [--dry-run] [--json]
 
 选项:
   --sid      会话 ID，从对应 events.jsonl 读取
   --dry-run  预览学习结果但不写入文件
   --json     输出 JSON
-  --apply    将学习结果转换为门禁规则（写入 errors/ 和 knowledge/patterns/）
   --help     显示此帮助
 
 流程:
   1. 读取 events.jsonl（最近 1 次任务）
   2. 通过 learn-rules 分类（A/B/C/BLOCKED）
   3. 按分类执行：errors/ / patterns/ / human-gate / skip
-  4. --apply 模式下，额外生成门禁规则供 verify.mjs 消费
-  5. 所有操作 best-effort，不阻塞主流程
+  4. 所有操作 best-effort，不阻塞主流程
 `;
 }
 
@@ -129,7 +185,6 @@ export function main(argv) {
   const sid = sidIdx >= 0 ? args[sidIdx + 1] : 'unknown';
   const dryRun = args.includes('--dry-run');
   const jsonOut = args.includes('--json');
-  const apply = args.includes('--apply');
 
   // Step 1: 读取事件
   const events = readEvents(sid);
