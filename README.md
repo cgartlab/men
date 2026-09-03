@@ -64,14 +64,14 @@ npx @cgartlab/men
 **全局安装（可选）：任意目录生效** — 想在任何目录都能用 men，加上 `--global` 参数：
 
 ```bash
-# 完整部署到 ~/.config/opencode/ 并合并 opencode.json（default_agent: men + plugin），重启 OpenCode 后任意目录生效
+# 完整部署到 ~/.config/opencode/ 并合并 opencode.json（仅 default_agent: men），重启 OpenCode 后任意目录生效
 npx @cgartlab/men --global
 
 # 卸载全局安装并还原配置（删除部署资产、还原 opencode.json、注销 TUI 插件）
 npx @cgartlab/men --global-remove
 ```
 
-`--global` 将 agents/commands/skills 部署到 `~/.config/opencode/`，备份并合并全局 `opencode.json`（不改动 mcp），注册 TUI 插件（幂等）；`--global-remove` 清理上述部署并还原原配置。
+`--global` 将 agents/commands/skills/plugins 部署到 `~/.config/opencode/`，合并全局 `opencode.json` 仅设置 `default_agent: men`（**不触碰 mcp 与 plugin** —— 两者由 CC Switch 统一管理），TUI 插件以相对路径注册（不依赖 opencode npm 缓存，侧边栏版本号始终显示真实发布版本）；`--global-remove` 清理上述部署并还原原配置（幂等）。
 
 **方式 B：Git 一键脚本（备选）**
 

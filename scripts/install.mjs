@@ -114,11 +114,11 @@ npm 一键安装（推荐，scaffold 到当前目录）:
 选项:
   --dir <path>      安装目标目录（默认: 当前目录）。
                      目录不存在时从当前仓库根复制文件后安装
-  --global          全局安装：部署 agents/commands/skills 到 ~/.config/opencode，
-                     合并全局 opencode.json（default_agent: men + plugin），
-                     并注册 TUI 插件（tui.json）。重启 OpenCode 后任意目录生效
-  --global-remove   卸载全局安装：删除部署的 agents/commands/skills，
-                     还原 opencode.json（或移除 default_agent/plugin），并从 tui.json 注销
+  --global          全局安装：部署 agents/commands/skills/plugins 到 ~/.config/opencode，
+                     合并全局 opencode.json（仅 default_agent: men，不碰 mcp/plugin —— CC Switch 统一管理），
+                     并注册 TUI 插件（tui.json 相对路径）。重启 OpenCode 后任意目录生效
+  --global-remove   卸载全局安装：删除部署的 agents/commands/skills/plugins，
+                     还原 opencode.json（有备份还原 / 仅移除 default_agent），并从 tui.json 注销
   --skip-deps       跳过 .opencode/ 依赖安装（npm install）
   --skip-verify     跳过端到端验证（scripts/verify.mjs men）
   --json            输出 JSON 摘要
