@@ -11,9 +11,9 @@ on:
 # secrets 校验：fail-fast，防止 CI 空跑。参考 v0.5.0 PR #98 / #104
 # 必须在 jobs 权限声明之前、steps 之前运行。
 env:
-  HAS_APP_ID: ${{ secrets.ARGUS_FLASH_APP_ID != '' }}
-  HAS_KEY: ${{ secrets.ARGUS_FLASH_PRIVATE_KEY != '' }}
-  HAS_API: ${{ secrets.OPENCODE_API_KEY != '' }}
+  HAS_APP_ID: "${{ secrets.ARGUS_FLASH_APP_ID != '' }}"
+  HAS_KEY: "${{ secrets.ARGUS_FLASH_PRIVATE_KEY != '' }}"
+  HAS_API: "${{ secrets.OPENCODE_API_KEY != '' }}"
 
 # 全局权限最小化（argus 评审成功后会写 issue comment，故需 issues: write）
 permissions:
