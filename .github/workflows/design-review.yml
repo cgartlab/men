@@ -1,18 +1,57 @@
 name: Argus Design Review
 
+# 云端 argus 评审：PR 打开/同步/重开时自动触发；与本地 chi judge 无关，
+# 是独立的云端流程。规则详见 docs/integrations/argus.md。
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:                # 维护者手动重跑
+
+# secrets 校验：fail-fast，防止 CI 空跑。参考 v0.5.0 PR #98 / #104
+# 必须在 jobs 权限声明之前、steps 之前运行。
+env:
+  HAS_APP_ID: ${{ secrets.ARGUS_FLASH_APP_ID != '' }}
+  HAS_KEY: ${{ secrets.ARGUS_FLASH_PRIVATE_KEY != '' }}
+  HAS_API: ${{ secrets.OPENCODE_API_KEY != '' }}
+
+# 全局权限最小化（argus 评审成功后会写 issue comment，故需 issues: write）
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: argus-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true           # 新 push 取消旧评审，避免堆积
 
 jobs:
   argus-review:
+    if: env.HAS_APP_ID && env.HAS_KEY && env.HAS_API
     runs-on: ubuntu-latest
+    timeout-minutes: 15              # 兜底超时（argus 自身有 fallback 队列 + OpenCode 30min 保护）
     permissions:
       contents: read
       pull-requests: write
+      issues: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # ---- secrets 校验（fail-fast，直接中断 job）----
+      - name: 校验密钥存在（fail-fast）
+        run: |
+          missing=""
+          [ "$ARGUS_FLASH_APP_ID" = "" ] && missing="ARGUS_FLASH_APP_ID"
+          [ "$ARGUS_FLASH_PRIVATE_KEY" = "" ] && missing="$missing ARGUS_FLASH_PRIVATE_KEY"
+          [ "$OPENCODE_API_KEY" = "" ] && missing="$missing OPENCODE_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::缺少 secrets:$missing"
+            echo "::error::配置指南见 docs/integrations/argus.md §3"
+            exit 1
+          fi
+          echo "所有 secrets 就绪"
 
       - name: Generate GitHub App token
         id: app-token
@@ -26,3 +65,5 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           api-key: ${{ secrets.OPENCODE_API_KEY }}
+          # 消费方配置：使用仓库根 .argus.yml（已在 main，见 commit 48f79c8）
+          config-path: .argus.yml
