@@ -6,6 +6,18 @@
 
 v0.4.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/men` 一行安装）。GitHub 私有仓库 `cgartlab/men`，MIT 许可证。
 
+# Argus Design Review 集成（Optional）
+
+- **协议版本**：`men-api-version: 1`（见 `docs/men-integration.md` §5）。
+- **状态**：集成已完成（`.argus.yml` 存于 `2026-08-31` commit，`design-review.yml` 已升级）。
+- **形态**：Cloud-only（云端 GitHub Actions workflow `design-review.yml`），不在本地 chi judge 链路中。
+- **License**：本项目（men）使用 MIT。但我们依赖 `cgartlab/argus`，其 License 为 **BSL 1.1**（Business Source License 1.1，5 年后转 Apache 2.0），仅限内部使用。集成时请在 `docs/integrations/argus.md §5` 阅读完整 License 警告，避免商业用途合规风险。
+- **集成入口**：push 一个 PR → GitHub Actions `design-review.yml` 会自动触发 `cgartlab/argus/.github/actions/argus-review`（Composite Action），评审结果会写入 PR 评论（四段模板映射见 `docs/integrations/argus.md §2`）。
+- **调试/本地**：若想在本地复现，参考 `docs/integrations/argus.md §4`（需配置 OpenCode API key + GitHub App token 伪造环境）。
+- **风险**：若未来对外发布 `@cgartlab/men` 或在商业产品中使用 argus 评审结果，请自行评估 BSL 1.1 合规风险或推动 `cgartlab/argus` License 变更。
+
+> **一句话**：Argus 是云端独立前端设计评审官，结果映射到 men 的汇总报告模板；内部使用、license 见警告。
+
 ## 关键文件
 
 | 路径 | 用途 |
