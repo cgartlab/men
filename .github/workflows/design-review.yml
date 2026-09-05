@@ -8,12 +8,13 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:                # 维护者手动重跑
 
-# secrets 校验：fail-fast，防止 CI 空跑。参考 v0.5.0 PR #98 / #104
-# 必须在 jobs 权限声明之前、steps 之前运行。
+# secrets 直接暴露为 env 变量，供 step 级 fail-fast 检查缺省（参考 v0.5.0 PR #98 / #104）。
+# 注意：env 上下文在 jobs.<job_id>.if 不可用（422 parse error），故缺 secret 检查放在 step 内。
+# 双引号包裹避免 YAML tag 歧义（PR #110 经验）。
 env:
-  HAS_APP_ID: "${{ secrets.ARGUS_FLASH_APP_ID != '' }}"
-  HAS_KEY: "${{ secrets.ARGUS_FLASH_PRIVATE_KEY != '' }}"
-  HAS_API: "${{ secrets.OPENCODE_API_KEY != '' }}"
+  ARGUS_FLASH_APP_ID: "${{ secrets.ARGUS_FLASH_APP_ID }}"
+  ARGUS_FLASH_PRIVATE_KEY: "${{ secrets.ARGUS_FLASH_PRIVATE_KEY }}"
+  OPENCODE_API_KEY: "${{ secrets.OPENCODE_API_KEY }}"
 
 # 全局权限最小化（argus 评审成功后会写 issue comment，故需 issues: write）
 permissions:
@@ -27,7 +28,6 @@ concurrency:
 
 jobs:
   argus-review:
-    if: env.HAS_APP_ID && env.HAS_KEY && env.HAS_API
     runs-on: ubuntu-latest
     timeout-minutes: 15              # 兜底超时（argus 自身有 fallback 队列 + OpenCode 30min 保护）
     # job 级覆盖全局：argus 评审后需 push 产物，GITHUB_TOKEN 需 contents: write（修复 PR #108 push 403）
