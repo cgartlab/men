@@ -70,7 +70,7 @@ for (const [route, anchors] of Object.entries(ROUTE_ANCHORS)) {
   const f = join(DIST, route);
   let text = '';
   try { text = new TextDecoder('utf-8').decode(readFileSync(f)); }
-  catch { fail(`锚点检查：${route} 不存在`); continue; }
+  catch (e) { fail(`锚点检查：${route} 不存在（${e instanceof Error ? e.message : String(e)}）`); continue; }
   for (const a of anchors) {
     if (text.includes(a)) ok(`锚点 ${route} ← 「${a}」`);
     else fail(`锚点 ${route} 缺少「${a}」`);
