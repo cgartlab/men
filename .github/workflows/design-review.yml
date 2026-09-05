@@ -30,8 +30,10 @@ jobs:
     if: env.HAS_APP_ID && env.HAS_KEY && env.HAS_API
     runs-on: ubuntu-latest
     timeout-minutes: 15              # 兜底超时（argus 自身有 fallback 队列 + OpenCode 30min 保护）
+    # job 级覆盖全局：argus 评审后需 push 产物，GITHUB_TOKEN 需 contents: write（修复 PR #108 push 403）
+    # P0 权限最小化与功能平衡，见 PR #110；全局 permissions 段保持 contents: read（库级最小化）
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
       issues: write
 
