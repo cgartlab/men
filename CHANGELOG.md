@@ -14,6 +14,7 @@
 
 - **Pi Harness 适配层重建（对齐 main v0.4.0）**：`.pi/` 目录按官方 Pi Package 机制重建 —— `.pi/settings.json` 以 `packages: ["../"]` 自引用仓库根，`pi.skills` manifest 指向 `.opencode/skills/`（15 skills）、`pi.prompts` 指向 `prompts/`（4 模板）；`.pi/agents/` 5 个子 agent（si/ji/chi/yi/xun）按 pi-subagents 契约重写（frontmatter: name/description/tools/systemPrompt/skills/maxDepth/thinking）；`.pi/APPEND_SYSTEM.md` 注入 men 编排指令（Pi 官方追加机制）；`docs/pi-harness-install.md` 完整安装设计文档（双模式 + 风险对策 + 验收清单）
 - **Pi 安装/卸载器**：`scripts/pi-install.mjs`（模式 A 就地校验 / 模式 B 落位 agents+APPEND_SYSTEM+scripts 到目标项目或全局，幂等，机械校验 25 项）+ `scripts/pi-remove.mjs`（按清单卸载，0 残留）
+- **pi-install 引导式交互**：6 步进度（环境检查→模式识别→资产校验→落位→扩展引导→完成），TTY 彩色输出（非 TTY 自动降级），pi-subagents 缺失时交互询问是否安装（默认不装，`--yes` 免交互，`MEN_PI_INSTALL_EXT=0` 禁用），修复 `pi.settings` 校验（packages 自引用 `../`）
 - **prompts 适配 Pi 模板契约**：ultrawork/hyperplan/verify/gh-issue 加 `argument-hint` frontmatter，工具语义适配 Pi（task→subagent、todowrite→文本清单、question→文本选择题）
 
 ### Changed
