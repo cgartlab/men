@@ -24,6 +24,11 @@ temp/
 issue-body.md
 agent-exec-marker.txt
 
+# Pi harness 运行态（包安装位置与安装清单，不应入库）
+.pi/npm/
+.pi/git/
+.pi/men-install.json
+
 nul
 dist/
 site/dist/

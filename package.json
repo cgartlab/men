@@ -45,10 +45,16 @@
     "install.sh",
     "install.ps1",
     ".opencode/",
+    ".pi/",
+    "prompts/",
     "scripts/",
     "config/",
     "knowledge/"
   ],
+  "pi": {
+    "skills": ["./.opencode/skills"],
+    "prompts": ["./prompts"]
+  },
   "exports": {
     "./server": "./.opencode/plugins/men-sidebar/index.js",
     "./tui": "./.opencode/plugins/men-sidebar/tui.js"
@@ -61,6 +67,7 @@
   },
   "keywords": [
     "opencode",
+    "pi-package",
     "agent",
     "team",
     "orchestration",

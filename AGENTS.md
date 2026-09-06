@@ -110,6 +110,21 @@ node scripts/install.mjs --skip-deps --skip-verify --json
 - **本地优先**：内网数据源（192.168.31.x），SenseNova 生图仅 yi 挂载
 - **事件类型归一化**：learn-rules.mjs / eval-metrics.mjs 支持 `men.*` 前缀 → 标准类型映射
 
+## Pi Harness 兼容（feat/pi-harness 分支）
+
+Pi（`pi-coding-agent`）下运行时，通过 `.pi/` 目录桥接，共享 skills、prompts 与 scripts。Pi 官方包机制见 `docs/pi-harness-install.md`。
+
+- **双模式**：
+  - 模式 A（项目内）：`git clone` men 仓库 → `cd men` → 信任项目 → 就地使用，零复制
+  - 模式 B（插件）：`pi install`（npm/git/本地路径）→ 包内 skills/prompts 自动加载，`node scripts/pi-install.mjs` 落位 agents/APPEND_SYSTEM/scripts
+- **主 session 扮演 men（门）**：编排指令由 `.pi/APPEND_SYSTEM.md` 注入（Pi 官方追加机制，项目/全局两级）
+- **5 个子 agent 定义在 `.pi/agents/`**（si/ji/chi/yi/xun；pi-subagents 格式，frontmatter: name/description/tools/systemPrompt/skills/maxDepth/thinking）
+- **15 个 skills** 经 package.json `pi.skills` manifest 指向 `.opencode/skills/`（单一来源，无副本漂移）
+- **4 个 prompts**（ultrawork/hyperplan/verify/gh-issue）在 `prompts/`，经 `pi.prompts` manifest 加载，frontmatter 含 `argument-hint`
+- **subagent 工具**由扩展 `@johnnywu/pi-subagents` 提供（`pi install npm:@johnnywu/pi-subagents`，一次即可）
+- **机械验证 scripts**：verify/gate/event/learn 等直接 `node scripts/*.mjs` 运行；模式 B 由 pi-install.mjs 落位到目标项目
+- 安装/卸载：`node scripts/pi-install.mjs` / `node scripts/pi-remove.mjs`（纯 Node 零依赖，幂等）
+
 ## 版本同步缺口（发版步骤）
 
 `node scripts/release.mjs` 自动同步版本号到：JSON（`package-lock.json` / `opencode.json` / `site/package.json`）+ 文本（`site/src/pages/docs/configure.astro` / `AGENTS.md` / `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md`）。

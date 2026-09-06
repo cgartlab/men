@@ -128,6 +128,32 @@ node scripts/setup.mjs
 cd men && opencode
 ```
 
+### Pi 安装（可选）
+
+在 [Pi](https://github.com/badlogic/pi-mono)（`@earendil-works/pi-coding-agent`）下使用 men，两种模式任选（详见 `docs/pi-harness-install.md`）：
+
+**模式 A：项目内（推荐，零复制）**
+
+```bash
+git clone https://github.com/cgartlab/men.git men
+cd men
+pi install npm:@johnnywu/pi-subagents   # 一次性：提供 subagent 工具
+node scripts/pi-install.mjs             # 校验就绪（模式 A 不复制任何文件）
+pi                                       # 首次启动信任项目
+```
+
+**模式 B：插件安装（在任意项目启用 men）**
+
+```bash
+pi install /path/to/men                 # 或 npm/git 源
+node ~/.pi/agent/npm/@cgartlab/men/scripts/pi-install.mjs   # 落位 agents/APPEND_SYSTEM/scripts
+pi
+```
+
+卸载：`node scripts/pi-remove.mjs [--dir <项目>] [--global]`。
+
+Pi 下加载：15 skills（`/skill:xxx`）+ 4 prompts（`/ultrawork` `/verify` `/hyperplan` `/gh-issue`）+ 5 子 agent（si/ji/chi/yi/xun，经 subagent 工具）。
+
 ### 三个核心命令
 
 | 命令 | 用法 | 说明 |

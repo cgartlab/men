@@ -12,8 +12,15 @@
 
 ### Added
 
+- **Pi Harness 适配层重建（对齐 main v0.4.0）**：`.pi/` 目录按官方 Pi Package 机制重建 —— `.pi/settings.json` 以 `packages: ["../"]` 自引用仓库根，`pi.skills` manifest 指向 `.opencode/skills/`（15 skills）、`pi.prompts` 指向 `prompts/`（4 模板）；`.pi/agents/` 5 个子 agent（si/ji/chi/yi/xun）按 pi-subagents 契约重写（frontmatter: name/description/tools/systemPrompt/skills/maxDepth/thinking）；`.pi/APPEND_SYSTEM.md` 注入 men 编排指令（Pi 官方追加机制）；`docs/pi-harness-install.md` 完整安装设计文档（双模式 + 风险对策 + 验收清单）
+- **Pi 安装/卸载器**：`scripts/pi-install.mjs`（模式 A 就地校验 / 模式 B 落位 agents+APPEND_SYSTEM+scripts 到目标项目或全局，幂等，机械校验 25 项）+ `scripts/pi-remove.mjs`（按清单卸载，0 残留）
+- **prompts 适配 Pi 模板契约**：ultrawork/hyperplan/verify/gh-issue 加 `argument-hint` frontmatter，工具语义适配 Pi（task→subagent、todowrite→文本清单、question→文本选择题）
+
 ### Changed
 
+- **package.json**：新增 `pi` manifest（skills + prompts 路径）、`pi-package` keyword、files 白名单纳入 `.pi/` 与 `prompts/`
+- **AGENTS.md / README.md**：新增 Pi Harness 兼容段与 Pi 安装说明（双模式命令）
+- **.gitignore**：排除 `.pi/npm/` `.pi/git/` `.pi/men-install.json` 运行态
 - **--global 插件本地部署**：men-sidebar 直接部署到 `~/.config/opencode/plugins/men-sidebar/`，tui.json 改用相对路径 `./plugins/men-sidebar/tui.js` 注册——侧边栏不再依赖 opencode 的 npm 缓存（`men@latest`），升级后无需删缓存即可读到最新版本；同时避免与 CC Switch 管理的全局配置冲突（opencode.json 仅合并 default_agent，不再写 plugin 字段）
 
 ### Fixed
