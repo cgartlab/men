@@ -35,6 +35,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      projects: write
     concurrency:
       group: triage-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
@@ -80,11 +81,11 @@ jobs:
             [ -n "$l" ] && gh label create "$l" --force 2>/dev/null || true
             [ -n "$l" ] && gh pr edit ${{ github.event.pull_request.number }} --add-label "$l"
           done
-          if echo "$LABELS" | grep -q "learning"; then
+          if echo "$LABELS" | grep -qE "(^|,)learning(,|$)"; then
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Learning P0" || true
-          elif echo "$LABELS" | grep -q "infra"; then
+          elif echo "$LABELS" | grep -qE "(^|,)infra(,|$)"; then
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Infra" || true
-          elif echo "$LABELS" | grep -q "pi"; then
+          elif echo "$LABELS" | grep -qE "(^|,)pi(,|$)"; then
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Pi Harness" || true
           else
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Meta" || true
