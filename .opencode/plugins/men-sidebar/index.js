@@ -1,19 +1,18 @@
 /**
  * men-sidebar — server entry (V8)
  *
- * 最小化 server 插件：仅记录日志，无 hook。
+ * 最小化 server 插件：空实现，无 hook，无输出。
  * TUI 插件在 ./tui 子路径导出。
+ *
+ * 说明：server entry 加载是内部行为，加载成功不需要可被 env 意外触发的
+ * 顶层输出；调试日志由 ./tui.js 出口统一负责（MEN_DEBUG 门控）。
+ * 参见 issue #113（2026-09-05）：曾在此处输出 SERVER ENTRY LOADED /
+ * server() called 两行日志，MEN_DEBUG 被外部进程/用户环境设置时会污染宿主 stdout。
  */
-
-// 调试日志门控：MEN_DEBUG=1（或 true）时输出，默认静默（与 ./tui.js 一致），避免污染 host stdout
-const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEBUG === "true") { console.log(...a); } };
-
-dbg("[men-sidebar] === SERVER ENTRY LOADED (V8) ===");
 
 export default {
   id: "men-sidebar",
   server: async () => {
-    dbg("[men-sidebar] server() called — no hooks, TUI handled by ./tui export");
     return {};
   },
 };
