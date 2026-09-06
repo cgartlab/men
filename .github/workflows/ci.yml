@@ -2,9 +2,9 @@ name: CI
 
 "on":
   push:
-    branches: [main]
+    branches: [main, feat/pi-harness]
   pull_request:
-    branches: [main]
+    branches: [main, feat/pi-harness]
 
 jobs:
   validate:
@@ -60,6 +60,8 @@ jobs:
               .github/*) LABELS="$LABELS,infra" ;;
               .opencode/agent/*) LABELS="$LABELS,agents" ;;
               .opencode/skills/*) LABELS="$LABELS,skills" ;;
+              .pi/*) LABELS="$LABELS,pi" ;;
+              prompts/*) LABELS="$LABELS,prompts" ;;
               docs/*) LABELS="$LABELS,docs" ;;
               AGENTS.md) LABELS="$LABELS,meta" ;;
               README.md) LABELS="$LABELS,meta" ;;
@@ -75,12 +77,15 @@ jobs:
           fi
           IFS=',' read -ra LARR <<< "$LABELS"
           for l in "${LARR[@]}"; do
+            [ -n "$l" ] && gh label create "$l" --force 2>/dev/null || true
             [ -n "$l" ] && gh pr edit ${{ github.event.pull_request.number }} --add-label "$l"
           done
           if echo "$LABELS" | grep -q "learning"; then
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Learning P0" || true
           elif echo "$LABELS" | grep -q "infra"; then
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Infra" || true
+          elif echo "$LABELS" | grep -q "pi"; then
+            gh pr edit ${{ github.event.pull_request.number }} --milestone "Pi Harness" || true
           else
             gh pr edit ${{ github.event.pull_request.number }} --milestone "Meta" || true
           fi
