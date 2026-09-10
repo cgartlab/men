@@ -14,12 +14,40 @@
 
 ### Changed
 
-- **--global 插件本地部署**：men-sidebar 直接部署到 `~/.config/opencode/plugins/men-sidebar/`，tui.json 改用相对路径 `./plugins/men-sidebar/tui.js` 注册——侧边栏不再依赖 opencode 的 npm 缓存（`men@latest`），升级后无需删缓存即可读到最新版本；同时避免与 CC Switch 管理的全局配置冲突（opencode.json 仅合并 default_agent，不再写 plugin 字段）
+### Fixed
+
+## [v0.5.0] - 2026-09-11
+
+> Argus 云端设计评审 + 全局模型配置 + 工程加固
+
+### Added
+
+- **Argus 云端设计评审集成**：新增 `.github/workflows/design-review.yml` 与 `docs/integrations/argus.md`，PR 打开/同步时自动调用 `cgartlab/argus` 的 composite action，按 P0–P3 分级输出前端设计评审（设计 token、硬编码值、暗色覆盖、无障碍、CSS 质量），文档中同时标注 argus 的 **BSL 1.1** 许可证警告（#109 #110 #111）
+- **`men.jsonc` 全局配置**：新增 `~/.config/opencode/men.jsonc`，支持预设切换 + 逐 Agent 模型覆盖，职责切分为「CC Switch 管 provider/key，Men 管 agent 分配」；配套 `config/men.schema.json` 提供校验（#88）
+- **动态免费预设**：`setup.mjs` 实时拉取 OpenCode Zen 可用模型清单，不再依赖硬编码模型名（#94）
+- **安装前置条件检查 + 对话式模型引导**：安装前检测 OpenCode / Node 版本 / CC Switch 冲突，并引导完成模型配置（#93）
+- **PR 阶段站点构建检查**：新增 `.github/workflows/site.yml`，`site/**` 改动在 PR 阶段即跑 `npm ci && build && check-site`（此前只在 push main 的 `deploy.yml` 里构建）——仓库约定的产物级检查 `check-site.mjs`（UTF-8/mojibake/base 守卫 + 锚点）正式进入 CI（#117）
+
+### Changed
+
+- **`--global` 插件本地部署**：men-sidebar 直接部署到 `~/.config/opencode/plugins/men-sidebar/`，tui.json 改用相对路径 `./plugins/men-sidebar/tui.js` 注册——侧边栏不再依赖 opencode 的 npm 缓存（`men@latest`），升级后无需删缓存即可读到最新版本；同时避免与 CC Switch 管理的全局配置冲突（opencode.json 仅合并 default_agent，不再写 plugin 字段）（#87）
+- **安装文档同步**：补充 `--global` 只合并 `default_agent` 的新行为描述，避免与 CC Switch 加载顺序混淆（#92）
+- **`@opencode-ai/plugin` pin 同步**：`.opencode/package.json` 1.18.29 → 1.18.30，与 CI 内 opencode CLI 版本对齐（否则评审 job 会把 pin 改写后当作无关提交推回 PR 分支）（#117）
 
 ### Fixed
 
 - **侧边栏版本号滞后不更新**：此前 `--global` 用 npm 包名注册，OpenCode 从 `~/.cache/opencode/packages/@cgartlab/men@latest` 加载并锁死在旧版（实测缓存停留 0.3.4），导致 `npx @cgartlab/men` 更新后侧边栏版本号不刷新——现改为部署 VERSION 标记文件（scaffold + global 均写入），tui.js 优先读取真实发布版本
 - **卸载误删风险**：`--global-remove` 不再触碰 opencode.json 的 plugin 数组（CC Switch 统一管理），仅还原 default_agent；tui.json 迁移时移除旧 npm 包名注册避免重复加载侧边栏
+- **men-sidebar 启动日志噪音**：移除启动时打印的 `[men-sidebar] SERVER ENTRY LOADED` 等日志，不再污染终端输出（#113 #114）
+- **argus-review workflow 两处解析失败**：`!` 开头的 YAML tag 使表达式被当作 tag 解析（#110）、`jobs.<id>.if` 使用 `env` 上下文导致 422 parse error（#111），并补上 job 级 `contents: write` 修复评审产物 push 403（#108）
+- **`check-site.mjs` 吞掉锚点检查错误**：catch 块保留错误详情，锚点缺失不再静默通过（#101 #108）
+- **dependabot PR 的 argus 检查假红**：dependabot 触发的 run 拿不到仓库 secrets（只认 Dependabot secrets），密钥 fail-fast 必然失败——改为按 `github.actor` 跳过该 job（lockfile bump 无前端设计可评审），并补齐 `chore`/`dependencies` 标签（#116 #117）
+- **发版漏同步版本号**：`site/package-lock.json` 根版本、`.opencode/skills/men-status/SKILL.md`、`docs/integrations/argus.md` 纳入自动同步；lockfile 根版本改为对任意 `*-lock.json` 生效——发版残留清单只剰 `releases.astro`（v0.3.2 曾漏 6 处、v0.4.0 漏 2 处）
+- **批量 issue 修复**：发布前修正、`spawnSync`/`fetch` 超时、空 catch 块、知识库索引重建等六项（#86 #91 #89 #90 #73 #71）
+
+### Security
+
+- **svgo 4.0.2 → 4.1.0**（site 传递依赖，经 astro 引入）：修复 `GHSA-w27v-7q3p-w38r`（high，`removeScripts` 可被 namespace / 控制字符绕过而放行可执行链接）与 `GHSA-4vpr-x523-8j87`（medium，`foreignObject` 内可执行 HTML 清理不完整）（#116）
 
 ## [v0.4.0] - 2026-09-03
 

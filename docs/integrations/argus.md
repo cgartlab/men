@@ -103,7 +103,7 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 
 | 文档 | 关联版本 |
 |------|----------|
-| `AGENTS.md` | 本项目 v0.4.0（2026-09-05） |
+| `AGENTS.md` | 本项目 v0.5.0（版本号由 `release.mjs` 发版时同步，不手写日期） |
 | `docs/integrations/argus.md` | Sync: 每次发版重审，确认 BSL/license 状态未变 |
 | `design-review.yml` | Sync: CI 变更同步至 main 分支（已提交） |
 | `.argus.yml` | Sync: 2026-08-31 commit，见 `git log 48f79c8` |
