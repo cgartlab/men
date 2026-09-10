@@ -1,0 +1,32 @@
+name: Site
+
+# PR 阶段补站点构建检查：只在改动 site/** 时跑（GitHub 原生路径过滤，无需脚本分流）。
+# 背景：deploy.yml 只在 push main 时构建，PR 阶段对 site/ 零覆盖 —— dependabot 的
+# #116（svgo 4.0.2 → 4.1.0，修 GHSA-w27v-7q3p-w38r / GHSA-4vpr-x523-8j87）只能靠
+# 手工 npm run build 验证。check-site.mjs 是仓库约定的产物级检查（扫 dist，
+# 不依赖活服务器、零常驻进程）。
+
+"on":
+  pull_request:
+    paths:
+      - "site/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build site (site/**)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22          # 与 deploy.yml 保持一致
+      - name: Build + artifact check
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+          npm run check-site
