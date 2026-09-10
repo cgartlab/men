@@ -28,6 +28,10 @@ concurrency:
 
 jobs:
   argus-review:
+    # dependabot 触发的 run 拿不到仓库 secrets（GitHub 安全模型：只认 Dependabot secrets），
+    # 下方 fail-fast 必然假红；且 lockfile bump 没有前端设计可评审 → 直接跳过整个 job。
+    # 人类 PR 不受影响，缺 secret 仍 fail-fast。复盘见 PR #116。
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15              # 兜底超时（argus 自身有 fallback 队列 + OpenCode 30min 保护）
     # job 级覆盖全局：argus 评审后需 push 产物，GITHUB_TOKEN 需 contents: write（修复 PR #108 push 403）
