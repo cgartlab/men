@@ -96,6 +96,7 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 | `Missing secret: OPENCODE_API_KEY` | 未配置 OpenCode Zen API key | 按 §3 注册并填入 |
 | `429 Too Many Requests` / 模型不可用 | API 速率超限 | 等待 1 分钟重新触发，或设置 fallback models（见 argus config/free-models.yml） |
 | `fixture-mode: true 时无法评审 PR` | fixture-mode 只在 Argus 自身 CI 有效 | 删除 workflow 的 `fixture-mode` 输入，或在 CI 里不打该 label |
+| dependabot PR 上 argus 检查报「缺少 secrets」 | dependabot 触发的 run 拿不到仓库 secrets（GitHub 安全模型，只认 Dependabot secrets），fail-fast 假红 | 已修：`design-review.yml` 按 `github.actor` 跳过 dependabot（lockfile bump 无设计可评审）；若确实想评，另配 `gh secret set --app dependabot` |
 | PR 没有 Argus 评审评论 | workflow 正在排队 / 超时（30min） | 查看 Actions 日志；打开 issue 重新打 `agent-execute` label（若走 gh-flow 模式）<br>或检查 PR 是否有 `pull_request` 事件触发（本 workflow 用 `pull_request` 类型） |
 
 ## 7. 版本同步
