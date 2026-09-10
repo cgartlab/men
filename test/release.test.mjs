@@ -19,6 +19,8 @@ import {
   bumpChangelog,
   parseArgs,
   procFailInfo,
+  VERSION_JSON_FILES,
+  VERSION_TEXT_FILES,
 } from '../scripts/release.mjs';
 import { mdToHtml } from '../scripts/update-release-page.mjs';
 
@@ -149,6 +151,29 @@ test('release parseArgs: unknown arg captured, not thrown', () => {
 test('release parseArgs: --help returns help flag', () => {
   const r = parseArgs(['node', 'scripts/release.mjs', '--help']);
   assert.strictEqual(r.help, true);
+});
+
+// ── 版本同步覆盖（防发版漏文件）─────────────────────────
+test('release: 版本同步清单覆盖全部版本引用载体', () => {
+  // 先例：v0.3.2 发版漏 6 处、v0.4.0 漏 2 处；清单被改窄时这里先红。
+  assert.deepStrictEqual(VERSION_JSON_FILES, [
+    'package-lock.json',
+    'site/package-lock.json',
+    'opencode.json',
+    'site/package.json',
+  ]);
+  const textMust = [
+    'site/src/pages/docs/configure.astro',
+    'AGENTS.md',
+    'docs/guide/milestones.md',
+    'docs/governance.md',
+    'knowledge/README.md',
+    '.opencode/skills/men-status/SKILL.md',
+    'docs/integrations/argus.md',
+  ];
+  for (const f of textMust) {
+    assert.ok(VERSION_TEXT_FILES.includes(f), `${f} 必须在 VERSION_TEXT_FILES，否则发版会漏同步`);
+  }
 });
 
 // ── procFailInfo ─────────────────────────────────────────
