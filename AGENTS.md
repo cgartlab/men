@@ -4,7 +4,7 @@
 
 ## 项目状态
 
-v0.4.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/men` 一行安装）。GitHub 私有仓库 `cgartlab/men`，MIT 许可证。
+v0.5.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/men` 一行安装）。GitHub 私有仓库 `cgartlab/men`，MIT 许可证。
 
 # Argus Design Review 集成（Optional）
 
@@ -110,16 +110,15 @@ node scripts/install.mjs --skip-deps --skip-verify --json
 - **本地优先**：内网数据源（192.168.31.x），SenseNova 生图仅 yi 挂载
 - **事件类型归一化**：learn-rules.mjs / eval-metrics.mjs 支持 `men.*` 前缀 → 标准类型映射
 
-## 版本同步缺口（发版步骤）
+## 版本同步（发版步骤）
 
-`node scripts/release.mjs` 自动同步版本号到：JSON（`package-lock.json` / `opencode.json` / `site/package.json`）+ 文本（`site/src/pages/docs/configure.astro` / `AGENTS.md` / `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md`）。
+`node scripts/release.mjs` 自动同步版本号到：JSON（`package-lock.json` / `site/package-lock.json` / `opencode.json` / `site/package.json`）+ 文本（`site/src/pages/docs/configure.astro` / `AGENTS.md` / `docs/guide/milestones.md` / `docs/governance.md` / `knowledge/README.md` / `.opencode/skills/men-status/SKILL.md` / `docs/integrations/argus.md`）。lockfile 的 `packages[""]` 根版本对任意 `*-lock.json` 生效。
 
-**以下两处不在同步列表，发版后必须手动**：
+**唯一不在同步列表的只有一处，发版后必须手动**：
 
-- `site/src/pages/docs/releases.astro`（发布历史表 + 计数 + 当前版本亮点；仅 `--push`/`--gh-release` 时由 `update-release-page.mjs` 自动）
-- `.opencode/skills/men-status/SKILL.md`（`| 版本 | vX.Y.Z |` 硬编码）
+- `site/src/pages/docs/releases.astro`（发布历史表 + 计数 + 当前版本亮点；`update-release-page.mjs` 能自动改，但仅在 `--push`/`--gh-release` 时由 release.mjs 调用，PR 式发版需手动跑一次：`node scripts/update-release-page.mjs --version X.Y.Z --date YYYY-MM-DD --theme "主题" --notes "- 要点"`）
 
-先例：v0.3.2 发版漏 6 处版本引用；v0.4.0 修订为真实残留清单（releases.astro + men-status）。
+先例：v0.3.2 发版漏 6 处版本引用；v0.5.0 发版手动补 `releases.astro` + `men-status`；v0.5.0 把 `site/package-lock.json` / `men-status` / `docs/integrations/argus.md` 纳入自动同步，并用 `test/release.test.mjs` 锁住清单。
 
 ## 进程管理红线（Windows · 2026-08-24 事故后新增）
 

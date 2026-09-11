@@ -41,9 +41,12 @@ const SEMVER_RE = /^\d+\.\d+\.\d+$/;
 // bump 子命令 → 递增的版本段下标（0=major, 1=minor, 2=patch）
 const BUMP_SEGMENTS = { major: 0, minor: 1, patch: 2 };
 
+export { VERSION_JSON_FILES, VERSION_TEXT_FILES };
+
 // 发布时需同步版本号的 JSON 文件（相对仓库根）
 const VERSION_JSON_FILES = [
   "package-lock.json",          // 顶层 version + packages[""].version 两处
+  "site/package-lock.json",     // 站点 lockfile 根版本（此前漏同步，#116 rebase 时漂过）
   "opencode.json",
   "site/package.json",
 ];
@@ -55,6 +58,8 @@ const VERSION_TEXT_FILES = [
   "docs/guide/milestones.md",             // 里程碑进度版本引用
   "docs/governance.md",                   // 治理文档版本引用
   "knowledge/README.md",                  // 知识库 README 版本引用
+  ".opencode/skills/men-status/SKILL.md",  // 版本表格（v0.4.0 靠手工补过）
+  "docs/integrations/argus.md",           // argus 集成文档的版本引用
 ];
 
 // ─────────────────────────── 工具函数 ───────────────────────────
@@ -183,7 +188,7 @@ function syncVersionFiles(newVersion, oldVersion, dryRun) {
         changed = true;
       }
       if (
-        f === "package-lock.json" &&
+        f.endsWith("-lock.json") &&
         obj.packages &&
         typeof obj.packages[""] === "object" &&
         obj.packages[""].version !== undefined &&

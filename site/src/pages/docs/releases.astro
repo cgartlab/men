@@ -9,7 +9,7 @@ const pageTitle = '路线图 — ' + content.hero.title;
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-09-03 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-09-11 发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -54,7 +54,12 @@ const seealso = [
         <table>
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
-                                                            <tr>
+                                                                        <tr>
+              <td><strong>v0.5.0</strong></td>
+              <td>2026-09-11</td>
+              <td>发布主题「Argus 云端设计评审 + 全局模型配置 + 工程加固」。</td>
+            </tr>
+<tr>
               <td><strong>v0.4.0</strong></td>
               <td>2026-09-03</td>
               <td>发布主题「半自动化 GitHub 开发工作流 + 工程加固」。</td>
@@ -123,7 +128,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-09-03，共发布 <strong>12 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7、v0.4.0）。
+        截至 2026-09-11，共发布 <strong>13 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7、v0.4.0、v0.5.0）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -131,8 +136,20 @@ const seealso = [
 
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
-                              <p>
-        当前版本 <code>v0.4.0</code> 于 2026-09-03 发布，主题为「半自动化 GitHub 开发工作流 + 工程加固」。
+                                    <p>
+        当前版本 <code>v0.5.0</code> 于 2026-09-11 发布，主题为「Argus 云端设计评审 + 全局模型配置 + 工程加固」。
+      </p>
+      <h3>v0.5.0「Argus 云端设计评审 + 全局模型配置 + 工程加固」</h3>
+      <ul>
+        <li><strong>Argus 云端设计评审集成</strong>：PR 自动触发 P0–P3 分级前端设计评审，覆盖设计 token、硬编码值、暗色覆盖、无障碍与 CSS 质量（#109）</li>
+        <li><strong><code>men.jsonc</code> 全局配置</strong>：预设切换 + 逐 Agent 模型覆盖，CC Switch 只管 provider/key，Men 只管 agent 分配（#88）</li>
+        <li><strong>动态免费预设 + 安装引导</strong>：实时拉取 OpenCode Zen 可用模型清单，安装前检测 OpenCode / Node / CC Switch 并对话式引导模型配置（#93 #94）</li>
+        <li><strong>PR 阶段站点构建检查</strong>：<code>site/**</code> 改动即在 CI 跑 <code>build</code> + <code>check-site</code>，产物级验证（UTF-8/锚点/base）首次进入 PR 流程（#117）</li>
+        <li><strong>安全修复</strong>：svgo 4.0.2 → 4.1.0，修 1 项 high + 1 项 medium 的 SVG 清洗绕过（#116）</li>
+        <li><strong>发版同步补齐</strong>：<code>site/package-lock.json</code>、<code>men-status</code>、argus 集成文档纳入自动同步，残留清单只剩 <code>releases.astro</code>（#117）</li>
+      </ul>
+      <p class="wiki-note">
+        以下为 v0.4.0（历史）版本的发布亮点回顾。
       </p>
       <h3>v0.4.0「半自动化 GitHub 开发工作流 + 工程加固」</h3>
       <ul>
