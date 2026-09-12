@@ -42,6 +42,8 @@ agent: men
 
 **todowrite**：标记第 2 步 `in_progress`。
 
+**意图门永远先行**：任何任务先判定四类意图，再进入具体角色路由；不允许跳过意图门直接按任务类型分发。
+
 按以下四类意图判定任务性质，并选择对应执行策略。**分类置信度低时，向用户确认，不猜。**
 
 | 意图 | 典型触发 | 执行策略 | 是否需 chi judge |
@@ -144,14 +146,14 @@ node scripts/gate.mjs typecheck --dir <产物所在目录> --sid <sid>
 
 - 机械门禁通过后（或产物不涉及工程时），**必须 spawn chi**（`task` 工具，subagent_type: chi）做 fresh-context judge
 - chi judge 耗时较长，使用 `background: true` 后台运行
-- **重试时使用 task_id 恢复**：chi judge 失败后重试时，传入上次的 `task_id`，chi 可看到之前的验证结果，只需重新验证失败项
+- **重试时使用 task_id 恢复**：chi judge 失败后重试时，传入上次的 `task_id` 保留验证上下文；chi 每轮复验所有标准（含上一轮 PASS 项，防回归）
 - chi judge 的职责：
   - 只按验收标准**机械核对**（文件存在性 / 退出码 / 命令输出 / 格式校验）
   - **不接受任何子 agent 的自述作为完成证据**——只相信自己的检查结果
   - 输出结构化 verdict：每个子任务 PASS / FAIL，并附检查依据
 - **judge 结果处理：**
   - 全部 PASS → 进入 REPORT
-  - 有 FAIL → 回到**失败点的子任务**重试（不从头重跑），最多重试 5 次
+  - 有 FAIL → 回到**失败点的子任务**重试（不从头重跑）；chi 连续 3 次 FAIL 判定 BLOCKED 时立即停止，其余场景最多重试 5 次
   - chi 判定 BLOCKED（无法验证）→ 停止，报"卡住"，把已完成的中间产物和 BLOCKED 原因交给用户
 - 超限 5 次仍无法通过 → 停止，报"卡住"
 

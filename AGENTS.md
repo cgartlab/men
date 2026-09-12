@@ -50,6 +50,10 @@ v0.5.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 - **chi** 兼任独立 judge（fresh context spawn，机械验证）
 - 所有 agent 共享全员红线（见各定义底部），路由/合并/事件/交互规范见 `.opencode/agent/men.md`
 
+## 全员红线
+
+> 七条红线的完整定义见 `docs/guide/quickstart.md`「九、红线提醒」。6 个 agent 定义底部统一引用本段落，逐字一致。
+
 ## 编辑 agent 定义规则
 
 1. **先 read 再 edit** — OpenCode edit 要求此前已读取过文件

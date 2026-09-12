@@ -73,6 +73,7 @@ license: Apache-2.0
 
 ### 步骤 5：落盘
 
+0. 先确认是否被明确要求持久化：未明确要求时，优先写入临时目录（如 `.agents/state/sessions/<sid>/`）或直接给出保存建议；明确要求沉淀时才写入 `knowledge/`
 1. 确认目标路径（`knowledge/<目录>/<主题>.md`）
 2. 使用 `write` 工具写入 `.md` 文件
 3. **验证文件存在且非空**（read 或 Test-Path 确认）

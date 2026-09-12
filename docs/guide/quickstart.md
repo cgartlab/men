@@ -7,7 +7,7 @@
 
 ## 〇、使用环境（重要）
 
-**Men（门）Agent 团队是 OpenCode 的一个插件（plugin），不是独立应用。** 所谓"安装"，就是把本仓库作为 OpenCode 项目配置载入——OpenCode 在仓库目录启动时自动读取 `opencode.json`，加载 6 个 agent、15 个技能包、命令与 MCP 服务器。
+**Men（门）Agent 团队是 OpenCode 的一个插件（plugin），不是独立应用。** 所谓"安装"，就是把本仓库作为 OpenCode 项目配置载入——OpenCode 在仓库目录启动时自动读取 `opencode.json`，加载 6 个 agent、15 个技能包与自定义命令；MCP 服务器由 CC Switch 按需提供。
 
 **前置环境：**
 - 已安装 **OpenCode**（插件运行宿主）

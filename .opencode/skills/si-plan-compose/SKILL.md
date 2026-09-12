@@ -102,7 +102,7 @@ Wave 2: 组件开发（ji）+ 样式实现（ji）
 ## 验收标准
 | ID | 描述 | 验证方式 | PASS 条件 |
 |----|------|----------|-----------|
-| V1 | 组件文件存在 | file exists | .tsx 文件非空 |
+| V1 | 页面文件存在 | file exists | index.html 文件非空 |
 
 ## TODO List
 - [ ] Category:design Skills:yi-design QA:V1

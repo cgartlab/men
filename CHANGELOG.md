@@ -12,9 +12,20 @@
 
 ### Added
 
+- **Agent 自洽性机械检查**：新增 `test/agent-consistency.test.mjs`，锁定 6 个 agent 的红线引用、模型分配、角色边界、技能清单与关键流程表述，防后续提示词漂移
+
 ### Changed
 
+- **Agent 角色边界统一**：yi 上游只保留 men/si（chi 仅作评审输入）、xun 研究请求一律经 men 分发、si 成功标准改为临时目录落盘或保存建议、ji 明确设计实现落地与 Node 工程范围
+- **流程阈值统一**：意图门判定永远先行；chi 连续 3 次 FAIL 即 BLOCKED，编排层立即停止，不再与通用 5 次上限冲突；judge 每轮复验所有标准
+- **Exa MCP 表述修正**：xun 定义与 xun-search 技能改为「由 CC Switch 统一管理」，与仓库 `opencode.json` 不含 MCP 的实际配置一致
+- **架构文档同步**：si 角色描述、命令数量与 gh-issue 命令补齐
+
 ### Fixed
+
+- **men-update 技能 v0.5.0 同步**：移除「必须删除 npm 缓存」的陈旧流程，改为相对路径部署说明
+- **评审转交修正**：chi-judge 不再把语义/视觉评审推给 si/yi；yi-design 内容写作转交 ji
+- **数据源与文档冲突**：8888 端口注明与 Wealth Tracker 共用；release.md 的 MCP 声明规则与 AGENTS.md 统一；si-plan-compose 示例移除框架 `.tsx`
 
 ## [v0.5.0] - 2026-09-11
 
