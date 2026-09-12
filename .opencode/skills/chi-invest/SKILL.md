@@ -27,7 +27,7 @@ description: "Use when analyzing portfolio holdings, calculating investment retu
 
 ## 数据源
 
-**Wealth Tracker API**：`http://192.168.31.111:8888`
+**Wealth Tracker API**：`http://192.168.31.111:8888`（与 Affine/Blinko 共用 8888 端口，按实际部署路径区分）
 
 | 端点 | 方法 | 用途 |
 |------|------|------|

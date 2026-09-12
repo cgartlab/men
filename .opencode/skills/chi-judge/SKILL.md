@@ -1,6 +1,6 @@
 ---
 name: chi-judge
-description: "Use when performing independent mechanical verification (judge) of any agent's output — checking file existence, test results, lint, secrets, or TODO scans. 触发关键词：评审、judge、验收、verify、review、验收标准、独立评审、质量门禁。Don't call when the task is writing new code (use ji), or when doing semantic content review (use si)."
+description: "Use when performing independent mechanical verification (judge) of any agent's output — checking file existence, test results, lint, secrets, or TODO scans. 触发关键词：评审、judge、验收、verify、review、验收标准、独立评审、质量门禁。Don't call when the task is writing new code (use ji)."
 ---
 
 # chi-judge — 独立评审（Judge）技能
@@ -12,8 +12,6 @@ description: "Use when performing independent mechanical verification (judge) of
 ## 不要触发
 
 - 用户要求写新代码（由 ji 负责）
-- 用户要求做内容风格评审（由 si 负责）
-- 用户要求做视觉设计评审（由 yi 负责）
 
 ## Judge 协议
 

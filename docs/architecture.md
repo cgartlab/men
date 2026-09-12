@@ -10,7 +10,7 @@
 ```mermaid
 graph TD
     U[用户] -->|唯一指令入口| men[men 门 / primary<br/>唯一接收 / 唯一 spawner]
-    men -->|spawn task| si[si 思 / planner-writer]
+    men -->|spawn task| si[si 思 / planner + knowledge]
     men -->|spawn task| ji[ji 记 / engineer]
     men -->|spawn task| chi[chi 持 / investor + judge]
     men -->|spawn task| yi[yi 艺 / designer]
@@ -124,7 +124,7 @@ men/
 ├── .opencode/
 │   ├── agent/                  ← 6 个 agent 定义
 │   │   ├── men.md              ← 门 — 编排与路由
-│   │   ├── si.md               ← 思 — 规划与写作
+│   │   ├── si.md               ← 思 — 规划与知识管理
 │   │   ├── ji.md               ← 记 — 代码与工程
 │   │   ├── chi.md              ← 持 — 投资与评审
 │   │   ├── yi.md               ← 艺 — 视觉设计
@@ -136,10 +136,11 @@ men/
 │   │   ├── xun-factcheck / xun-rss-scan / xun-search
 │   │   ├── yi-design / yi-imagegen
 │   │   └── men-status / men-update
-│   ├── command/                ← 3 个自定义命令
+│   ├── command/                ← 4 个自定义命令
 │   │   ├── ultrawork.md        ← 一键编排
 │   │   ├── verify.md           ← 验证命令
-│   │   └── hyperplan.md        ← 访谈式规划
+│   │   ├── hyperplan.md        ← 访谈式规划
+│   │   └── gh-issue.md         ← 本地意图 → GitHub issue
 │   ├── package.json            ← @opencode-ai/plugin 本地依赖
 │   └── .gitignore
 │

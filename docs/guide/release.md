@@ -133,6 +133,6 @@ npm publish
 2. **内网 IP / 密钥必须走 `.env`**：
    - 内网数据源（192.168.31.x）、Embedding 服务地址、API key 一律放 `.env`（由 `.env.example` 模板生成，已被 `.gitignore` 排除）
    - 仓库中禁止出现真实密钥（`verify.mjs` 的 secrets 扫描会拦截）
-   - MCP 服务器一律在 `opencode.json` 中声明，禁止写死内网地址与密钥
+   - MCP 服务器一律由 CC Switch 统一管理，禁止在仓库 `opencode.json` 中写死内网地址与密钥
 3. **占位 URL 替换清单**（已过时）：占位符已在代码与文档中硬编码为真实地址，发布时无需再替换
 4. **License 与署名**：MIT LICENSE 已在根目录，确认 `package.json` 的 `"license": "MIT"` 一致
