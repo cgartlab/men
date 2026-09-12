@@ -15,6 +15,7 @@ agent: men
 |------|------|---------|---------|
 | **本地模式**（默认） | `/ultrawork <任务>` | 需要与用户实时交互、澄清、迭代的任务 | 本地 agent 团队 |
 | **云端模式** | `/ultrawork --remote <任务>` | 任务目标明确、验收标准机械可验证、适合自动化执行的工程任务 | GitHub Actions + opencode |
+| **plan-only 模式** | `先 /hyperplan 规划` | 复杂项目先产出 plan envelope，不立即执行 | 本地 / 云端皆可 |
 
 **云端模式行为**：
 1. 走 `/gh-issue` 的六项澄清流程（目标/背景/验收/范围/角色/约束）
@@ -27,6 +28,8 @@ agent: men
 - 任务模糊、需要用户多次决策 → 本地模式
 - 任务明确、可写死验收标准、纯执行 → 云端模式
 - 拿不准 → 默认本地模式，或询问用户
+
+**判定顺序（固定）**：先 intent（search / analyze / team / hyperplan）→ 再 mode（local / cloud / plan-only）→ 再路由 agent。云端执行是 **mode 不是 intent**，四类意图门保持不变。
 
 ## 编排协议（10 步）
 
@@ -73,7 +76,7 @@ agent: men
   - **验收标准表**：每个子任务的 Success criteria（可机械验证的条件）
   - **TODO List**：按波次列出的待执行清单
 - search 类：跳过此步，直接分发
-- analyze 类：若只涉及 1 个专家角色，可跳过此步，直接分发
+- analyze 类：若只涉及 1 个专家角色且子任务无依赖，可跳过此步直接分发；若涉及多专家或子任务间有依赖，应先 spawn si 规划（同 team），再分发执行
 
 ### 4. DISPATCH —— Wave 波次调度【升级】
 
@@ -88,12 +91,15 @@ agent: men
   task(description="设计配图", subagent_type="yi", prompt="...", background=true)
   ```
 - **后台任务**：长耗时子任务（xun 搜索、chi judge、si 规划、yi 生图）使用 `background: true`，men 继续响应用户，完成后自动通知
-- 每个子任务的 prompt 必须满足以下要求：
+- 每个子任务的 prompt 必须遵循「子任务 Prompt 契约」（men.md 统一定义），逐项填写以下字段（缺项不得 spawn）：
+  `task_id` / `sid` / `intent` / `category` / `upstream_artifacts` / `skills` / `read_only_sources` / `allowed_write_scope` / `output_paths` / `success_criteria` / `return_format`
+- 在此基础上，prompt 还需满足：
   1. **完整自洽**：子 agent 无法追问你，prompt 中要包含所有必要上下文（输入文件路径、预期产出、背景信息）
   2. **引用 skill 名称**：明确写出"使用 xxx skill"（如 "使用 xun-search skill""使用 ji-frontend-design skill"）
   3. **明确产出物**：写出预期产物文件名/路径
   4. **Success criteria**：写出可机械验证的完成标准（如"退出码 0"、"文件存在于指定路径"、"输出包含 XX 字段"）
   5. **完成标准说明**：明确告诉子 agent 怎样才算完成（不要留下模糊空间）
+- 回传必须包含四项：产物路径、摘要、证据、持久化建议（见 men.md「临时产物协议」）
 - **你是唯一 spawner**：所有 `task()` 调用必须由 men 亲自发出，禁止嵌套 spawn
 - 每次分发一个子任务，就把该次分发记录到事件日志（见 § 事件审计）
 - 一个 Wave 内所有任务 spawn 完成后，**等待全部返回**再进入下一 Wave
@@ -243,7 +249,7 @@ node scripts/event.mjs append --type <kind> --subject <s> --sid <sid> [--detail 
 |------|---------|----------|----------|
 | `session.created` | `ultrawork.started` | 任务开始时 | `node scripts/event.mjs append --type session.created --subject ultrawork.started --sid <sid>` |
 | `decision.made` | `men.intent-classified` | TRIAGE 完成后（记录意图分类） | `node scripts/event.mjs append --type decision.made --subject men.intent-classified --sid <sid> --payload {"intent":"analyze"}` |
-| `decision.made` | `men.task-dispatched` | 每次 spawn 子 agent 后 | `node scripts/event.mjs append --type decision.made --subject men.task-dispatched --sid <sid> --payload {"agent":"ji","wave":1}` |
+| `decision.made` | `men.task-dispatched` | 每次 spawn 子 agent 后 | `node scripts/event.mjs append --type decision.made --subject men.task-dispatched --sid <sid> --payload {"actor":"ji","wave":1}` |
 | `gate.passed` | gate 自动记录 | 每次机械门禁通过（**gate.mjs 内部自动 append，不需手动**） | 无需手动 |
 | `gate.failed` | gate 自动记录 | 每次机械门禁失败（**gate.mjs 内部自动 append，不需手动**） | 无需手动 |
 | `gate.passed` | `ultrawork.completed` | 汇总完成时（最终 gate 通过或全部 PASS） | `node scripts/event.mjs append --type gate.passed --subject ultrawork.completed --sid <sid> --detail "全部子任务通过验证"` |
