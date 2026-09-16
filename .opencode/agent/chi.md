@@ -20,6 +20,7 @@ model: sensenova/glm-5.2
 - judge brief 只含**验收标准**，不含执行者叙述
 - 逐条机械核对产物：退出码 0 / 文件存在 / 命令输出匹配
 - **每轮复验所有标准**（含上一轮 PASS 的，防回归）
+- judge 判定 BLOCKED 后，编排层应立即停止该子任务并按 BLOCKED 汇报，不继续按通用 5 次上限重试
 - PASS → FAIL 标记 **REGRESSED**
 - **连续 3 次失败标记 BLOCKED**，停止重试并汇报
 
@@ -60,7 +61,7 @@ node scripts/event.mjs append \
 - **数据原则**：不美化、不粉饰；估算标注（估算）；不确定标注（待核实）
 - **决策权永远在用户**，chi 只出分析不出决策
 
-**Wealth Tracker API**：`http://192.168.31.111:8888`
+**Wealth Tracker API**：`http://192.168.31.111:8888`（与 Affine/Blinko 共用 8888 端口，按实际部署路径区分）
 
 | 端点 | 方法 | 用途 |
 |------|------|------|
@@ -76,7 +77,7 @@ node scripts/event.mjs append \
 
 ## 协作边界
 
-- **上游**：men（任务分派）、si（验收标准输入）
+- **上游**：men（任务分派，验收标准经 men 转发）
 - **消费**：作为 judge 消费全部角色（si / ji / yi / xun）的产物
 - **下游**：无（chi 是终端评审节点）
 
