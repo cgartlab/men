@@ -1055,9 +1055,9 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 项 | 状态 |
 |----|------|
 | 分支 | `fix/web-quality-2026-09-19` |
-| 提交规范 | `fix(web): …` / `chore(quality): …`（Conventional Commits） |
-| PR + Squash merge | ⏳ 待全部维度完成后一次性提交 |
-| `git status` 干净 | ⏳ 本轮提交后复查 |
+| 提交规范 | `fix(web): …` / `docs(reports): …`（Conventional Commits）—— 12 轮全部按维度拆分为「代码 + 报告」两笔 |
+| PR + Squash merge | ⏳ **待办**：分支 `fix/web-quality-2026-09-19` 已完成 12 个提交，尚未 push / 开 PR / squash |
+| `git status` 干净 | ✅ 每轮提交后复查均 clean（`git status --porcelain=v1` 无输出） |
 
 ---
 
@@ -1077,10 +1077,11 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | XSS 危险 API | R10 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；依赖 CVE UNKNOWN） |
 | 密钥泄露 | R11 | ✅ 完成（0 缺陷：产物 0 命中 / 源码 0 命中 / 环境注入点 0 / `.env` 未跟踪 / CI 无硬编码 / 自带 `checkSecrets()` 门禁） |
 | 交互态（七态） | R12 | ✅ 完成（P2-9 按钮 `:disabled` 缺失已修；P3-18 SVG aria、P3-19 `:active` 记录；触控目标 / 缩放 / 破坏性操作全达标） |
-| 视觉留档（③ 截图） | — | ⛔ **UNKNOWN**：需浏览器自动化依赖，待确认 |
+| 视觉留档（③ 截图） | — | ⛔ **UNKNOWN · 双重障碍**：(1) 缺浏览器引擎（无 Playwright/Puppeteer，纯 Node 无法渲染 HTML 为位图，无 grep 替代路径）；(2) **明暗主题无法产出** —— `global.css:36` 声明 `color-scheme: light;`，全站 `prefers-color-scheme` 媒体查询 **0 处**，唯一 `theme-color` 为 `#fafafa`，站点确定只有浅色主题，暗色截图将与浅色逐字节相同 |
 | axe / pa11y（②） | — | ⛔ **缺口**：无依赖，待确认 |
 
 ### 需用户确认
 
-1. **是否允许 `npm i -D playwright`**（或复用本机 Chrome）以完成 ③ 视觉留档的 375/768/1440 × 明暗截图？否则 ③ 只能以 UNKNOWN 结案。
-2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注。
+1. **是否允许 `npm i -D playwright`**（或复用本机 Chrome）以完成 ③ 视觉留档的 375/768/1440 截图？否则 ③ 以 UNKNOWN 结案。
+   **注意**：即便装了 Playwright，「× 明暗主题」仍无法满足 —— 站点为**确定单主题**（`global.css:36 color-scheme: light`、`prefers-color-scheme` 媒体查询 0 处）。可行方案是产出 3 断点 × 1 主题的 9 张（抽样 3 页）并标注「暗色塌缩为重复图」，而非伪造差异。
+2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注（12 轮已全程如此，六簇覆盖无缺口）。
