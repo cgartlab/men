@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R5 / 维度：标题层级（h1 唯一 · 不跳级）（Lite 单维度循环第 5 项）
+> **轮次**：R6 / 维度：对比度（正文 ≥4.5:1 · WCAG 2.2 AA）（Lite 单维度循环第 6 项）
 > **日期**：2026-09-19
 
 ---
@@ -101,6 +101,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
+| 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **2 项 P2 AA 违规，12 处已修**（§5 P2-1 / P2-2）；1 项 P2 待决（P2-3：`--color-fg-muted` 在次级背景上低于 4.5:1，需逐元素背景分析，超出单轮范围）；3 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准） |
 | 元素一致性 | — | ⏳ 待查（R4：七态、焦点可见、目标 ≥24×24、alt） |
 | 交互体验 | — | ⏳ 待查（R5：反馈、可撤销、Tab 陷阱、模态焦点归还、`prefers-reduced-motion`、缩放） |
 | 前端安全 | 外链 `rel=noopener`（随断链扫描顺带检查，134 条外链） | ✅ `target=_blank` 缺 `noopener` = 0；其余子项 ⏳ 待查（R6–R8：XSS 危险 API / CSP 与安全头 / 密钥进产物） |
@@ -178,9 +179,82 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   定级依据：定级表「P1 关键流程受阻」—— 快速上手页是站点主入口的入门流程，`/ultrawork` 作为唯一编排命令在本页无章节，新用户的第一个任务在此页无法完成。
 - **Note（验证方式）**：`npm run build`（exit 0）→ `node tmp/link-check.mjs`（exit 0，锚点缺失 2 → 0）→ `node site/scripts/check-site.mjs`（exit 0）。引用的 3 个源路径（`.opencode/command/ultrawork.md`、`docs/guide/quickstart.md`、`scripts/install.mjs`）均已 `Test-Path` 确认存在。
 
-### P2
+### P2（R6 · 对比度 · WCAG 2.2 AA 1.4.3）
 
-⏳ 后续轮次填写（当前 0 项）。
+> 判据：WCAG 2.2 §1.4.3 Contrast (Minimum) —— 正文与 UI 文本需 **≥4.5:1**；仅「大文本」（≥18pt / 24px，或 ≥14pt / 18.66px 粗体）可降至 **3:1**。非文本元素（边框 / 图形 / 图标）适用 §1.4.11，阈值 **3:1**。以下实算值均由 `tmp/contrast-check.mjs` 按 WCAG 相对亮度公式计算，非引用注释。
+
+#### P2-1 信息排版 · 对比度 — 常驻小字使用主强调色，AA 不达标（已修复）
+
+- **位置**：`site/src/pages/index.astro:572`、`index.astro:590`
+- **问题**：`--color-accent`（`#e85d04`）在**所有**浅色背景上都不达 4.5:1（实测 2.84–3.50:1），仅够「大文本 / 非文本」的 3:1。两处将其用于**常驻小字文本**：
+  - `:572` `.terminal__ps1` —— `font-size: var(--font-size-body)`（1rem = **16px**）、`font-weight: var(--font-weight-bold)`（**700**）、父容器 `.terminal__cmd-line` 背景 `#fff`（`:570`）。16px/700 **不构成大文本**（粗体需 ≥18.66px）。实测 **3.50:1**。
+  - `:590` `.showcase__label` —— `font-size: var(--font-size-eyebrow)`（0.75rem = **12px**）、`font-weight: var(--font-weight-semi)`（600），背景为页面底色 `#fafafa`。实测 **3.35:1**。
+- **Found（原文逐字，修复前）**：
+  ```css
+  .terminal__ps1 { font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-accent); flex-shrink: 0; font-weight: var(--font-weight-bold); line-height: 1.5; }
+  .showcase__label { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-3); }
+  ```
+- **Expected**：小字（<24px 且非 ≥18.66px 粗体）使用强调色时应走 `--color-accent-dark`（`#a03c00`）—— 该令牌的注释用途正是「小字安全橘」，且实测在系统内**全部 7 个背景上都 ≥5.42:1**。
+- **Fix（已入库，可复制）**：
+  ```css
+  .terminal__ps1 { font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-accent-dark); flex-shrink: 0; font-weight: var(--font-weight-bold); line-height: 1.5; }
+  .showcase__label { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-accent-dark); margin-bottom: var(--space-3); }
+  ```
+- **Basis**：WCAG 2.2 §1.4.3。命令输出（`tmp/contrast-fix.mjs`）：
+  ```
+  --color-accent (#e85d04):  不达标 → #fafafa=3.35:1 | #ffffff=3.50:1 | #f5f5f5=3.21:1 | #f0ebe2=2.95:1 | accent-tint=3.11:1 | #efe7d2=2.84:1
+  --color-accent-dark (#a03c00):  全部达标 ✓
+  ```
+- **Note**：**该缺陷先于本轮存在** —— R4 把 `#e85d04` 字面量收敛为 `var(--color-accent)` 时是等值替换，对比度未变。此处如实记录为先有缺陷，不由 R4 引入。修正后：`.terminal__ps1` 6.69:1（AAA）、`.showcase__label` 6.41:1（AAA）。`npm run build` exit 0（14 页）、`check-site.mjs` exit 0、`link-check` 断链 0、`empty-check` 空实现 0、`heading-check` 合规、`node --test` exit 0、`verify.mjs` PASS=9。
+
+#### P2-2 信息排版 · 对比度 — hover / active 态文本回落到主强调色，降低对比度（已修复）
+
+- **位置**：10 处 —— `index.astro:533,542,583,656,671,765`、`roles.astro:960,999`、`global.css:355,360`
+- **问题**：多处交互态把文本色从已达标的 `--color-fg-muted`（4.54:1）或 `--color-fg` 改为 `--color-accent`（3.35:1），**交互时反而降低可读性**。WCAG §1.4.3 对瞬态文本同样适用。涉及：
+  - `.hero-cta--ghost:hover`（`:533`，文本落在 `--color-accent-tint` ≈ `#fdefe6` 上，实测 **3.11:1** —— 全部组合中最低）
+  - `.install__guide:hover` / `.topo__all:hover` / `.mechanisms__all:hover`（`:542,671,765`，均为 0.76rem ≈ 12.2px 链接）
+  - `.terminal__copy:hover`（`:583`，32×32 图标按钮，白底）
+  - `.showcase__arrow:hover`（`:656`，accent-tint 底）
+  - `.intent-link a:hover` / `.principles-link a:hover`（`roles.astro:960,999`）
+  - `pre .copy-btn:hover` / `.copy-btn.copied`（`global.css:355,360`）
+- **Found（原文逐字，修复前，取 3 处代表）**：
+  ```css
+  .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent); background: var(--color-accent-tint); text-decoration: none; }
+  .install__guide:hover { color: var(--color-accent); text-decoration: none; }
+  pre .copy-btn.copied { opacity: 1; color: var(--color-accent); }
+  ```
+- **Expected**：交互态文本同样使用 `--color-accent-dark`；**边框 / 阴影等非文本元素保持 `--color-accent`**（§1.4.11 阈值 3:1，3.35:1 已达标，无需改）。
+- **Fix（已入库，可复制 · 模式）**：仅替换 `color:` 一处，保留 `border-color:`：
+  ```css
+  .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
+  .install__guide:hover { color: var(--color-accent-dark); text-decoration: none; }
+  pre .copy-btn.copied { opacity: 1; color: var(--color-accent-dark); }
+  ```
+- **Basis**：WCAG 2.2 §1.4.3（正文）与 §1.4.11（非文本，阈值区分是本轮判断依据）。命令输出：修正后 12 处全部 ≥5.42:1；残留 `color: var(--color-accent)` 文本用法 6 处已逐条核为合规（见 Note）。
+- **Note · 残留合规核对**：修复后源码仍存 6 处 `color: var(--color-accent)`，逐条判定均不违规 ——
+  1. `global.css:773` `.oc-title em` —— em 位于 h1 内（≥24px 大文本，3.35:1 ≥ 3:1 ✓）
+  2. `index.astro:524` `.hero-logo`、`index.astro:643` `.showcase__trait svg` —— SVG 图形，适用 §1.4.11，3:1 ✓
+  3. `HeroArt.astro:174,205` `.dither-band` / `.dither-band pre` —— ASCII 装饰艺术，元素层 `aria-hidden="true"`（`HeroArt.astro:20,28`），不纳入对比度判定
+  4. `roles.astro:877` `content: '·'` —— 伪元素装饰圆点标记
+  另 20 处 `border-color` / `border-bottom-color` / `border-left-color` 属非文本，3:1 阈值下 3.35:1 达标。
+
+#### P2-3 信息排版 · 对比度 — `--color-fg-muted` 在次级背景上低于 4.5:1（未修 · 需逐元素背景分析）
+
+- **位置**：`site/src/styles/global.css:118`（令牌定义）+ 约 50 处使用点
+- **问题**：`--color-fg-muted`（`#737373`）在页面底色 `#fafafa` 上为 4.54:1（**勉强达标**），但在站点实际使用的次级背景上跌破阈值：
+  | 背景 | 值 | 实测 |
+  |------|-----|------|
+  | `--color-surface-warm` / `--color-code-bg` | `#f5f5f5` | **4.35:1** ✗ |
+  | `--color-accent-tint` | ≈`#fdefe6` | **4.21:1** ✗ |
+  | `--color-meta` | `#efe7d2` | **3.85:1** ✗ |
+  | `--color-bg-warm` | `#f0ebe2` | **3.99:1** ✗ |
+- **Expected**：在浅色次级背景上使用 `--color-fg-tertiary`（`#5c5c5c`，在 `#f5f5f5` 上 6.13:1）或 `--color-fg-secondary`（`#404040`，9.93:1）。
+- **Fix**：**本轮不改**。需对每个使用点解析其实际背景（依赖 CSS 层叠与父级继承），超出「≤3 文件 / 只改必要行」的单轮约束；且改动面达 50 处。建议交强模型做独立轮，或统一将 `--color-fg-muted` 的取值加深至 `#6b6b6b`（在 `#f5f5f5` 上约 4.8:1）—— 但后者触及令牌语义，须先经确认。
+- **Basis**：WCAG 2.2 §1.4.3。命令输出（`tmp/contrast-fix.mjs`）：
+  ```
+  --color-fg-muted (#737373):  不达标 → #f5f5f5=4.35:1 | #f0ebe2=3.99:1 | accent-tint=4.21:1 | #efe7d2=3.85:1
+  ```
+- **Note**：定级 P2（WCAG AA 违规不低于 P2）。当前 `--color-fg-muted` 的多数使用点落在 `#fafafa` 页底或白卡上（4.54:1 / 4.43:1 量级），故未达 P1「严重不可读」。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -416,6 +490,75 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 
 **Basis**：`检查要点 · 样式`（裸色值）；`排除范围`（令牌中的裸值定义不报）。
 
+#### P3-10 样式代码 — 死令牌：定义后从未使用（未修 · 需确认是否保留）
+
+- **位置**：`site/src/styles/global.css:119`、`global.css:124`
+- **问题**：两个色令牌定义后全仓库零引用 —— `--color-fg-decorative`（`#8a8a8a`，注释自称「仅装饰 / 大写小字 · 3.3:1」）与 `--color-accent-soft`（`#c94700`，「中等强度橘 · 填充 / hover」）。更值得注意的是：`--color-fg-decorative` 的 3.31:1 本就**不达 AA 正文**，若真被用于正文即为 P2；当前零使用恰好避免了该违规。
+- **Found（原文逐字）**：
+  ```css
+  --color-fg-decorative: #8a8a8a;              /* 仅装饰 / 大写小字 · 3.3:1 */
+  --color-accent-soft: #c94700;                /* 中等强度橘 · 填充 / hover · 4.1:1 大文本 */
+  ```
+- **Expected**：未使用的令牌应删除，或补齐使用点。
+- **Fix**：**本轮不改**。删除令牌属改动令牌体系，受「不改令牌语义」硬约束限制，需先经确认。
+- **Basis**：`检查要点 · 样式`（死代码）。命令输出（grep `--color-fg-decorative|--color-accent-soft`）：
+  ```
+  global.css:119  --color-fg-decorative: #8a8a8a;   ← 唯一定义，0 处引用
+  global.css:124  --color-accent-soft: #c94700;     ← 唯一定义，0 处引用
+  ```
+- **Note**：`--color-accent-soft` 的注释声称「4.1:1 大文本」，实测在 `#fafafa` 上为 4.59:1（已达 AA 正文），在 `#f5f5f5` / `#f0ebe2` / `#efe7d2` 上仅 3.88–4.39:1（仅大文本）。若未来启用，须按 P2-1 同规则限制用途。
+
+#### P3-11 样式代码 — 死 CSS：`.oc-hero-art` 规则块无对应元素（未修）
+
+- **位置**：`site/src/styles/global.css:778-801`（含 `.oc-hero-art` 与 `.oc-hero-art pre` 两条规则）
+- **问题**：`.oc-hero-art` 类名在全部 14 个源文件与 14 个构建产物中**零出现**，对应 CSS 为死代码。其中 `.oc-hero-art pre` 声明 `font-size: 11px; color: var(--color-accent); opacity: 0.35` —— 若真被使用，11px 强调色文本将构成 P2 对比度违规。
+- **Found（原文逐字）**：
+  ```css
+  .oc-hero-art pre {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: 1px;
+    color: var(--color-accent);
+    opacity: 0.35;
+  ```
+- **Expected**：删除无对应元素的规则块。
+- **Fix**：**本轮不改**（避免与 R6 的对比度修复混在同一提交；且需确认该块是否为预留的 Hero 变体）。
+- **Basis**：`检查要点 · 样式`（死代码）。命令输出：
+  ```
+  oc-hero-art 在 site/src 全部 .astro：0 命中
+  oc-hero-art 在 site/dist 全部 .html：0 命中
+  ```
+- **Note**：与 R3 的 P3-2（重复 reduced-motion 块 + 死代码 `.oc-hero-art pre`）相关 —— R3 已从 reduced-motion 块中删除 `.oc-hero-art pre { animation: none }`，但主规则块 `:790-801` 仍存。可合并处理。
+
+#### P3-12 样式代码 — 令牌注释声称的对比度值失准（未修 · 文档类）
+
+- **位置**：`site/src/styles/global.css:115-119,122-123,137`
+- **问题**：令牌注释中标注的对比度与 WCAG 公式实算值存在偏差，7 处声称值中 6 处偏差 > 0.15。方向不一致（既高报也低报），说明这些数值是估算而非实测，可能误导后续开发者对令牌可用范围的判断。
+- **Found（原文逐字 vs 实算）**：
+  | 令牌 | 注释声称 | 实算（on `#fafafa`） | 偏差 |
+  |------|---------|------|------|
+  | `--color-fg` | 17:1 | **16.67:1** | −0.33 |
+  | `--color-fg-secondary` | 9.3:1 | **9.93:1** | +0.63 |
+  | `--color-fg-tertiary` | 5.6:1 | **6.41:1** | +0.81 |
+  | `--color-fg-muted` | 4.6:1 | **4.54:1** | −0.06 ✓ |
+  | `--color-fg-decorative` | 3.3:1 | **3.31:1** | +0.01 ✓ |
+  | `--color-accent-dark` | 5.7:1 | **6.41:1** | +0.71 |
+  | `--color-code` | 17:1 | **16.67:1** | −0.33 |
+- **Expected**：注释中的对比度应标注**最不利背景**下的实测值（而非仅在 `#fafafa` 上），并注明测试背景，避免误用。例如 `--color-fg-muted` 在 `#fafafa` 上 4.54:1 但在 `#f5f5f5` 上仅 4.35:1 —— 若只写 4.6:1，开发者会以为它可以安全用在纸感底上。
+- **Fix（建议，本轮不改）**：
+  ```css
+  --color-fg-muted: #737373;      /* 弱化文本 · 4.54:1 on #fafafa / 4.35:1 on #f5f5f5（后者不达 AA 正文，见 P2-3） */
+  ```
+- **Basis**：`检查要点 · 排版`（正文对比 ≥4.5:1）。命令输出（`tmp/contrast-check.mjs`）：
+  ```
+  --color-fg           实算 16.67:1  声称 17  (-0.33)  AAA  ← 声称值偏差
+  --color-fg-secondary 实算 9.93:1   声称 9.3 (+0.63)  AAA  ← 声称值偏差
+  --color-fg-tertiary  实算 6.41:1   声称 5.6 (+0.81)  AA正文  ← 声称值偏差
+  --color-accent-dark  实算 6.41:1   声称 5.7 (+0.71)  AA正文  ← 声称值偏差
+  ```
+- **Note**：定级 P3（文档准确性，无渲染影响）。但 `--color-fg-muted` 的 4.6:1 声称值掩盖了 P2-3 的实际风险，两者存在因果关联。
+
 ### 无发现记录（R2 空实现）
 
 | 检查项 | 范围 | 结果 |
@@ -480,7 +623,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 | ✅ 完成（P3-6/P3-7 已修 11 处；P3-8 双源真相待重构；P3-9 合法字面量留档） |
 | 标题层级 | R5 | ✅ 完成（0 缺陷） |
-| 对比度 | R6 | ⏳ |
+| 对比度 | R6 | ✅ 完成（P2-1/P2-2 共 12 处已修；P2-3 待逐元素背景分析；P3-10～P3-12 记录） |
 | 键盘焦点 | R7 | ⏳ |
 | 错误容错（含 404 / 空态） | R8 | ⏳ |
 | 核心网页指标（LCP/INP/CLS） | R9 | ⏳ |
