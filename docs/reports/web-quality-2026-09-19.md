@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R3 / 维度：`!important` 与内联样式滥用（Lite 单维度循环第 3 项）
+> **轮次**：R4 / 维度：裸色值（未走令牌的 hex / rgb）（Lite 单维度循环第 4 项）
 > **日期**：2026-09-19
 
 ---
@@ -99,6 +99,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 |----|-----------|------|
 | 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`）+ 空实现 / skip-link / 空跳模式（`tmp/empty-check*.mjs`），产物 14 页全量扫描 | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0 / 空实现 0**（修复前 2 处锚点缺失，见 §5 P1-1）。查了什么：`<a>` 462 个的 href 形态、12 个 `<button>` 的处理器接线、`<form>`/`<input>`/`<select>` 存在性（0 个）、`window.open('')` / `location.href='#'` / `void(0)` / `alert()` 占位、`TODO`/`FIXME` 标记（7 命中全为误报）。表单防重复提交与 error boundary：**不适用**（站点无表单、无客户端路由） |
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
+| 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 | — | ⏳ 待查（R3：标题层级、正文 ≥16px、行高、行长、对比度） |
 | 元素一致性 | — | ⏳ 待查（R4：七态、焦点可见、目标 ≥24×24、alt） |
 | 交互体验 | — | ⏳ 待查（R5：反馈、可撤销、Tab 陷阱、模态焦点归还、`prefers-reduced-motion`、缩放） |
@@ -330,6 +331,91 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 - **Basis**：`检查要点 · 样式`（断点与双主题令牌一致）；`定级表` — P3。令牌一致性本身是 **PASS**（单一定义，无冲突）。
 - **Note**：**对 ③ 视觉留档的影响** —— 抽样规则要求「明暗主题」，本站无暗色主题，故明暗维度**塌缩为仅「明」**；截图计划中的 `*-dark.png` 全部标注为 N/A（主题不存在），而非 UNKNOWN。此项在 ③ 执行轮需用户确认是否接受该塌缩。
 
+#### P3-6 样式代码 · 裸色值 — canvas 兜底值与令牌定义不符（已修复）
+
+- **位置**：`site/src/components/HeroCanvas.astro:21`
+- **问题**：从 CSS 自定义属性读取强调色的**兜底值与令牌实际定义不符**。`--color-accent` 定义为 `#e85d04`（`global.css:122`），兜底却写成了 `#63fe13`（霓虹绿）。一旦 `getPropertyValue` 返回空串，门图 canvas 会画出**错误品牌色**。另两个兜底（`#d9d9d9` / `#fafafa`）与 `--color-line`（`:131`）、`--color-bg`（`:110`）一致，仅此项失配。
+- **Found（原文逐字，修复前）**：
+  ```js
+  const accentColor = cs.getPropertyValue('--color-accent').trim() || '#63fe13';
+  const faintColor = cs.getPropertyValue('--color-line').trim() || '#d9d9d9';   // ✓ 与 :131 一致
+  const bgColor = cs.getPropertyValue('--color-bg').trim() || '#fafafa';          // ✓ 与 :110 一致
+  ```
+- **Expected**：兜底值必须与令牌定义逐字一致 —— 兜底的语义就是「令牌缺失时退化为设计系统声明的颜色」，退化成另一个颜色等于静默改设计。
+- **Fix（已入库，可复制）**：
+  ```js
+  const accentColor = cs.getPropertyValue('--color-accent').trim() || '#e85d04';
+  ```
+- **Basis**：`检查要点 · 样式`（裸色值 / 令牌一致）。命令输出（修复后 `tmp/color-check.mjs`）：
+  ```
+  site/src/components/HeroCanvas.astro:21  #e85d04  ←  const accentColor = cs.getPropertyValue('--color-accent').trim() || '#e85d04';
+  ```
+- **Note**：定级 P3 而非 P2 —— `:root` 全局定义了 `--color-accent`，兜底路径实际不会触发，属**潜伏错误**而非当前可见缺陷；但错兜底比无兜底更危险（静默产生错误视觉），故修。`npm run build` exit 0，`check-site.mjs` exit 0。
+
+#### P3-7 样式代码 · 裸色值 — 主强调色绕过令牌（已修复）
+
+- **位置**：`site/src/pages/index.astro` 共 10 处（`:303` SVG 属性、`:557`、`:572`、`:583`×2、`:679`、`:688`、`:700`、`:732`、`:753`）
+- **问题**：主强调色 `#e85d04` 在 CSS 与 SVG 中硬编码 10 处，全部等于 `global.css:122` 的 `--color-accent`。终端组件（tab 下划线 / PS1 提示符 / 复制按钮 hover）与拓扑图（分叉贝塞尔线 / 流动圆点 / hub 节点 / hub 脉冲 / 图例点 / 箭头 marker）全部钉死为字面量，与同文件 `:208` 走 `a.color` 令牌引用的写法不一致。
+- **Found（原文逐字，修复前，取 3 处代表）**：
+  ```css
+  .terminal__tab[aria-selected="true"] { color: #1f2328; border-bottom-color: #e85d04; }   /* :557 */
+  .terminal__ps1 { ... color: #e85d04; ... }                                                /* :572 */
+  .topo-bezier--branch { stroke: #e85d04; stroke-opacity: 0.45; }                           /* :679 */
+  ```
+  ```html
+  <path d="M0,0L10,5L0,10z" fill="#e85d04" />                                              /* :303 · SVG marker 箭头 */
+  ```
+- **Expected**：已有令牌的颜色一律 `var(--color-accent)`。SVG **表现属性**（`fill=`/`stroke=`）不支持 CSS 自定义属性，必须改用 `style` 属性或 CSS 规则。
+- **Fix（已入库，可复制）**：9 处 CSS 直接替换为 `var(--color-accent)`；1 处 SVG 属性改为 `style`：
+  ```html
+  <path d="M0,0L10,5L0,10z" style="fill: var(--color-accent)" />
+  ```
+- **Basis**：`检查要点 · 样式`（裸色值）。命令输出（构建后）：
+  ```
+  index.astro total: 96   unique: 22   #e85d04 x1    （仅剩 :42 数据数组）
+  <path d="M0,0L10,5L0,10z" style="fill: var(--color-accent)" data-astro-cid-lcdefpme>      ← dist/index.html
+  ```
+  全量残留核对：`#e85d04` 在源码仅剩 7 处 —— `global.css:122-128`（令牌定义，不报）、`HeroCanvas.astro:21`（兜底，P3-6 已对齐）、`index.astro:42`（数据数组）。
+- **Note**：今日视觉零差异（单主题，令牌值即 `#e85d04`）。价值：品牌色收敛到单一来源，未来加暗色主题时终端与拓扑图自动跟随，不会成为漏改点。`npm run build` exit 0、`link-check` 断链 0、`empty-check` 空实现 0、`check-site.mjs` exit 0。
+
+#### P3-8 样式代码 · 裸色值 — 角色色双源真相（未修 · 需重构）
+
+- **位置**：`site/src/pages/index.astro:42-92`（JS 数据数组）↔ `:679-716`、`:752-758`（拓扑图 CSS）
+- **问题**：6 个角色色存在**两个真相源**。JS 数组驱动卡片强调色（`:208` `style={--card-accent: ${a.color}}`），拓扑图 CSS 又把同一批色值逐一硬编码进 `stroke` / `fill` / `background`。改一处不动另一处，两张图就会显示不同颜色。
+- **Found（原文逐字）**：
+  ```js
+  // :42-92 · JS 数据
+  { ..., color: '#e85d04' }, { ..., color: '#4a90d9' }, { ..., color: '#2ea043' },
+  { ..., color: '#bf8700' }, { ..., color: '#a371f7' }, { ..., color: '#8b5cf6' }
+  ```
+  ```css
+  /* :679-716 · 同一批色值再次硬编码 */
+  .topo-bezier--return { stroke: #2ea043; ... }   .topo-bezier--fail { stroke: #bf8700; ... }
+  .topo-dot--learn { fill: #8b5cf6; }              .topo-label--judge-cn { fill: #1f2328; ... }
+  /* :752-758 · 图例第三次出现 */
+  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid #bf8700; }
+  ```
+- **Expected**：单一真相源。两个可选方向 —— (a) 为每个角色加令牌（`--role-si` / `--role-ji` …），CSS 与 JS 均引用；(b) 拓扑图节点用 `style` 注入 `--role-color`，CSS 只写 `fill: var(--role-color)`。
+- **Fix**：**本轮不改**。方向 (a) 需向令牌系统新增 6 个令牌（触及「不改令牌语义」边界）；方向 (b) 需重构拓扑图渲染（约 60+ 个元素加内联样式）。两者均超出「只改必要行 / ≤3 文件」的单轮约束，建议交强模型做独立重构轮。
+- **Basis**：`检查要点 · 样式`（死代码与裸色值 / 令牌一致）。`tmp/color-check.mjs` 输出：`index.astro total: 96  unique: 22`，其中角色色 `#2ea043 ×14`、`#bf8700 ×15`、`#8b5cf6 ×5`、`#4a90d9 ×1`、`#a371f7 ×1`、`#e85d04 ×1`。
+- **Note**：当前两处数值**完全一致**（人工核对 6/6），无可见不一致；风险是未来编辑漂移。
+
+#### P3-9 样式代码 · 裸色值 — 合法字面量留档（不修 · 分类说明）
+
+以下残留经逐条判读属**合法字面量**，不构成缺陷，仅留档说明为何不走令牌：
+
+| 类别 | 位置 | 值 | 判据 |
+|------|------|-----|------|
+| Canvas 绘制色 | `HeroArt.astro:132,144` | `rgba(232, 93, 4, <opacity>)` | `CanvasRenderingContext2D.fillStyle` 不接受 `var()`，必须字面量或经 `getComputedStyle` 读取。此处为逐粒子动态透明度插值，字面量最简。 |
+| CSS mask 遮罩 | `HeroArt.astro:176,177,220,221` | `#000` ×6 | `mask-image` 依亮度取 alpha，`#000` / `#fff` 是遮罩惯用语义色，无品牌含义，不应占用设计令牌。 |
+| 终端 chrome 配色 | `index.astro:544-583` | `#f6f8fa` ×10、`#d0d7de` ×8、`#1f2328` ×9、`#656d76` ×7、`#8b949e`、`#d8dee4`、`#eaeef2`、`#0969da`、`#fff` ×7 | 刻意复刻 GitHub 设计系统的终端外观，属**独立的视觉语言**，与站点暖白纸感体系并存。并入令牌会破坏「这是终端截图」的拟真度。 |
+| macOS 红绿灯 | `index.astro`（terminal chrome） | `#ff5f57` / `#febc2e` / `#28c840` | 系统窗口控件色，必须为字面量。 |
+| 阴影 / 叠加 | `index.astro:615,713` | `rgba(0,0,0,0.06)`、`rgba(255,255,255,0.85)`、`rgba(255,255,255,0.75)` | 投影与半透明白叠是常规实现，令牌系统未定义阴影族。 |
+| HTML meta | `BaseLayout.astro:23` | `<meta name="theme-color" content="#fafafa">` | `content` 是 HTML 属性，不支持 CSS 变量。见 P3-5。 |
+| 误报（已排除） | `BackgroundCanvas.astro:5`、`releases.astro:144,147,148,149` | `#fafafa` 注释、`#109`/`#117`/`#116`/`#117` | 前者为注释文本，后 4 处为 GitHub issue 编号，非颜色。 |
+
+**Basis**：`检查要点 · 样式`（裸色值）；`排除范围`（令牌中的裸值定义不报）。
+
 ### 无发现记录（R2 空实现）
 
 | 检查项 | 范围 | 结果 |
@@ -366,7 +452,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 断链 | R1 | ✅ 完成（P1-1 已修复） |
 | 空实现（`href="#"`） | R2 | ✅ 完成（0 缺陷） |
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
-| 裸色值 | R4 | ⏳ |
+| 裸色值 | R4 | ✅ 完成（P3-6/P3-7 已修 11 处；P3-8 双源真相待重构；P3-9 合法字面量留档） |
 | 标题层级 | R5 | ⏳ |
 | 对比度 | R6 | ⏳ |
 | 键盘焦点 | R7 | ⏳ |
