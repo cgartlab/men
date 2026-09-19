@@ -185,7 +185,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-145` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；**R15 已修 P3-8**：新增 6 个 `--role-*` 令牌建立单一真相源，角色色字面量 **36 处 → 5 处**（全部落在令牌定义块，`index.astro` 残留 0），`role-token-verify.mjs` 27 项断言全过证明零视觉漂移。残留 108 处终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
-| 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **3 项 P2 AA 违规已修**（§5 P2-1 / P2-2 / P2-3，共 15 处；P2-3 由 R13 用真实背景解析定位到 3 个选择器后修复）；**1 项 P2 已修**（P2-10 主强调色底硬编码白字，R13）；**1 项 P2 待设计决策**（P2-11 六个角色色 14px 正文不达 4.5:1，但全部 ≥3:1，可经大文本资格达标）；4 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准）+ R13 新增 P3-20（注释失准最大案例 3.14）、P3-21（死令牌再 +2）、P3-22（规则重复 ×3）。小字号对比度不合格总数：**21 → 6**（R13 实测） |
+| 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **3 项 P2 AA 违规已修**（§5 P2-1 / P2-2 / P2-3，共 15 处；P2-3 由 R13 用真实背景解析定位到 3 个选择器后修复）；**1 项 P2 已修**（P2-10 主强调色底硬编码白字，R13）；**1 项 P2 待设计决策**（P2-11 六个角色色 14px 正文不达 4.5:1，但全部 ≥3:1，可经大文本资格达标）；4 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准）+ R13 新增 P3-20（注释失准最大案例 3.14）、P3-21（死令牌再 +2）、P3-22（规则重复 ×3）。小字号对比度不合格总数：**21 → 6**（R13 实测）。**R16 已修 P3-12/P3-20**：11 处声称值 8 失准已全部改为实算值，L114 错误组注释已拆分修正，新增 `token-ratio-check.mjs` 防回归（修复中抓到自身一处 #fafafa→#f5f5f5 背景标注错误） |
 | 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。七态 / 目标 ≥24×24 / alt 已在 R12 完成（见 §4 交互态行、§5 P2-9） |
 | 交互体验 · 键盘可达 | 同上：焦点陷阱风险扫描（`position:fixed` + `overflow:hidden` 层是否含焦点元素）、模态 / 抽屉焦点归还、Tab 顺序 | ✅ **Tab 无陷阱，模态焦点归还不适用**。焦点陷阱扫描仅命中 `HeroArt.astro:156 .hero-canvas`，该元素 `aria-hidden="true"` 且 `pointer-events:none`，内部无焦点元素 → 非陷阱。全站**无 `<dialog>` / `role="dialog"` / `aria-modal` / modal / drawer**，仅 2 处原生 `<details>/<summary>`（`Footer.astro:32`、`index.astro:497`），键盘可达为浏览器内建行为 → 模态焦点归还不适用。`prefers-reduced-motion`（R3 P3-2 已查）、`user-scalable` 缩放未在本轮检查（属 R12） |
 | 元素一致性 · 交互态 | `tmp/state-check.mjs`：七态规则计数（hover / focus-visible / active / disabled / loading / empty / error）+ 每个定义 `:hover` 的按钮选择器是否被 `:disabled` 覆盖 + 触控目标尺寸抽取（WCAG 2.5.8 AA ≥24×24）+ SVG 可访问性（99 个 SVG 的 role / aria-label / aria-hidden 分布）+ viewport 缩放禁用 + 破坏性操作确认 | ⚠️ **1 项 P2 已修 + 2 项 P3 记录**（§5 P2-9 按钮禁用态缺失、P3-18 装饰 SVG 未标 `aria-hidden`、P3-19 `.btn` 无 `:active`）。七态实测：hover 42、focus-visible 3、active 1、**disabled 0→3（已修）**、error 1；**loading / empty 不适用**（静态站无异步数据加载、无数据集合，R8 已确认 0 个 `<form>`）；`prefers-reduced-motion` 11 处覆盖 18 个 `@keyframes`（R3 P3-2）。触控目标全部达标：`button`/`details summary`/`a.btn` 全局 `min-height:44px`、`.terminal__copy` 32×32、`.showcase__arrow` 40px。**viewport 未禁用缩放**（`width=device-width, initial-scale=1.0`，无 `user-scalable=no` / `maximum-scale`，符合 WCAG 1.4.4）。**破坏性操作不适用**：6 个文件含 `remove`/`drop` 关键词，全部为 `classList.remove()` / `removeAttribute()` JS API 调用，无用户可执行的破坏性动作 |
@@ -937,33 +937,40 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   ```
 - **Note**：与 R3 的 P3-2（重复 reduced-motion 块 + 死代码 `.oc-hero-art pre`）相关 —— R3 已从 reduced-motion 块中删除 `.oc-hero-art pre { animation: none }`，但主规则块 `:790-801` 仍存。可合并处理。
 
-#### P3-12 样式代码 — 令牌注释声称的对比度值失准（未修 · 文档类）
+#### P3-12 样式代码 — 令牌注释声称的对比度值失准（R16 已修复 · 附防回归检查器）
 
-- **位置**：`site/src/styles/global.css:115-119,122-123,137`
-- **问题**：令牌注释中标注的对比度与 WCAG 公式实算值存在偏差，7 处声称值中 6 处偏差 > 0.15。方向不一致（既高报也低报），说明这些数值是估算而非实测，可能误导后续开发者对令牌可用范围的判断。
-- **Found（原文逐字 vs 实算）**：
-  | 令牌 | 注释声称 | 实算（on `#fafafa`） | 偏差 |
+- **位置**：`site/src/styles/global.css:114-126,148`（11 处声称值 + 1 处组注释）
+- **问题**：令牌注释中标注的对比度与 WCAG 公式实算值存在偏差。R16 全量复查发现 **11 项声称值中 8 项偏差 > 0.15**（R13 初查仅覆盖 7 项、判 6 项失准）。方向不一致（既高报也低报），说明数值是估算而非实测，会误导后续开发者对令牌可用范围的判断。
+- **Found（R16 全量复查 · 原文逐字 vs 实算）**：
+  | 令牌 | 注释声称 | 实算 | 偏差 |
   |------|---------|------|------|
-  | `--color-fg` | 17:1 | **16.67:1** | −0.33 |
-  | `--color-fg-secondary` | 9.3:1 | **9.93:1** | +0.63 |
-  | `--color-fg-tertiary` | 5.6:1 | **6.41:1** | +0.81 |
+  | `--color-fg` | 17:1 | **16.67:1** | −0.33 ✗ |
+  | `--color-fg-secondary` | 9.3:1 | **9.93:1** | +0.63 ✗ |
+  | `--color-fg-tertiary` | 5.6:1 | **6.41:1** | +0.81 ✗ |
   | `--color-fg-muted` | 4.6:1 | **4.54:1** | −0.06 ✓ |
   | `--color-fg-decorative` | 3.3:1 | **3.31:1** | +0.01 ✓ |
-  | `--color-accent-dark` | 5.7:1 | **6.41:1** | +0.71 |
-  | `--color-code` | 17:1 | **16.67:1** | −0.33 |
-- **Expected**：注释中的对比度应标注**最不利背景**下的实测值（而非仅在 `#fafafa` 上），并注明测试背景，避免误用。例如 `--color-fg-muted` 在 `#fafafa` 上 4.54:1 但在 `#f5f5f5` 上仅 4.35:1 —— 若只写 4.6:1，开发者会以为它可以安全用在纸感底上。
-- **Fix（建议，本轮不改）**：
+  | `--color-accent` | 3.4:1 | **3.35:1** | −0.05 ✓ |
+  | `--color-accent-dark` | 5.7:1 | **6.41:1** | +0.71 ✗ |
+  | `--color-accent-soft` | 4.1:1 | **4.59:1** | +0.49 ✗ |
+  | `--color-accent-on-accent` | 8.8:1 | **5.66:1** | **+3.14** ✗（最大） |
+  | `--color-accent-on-accent-soft` | 6.5:1 | **4.97:1** | +1.53 ✗ |
+  | `--color-code` | 17:1 | **15.96:1**（on `#f5f5f5`） | +1.04 ✗ |
+  另有 **L114 组注释**声称「每级都满足 WCAG 2.2 AA 4.5:1 on #fafafa」，但 `--color-fg-decorative` 实测 3.31:1，**组注释为错误概括**。
+- **Expected**：注释中的对比度应标注实测值并注明测试背景，组注释不得对含 <4.5 成员的集合声称全部达标。
+- **Fix（R16 已入库，1 文件 · 14 增 12 删）**：逐一将 11 处声称值改为 WCAG 相对亮度公式实算值；每处补注 `on #背景`；组注释拆为多行并注明 `--color-fg-decorative` 为 3.31:1、禁用于正文。示例（修复后原文逐字）：
   ```css
-  --color-fg-muted: #737373;      /* 弱化文本 · 4.54:1 on #fafafa / 4.35:1 on #f5f5f5（后者不达 AA 正文，见 P2-3） */
+  --color-fg: #1a1a1a;                         /* 正文 / 标题 · 16.67:1 on #fafafa */
+  --color-fg-muted: #737373;                   /* 弱化文本 · 4.54:1 on #fafafa（仅勉强达标，勿用于浅底面板上的小字） */
+  --color-fg-decorative: #8a8a8a;              /* 仅装饰 / 大写小字 · 3.31:1（<4.5，禁用于正文） */
+  --color-accent-on-accent: #0a0a0a;           /* 橘底文字 · 5.66:1 on #e85d04（原注释 8.8:1 失准 +3.14，为全块最大失准项） */
   ```
-- **Basis**：`检查要点 · 排版`（正文对比 ≥4.5:1）。命令输出（`tmp/contrast-check.mjs`）：
+- **Basis**：`检查要点 · 排版`（正文对比 ≥4.5:1）。命令输出（`tmp/ratio-check.mjs`，R16 全量复查）：
   ```
-  --color-fg           实算 16.67:1  声称 17  (-0.33)  AAA  ← 声称值偏差
-  --color-fg-secondary 实算 9.93:1   声称 9.3 (+0.63)  AAA  ← 声称值偏差
-  --color-fg-tertiary  实算 6.41:1   声称 5.6 (+0.81)  AA正文  ← 声称值偏差
-  --color-accent-dark  实算 6.41:1   声称 5.7 (+0.71)  AA正文  ← 声称值偏差
+  失准 8 / 11 项，失准绝对值合计 8.78，平均 0.80
+  → 1 级不满足 4.5:1，L114 组注释为错误概括
   ```
-- **Note**：定级 P3（文档准确性，无渲染影响）。但 `--color-fg-muted` 的 4.6:1 声称值掩盖了 P2-3 的实际风险，两者存在因果关联。
+- **Note（验证方式 + 防回归）**：新增 `site/scripts/token-ratio-check.mjs` 解析 global.css 令牌行注释中的 `N:1 on #rrggbb` 声称值，用 WCAG 相对亮度公式实算并比对，任何 >0.05 的偏差即报错退出 1。该检查器在修复过程中**抓到本条自身的一处错误**：初版把 `--color-code` 的 `15.96:1` 标注为 `on #fafafa`，但 `--color-code` 实际渲染在 `--color-code-bg: #f5f5f5` 上（#1a1a1a on #f5f5f5 = 15.96:1，而 on #fafafa = 16.67:1）—— 已修正为 `15.96:1 on #f5f5f5（--color-code-bg）`。修复后复查输出：`共检查 10 项声称值，失准 0 项 ✅ 全部一致`（`--color-fg-decorative` 注释不含 `on #bg` 格式故不在自动检查范围，由组注释修正覆盖）。
+  - 因果关联：`--color-fg-muted` 原 4.6:1 声称掩盖了 P2-3 的实际风险（在 `#f5f5f5` 上仅 4.35:1），两者现已各自标注真实值。
 
 #### P3-13 样式代码 — 重复的 `:focus-visible` 全局块（已修复）
 
@@ -1127,21 +1134,23 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 - **Basis**：`检查要点 · 元素`（七态之 active）。**无 WCAG AA 违规** —— WCAG 2.2 无「按钮须有按压态」的准则；定级 P3 基于交互完整度。
 - **Note**：与 P2-9 同区块，若后续补 `:active` 可直接追加在禁用态块之后。`details summary`、`a` 亦无 `:active`，但二者由浏览器 UA 样式提供默认反馈，风险更低。
 
-#### P3-20 样式代码 — 令牌注释声称的对比度值失准（R13 新增案例，延续 P3-12）
+#### P3-20 样式代码 — 令牌注释声称的对比度值失准（R16 已修复 · P3-12 最大失准项）
 
-- **位置**：`site/src/styles/global.css:125` `--color-accent-on-accent`
-- **问题**：注释声称 `8.8:1 on #e85d04`，实测 **5.66:1**，失准 **3.14** —— 迄今发现的最大失准（P3-12 记录的 6 例失准幅度均小于此）。
+- **位置**：`site/src/styles/global.css:125` `--color-accent-on-accent`（及 `:126` `--color-accent-on-accent-soft`）
+- **问题**：注释声称 `8.8:1 on #e85d04`，实测 **5.66:1**，失准 **3.14** —— R16 全量复查确认仍为全块最大失准项。`:126` 的 `--color-accent-on-accent-soft` 同步修正：声称 6.5:1 → 实测 4.97:1（失准 1.53）。
   ```
   --color-accent-on-accent: #0a0a0a;  /* 橘底文字 · 8.8:1 on #e85d04 */   ← 声称 8.8
   实测：--color-accent-on-accent #0a0a0a on #e85d04 = 5.66:1
   ```
 - **Expected**：注释写实测值 `5.66:1`。
-- **Fix**：**本轮不改**（同 P3-12，文档类）。注意：失准方向是「高估」，但 5.66:1 仍 ≥4.5:1，故 P2-10 的修复依然有效 —— 未因注释错误而引入新的 AA 违规。
-- **Basis**：命令输出（`tmp/ratio-check.mjs`）：
+- **Fix（R16 已入库）**：`global.css:125` 改为 `/* 橘底文字 · 5.66:1 on #e85d04（原注释 8.8:1 失准 +3.14，为全块最大失准项） */`；`:126` 改为 `/* 橘底次文本 · 4.97:1 on #e85d04（原注释 6.5:1 失准 +1.53；仍达正文 4.5 阈值） */`。失准方向是「高估」，但 5.66:1 仍 ≥4.5:1，故 P2-10 的修复依然有效 —— 未因注释错误引入新的 AA 违规。
+- **Basis**：命令输出（`site/scripts/token-ratio-check.mjs`，R16 防回归检查器）：
   ```
-  5.66:1  --color-accent-on-accent on --color-accent  （注释声称 8.8:1，失准 3.14）
+  --color-accent-on-accent       5.66:1   5.66:1  ✓
+  --color-accent-on-accent-soft  4.97:1   4.97:1  ✓
+  共检查 10 项声称值，失准 0 项 ✅ 全部一致
   ```
-- **Note**：定级 P3（文档准确性）。R13 用 `tmp/ratio-check.mjs` 对本轮实际改动的全部令牌做了声称值 vs 实测值复核：`--color-accent-on-accent` 失准 3.14；`--color-fg-tertiary on #f5f5f5` 与 `on #f0ebe2` 无注释声称（本条不涉及）。P3-12 建议由强模型统一重算全部令牌注释，本条是该建议的又一佐证。
+- **Note**：定级 P3（文档准确性）。R13 用 `tmp/ratio-check.mjs` 做了声称值 vs 实测值复核；R16 将该工具升级为 `site/scripts/token-ratio-check.mjs`（解析注释、自动比对、退出码驱动），并对全部令牌注释做了统一重算 —— P3-12 的「建议由强模型统一重算」已在 R16 完成，本条随之闭环。
 
 #### P3-21 样式代码 — 死令牌新增 2 例（延续 P3-10）
 
@@ -1280,7 +1289,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 / R15 | ✅ 完成（P3-6/P3-7 已修 11 处；**P3-8 双源真相 R15 已重构**：新增 `--role-*` 令牌，角色色字面量 36→5，27 项浏览器断言零漂移；P3-9 合法字面量留档） |
 | 标题层级 | R5 | ✅ 完成（0 缺陷） |
-| 对比度 | R6 / R13 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10～P3-12、P3-20～P3-21 记录。R13 实测不合格总数 21→6） |
+| 对比度 | R6 / R13 / R16 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10/P3-11/P3-21/P3-22 记录。**P3-12/P3-20 令牌注释失准 R16 已修**：11 处声称值 8 失准改为实算值 + 组注释修正 + `token-ratio-check.mjs` 防回归。R13 实测不合格总数 21→6） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
 | 核心网页指标（LCP/INP/CLS） | R9 / R14 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录）。**R14 已装 Playwright 并实测（§3.2）**：FCP 132–206ms（12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏 33–59 KB、点击延迟 1ms —— 静态风险因子未构成瓶颈。**LCP/CLS/INP 仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（已排除脚本缺陷，4 种启动模式一致；根因未完全隔离）；接 `npx lighthouse` 或 CrUX 可解除，属新增依赖待确认 |
