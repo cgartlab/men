@@ -352,12 +352,12 @@ pre:hover .copy-btn {
   opacity: 1;
 }
 pre .copy-btn:hover {
-  color: var(--color-accent);
+  color: var(--color-accent-dark);
   background: var(--color-surface);
 }
 pre .copy-btn.copied {
   opacity: 1;
-  color: var(--color-accent);
+  color: var(--color-accent-dark);
 }
 
 ::selection {
