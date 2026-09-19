@@ -125,7 +125,6 @@ body::before {
   --color-accent-dark: #a03c00;                /* 小字安全橘 · 6.41:1 on #fafafa */
   --color-accent-soft: #c94700;                /* 中等强度橘 · 填充 / hover · 4.59:1 on #fafafa（实测已达正文 4.5 阈值） */
   --color-accent-on-accent: #0a0a0a;           /* 橘底文字 · 5.66:1 on #e85d04（原注释 8.8:1 失准 +3.14，为全块最大失准项） */
-  --color-accent-on-accent-soft: #1a1a1a;      /* 橘底次文本 · 4.97:1 on #e85d04（原注释 6.5:1 失准 +1.53；仍达正文 4.5 阈值） */
   --color-accent-tint: color-mix(in srgb, #e85d04 10%, #ffffff);  /* 橘色浅底 */
   --color-accent-tint-strong: color-mix(in srgb, #e85d04 20%, #ffffff);
 
@@ -183,7 +182,6 @@ body::before {
   --font-size-caption: 0.875rem;
   --font-size-eyebrow: 0.75rem;
   --font-size-eyebrow-nav: 0.65625rem;
-  --font-size-eyebrow-rail: 0.625rem;
 
   /* 行宽容器 */
   --content-width: 68ch;
