@@ -184,7 +184,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | 功能稳定 · 核心网页指标 | R9 `tmp/cwv-check.mjs`（静态风险因子）+ **R14 `site/scripts/cwv-measure.mjs`（lab 实测，12 组合）**：LCP 候选与阻塞资源、CLS 风险因子（无宽高图片 / `font-display` / `100vh`）、INP 风险因子（内联 JS 体积 / rAF / `will-change`）、资源总体积、`preconnect`/`preload`/`modulepreload`/`fetchpriority` 存在性 | ⚠️ **1 项 P2 已修**（§5 P2-7 外部字体 1.47 MB 无 `preconnect`/`preload`）+ 2 项 P3 记录（P3-15 `font-display: swap` 回流、P3-16 单字体 744 KB）。**R14 实测（§3.2）**：FCP **132–206ms**（阈值 1800ms，12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏资源 33–59 KB、单资源最大 33 KB（渲染阻塞 CSS，4–7ms）、点击延迟 1ms —— **静态风险因子在实测下未构成瓶颈**。**LCP / CLS / INP 值仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（4 种启动模式结果一致，PerformanceObserver 注册无异常，不受影响的 FCP 与 first-input 正常产出，根因未完全隔离）。查了什么：`<img>` 0 个、`<canvas>` 1 个、渲染阻塞 CSS 1 个/页、`<head>` 内 `<script>` 0 个（无渲染阻塞 JS）、`100vh` 0 处（无移动端地址栏 CLS）、内联 JS 15 页共 11.3 KB（单页最大 6.7 KB）、`requestAnimationFrame` 16 处、`will-change` 1 处、站点自产资源合计 472.3 KB |
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-145` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；**R15 已修 P3-8**：新增 6 个 `--role-*` 令牌建立单一真相源，角色色字面量 **36 处 → 5 处**（全部落在令牌定义块，`index.astro` 残留 0），`role-token-verify.mjs` 27 项断言全过证明零视觉漂移。残留 108 处终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
-| 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
+| 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 + `heading-size-audit.mjs` 渲染尺寸 | ✅ **DOM 语义完全合规，0 缺陷**（14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0）。**渲染尺寸 P2-12 R18 已修**：`--font-size-h5` 令牌原未定义导致 4 处标题退化至继承值（h3→16px=正文字号、infobox 标题→14px=caption），R18 定义 `1rem` 后 3/4 处零变化、1 处 14px→16px 修正 |
 | 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **3 项 P2 AA 违规已修**（§5 P2-1 / P2-2 / P2-3，共 15 处；P2-3 由 R13 用真实背景解析定位到 3 个选择器后修复）；**1 项 P2 已修**（P2-10 主强调色底硬编码白字，R13）；**1 项 P2 待设计决策**（P2-11 六个角色色 14px 正文不达 4.5:1，但全部 ≥3:1，可经大文本资格达标）；4 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准）+ R13 新增 P3-20（注释失准最大案例 3.14）、P3-21（死令牌再 +2）、P3-22（规则重复 ×3）。小字号对比度不合格总数：**21 → 6**（R13 实测）。**R16 已修 P3-12/P3-20**：11 处声称值 8 失准已全部改为实算值，L114 错误组注释已拆分修正，新增 `token-ratio-check.mjs` 防回归（修复中抓到自身一处 #fafafa→#f5f5f5 背景标注错误） |
 | 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。七态 / 目标 ≥24×24 / alt 已在 R12 完成（见 §4 交互态行、§5 P2-9） |
 | 交互体验 · 键盘可达 | 同上：焦点陷阱风险扫描（`position:fixed` + `overflow:hidden` 层是否含焦点元素）、模态 / 抽屉焦点归还、Tab 顺序 | ✅ **Tab 无陷阱，模态焦点归还不适用**。焦点陷阱扫描仅命中 `HeroArt.astro:156 .hero-canvas`，该元素 `aria-hidden="true"` 且 `pointer-events:none`，内部无焦点元素 → 非陷阱。全站**无 `<dialog>` / `role="dialog"` / `aria-modal` / modal / drawer**，仅 2 处原生 `<details>/<summary>`（`Footer.astro:32`、`index.astro:497`），键盘可达为浏览器内建行为 → 模态焦点归还不适用。`prefers-reduced-motion`（R3 P3-2 已查）、`user-scalable` 缩放未在本轮检查（属 R12） |
@@ -640,25 +640,31 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   ```
 - **Note**：定级 P2（WCAG AA 违规不低于 P2），非 P1 —— 六个颜色均在 3:1 以上，大文本阈值可达，且角色标签是辅助信息而非唯一信息载体（卡片同时有图标、名称、职责描述）。截图证据：`home-1440.png` 展示卡片区。与 **P3-8**（角色色双源真相）同源但不同维度：P3-8 是「颜色值分散在 JS 与 CSS」的架构债（**R15 已修复**），本条是「颜色本身不达对比度」的 AA 违规（**仍未修**）。两者已解耦 —— P3-8 的重构反而降低了本条的修复成本。
 
-#### P2-12 信息排版 · 标题层级 — `--font-size-h5` 从未定义，4 处使用导致 `<h3>` 退化为正文字号（未修 · 意图不明）
+#### P2-12 信息排版 · 标题层级 — `--font-size-h5` 从未定义，4 处使用导致标题退化（R18 已修复 · 定义令牌 `1rem`）
 
-- **位置**：`site/src/styles/global.css:966`（`.wiki-infobox__title`）、`global.css:1048`（`.doc-section h3`）、`site/src/pages/docs/index.astro:95`（`.docs-category__title`）、`site/src/pages/mechanisms.astro:470`（`.step-card__header h3`）
-- **问题**：`--font-size-h5` 在全仓库**只有使用、没有定义**（`grep -r "font-size-h5" site/src` 命中 4 处，全部是 `var(--font-size-h5)`，令牌定义区 `global.css:163-172` 只有 display/h1/h2/h3/h4/body/caption/eyebrow 七个）。`var()` 引用未定义自定义属性且无 fallback 时，声明在 computed-value 阶段失效；`font-size` 是可继承属性，故**退化为继承值**。其中 2 处是 `<h3>`，实际渲染为 16px = 正文字号。
-- **Expected**：`<h3>` 应使用 `--font-size-h3`（`1.25rem` = 20px）；`.wiki-infobox__title` / `.docs-category__title` 需要一个真实存在的中间尺寸令牌。
-- **Fix**：**本轮不改**（意图不明）。补定义或改引用都取决于原作者意图，且都改标题视觉尺寸：
-  1. 定义 `--font-size-h5: 1.0625rem`（同 h4）→ h3 变 17px，仅比正文大 1px，层级仍不成立；
-  2. 把 2 处 h3 改用 `--font-size-h3`（20px）+ 定义 h5 给另 2 处 → 最符合语义，但需确认；
-  3. 删除这 4 处字号声明、交给 UA/继承 → 视觉更不可控。
-- **Basis**：`检查要点 · 排版`（标题层级）。命令输出（`site/scripts/heading-size-audit.mjs`，`getComputedStyle` 实测）：
+- **位置**：`site/src/styles/global.css:953`（`.wiki-infobox__title`）、`global.css:1035`（`.doc-section h3`）、`site/src/pages/docs/index.astro:95`（`.docs-category__title`）、`site/src/pages/mechanisms.astro:470`（`.step-card__header h3`）
+- **问题**：`--font-size-h5` 在全仓库**只有使用、没有定义**（4 处 `var(--font-size-h5)`，令牌定义区只有 display/h1/h2/h3/h4/body/caption/eyebrow）。`var()` 引用未定义自定义属性且无 fallback 时，声明在 computed-value 阶段失效；`font-size` 是可继承属性，故**退化为继承值**。其中 2 处是 `<h3>`，实际渲染为 16px = 正文字号；`.wiki-infobox__title` 因父容器 `.wiki-infobox` 设 `font-size: var(--font-size-caption)`（14px），退化至 14px。
+- **Found（修复前实测，`site/scripts/h5-measure.mjs`）**：
   ```
-  mechanisms/index.html   h1=57.6px | h2=20px | h3=16px h3=16px h3=16px   ← h3 = 正文 16px
-    h3 16px  .  "CERTAINTY 需求确认"
-    h3 16px  .  "TRIAGE 意图分诊"
-  index.html              h1=54.4px | h2=20px | h3=41.6px h3=16px h3=16px
-  docs/index.html         h1=57.6px | h2=16px h2=16px | h3=17px h3=17px h3=17px
+  /mechanisms/   .step-card__header h3    font-size=16px  weight=600  text="CERTAINTY 需求确认"
+  /docs/         .docs-category__title    font-size=16px  weight=600  text="入门"
+  /docs/overview/ .wiki-infobox__title    font-size=14px  weight=600  text="基本信息"
+  基准：body=16px
   ```
-  R5 的标题层级检查（`tmp/heading-check.mjs`）只校验 DOM 语义级次（h1/h2/h3 顺序、不跳级），**不校验渲染尺寸**，故 R5 判 0 缺陷与本报告不冲突 —— 两条检查互为补充。
-- **Note**：定级 P2（核心内容页视觉层级失效），非 WCAG 违规（WCAG 2.4.6 只要求标题描述准确，不要求视觉尺寸大于正文）。影响面：`mechanisms/index.html` 的 10 步协议卡（该页核心内容）与 `index.html` 机制区。截图证据：`home-1440.png`（机制区 h3 与正文同大）、`roles-1440.png`（h3=17px，勉强可辨）。
+- **Fix（R18 已入库，1 行）**：在令牌定义区 h4 之后新增 `--font-size-h5: 1rem;`（16px）。取值依据：标题级 h1(30) > h2(24) > h3(20) > h4(17) > body(16) > caption(14)，h5 自然落在 h4 与 body 之间，但间隙仅 1px，故取 `1rem`（= body）—— 最小标题以字重区分（4 处使用点均配 `font-weight: var(--font-weight-semi)` = 600），符合「最小标题 = 正文字号 + 粗体」的常见模式。R13 原建议 `1.0625rem`（17px = h4）会造成 h5 = h4 重复；`1rem` 更合理。
+- **修复后实测（`h5-measure.mjs`）**：
+  ```
+  /mechanisms/   .step-card__header h3    font-size=16px  ✓ 不变
+  /docs/         .docs-category__title    font-size=16px  ✓ 不变
+  /docs/overview/ .wiki-infobox__title    font-size=16px  ← 14px→16px（修好退化）
+  ```
+  4 处中 3 处零视觉变化（继承值 = 令牌值 = 16px）；1 处 `.wiki-infobox__title` 从 14px→16px，修正了标题退化至与信息框正文（14px caption）同大的 bug —— 修复后标题 16px > 正文 14px，层级恢复正确。
+- **Basis**：`检查要点 · 排版`（标题层级）。命令输出（`site/scripts/heading-size-audit.mjs`，修复前）：
+  ```
+  mechanisms/index.html   h3=16px h3=16px h3=16px   ← h3 = 正文 16px（退化）
+  ```
+  R5 的标题层级检查只校验 DOM 语义级次，不校验渲染尺寸，故 R5 判 0 缺陷与本报告不冲突。
+- **Note**：定级 P2（核心内容页视觉层级失效）。非 WCAG 违规（WCAG 2.4.6 只要求标题描述准确，不要求视觉尺寸大于正文）。影响面：`mechanisms/index.html` 的 10 步协议卡（该页核心内容）。修复后 build 0、check-site 0、11/11 检查器 0、token-ratio-check 0 失准、`node --test` 149 pass / 0 fail、verify PASS=9。截图证据：`home-1440.png`（机制区 h3 与正文同大 → 修复后仍为 16px，因 h5=body 是设计取舍）。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -1290,7 +1296,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | 空实现（`href="#"`） | R2 | ✅ 完成（0 缺陷） |
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 / R15 | ✅ 完成（P3-6/P3-7 已修 11 处；**P3-8 双源真相 R15 已重构**：新增 `--role-*` 令牌，角色色字面量 36→5，27 项浏览器断言零漂移；P3-9 合法字面量留档） |
-| 标题层级 | R5 | ✅ 完成（0 缺陷） |
+| 标题层级 | R5 / R18 | ✅ 完成（DOM 语义 0 缺陷；**P2-12 `--font-size-h5` 未定义 R18 已修**：定义 `1rem`，4 处标题退化修正，3/4 零变化、1 处 14px→16px） |
 | 对比度 | R6 / R13 / R16 / R17 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10/P3-21 死令牌记录。**P3-12/P3-20 令牌注释失准 R16 已修**：11 处声称值 8 失准改为实算值 + 组注释修正 + `token-ratio-check.mjs` 防回归。**P3-11/P3-22 死 CSS R17 已修**：删除 `.oc-hero-art` 死规则块（25 行）+ `.site-footer__legal` 三重规则去重（删 6 行保留含 letter-spacing 的完整版）。R13 实测不合格总数 21→6） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
@@ -1307,5 +1313,5 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 1. ~~**是否允许 `npm i -D playwright`**~~ → **R13 已确认并已执行**：`npm i -D playwright` 已入库（`site/package.json` / `site/package-lock.json`），Chromium 经 `npx playwright install chromium` 装到 `C:\Users\cgart\AppData\Local\ms-playwright`（不进仓库）。12 张截图已产出。**明暗维度按实证判为 N/A**（`global.css:36 color-scheme: light`、`prefers-color-scheme` 媒体查询 0 处），未产出重复图。
 2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注（13 轮已全程如此，六簇覆盖无缺口）。R13 已用 Playwright 实测替代了部分 axe 能力（对比度、字号、标题尺寸、横向溢出），但**语义层规则**（表单 label 关联、`aria-*` 完整性、地标角色）仍无自动化覆盖。
 3. **新增（R13）：P2-11 六个角色色的修复路径** —— 二选一：(a) `.showcase__card-role` 提至 `≥18.66px + font-weight:700`（1 行，满足大文本 3:1，六色全过，代价是标签视觉权重加重）；(b) 加深六个角色色（**R15 后已简化**：P3-8 单一真相源建立后，只需改 `global.css:135-139` 的 6 行 `--role-*` 令牌，卡片与拓扑图同时生效，代价是六个 Agent 的标识色相偏移）。六色当前均为 3.14–4.23:1，全部 ≥3:1。R15 已做的前置：P3-8 双源真相重构完成，路径 (b) 不再需要协调两个真相源。
-4. **新增（R13）：P2-12 `--font-size-h5` 未定义** —— 二选一：(a) 定义该令牌（需给出取值，建议 `1.0625rem`，但 h3 仅变 17px，层级仍弱）；(b) 把 2 处 `<h3>` 改用 `--font-size-h3`（20px）并为另 2 处标题类元素定义 h5 令牌。当前 `mechanisms/index.html` 的 h3 渲染为 16px = 正文字号。
+4. ~~**新增（R13）：P2-12 `--font-size-h5` 未定义**~~ → **R18 已修复**：定义 `--font-size-h5: 1rem`（16px）。取值依据：标题级 h1(30) > h2(24) > h3(20) > h4(17) > body(16) > caption(14)，h5 自然落在 h4 与 body 之间，间隙仅 1px，取 `1rem`（= body）—— 最小标题以字重区分。4 处使用点中 3 处零视觉变化（继承值 = 令牌值 = 16px），1 处 `.wiki-infobox__title` 从 14px→16px（修正了退化至 caption 字号的 bug）。R13 原建议 `1.0625rem`（17px）会造成 h5 = h4 重复，`1rem` 更合理。`h5-measure.mjs` 实测验证。
 5. **新增（R14）：是否允许 `npx lighthouse`（不入库依赖）以解除 LCP/CLS/INP 的 UNKNOWN？** R14 已实测 FCP 132–206ms、DOM ready 60–178ms、load 460–730ms、首屏资源 33–59 KB、点击延迟 1ms —— 全部远离阈值，故 UNKNOWN 不影响当前结论，但 LCP/CLS/INP 三项仍是空白。Lighthouse 自带可见性仿真，能绕过 headless 不产出这三类条目的限制（`npx` 临时拉取，不落 `package.json`）。不安装则维持 UNKNOWN 留档。
