@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R1 / 维度：断链（Lite 单维度循环第 1 项）
+> **轮次**：R2 / 维度：空实现（Lite 单维度循环第 2 项）
 > **日期**：2026-09-19
 
 ---
@@ -62,6 +62,7 @@
 | 子项 | 工具 | 状态 | 说明 |
 |------|------|------|------|
 | **断链** | `tmp/link-check.mjs`（自研，纯 Node 零依赖，产物级） | ✅ **已跑** | 内链 292 / 外链 134 / 纯锚点 164；**断链 0 / 锚点缺失 0 / src 缺失 0**；`target=_blank` 缺 `noopener` = 0 |
+| **空实现** | `tmp/empty-check.mjs` + `tmp/empty-check2.mjs`（自研，产物级 + 源码扫描） | ✅ **已跑** | `<a>` 462 个：无 href 0 / `href="#"` 0 / `href=""` 0 / `javascript:` 0；`<button>` 12 个全部有处理器；skip-link **14/14 页**且全部指向 `id="main-content"` |
 | 可访问性（axe / pa11y） | — | ⚠️ **缺口** | 无 axe-core / pa11y / @axe-core/cli 依赖；新增需经确认 |
 | HTML 合法性 | `check-site.mjs`（部分） | ⚠️ **部分** | 仅校验 UTF-8 / charset / mojibake / 空 slot，无标签闭合与结构校验 |
 | 样式规则 | — | ⚠️ **缺口** | 无 stylelint |
@@ -88,7 +89,7 @@
 
 | 簇 | 已检查范围 | 结论 |
 |----|-----------|------|
-| 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`，产物 14 页全量扫描） | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0**（修复前为 2 处锚点缺失，见 §5 P1-1） |
+| 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`）+ 空实现 / skip-link / 空跳模式（`tmp/empty-check*.mjs`），产物 14 页全量扫描 | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0 / 空实现 0**（修复前 2 处锚点缺失，见 §5 P1-1）。查了什么：`<a>` 462 个的 href 形态、12 个 `<button>` 的处理器接线、`<form>`/`<input>`/`<select>` 存在性（0 个）、`window.open('')` / `location.href='#'` / `void(0)` / `alert()` 占位、`TODO`/`FIXME` 标记（7 命中全为误报）。表单防重复提交与 error boundary：**不适用**（站点无表单、无客户端路由） |
 | 样式代码 | — | ⏳ 待查（R2：`!important` 与内联滥用） |
 | 信息排版 | — | ⏳ 待查（R3：标题层级、正文 ≥16px、行高、行长、对比度） |
 | 元素一致性 | — | ⏳ 待查（R4：七态、焦点可见、目标 ≥24×24、alt） |
@@ -172,6 +173,22 @@
 
 ⏳ 后续轮次填写。
 
+### 无发现记录（R2 空实现）
+
+| 检查项 | 范围 | 结果 |
+|--------|------|------|
+| `<a>` 空 href | 产物 14 页，462 个 `<a>` | 无 href **0** / `href="#"` **0** / `href=""` **0** / `javascript:` **0** |
+| `<button>` 无处理器 | 产物 12 个 `<button>` | 全部接线：3 个 `role="tab"`（`index.astro:811-820`）、7 个 `.terminal__copy`（`:828-829`）、2 个 `showcase-prev/next`（`:897-898`） |
+| skip-link 可达 | 源码 `BaseLayout.astro:28` | **14/14 页**均输出 skip-link 且目标 `id="main-content"` 存在 |
+| 空跳模式 | 源码全量 | `window.open('')` 0 / `location.href='#'` 0 / `void(0)` 0 / `alert()` 占位 0 |
+| `disabled` / `aria-disabled` | 源码全量 | 2 命中，均为合法开关：`CollaborationGraph.astro:355` 播放中置 `disabled`、`:371` 播放完移除 |
+| `TODO` / `FIXME` | 源码全量 | 7 命中，**全为误报**：`todo-scan` 校验项名（`architecture.astro:104`、`quickstart.astro:95`、`index.astro:433`、`roles.astro:152`）、plan 产物「TODO List」（`quickstart.astro:112`）、`.env`「占位符」描述（`quickstart.astro:66`）、版本历史「占位」说明（`releases.astro:125`） |
+| SVG 内部引用 | 产物 96 个 `<use>` / `<mpath>` | 合法，指向同文档 SVG `id`，非导航链接，不计缺陷 |
+
+**Basis**：`node tmp/empty-check.mjs` → `结果：空实现 0`（exit 0）；`node tmp/empty-check2.mjs` → `含 skip-link 的页面: 14/14`、`合计: 7`（全误报，exit 0）。
+
+> **工具修正留痕**：初版检查器把 `<script>` 内 JS 的比较运算符（`i<a`）误判为 `<a>` 标签，产出 2 条假阳性（`A_NO_HREF`，href 显示为 `undefined`）。已加 `<script>` / `<style>` 块剥离后重跑，462 个 `<a>` 全部具备合法 href。
+
 ---
 
 ## 6. 提交与合并（⑥）
@@ -190,7 +207,7 @@
 | 维度 | 轮次 | 状态 |
 |------|------|------|
 | 断链 | R1 | ✅ 完成（P1-1 已修复） |
-| 空实现（`href="#"`） | R2 | ⏳ |
+| 空实现（`href="#"`） | R2 | ✅ 完成（0 缺陷） |
 | `!important` 与内联滥用 | R3 | ⏳ |
 | 裸色值 | R4 | ⏳ |
 | 标题层级 | R5 | ⏳ |
