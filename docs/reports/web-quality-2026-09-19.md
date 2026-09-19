@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R7 / 维度：键盘焦点（焦点可见 · Tab 可达 · 焦点陷阱）（Lite 单维度循环第 7 项）
+> **轮次**：R8 / 维度：错误容错（404 · 空态 · error boundary · 防重复提交）（Lite 单维度循环第 8 项）
 > **日期**：2026-09-19
 
 ---
@@ -98,6 +98,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 簇 | 已检查范围 | 结论 |
 |----|-----------|------|
 | 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`）+ 空实现 / skip-link / 空跳模式（`tmp/empty-check*.mjs`），产物 14 页全量扫描 | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0 / 空实现 0**（修复前 2 处锚点缺失，见 §5 P1-1）。查了什么：`<a>` 462 个的 href 形态、12 个 `<button>` 的处理器接线、`<form>`/`<input>`/`<select>` 存在性（0 个）、`window.open('')` / `location.href='#'` / `void(0)` / `alert()` 占位、`TODO`/`FIXME` 标记（7 命中全为误报）。表单防重复提交与 error boundary：**不适用**（站点无表单、无客户端路由） |
+| 功能稳定 · 错误容错 | `tmp/error-check.mjs`（产物 + 源码双扫）：404 页存在性（源码与产物）、空 `catch{}` / 空 `.catch` 回调静默吞错、错误文案是否含修法指引、`<form>` 存在性、`try`/`catch` 配对、客户端水合与 Error Boundary、空态文案 | ⚠️ **2 项 P2 已修**（§5 P2-5 空 catch 静默吞错、P2-6 无 404 页）。404 页已补（`site/src/pages/404.astro` → 产物 `dist/404.html` 9209 字节，含 h1 / 回站入口 / skip-link）；页面数 14 → 15。**表单防重复提交不适用**（`<form>` 0 个）；**error boundary 不适用**（纯静态 SSR，无 `astro:*` 客户端水合、无客户端路由，构建期错误在 `npm run build` 阶段暴露）；**空态不适用**（文档/角色/机制均为静态数据页，无运行时数据加载）。另更正 R2 记录：copy 按钮实际 **3 个**（`index.astro:158,172,187`），R2 误记为 7 |
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
@@ -285,6 +286,83 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   合计: 0（0 = 合规）        ← 修复前为 1
   ```
 - **Note**：**该组件的键盘支持本身是完备的** —— `CollaborationGraph.astro:317-331` 已实现 `focus` → highlight、`blur` → 取消、`keydown` Enter/Space → `preventDefault` + 显示提示 1.6s；焦点指示器为 stroke 由 `--color-line` 变 `--color-accent` 且 stroke-width 1.5→2.5（含非色彩线索，满足 §1.4.11）。因此本缺陷是**纯粹的 ARIA 语义错误**，不影响鼠标与键盘操作，只影响 AT 播报。同类模式核对：`MechanismSVG.astro` 6 处 `role="img"`（`:13,38,69,88,109,136`）经检为**纯静态示意图**（无 `tabindex` / `role="button"` / `<a>` / `<button>` / `onclick`），`role="img"` 用法合法，无需修改。`npm run build` exit 0，`:focus-visible` 声明数 2→1。
+
+#### P2-5 功能稳定 · 错误容错 — 复制按钮 `catch {}` 静默吞错，失败零反馈（已修复）
+
+- **位置**：`site/src/pages/index.astro:841`（修复前）
+- **问题**：3 个 `.terminal__copy` 按钮（`index.astro:158,172,187`）的点击处理器用 `catch {}` 空块吞掉**所有** `navigator.clipboard.writeText()` 失败。成功路径有完整反馈（勾图标 + 绿色 1.5s），**失败路径什么都没有** —— 无错误图标、无错误文案、无 AT 播报。触发场景：剪贴板权限被拒、非安全上下文（`navigator.clipboard` 为 `undefined` 时抛 `TypeError`）、移动端浏览器限制。违反「错误文案指明修法」与「>300ms 必有反馈」。
+- **Found（原文逐字，修复前）**：
+  ```js
+  btn.addEventListener('click', async () => {
+    const cmd = (btn as HTMLElement).dataset.cmd;
+    if (!cmd) return;
+    try {
+      await navigator.clipboard.writeText(cmd);
+      btn.innerHTML = '<svg ...path d="M20 6L9 17l-5-5"/>';
+      (btn as HTMLElement).style.color = '#28c840';
+      setTimeout(() => {
+        btn.innerHTML = '<svg ...rect.../>';
+        (btn as HTMLElement).style.color = '';
+      }, 1500);
+    } catch {}
+  });
+  ```
+- **Expected**：失败时给出可见错误状态 + 指明替代做法 + 通过 `aria-live` 让 AT 播报（WCAG §4.1.3 Status Messages）。
+- **Fix（已入库，可复制）**：按钮加 `aria-live="polite"`，成功/失败均更新 `aria-label`，失败分支给出红叉图标与「请手动选中并复制」：
+  ```js
+  document.querySelectorAll('.terminal__copy').forEach(btn => {
+    const ICON_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const label = btn.getAttribute('aria-label') || '复制命令';
+    btn.setAttribute('aria-live', 'polite');
+    btn.addEventListener('click', async () => {
+      const cmd = (btn as HTMLElement).dataset.cmd;
+      if (!cmd) return;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        btn.innerHTML = '<svg ...勾.../>';
+        (btn as HTMLElement).style.color = '#28c840';
+        btn.setAttribute('aria-label', '已复制');
+        setTimeout(() => { btn.innerHTML = ICON_COPY; btn.style.color = ''; btn.setAttribute('aria-label', label); }, 1500);
+      } catch {
+        /* 剪贴板写入失败（权限被拒 / 非安全上下文）：显式报错并指明替代做法 */
+        btn.innerHTML = '<svg ...叉.../>';
+        (btn as HTMLElement).style.color = '#cf222e';
+        btn.setAttribute('aria-label', '复制失败：请手动选中并复制');
+        setTimeout(() => { btn.innerHTML = ICON_COPY; btn.style.color = ''; btn.setAttribute('aria-label', label); }, 1500);
+      }
+    });
+  });
+  ```
+- **Basis**：WCAG 2.2 §4.1.3 Status Messages；`检查要点 · 交互`（错误文案指明修法）。命令输出（`tmp/error-check.mjs`）：
+  ```
+  === 2. 静默吞错：空 catch / 空 except ===
+    合计空 catch: 0（0 = 合规）          ← 修复前为 1
+  === 3. 错误文案是否指明修法 ===
+    site/src/pages/index.astro  含 catch: ✓  含修法指引: ✓
+  ```
+- **Note**：`label` 变量保留各按钮原始 `aria-label`（`复制完整提示词` / `复制 npm i ...`），1.5s 后还原，不破坏 R2 已验证的标签唯一性。`#28c840`（成功绿）与 `#cf222e`（失败红）为 JS 运行时状态色，与 R4 P3-9「JS 动态值合法」同性质，非主题令牌。定级 P2：触发条件在 `https://men.cgartlab.com`（安全上下文）下较少见，但静默吞错属通用反模式，且缺陷在权限受限环境下 100% 可复现。
+
+#### P2-6 功能稳定 · 错误容错 — 无 404 页，错误 URL 无品牌化恢复路径（已修复）
+
+- **位置**：`site/src/pages/404.astro`（修复前不存在）→ 产物 `site/dist/404.html`（修复前不存在）
+- **问题**：Astro `output: 'static'` 模式下，未提供 `src/pages/404.astro` 时**不生成** `404.html`。修复前 `dist/` 根目录仅含 `_astro`、`about`、`docs`、`mechanisms`、`roles`、`CNAME`、`favicon.svg`、`index.html` —— 无 `404.html`。用户访问错误地址将得到托管方默认页（如 GitHub Pages 的裸 "404"），无品牌、无站内导航、无 skip-link。违反「空态与边界齐备」。
+- **Found（修复前，命令输出）**：
+  ```
+  === dist 根目录 ===
+  _astro  about  docs  mechanisms  roles  CNAME  favicon.svg  index.html
+  404.html → MISSING
+  ```
+- **Expected**：静态站提供 404 页，含 h1、错误说明、回站入口与 skip-link，样式走设计令牌。
+- **Fix（已入库）**：新增 `site/src/pages/404.astro`，使用 `BaseLayout` + 现有 `.btn` / `.btn--primary` / `.btn--ghost` 组件与 `--color-*` / `--space-*` / `--font-*` 令牌；含 HTTP 404 eyebrow、`404` + 「页面不存在」标题、说明文案、4 个回站入口（首页 / 文档 / 角色 / 机制）、GitHub Issues 反馈链接、`@media (max-width: 480px)` 响应式。
+- **Basis**：`检查要点 · 功能`（空态与边界齐备）。命令输出（`tmp/error-check.mjs`）：
+  ```
+  === 1. 404 边界（静态站必须有 404 页）===
+    源码 404.astro: ✓
+    产物 404.html:  ✓ (9209 字节)
+    h1: ✓   回站入口: ✓   skip-link: ✓   标题文本: ✓
+  ```
+  `npm run build` 输出 `/404.html (+8ms)`，页面数 14 → 15；`tmp/heading-check.mjs` 复核 15 页 15 个 h1，跳级 0。
+- **Note**：R1 抽样规则中已把「404 无自定义」记为抽样缺口（③ 视觉留档的采样盲区），R8 将其升级为实际缺陷并修复。新增页面不引入新路由（404 为特殊路由）、不改令牌语义、不重做视觉风格 —— 复用 `BaseLayout` 与 `.btn` 既有组件。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -711,7 +789,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 标题层级 | R5 | ✅ 完成（0 缺陷） |
 | 对比度 | R6 | ✅ 完成（P2-1/P2-2 共 12 处已修；P2-3 待逐元素背景分析；P3-10～P3-12 记录） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
-| 错误容错（含 404 / 空态） | R8 | ⏳ |
+| 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
 | 核心网页指标（LCP/INP/CLS） | R9 | ⏳ |
 | XSS 危险 API | R10 | ⏳ |
 | 密钥泄露 | R11 | ⏳ |
