@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R11 / 维度：密钥泄露（密钥不入前端产物）（Lite 单维度循环第 11 项）
+> **轮次**：R12 / 维度：交互态（七态 · 触控目标 · alt 与宽高预留 · 缩放）（Lite 单维度循环第 12 项，序列完结）
 > **日期**：2026-09-19
 
 ---
@@ -104,8 +104,9 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
 | 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **2 项 P2 AA 违规，12 处已修**（§5 P2-1 / P2-2）；1 项 P2 待决（P2-3：`--color-fg-muted` 在次级背景上低于 4.5:1，需逐元素背景分析，超出单轮范围）；3 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准） |
-| 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。**七态 / 目标 ≥24×24 / alt** 未在本轮检查（属 R12） |
+| 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。七态 / 目标 ≥24×24 / alt 已在 R12 完成（见 §4 交互态行、§5 P2-9） |
 | 交互体验 · 键盘可达 | 同上：焦点陷阱风险扫描（`position:fixed` + `overflow:hidden` 层是否含焦点元素）、模态 / 抽屉焦点归还、Tab 顺序 | ✅ **Tab 无陷阱，模态焦点归还不适用**。焦点陷阱扫描仅命中 `HeroArt.astro:156 .hero-canvas`，该元素 `aria-hidden="true"` 且 `pointer-events:none`，内部无焦点元素 → 非陷阱。全站**无 `<dialog>` / `role="dialog"` / `aria-modal` / modal / drawer**，仅 2 处原生 `<details>/<summary>`（`Footer.astro:32`、`index.astro:497`），键盘可达为浏览器内建行为 → 模态焦点归还不适用。`prefers-reduced-motion`（R3 P3-2 已查）、`user-scalable` 缩放未在本轮检查（属 R12） |
+| 元素一致性 · 交互态 | `tmp/state-check.mjs`：七态规则计数（hover / focus-visible / active / disabled / loading / empty / error）+ 每个定义 `:hover` 的按钮选择器是否被 `:disabled` 覆盖 + 触控目标尺寸抽取（WCAG 2.5.8 AA ≥24×24）+ SVG 可访问性（99 个 SVG 的 role / aria-label / aria-hidden 分布）+ viewport 缩放禁用 + 破坏性操作确认 | ⚠️ **1 项 P2 已修 + 2 项 P3 记录**（§5 P2-9 按钮禁用态缺失、P3-18 装饰 SVG 未标 `aria-hidden`、P3-19 `.btn` 无 `:active`）。七态实测：hover 42、focus-visible 3、active 1、**disabled 0→3（已修）**、error 1；**loading / empty 不适用**（静态站无异步数据加载、无数据集合，R8 已确认 0 个 `<form>`）；`prefers-reduced-motion` 11 处覆盖 18 个 `@keyframes`（R3 P3-2）。触控目标全部达标：`button`/`details summary`/`a.btn` 全局 `min-height:44px`、`.terminal__copy` 32×32、`.showcase__arrow` 40px。**viewport 未禁用缩放**（`width=device-width, initial-scale=1.0`，无 `user-scalable=no` / `maximum-scale`，符合 WCAG 1.4.4）。**破坏性操作不适用**：6 个文件含 `remove`/`drop` 关键词，全部为 `classList.remove()` / `removeAttribute()` JS API 调用，无用户可执行的破坏性动作 |
 | 前端安全 | 外链 `rel=noopener`（随断链扫描顺带检查，134 条外链） | ✅ `target=_blank` 缺 `noopener` = 0；XSS 危险 API 与 CSP 已在 R10 完成（§5 P2-8 / P3-17）；密钥入产物见下行（R11） |
 | 前端安全 · XSS | `tmp/xss-check.mjs`：7 类危险 API 全量扫描（`dangerouslySetInnerHTML` / `.innerHTML=` / `.outerHTML=` / `insertAdjacentHTML` / `document.write` / `eval(` / `new Function(`）+ 每个 sink 的 RHS 输入来源分类（静态字面量 / 内部生成 / 需人工核查）+ 8 类用户输入源存在性（`location.hash/search/href` / `URLSearchParams` / `localStorage` / `sessionStorage` / `document.cookie` / `dataTransfer` / `innerText` / `prompt()`）+ `postMessage`/`message` 事件 + CSP 与安全头 | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-8 `innerHTML` 未防护 sink、P3-17 无 CSP 与安全头）。**零可执行注入**：`dangerouslySetInnerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write`/`eval`/`new Function` 均 **0**；`innerHTML` 4 处全部为静态 SVG 字面量或字面量 const，**需人工核查 0**；**用户输入源 0**（营销站，无表单、无状态读取、无 URL 参数解析）；`postMessage` 0（无跨源消息 → `origin` 校验不适用）。**依赖高危 CVE = UNKNOWN**（`npm audit` 端点 503，npm registry 维护中） |
 | 前端安全 · 密钥 | `tmp/secret-check.mjs`：18 类密钥正则（AWS `AKIA` / GitHub PAT `gh[pousr]_` / Slack `xox[baprs]-` / Stripe `sk_live_` / Google `AIza` / JWT `eyJ…` / PEM 私钥块 / SendGrid `SG.` / Twilio `SK` / Mailgun `key-` / `Bearer ` / URL 内嵌凭据 `://u:p@` / MongoDB 连接串 / OpenAI-Antropic `sk-` / 通用 `(api_key\|secret\|token\|password)=` 赋值 / 40+ 位十六进制串）分三层扫描：**产物 `site/dist`（22 文件）→ 源码 `site/src` → 仓库其他位置**；另查环境注入面（`import.meta.env` / `process.env`）、`.env*` 文件与 `.gitignore` 覆盖、CI workflow 硬编码密钥 | ✅ **0 缺陷**（详见 §5 无发现记录 R11）。**产物 0 命中 / 源码 0 命中**；**环境注入点 0**（前端不读取任何环境变量，结构性不可能泄露）；`.env` 被 `.gitignore:10` 忽略且未跟踪，`.env.example` 入库仅含占位符；CI workflow 用 `${{ secrets.ANTHROPIC_API_KEY }}` 无任何硬编码；仓库自带 `scripts/verify.mjs:134 checkSecrets()` 门禁且 `test/verify.test.mjs:162` 有其测试。**依赖高危 CVE = UNKNOWN**（R10 与 R11 连续两轮 `npm audit` 均 503，npm registry 维护中） |
@@ -453,6 +454,56 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   ```
   产物核验：`dist/index.html` 中 `createElement`/`createDocumentFragment`/`setProperty`/`textContent` 均存在，`matrix.innerHTML` 已消失。
 - **Note**：**无 active 漏洞** —— 修复前也无注入路径（`tmp/xss-check.mjs` 第 3 节确认全站用户输入源为 0），定级 P2 的理由是「首页存在未防护 sink + 拼接 CSS 属性值」的组合风险，而非「当前可被利用」。`data-glyph` 属性经 grep 确认为**只写不读**（全仓库仅 1 处命中，即生成处本身），`span.dataset.glyph = ''` 与原始 `<span data-glyph>` 语义等价。保留它以免破坏潜在的 CSS 选择器依赖。`index.astro:838,842,848,852` 的 4 处 `innerHTML` **未改**：均为静态 SVG 字面量或字面量 const（`ICON_COPY`），单元素赋值无性能顾虑，改造属纯重构无安全收益。`npm run build` exit 0（15 页）。
+
+#### P2-9 交互态 · 按钮禁用态缺失（七态之 disabled）
+
+- **位置**：`site/src/styles/global.css:400-459`（`.btn` / `.btn--primary` / `.btn--ghost` 状态块，无 `:disabled`）；触发点 `site/src/components/CollaborationGraph.astro:355`
+- **问题**：`.btn` 定义了 `:hover`（accent 边框、accent 文字色、`transform: translateX(2px)` 推门位移）与 `:hover .btn__arrow`（箭头位移），但**全站 `:disabled` 规则数为 0**。CSS 的 `:hover` 会匹配 `disabled` 元素 —— 浏览器不抑制它。演示播放期间 `playBtn!.setAttribute('disabled','true')` 生效后（`CollaborationGraph.astro:355`，持续 `delay + 400ms` ≈ 6 s），鼠标掠过按钮仍会显示 accent 高亮、推门位移与 `cursor: pointer` —— 对一个**当前无法点击**的控件输出「可点击」的视觉反馈。
+- **Found**（`global.css:422-458` 原文逐字，全文无 `:disabled`）：
+  ```css
+  .btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent-on-accent);
+    text-decoration: none;
+    transform: translateX(2px); /* 推门语义 */
+  }
+  .btn--primary:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent-on-accent);
+  }
+  .btn:hover .btn__arrow {
+    transform: translateX(2px);
+  }
+  ```
+  `tmp/state-check.mjs` 第 1 节：`disabled 0`；第 2 节：`.btn:hover` / `.btn--primary:hover` `:disabled 覆盖 ✗ 缺失`。
+- **Expected**：禁用态需显式覆盖 hover 的边框、文字色与位移，并给出不可操作的视觉信号与光标。
+- **Fix**（`global.css`，插在 `.btn:hover .btn__arrow` 之后，已入库）：
+  ```css
+  /* ---------- 按钮禁用态 ----------
+     CSS 的 :hover 会匹配 disabled 元素（浏览器不抑制），故必须显式覆盖，
+     否则禁用期间仍会显示 accent 边框 / 文字色与 translateX 推门位移，
+     给「不可点」的控件输出「可点」的视觉反馈。
+     注：WCAG 1.4.3 明确豁免非活动 UI 组件的对比度要求，故 opacity 降弱可接受。 */
+  .btn:disabled,
+  .btn:disabled:hover {
+    cursor: not-allowed;
+    opacity: 0.5;
+    border-color: var(--color-line-soft);
+    color: var(--color-fg-muted);
+    transform: none;
+  }
+  .btn:disabled .btn__arrow {
+    transform: none;
+  }
+  ```
+- **Basis**：`检查要点 · 元素`（七态 hover/focus/active/disabled/loading/empty/error）。命令输出（`tmp/state-check.mjs`）：
+  ```
+  === 1. 七态覆盖（全站 CSS）===
+  disabled               0      ← 修复前
+  disabled               3      ← 修复后
+  ```
+  产物核验：`dist/BaseLayout.ry_r1Nzi.css` 含 `:disabled`（修复前 0 命中）。
+- **Note**：**唯一受影响的元素是 `#cg-play`** —— `grep setAttribute('disabled' / \bdisabled\b` 全仓库仅 `CollaborationGraph.astro:355,371` 两处，均作用于 `playBtn`（即 `.btn .btn--primary .cg__play`）；标记级 `disabled` 属性 0 处。`tmp/state-check.mjs` 第 2 节另报 `.terminal__copy:hover` / `.showcase__arrow:hover` / `.copy-btn:hover` 缺 `:disabled` 覆盖 —— **均为非缺陷**：这三个元素运行时从不被禁用，加规则属无意义代码。特异性核对：`.btn:disabled:hover` = (0,3,0) 高于 `.btn--primary:hover` (0,2,0) 且位于其后；`.btn:disabled .btn__arrow` (0,3,0) 与 `.btn:hover .btn__arrow` (0,3,0) 并列但位于其后 —— 均正确胜出，无需 `!important`。`opacity: 0.5` 使文字对比度降至约 2:1，但 **WCAG 1.4.3 明确豁免非活动 UI 组件**（"Text that is part of an inactive user interface component does not require a contrast ratio"），故不违反 AA。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -888,6 +939,37 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   ```
 - **Note**：**CSP 是务实基线，不是强约束** —— `script-src` 与 `style-src` 均含 `'unsafe-inline'`，因为 Astro 会把 `.astro` 组件的 `<script>` / `<style>` 内联进 HTML（R9 已确认 `<head>` 内 `<script>` 为 0 但正文内有内联脚本，共 11.3 KB）。收紧 `'unsafe-inline'` 会打断复制按钮、Canvas 粒子与背景动画，需先把内联脚本抽为外部文件（Astro `hoist` / `<script>` 外提）—— 属结构调整，超本轮范围。即便如此，该 CSP 仍封住 `object-src 'none'`（插件内容）、`base-uri 'self'`（`<base>` 注入）、`form-action 'self'`（表单数据外泄）、`img-src`/`connect-src` 限制等攻击面。**无法本地验证响应头实际生效** —— GitHub Pages 才应用 `_headers`，本地 `astro preview` 不读取；受 AGENTS.md「静态站验证走产物级检查、不依赖活服务器」约束，仅验证了文件存在与语法。**`_headers` 不支持注释**（GitHub 文档未记载支持），故文件内无 `#` 注释，本条注释写在报告与提交信息中。
 
+#### P3-18 交互态 · 装饰 SVG 未显式标记 `aria-hidden`
+
+- **位置**：全站 15 页产物，`tmp/state-check.mjs` 第 4 节
+- **问题**：SVG 共 **99 个**，其中 `role="img"`/`aria-label` **0 个**、`aria-hidden="true"` **32 个**、**裸标记 67 个**。裸 SVG 未声明可访问性意图。
+- **Found**：
+  ```
+  === 4. SVG 可访问性（role / aria-label / aria-hidden）===
+    SVG 总数 99 | role=img/aria-label 0 | aria-hidden 32 | 裸 67
+    裸 SVG 中含 <title>/<text> 或裸露文字: 0
+    → 裸且无文字 = 67
+  ```
+- **Expected**：装饰性 SVG 显式 `aria-hidden="true"`，有意义 SVG 用 `role="img"` + `aria-label`。
+- **Fix**：**本轮不改**。67 处跨多个文件的批量机械修改，违反「只改必要行」与「≤3 文件」约束。
+- **Basis**：`检查要点 · 元素`（alt 与宽高预留）。**无功能性缺陷** —— 67 个裸 SVG 中 **0 个含 `<title>`/`<text>` 或裸露文字**，即纯 `<path>` 装饰图标；浏览器默认将无文本、无 role 的内联 SVG 视为透明节点，不向辅助技术播报。若强行朗读，反而会产生 67 条无名「图形」播报。
+- **Note**：定级 P3 的理由是**可访问性意图未显式化**，不是当前行为错误。若后续引入带文字的 SVG（如 `<text>` 标注图），需同步补 `aria-hidden`。建议一次性批量处理（机械替换，可由 CI 脚本化），而非零散改动。
+
+#### P3-19 交互态 · `.btn` 无 `:active` 按压态
+
+- **位置**：`site/src/styles/global.css:400-459`
+- **问题**：全站 `:active` 规则仅 **1 条**（`index.astro:657` `.showcase__arrow:active { transform: scale(0.92); }`）。`.btn` 有 `:hover` 位移（`translateX(2px)`）却无 `:active` 加深，鼠标按下与悬停视觉一致，缺少「已按下」反馈。
+- **Found**：
+  ```
+  === 1. 七态覆盖（全站 CSS）===
+  active                 1
+  ```
+  `grep :active` 全仓库唯一命中：`site/src/pages/index.astro:L657: .showcase__arrow:active { transform: scale(0.92); }`
+- **Expected**：`:hover` 之后补 `:active` 的按压位移（如 `translateX(4px)`），完成「推门」交互的完整反馈链。
+- **Fix**：**本轮不改**（`.btn` 的 `:disabled` 修复已用掉本轮的主要改动；`:active` 属纯视觉润色）。
+- **Basis**：`检查要点 · 元素`（七态之 active）。**无 WCAG AA 违规** —— WCAG 2.2 无「按钮须有按压态」的准则；定级 P3 基于交互完整度。
+- **Note**：与 P2-9 同区块，若后续补 `:active` 可直接追加在禁用态块之后。`details summary`、`a` 亦无 `:active`，但二者由浏览器 UA 样式提供默认反馈，风险更低。
+
 ### 无发现记录（R2 空实现）
 
 | 检查项 | 范围 | 结果 |
@@ -994,7 +1076,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 核心网页指标（LCP/INP/CLS） | R9 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录；实测 ms 值 UNKNOWN 待 Playwright） |
 | XSS 危险 API | R10 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；依赖 CVE UNKNOWN） |
 | 密钥泄露 | R11 | ✅ 完成（0 缺陷：产物 0 命中 / 源码 0 命中 / 环境注入点 0 / `.env` 未跟踪 / CI 无硬编码 / 自带 `checkSecrets()` 门禁） |
-| 交互态（七态） | R12 | ⏳ |
+| 交互态（七态） | R12 | ✅ 完成（P2-9 按钮 `:disabled` 缺失已修；P3-18 SVG aria、P3-19 `:active` 记录；触控目标 / 缩放 / 破坏性操作全达标） |
 | 视觉留档（③ 截图） | — | ⛔ **UNKNOWN**：需浏览器自动化依赖，待确认 |
 | axe / pa11y（②） | — | ⛔ **缺口**：无依赖，待确认 |
 
