@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R6 / 维度：对比度（正文 ≥4.5:1 · WCAG 2.2 AA）（Lite 单维度循环第 6 项）
+> **轮次**：R7 / 维度：键盘焦点（焦点可见 · Tab 可达 · 焦点陷阱）（Lite 单维度循环第 7 项）
 > **日期**：2026-09-19
 
 ---
@@ -102,8 +102,8 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
 | 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **2 项 P2 AA 违规，12 处已修**（§5 P2-1 / P2-2）；1 项 P2 待决（P2-3：`--color-fg-muted` 在次级背景上低于 4.5:1，需逐元素背景分析，超出单轮范围）；3 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准） |
-| 元素一致性 | — | ⏳ 待查（R4：七态、焦点可见、目标 ≥24×24、alt） |
-| 交互体验 | — | ⏳ 待查（R5：反馈、可撤销、Tab 陷阱、模态焦点归还、`prefers-reduced-motion`、缩放） |
+| 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。**七态 / 目标 ≥24×24 / alt** 未在本轮检查（属 R12） |
+| 交互体验 · 键盘可达 | 同上：焦点陷阱风险扫描（`position:fixed` + `overflow:hidden` 层是否含焦点元素）、模态 / 抽屉焦点归还、Tab 顺序 | ✅ **Tab 无陷阱，模态焦点归还不适用**。焦点陷阱扫描仅命中 `HeroArt.astro:156 .hero-canvas`，该元素 `aria-hidden="true"` 且 `pointer-events:none`，内部无焦点元素 → 非陷阱。全站**无 `<dialog>` / `role="dialog"` / `aria-modal` / modal / drawer**，仅 2 处原生 `<details>/<summary>`（`Footer.astro:32`、`index.astro:497`），键盘可达为浏览器内建行为 → 模态焦点归还不适用。`prefers-reduced-motion`（R3 P3-2 已查）、`user-scalable` 缩放未在本轮检查（属 R12） |
 | 前端安全 | 外链 `rel=noopener`（随断链扫描顺带检查，134 条外链） | ✅ `target=_blank` 缺 `noopener` = 0；其余子项 ⏳ 待查（R6–R8：XSS 危险 API / CSP 与安全头 / 密钥进产物） |
 
 ---
@@ -254,7 +254,37 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   ```
   --color-fg-muted (#737373):  不达标 → #f5f5f5=4.35:1 | #f0ebe2=3.99:1 | accent-tint=4.21:1 | #efe7d2=3.85:1
   ```
-- **Note**：定级 P2（WCAG AA 违规不低于 P2）。当前 `--color-fg-muted` 的多数使用点落在 `#fafafa` 页底或白卡上（4.54:1 / 4.43:1 量级），故未达 P1「严重不可读」。
+- **Note**：定级 P2（WCAG AA 违规不低于 P2）。当前 `--color-fg-muted` 的多数使用点落在 `#fafafa` 页底（4.54:1，勉强达标）或白卡（4.74:1）上，故未达 P1「严重不可读」。
+
+#### P2-4 元素一致性 · 键盘焦点 — `role="img"` 容器剪除交互子节点，屏幕阅读器不可达（已修复）
+
+- **位置**：`site/src/components/CollaborationGraph.astro:71`
+- **问题**：协作拓扑图 SVG 根节点标为 `role="img"`，但内部有 6 个 `tabindex="0" role="button"` 的角色节点。ARIA 规范中 `img` 角色的 **Children Presentational = true**，即其后代在辅助技术（AT）的无障碍树中被剪除。结果：键盘用户可 Tab 到这些节点（`tabindex="0"` 是 DOM 行为，不受 ARIA 影响），焦点指示器也正常显示，但**屏幕阅读器不会播报按钮的名称与角色** —— 违反 WCAG 2.2 §4.1.2 Name, Role, Value。
+- **Found（原文逐字，修复前）**：
+  ```html
+  <svg
+    class="cg__svg"
+    viewBox="0 0 800 600"
+    role="img"
+    aria-label="men 与五个 Agent 的协作拓扑图"
+    preserveAspectRatio="xMidYMid meet"
+  >
+    ...
+    <g class="cg__node cg__node--${n.kind}" data-id={n.id} data-role={n.role}
+       tabindex="0" role="button" aria-label={`${n.cn} ${n.en}：${n.role}`}>
+  ```
+- **Expected**：容器角色不得剪除交互后代。`role="group"` 的 Children Presentational 为 false，且可携带 `aria-label` 保留图的描述性名称。
+- **Fix（已入库，可复制）**：
+  ```html
+  <svg class="cg__svg" viewBox="0 0 800 600" role="group"
+       aria-label="men 与五个 Agent 的协作拓扑图" preserveAspectRatio="xMidYMid meet">
+  ```
+- **Basis**：WCAG 2.2 §4.1.2 Name, Role, Value；WAI-ARIA `img` 角色 `Children Presentational: true`。命令输出（`tmp/focus-check.mjs`）：
+  ```
+  === 1. role="img" 容器内含交互子元素（ARIA Children Presentational 陷阱）===
+  合计: 0（0 = 合规）        ← 修复前为 1
+  ```
+- **Note**：**该组件的键盘支持本身是完备的** —— `CollaborationGraph.astro:317-331` 已实现 `focus` → highlight、`blur` → 取消、`keydown` Enter/Space → `preventDefault` + 显示提示 1.6s；焦点指示器为 stroke 由 `--color-line` 变 `--color-accent` 且 stroke-width 1.5→2.5（含非色彩线索，满足 §1.4.11）。因此本缺陷是**纯粹的 ARIA 语义错误**，不影响鼠标与键盘操作，只影响 AT 播报。同类模式核对：`MechanismSVG.astro` 6 处 `role="img"`（`:13,38,69,88,109,136`）经检为**纯静态示意图**（无 `tabindex` / `role="button"` / `<a>` / `<button>` / `onclick`），`role="img"` 用法合法，无需修改。`npm run build` exit 0，`:focus-visible` 声明数 2→1。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -559,6 +589,62 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   ```
 - **Note**：定级 P3（文档准确性，无渲染影响）。但 `--color-fg-muted` 的 4.6:1 声称值掩盖了 P2-3 的实际风险，两者存在因果关联。
 
+#### P3-13 样式代码 — 重复的 `:focus-visible` 全局块（已修复）
+
+- **位置**：`site/src/styles/global.css:470-475`（修复前）
+- **问题**：全局 `:focus-visible` 声明了两次。第一份（`:470-475`）使用 `var(--color-accent)` + `outline-offset: 2px`；第二份（`:872-877`，注释自称「已有 · 此处为保险」）使用 `var(--color-accent-dark)` + `outline-offset: 3px` + `border-radius`。两份选择器特异性完全相同（`0,1,0`），第二份在层叠顺序上胜出，**第一份的三个属性全部被覆盖，为死代码**。与 R3 P3-2（重复 reduced-motion 块）同一反模式：在文件后部加一份「保险」副本，而不修改原声明。
+- **Found（原文逐字，修复前）**：
+  ```css
+  /* ---------- Focus visible ---------- */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  ```
+- **Expected**：全局焦点样式唯一声明。
+- **Fix（已入库，可复制）**：删除第一份，保留位置注释说明去向：
+  ```css
+  /* ---------- Focus visible ----------
+     全局唯一声明见下方 L873 的 :focus-visible 块（var(--color-accent-dark) / outline-offset: 3px）。
+     此处原有一份使用 var(--color-accent) 的副本，被下方块完全覆盖，R7 已删除。 */
+  ```
+- **Basis**：`检查要点 · 样式`（死代码）。命令输出：
+  ```
+  === 3. :focus-visible 声明数（应为 1）===
+  site/dist/_astro/BaseLayout.CEJ6rBdT.css: 1        ← 修复前为 2
+  ```
+- **Note**：保留的第二份使用 `--color-accent-dark`（6.41:1），恰好是 R6 P2-1 确认的正确令牌 —— 焦点指示器作为非文本元素适用 §1.4.11（3:1），两个令牌都达标，但 `accent-dark` 更稳。删掉的死代码若某日因层叠变化被激活，其 `--color-accent` 版本在文本焦点语境下会构成 P2（见 P2-1）。
+
+#### P3-14 元素一致性 · 键盘焦点 — skip-link 用 `outline: none` 关闭默认轮廓（未修 · 合规留档）
+
+- **位置**：`site/src/layouts/BaseLayout.astro:90-94`
+- **问题**：skip-link 的 `:focus` 规则显式关闭了 `outline`。硬约束明确禁止「用 `outline:none` 掩盖问题」，故必须逐条判定：此处**不属于掩盖** —— skip-link 未聚焦时位于 `top: -40px`（屏幕外），`:focus` 时 `top: var(--space-4)` 滑入视野，其自身外观（`background: var(--color-accent)` 橘底 + `color: var(--color-accent-on-accent)` 深字）即为焦点指示器，文字对比度 5.66:1（R6 实测）。WCAG §2.4.7 要求「焦点指示器可见」，未规定必须用 outline。
+- **Found（原文逐字）**：
+  ```css
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    ...
+    background: var(--color-accent);
+    color: var(--color-accent-on-accent);
+    ...
+  }
+
+  .skip-link:focus {
+    top: var(--space-4);
+    outline: none;
+    text-decoration: none;
+  }
+  ```
+- **Expected**：保留替代指示器的前提下可关闭 outline；若想进一步加固（高对比度显示模式），可移除 `outline: none` 让全局 `:focus-visible` 叠加显示。
+- **Fix**：**本轮不改** —— 当前实现已合规且是刻意设计的视觉语言，改动属「重做视觉风格」，受硬约束限制。
+- **Basis**：WCAG 2.2 §2.4.7 Focus Visible；`检查要点 · 元素`（焦点可见）。命令输出（`tmp/focus-check.mjs`）：
+  ```
+  site/src/layouts/BaseLayout.astro:92  替代指示器: 视觉属性变化
+  ```
+- **Note**：`.skip-link:focus` 特异性 `0,1,1` 高于全局 `:focus-visible` 的 `0,1,0`，因此 outline 确实被关闭；替代指示器为元素位移 + 高对比度背景。定级 P3（合规实现，仅留档防未来回归）。
+
 ### 无发现记录（R2 空实现）
 
 | 检查项 | 范围 | 结果 |
@@ -624,7 +710,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 裸色值 | R4 | ✅ 完成（P3-6/P3-7 已修 11 处；P3-8 双源真相待重构；P3-9 合法字面量留档） |
 | 标题层级 | R5 | ✅ 完成（0 缺陷） |
 | 对比度 | R6 | ✅ 完成（P2-1/P2-2 共 12 处已修；P2-3 待逐元素背景分析；P3-10～P3-12 记录） |
-| 键盘焦点 | R7 | ⏳ |
+| 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ⏳ |
 | 核心网页指标（LCP/INP/CLS） | R9 | ⏳ |
 | XSS 危险 API | R10 | ⏳ |
