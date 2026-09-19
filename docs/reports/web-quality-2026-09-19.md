@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R4 / 维度：裸色值（未走令牌的 hex / rgb）（Lite 单维度循环第 4 项）
+> **轮次**：R5 / 维度：标题层级（h1 唯一 · 不跳级）（Lite 单维度循环第 5 项）
 > **日期**：2026-09-19
 
 ---
@@ -100,7 +100,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`）+ 空实现 / skip-link / 空跳模式（`tmp/empty-check*.mjs`），产物 14 页全量扫描 | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0 / 空实现 0**（修复前 2 处锚点缺失，见 §5 P1-1）。查了什么：`<a>` 462 个的 href 形态、12 个 `<button>` 的处理器接线、`<form>`/`<input>`/`<select>` 存在性（0 个）、`window.open('')` / `location.href='#'` / `void(0)` / `alert()` 占位、`TODO`/`FIXME` 标记（7 命中全为误报）。表单防重复提交与 error boundary：**不适用**（站点无表单、无客户端路由） |
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
-| 信息排版 | — | ⏳ 待查（R3：标题层级、正文 ≥16px、行高、行长、对比度） |
+| 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
 | 元素一致性 | — | ⏳ 待查（R4：七态、焦点可见、目标 ≥24×24、alt） |
 | 交互体验 | — | ⏳ 待查（R5：反馈、可撤销、Tab 陷阱、模态焦点归还、`prefers-reduced-motion`、缩放） |
 | 前端安全 | 外链 `rel=noopener`（随断链扫描顺带检查，134 条外链） | ✅ `target=_blank` 缺 `noopener` = 0；其余子项 ⏳ 待查（R6–R8：XSS 危险 API / CSP 与安全头 / 密钥进产物） |
@@ -434,6 +434,32 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 
 ---
 
+### 无发现记录（R5 标题层级）
+
+**标题层级 — 0 缺陷**
+
+| 检查项 | 范围 | 结果 |
+|--------|------|------|
+| h1 唯一性 | 产物 14 页 | **14/14 页各恰好 1 个 h1**；h1 总数 14 |
+| 不跳级 | 产物 14 页，相邻标题级差 ≤1 | **跳级 0** |
+| 空标题 | 产物 14 页 | 空 `<hN></hN>` **0** |
+| 标题嵌套 | 产物 14 页 | `<hN>` 内嵌 `<hM>` **0** |
+| 目录误用 | 产物 14 页，`nav` / `aside` 容器 | 容器内 h-tag **0**（TOC 未误用标题元素） |
+| 标题长度 | 产物 14 页 | 超 60 字符标题 **0** |
+
+**h1 来源核对**：5 个页面在源文件中直接写 `<h1>`（`index.astro:112`、`about.astro:32`、`roles.astro:180`、`mechanisms.astro:31`、`docs/index.astro:18`）；8 个文档页通过组件 prop 注入 —— `WikiDoc.astro:35` 的 `<h1 id="page-title" class="doc-title">{title}</h1>`（agents / architecture / configure / governance / install / overview / protocols / quickstart），`WikiManual`（releases）。1 页（docs/index）自身写 `<h1>`。合计 14。
+
+**最深层级**：`roles/index.html` 达 h4（`h1:1 h2:5 h3:14 h4:30`，共 50 个标题）—— 各 Agent 下「职责 / 技能 / 约束 / 输入 / 输出」用 h4，层级递进合理，无跳级。
+
+**Basis**：`检查要点 · 排版`（h1 唯一不跳级）；WCAG 2.2 §2.4.6 Headings and Labels。命令输出：
+```
+页面 14 | h1 总数 14 | 无 h1 0 | 多 h1 0 | 跳级 0
+结果：标题层级合规
+合计：空标题 0 | 嵌套标题 0 | nav/aside 内 h-tag 0
+```
+
+> **工具留痕**：首轮用源码 `Select-String '<h1'` 统计，8 个文档页显示 0 个 h1，一度疑似缺 h1。改以 **dist 渲染产物**为真相源后确认 h1 由组件注入 —— 与 R1 断链检查同源的教训：Astro 的 `href={expr}` / `{title}` 表达式语法会让源码扫描失真，产物才是真相。
+
 ## 6. 提交与合并（⑥）
 
 | 项 | 状态 |
@@ -453,7 +479,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 空实现（`href="#"`） | R2 | ✅ 完成（0 缺陷） |
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 | ✅ 完成（P3-6/P3-7 已修 11 处；P3-8 双源真相待重构；P3-9 合法字面量留档） |
-| 标题层级 | R5 | ⏳ |
+| 标题层级 | R5 | ✅ 完成（0 缺陷） |
 | 对比度 | R6 | ⏳ |
 | 键盘焦点 | R7 | ⏳ |
 | 错误容错（含 404 / 空态） | R8 | ⏳ |
