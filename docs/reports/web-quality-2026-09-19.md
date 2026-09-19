@@ -183,7 +183,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | 功能稳定 · 错误容错 | `tmp/error-check.mjs`（产物 + 源码双扫）：404 页存在性（源码与产物）、空 `catch{}` / 空 `.catch` 回调静默吞错、错误文案是否含修法指引、`<form>` 存在性、`try`/`catch` 配对、客户端水合与 Error Boundary、空态文案 | ⚠️ **2 项 P2 已修**（§5 P2-5 空 catch 静默吞错、P2-6 无 404 页）。404 页已补（`site/src/pages/404.astro` → 产物 `dist/404.html` 9209 字节，含 h1 / 回站入口 / skip-link）；页面数 14 → 15。**表单防重复提交不适用**（`<form>` 0 个）；**error boundary 不适用**（纯静态 SSR，无 `astro:*` 客户端水合、无客户端路由，构建期错误在 `npm run build` 阶段暴露）；**空态不适用**（文档/角色/机制均为静态数据页，无运行时数据加载）。另更正 R2 记录：copy 按钮实际 **3 个**（`index.astro:158,172,187`），R2 误记为 7 |
 | 功能稳定 · 核心网页指标 | R9 `tmp/cwv-check.mjs`（静态风险因子）+ **R14 `site/scripts/cwv-measure.mjs`（lab 实测，12 组合）**：LCP 候选与阻塞资源、CLS 风险因子（无宽高图片 / `font-display` / `100vh`）、INP 风险因子（内联 JS 体积 / rAF / `will-change`）、资源总体积、`preconnect`/`preload`/`modulepreload`/`fetchpriority` 存在性 | ⚠️ **1 项 P2 已修**（§5 P2-7 外部字体 1.47 MB 无 `preconnect`/`preload`）+ 2 项 P3 记录（P3-15 `font-display: swap` 回流、P3-16 单字体 744 KB）。**R14 实测（§3.2）**：FCP **132–206ms**（阈值 1800ms，12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏资源 33–59 KB、单资源最大 33 KB（渲染阻塞 CSS，4–7ms）、点击延迟 1ms —— **静态风险因子在实测下未构成瓶颈**。**LCP / CLS / INP 值仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（4 种启动模式结果一致，PerformanceObserver 注册无异常，不受影响的 FCP 与 first-input 正常产出，根因未完全隔离）。查了什么：`<img>` 0 个、`<canvas>` 1 个、渲染阻塞 CSS 1 个/页、`<head>` 内 `<script>` 0 个（无渲染阻塞 JS）、`100vh` 0 处（无移动端地址栏 CLS）、内联 JS 15 页共 11.3 KB（单页最大 6.7 KB）、`requestAnimationFrame` 16 处、`will-change` 1 处、站点自产资源合计 472.3 KB |
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
-| 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
+| 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-145` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；**R15 已修 P3-8**：新增 6 个 `--role-*` 令牌建立单一真相源，角色色字面量 **36 处 → 5 处**（全部落在令牌定义块，`index.astro` 残留 0），`role-token-verify.mjs` 27 项断言全过证明零视觉漂移。残留 108 处终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
 | 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **3 项 P2 AA 违规已修**（§5 P2-1 / P2-2 / P2-3，共 15 处；P2-3 由 R13 用真实背景解析定位到 3 个选择器后修复）；**1 项 P2 已修**（P2-10 主强调色底硬编码白字，R13）；**1 项 P2 待设计决策**（P2-11 六个角色色 14px 正文不达 4.5:1，但全部 ≥3:1，可经大文本资格达标）；4 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准）+ R13 新增 P3-20（注释失准最大案例 3.14）、P3-21（死令牌再 +2）、P3-22（规则重复 ×3）。小字号对比度不合格总数：**21 → 6**（R13 实测） |
 | 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。七态 / 目标 ≥24×24 / alt 已在 R12 完成（见 §4 交互态行、§5 P2-9） |
@@ -627,8 +627,8 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 - **Expected**：正文阈值 4.5:1，或使文本满足**大文本**资格（≥24px，或 ≥18.66px 且字重 ≥700）以降至 3:1 阈值。
 - **Fix**：**本轮不改**（需设计决策）。关键事实：**六个颜色在 3:1 阈值下全部达标**（最低 `#bf8700` = 3.14:1 ≥ 3.0）。因此有两条互斥路径，都需要确认：
   1. **改字号/字重**（1 行）：`.showcase__card-role` 提至 `≥18.66px + font-weight:700`，即满足大文本 3:1，六色全过。代价：角色标签视觉权重明显加重。
-  2. **加深六个角色色**（6 行，在 JS 数据数组内）：保持字号不变。代价：六个 Agent 的标识色相偏移，且与 P3-8「角色色双源真相」的重构耦合。
-  两条都触及「不重做视觉风格」边界，故交回设计决策。
+  2. **加深六个角色色**（**R15 后已降为 6 行**，改 `global.css:135-139` 的 `--role-*` 令牌即可）：保持字号不变。代价：六个 Agent 的标识色相偏移。~~与 P3-8「角色色双源真相」的重构耦合~~ → **R15 已解除该耦合**：P3-8 建立单一真相源后，改一处令牌即同时作用于卡片与拓扑图，不再需要协调两个真相源。
+  两条都触及「不重做视觉风格」边界，故交回设计决策。**R15 结论：路径 2 的执行成本已显著下降，但色相偏移属设计取舍，仍需确认。**
 - **Basis**：WCAG 2.2 §1.4.3（正文 4.5:1）与 §1.4.6（大文本 3:1）。命令输出（`site/scripts/tiny-text-audit.mjs` + `tmp/ratio-check.mjs`）：
   ```
   3.14:1  14px  #bf8700 on #ffffff  <showcase__card-role>"数据/投资评审 / Judge"
@@ -638,7 +638,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   3.50:1  14px  #e85d04 on #ffffff  <showcase__card-role>"编排与路由核心"
   4.23:1  14px  #8b5cf6 on #ffffff  <showcase__card-role>"搜索与研究"
   ```
-- **Note**：定级 P2（WCAG AA 违规不低于 P2），非 P1 —— 六个颜色均在 3:1 以上，大文本阈值可达，且角色标签是辅助信息而非唯一信息载体（卡片同时有图标、名称、职责描述）。截图证据：`home-1440.png` 展示卡片区。与 **P3-8**（角色色双源真相）同源但不同维度：P3-8 是「颜色值分散在 JS 与 CSS」的架构债，本条是「颜色本身不达对比度」的 AA 违规。
+- **Note**：定级 P2（WCAG AA 违规不低于 P2），非 P1 —— 六个颜色均在 3:1 以上，大文本阈值可达，且角色标签是辅助信息而非唯一信息载体（卡片同时有图标、名称、职责描述）。截图证据：`home-1440.png` 展示卡片区。与 **P3-8**（角色色双源真相）同源但不同维度：P3-8 是「颜色值分散在 JS 与 CSS」的架构债（**R15 已修复**），本条是「颜色本身不达对比度」的 AA 违规（**仍未修**）。两者已解耦 —— P3-8 的重构反而降低了本条的修复成本。
 
 #### P2-12 信息排版 · 标题层级 — `--font-size-h5` 从未定义，4 处使用导致 `<h3>` 退化为正文字号（未修 · 意图不明）
 
@@ -856,27 +856,29 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   全量残留核对：`#e85d04` 在源码仅剩 7 处 —— `global.css:122-128`（令牌定义，不报）、`HeroCanvas.astro:21`（兜底，P3-6 已对齐）、`index.astro:42`（数据数组）。
 - **Note**：今日视觉零差异（单主题，令牌值即 `#e85d04`）。价值：品牌色收敛到单一来源，未来加暗色主题时终端与拓扑图自动跟随，不会成为漏改点。`npm run build` exit 0、`link-check` 断链 0、`empty-check` 空实现 0、`check-site.mjs` exit 0。
 
-#### P3-8 样式代码 · 裸色值 — 角色色双源真相（未修 · 需重构）
+#### P3-8 样式代码 · 裸色值 — 角色色双源真相（R15 已修复 · 单一真相源建立）
 
-- **位置**：`site/src/pages/index.astro:42-92`（JS 数据数组）↔ `:679-716`、`:752-758`（拓扑图 CSS）
-- **问题**：6 个角色色存在**两个真相源**。JS 数组驱动卡片强调色（`:208` `style={--card-accent: ${a.color}}`），拓扑图 CSS 又把同一批色值逐一硬编码进 `stroke` / `fill` / `background`。改一处不动另一处，两张图就会显示不同颜色。
-- **Found（原文逐字）**：
-  ```js
-  // :42-92 · JS 数据
-  { ..., color: '#e85d04' }, { ..., color: '#4a90d9' }, { ..., color: '#2ea043' },
-  { ..., color: '#bf8700' }, { ..., color: '#a371f7' }, { ..., color: '#8b5cf6' }
+- **位置**：`site/src/styles/global.css:131-139`（新增 `--role-*` 令牌）↔ `site/src/pages/index.astro`（卡片数据 + 拓扑图 CSS + SVG marker）
+- **问题**：6 个角色色存在**两个真相源**。JS 数组驱动卡片强调色（原 `:208` `style={--card-accent: ${a.color}}`），拓扑图 CSS 又把同一批色值逐一硬编码进 `stroke` / `fill` / `background`，SVG `<marker>` 再写一遍 `fill="#…"`。改一处不动另一处，两张图就会显示不同颜色。
+- **R14 补充判读**：拓扑图是**静态 SVG**，颜色按「哪一步由哪个角色完成」编码流向状态（`--return`/`--verdict` 用记的绿、`--fail`/`--judge` 用持的黄、`--learn`/`--knowledge` 用寻的紫），并非逐 Agent 渲染。因此不能按「Agent 身份」理解，但**色值必须与角色色板一致**，故仍需统一真相源。
+- **Fix（R15 已入库，2 文件 · 42 增 37 删）**：
+  1. `global.css` 新增 6 个 `--role-*` 令牌作为唯一真相源；`--role-men` 写 `var(--color-accent)` 而非字面量，避免与主强调色再次分叉
+  2. `index.astro` JS 数据数组**删除 6 处 `color:` 字段**，卡片改为 `style={`--card-accent: var(--role-${a.id})`}` —— JS 不再持有颜色值，只持有角色 id
+  3. 拓扑图 CSS 26 处字面量改为 `var(--role-*)`
+  4. 3 个 SVG `<marker>` 由 `fill="#…"` 改为 `style="fill: var(--role-*)"`（SVG 表现属性不接受 `var()`，同页 `:303` 的主强调色箭头早已用此写法）
+- **角色色字面量：全仓 36 处 → 5 处**（5 处全部为 `global.css:135-139` 的令牌定义，按规则不报）。`index.astro` 内残留 0 处。
+- **Basis**：`检查要点 · 样式`（死代码与裸色值 / 令牌一致）。命令输出（`tmp/color-check.mjs`，重构后）：
   ```
-  ```css
-  /* :679-716 · 同一批色值再次硬编码 */
-  .topo-bezier--return { stroke: #2ea043; ... }   .topo-bezier--fail { stroke: #bf8700; ... }
-  .topo-dot--learn { fill: #8b5cf6; }              .topo-label--judge-cn { fill: #1f2328; ... }
-  /* :752-758 · 图例第三次出现 */
-  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid #bf8700; }
+  #4a90d9 ×1  site/src/styles/global.css:135
+  #2ea043 ×1  site/src/styles/global.css:136
+  #bf8700 ×1  site/src/styles/global.css:137
+  #a371f7 ×1  site/src/styles/global.css:138
+  #8b5cf6 ×1  site/src/styles/global.css:139
   ```
-- **Expected**：单一真相源。两个可选方向 —— (a) 为每个角色加令牌（`--role-si` / `--role-ji` …），CSS 与 JS 均引用；(b) 拓扑图节点用 `style` 注入 `--role-color`，CSS 只写 `fill: var(--role-color)`。
-- **Fix**：**本轮不改**。方向 (a) 需向令牌系统新增 6 个令牌（触及「不改令牌语义」边界）；方向 (b) 需重构拓扑图渲染（约 60+ 个元素加内联样式）。两者均超出「只改必要行 / ≤3 文件」的单轮约束，建议交强模型做独立重构轮。
-- **Basis**：`检查要点 · 样式`（死代码与裸色值 / 令牌一致）。`tmp/color-check.mjs` 输出：`index.astro total: 96  unique: 22`，其中角色色 `#2ea043 ×14`、`#bf8700 ×15`、`#8b5cf6 ×5`、`#4a90d9 ×1`、`#a371f7 ×1`、`#e85d04 ×1`。
-- **Note**：当前两处数值**完全一致**（人工核对 6/6），无可见不一致；风险是未来编辑漂移。
+  `index.astro` 内 `Select-String "#(4a90d9|2ea043|bf8700|a371f7|8b5cf6)"` = 0 命中；`var(--role-` 引用 32 处；JS 数组 `color: '#'` = 0 处。
+- **Note 验证方式**：`site/scripts/role-token-verify.mjs`（新增）在浏览器中实测 **27 项断言全过**：6 个令牌定义值、6 张卡片的 `--card-accent` 书写值及其消费端（`.showcase__card-icon` / `.showcase__card-role` 的 `color`）、11 个拓扑图元素的 `fill`/`stroke`/`border-color`、4 个 SVG marker 的 `fill` —— 全部解析为重构前的预期 hex，**零视觉漂移**。
+  - 脚本踩到一个坑值得留档：`getComputedStyle(el).getPropertyValue('--card-accent')` 返回的是**原样书写值**（`#e85d04`），不是解析后的 `rgb()` —— 自定义属性不做颜色解析。首版断言因此误报 6 处「不一致」，实际消费端 `color` 全部正确。断言已改为比对书写值 + 消费端解析值双轨。
+- **P2-11 关联**：本重构**不改变任何颜色值**，故 P2-11（六个角色色 14px 正文 3.14–4.23:1）状态不变，仍是待决项 —— 但修复成本因本重构而下降：现在只需改 `global.css` 的 6 行令牌，卡片与拓扑图同时生效。
 
 #### P3-9 样式代码 · 裸色值 — 合法字面量留档（不修 · 分类说明）
 
@@ -1276,7 +1278,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | 断链 | R1 | ✅ 完成（P1-1 已修复） |
 | 空实现（`href="#"`） | R2 | ✅ 完成（0 缺陷） |
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
-| 裸色值 | R4 | ✅ 完成（P3-6/P3-7 已修 11 处；P3-8 双源真相待重构；P3-9 合法字面量留档） |
+| 裸色值 | R4 / R15 | ✅ 完成（P3-6/P3-7 已修 11 处；**P3-8 双源真相 R15 已重构**：新增 `--role-*` 令牌，角色色字面量 36→5，27 项浏览器断言零漂移；P3-9 合法字面量留档） |
 | 标题层级 | R5 | ✅ 完成（0 缺陷） |
 | 对比度 | R6 / R13 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10～P3-12、P3-20～P3-21 记录。R13 实测不合格总数 21→6） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
@@ -1293,6 +1295,6 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 
 1. ~~**是否允许 `npm i -D playwright`**~~ → **R13 已确认并已执行**：`npm i -D playwright` 已入库（`site/package.json` / `site/package-lock.json`），Chromium 经 `npx playwright install chromium` 装到 `C:\Users\cgart\AppData\Local\ms-playwright`（不进仓库）。12 张截图已产出。**明暗维度按实证判为 N/A**（`global.css:36 color-scheme: light`、`prefers-color-scheme` 媒体查询 0 处），未产出重复图。
 2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注（13 轮已全程如此，六簇覆盖无缺口）。R13 已用 Playwright 实测替代了部分 axe 能力（对比度、字号、标题尺寸、横向溢出），但**语义层规则**（表单 label 关联、`aria-*` 完整性、地标角色）仍无自动化覆盖。
-3. **新增（R13）：P2-11 六个角色色的修复路径** —— 二选一：(a) `.showcase__card-role` 提至 `≥18.66px + font-weight:700`（1 行，满足大文本 3:1，六色全过，代价是标签视觉权重加重）；(b) 加深六个角色色（6 行，在 JS 数据数组内，代价是标识色相偏移）。六色当前均为 3.14–4.23:1，全部 ≥3:1。
+3. **新增（R13）：P2-11 六个角色色的修复路径** —— 二选一：(a) `.showcase__card-role` 提至 `≥18.66px + font-weight:700`（1 行，满足大文本 3:1，六色全过，代价是标签视觉权重加重）；(b) 加深六个角色色（**R15 后已简化**：P3-8 单一真相源建立后，只需改 `global.css:135-139` 的 6 行 `--role-*` 令牌，卡片与拓扑图同时生效，代价是六个 Agent 的标识色相偏移）。六色当前均为 3.14–4.23:1，全部 ≥3:1。R15 已做的前置：P3-8 双源真相重构完成，路径 (b) 不再需要协调两个真相源。
 4. **新增（R13）：P2-12 `--font-size-h5` 未定义** —— 二选一：(a) 定义该令牌（需给出取值，建议 `1.0625rem`，但 h3 仅变 17px，层级仍弱）；(b) 把 2 处 `<h3>` 改用 `--font-size-h3`（20px）并为另 2 处标题类元素定义 h5 令牌。当前 `mechanisms/index.html` 的 h3 渲染为 16px = 正文字号。
 5. **新增（R14）：是否允许 `npx lighthouse`（不入库依赖）以解除 LCP/CLS/INP 的 UNKNOWN？** R14 已实测 FCP 132–206ms、DOM ready 60–178ms、load 460–730ms、首屏资源 33–59 KB、点击延迟 1ms —— 全部远离阈值，故 UNKNOWN 不影响当前结论，但 LCP/CLS/INP 三项仍是空白。Lighthouse 自带可见性仿真，能绕过 headless 不产出这三类条目的限制（`npx` 临时拉取，不落 `package.json`）。不安装则维持 UNKNOWN 留档。
