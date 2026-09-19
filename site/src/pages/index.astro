@@ -615,8 +615,8 @@ const faq = install.faq || [];
   .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); }
   .showcase__card-cn { font-family: var(--font-serif); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
   .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
-  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--card-accent); }
-  .showcase__card--team .showcase__card-role { font-size: var(--font-size-h4); }
+  /* P2-11: ≥18.66px + weight 700 → 大文本资格 → 3:1 阈值（六角色色 3.14–4.23:1 全过） */
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-h3); font-weight: var(--font-weight-bold); color: var(--card-accent); }
   .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
   .showcase__card-skills { display: flex; flex-wrap: wrap; gap: 6px; }
   .showcase__skill {
