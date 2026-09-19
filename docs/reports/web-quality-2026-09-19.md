@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R10 / 维度：XSS 危险 API（innerHTML / eval / CSP 与安全头）（Lite 单维度循环第 10 项）
+> **轮次**：R11 / 维度：密钥泄露（密钥不入前端产物）（Lite 单维度循环第 11 项）
 > **日期**：2026-09-19
 
 ---
@@ -106,8 +106,9 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **2 项 P2 AA 违规，12 处已修**（§5 P2-1 / P2-2）；1 项 P2 待决（P2-3：`--color-fg-muted` 在次级背景上低于 4.5:1，需逐元素背景分析，超出单轮范围）；3 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准） |
 | 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。**七态 / 目标 ≥24×24 / alt** 未在本轮检查（属 R12） |
 | 交互体验 · 键盘可达 | 同上：焦点陷阱风险扫描（`position:fixed` + `overflow:hidden` 层是否含焦点元素）、模态 / 抽屉焦点归还、Tab 顺序 | ✅ **Tab 无陷阱，模态焦点归还不适用**。焦点陷阱扫描仅命中 `HeroArt.astro:156 .hero-canvas`，该元素 `aria-hidden="true"` 且 `pointer-events:none`，内部无焦点元素 → 非陷阱。全站**无 `<dialog>` / `role="dialog"` / `aria-modal` / modal / drawer**，仅 2 处原生 `<details>/<summary>`（`Footer.astro:32`、`index.astro:497`），键盘可达为浏览器内建行为 → 模态焦点归还不适用。`prefers-reduced-motion`（R3 P3-2 已查）、`user-scalable` 缩放未在本轮检查（属 R12） |
-| 前端安全 | 外链 `rel=noopener`（随断链扫描顺带检查，134 条外链） | ✅ `target=_blank` 缺 `noopener` = 0；其余子项 ⏳ 待查（R6–R8：XSS 危险 API / CSP 与安全头 / 密钥进产物） |
+| 前端安全 | 外链 `rel=noopener`（随断链扫描顺带检查，134 条外链） | ✅ `target=_blank` 缺 `noopener` = 0；XSS 危险 API 与 CSP 已在 R10 完成（§5 P2-8 / P3-17）；密钥入产物见下行（R11） |
 | 前端安全 · XSS | `tmp/xss-check.mjs`：7 类危险 API 全量扫描（`dangerouslySetInnerHTML` / `.innerHTML=` / `.outerHTML=` / `insertAdjacentHTML` / `document.write` / `eval(` / `new Function(`）+ 每个 sink 的 RHS 输入来源分类（静态字面量 / 内部生成 / 需人工核查）+ 8 类用户输入源存在性（`location.hash/search/href` / `URLSearchParams` / `localStorage` / `sessionStorage` / `document.cookie` / `dataTransfer` / `innerText` / `prompt()`）+ `postMessage`/`message` 事件 + CSP 与安全头 | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-8 `innerHTML` 未防护 sink、P3-17 无 CSP 与安全头）。**零可执行注入**：`dangerouslySetInnerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write`/`eval`/`new Function` 均 **0**；`innerHTML` 4 处全部为静态 SVG 字面量或字面量 const，**需人工核查 0**；**用户输入源 0**（营销站，无表单、无状态读取、无 URL 参数解析）；`postMessage` 0（无跨源消息 → `origin` 校验不适用）。**依赖高危 CVE = UNKNOWN**（`npm audit` 端点 503，npm registry 维护中） |
+| 前端安全 · 密钥 | `tmp/secret-check.mjs`：18 类密钥正则（AWS `AKIA` / GitHub PAT `gh[pousr]_` / Slack `xox[baprs]-` / Stripe `sk_live_` / Google `AIza` / JWT `eyJ…` / PEM 私钥块 / SendGrid `SG.` / Twilio `SK` / Mailgun `key-` / `Bearer ` / URL 内嵌凭据 `://u:p@` / MongoDB 连接串 / OpenAI-Antropic `sk-` / 通用 `(api_key\|secret\|token\|password)=` 赋值 / 40+ 位十六进制串）分三层扫描：**产物 `site/dist`（22 文件）→ 源码 `site/src` → 仓库其他位置**；另查环境注入面（`import.meta.env` / `process.env`）、`.env*` 文件与 `.gitignore` 覆盖、CI workflow 硬编码密钥 | ✅ **0 缺陷**（详见 §5 无发现记录 R11）。**产物 0 命中 / 源码 0 命中**；**环境注入点 0**（前端不读取任何环境变量，结构性不可能泄露）；`.env` 被 `.gitignore:10` 忽略且未跟踪，`.env.example` 入库仅含占位符；CI workflow 用 `${{ secrets.ANTHROPIC_API_KEY }}` 无任何硬编码；仓库自带 `scripts/verify.mjs:134 checkSecrets()` 门禁且 `test/verify.test.mjs:162` 有其测试。**依赖高危 CVE = UNKNOWN**（R10 与 R11 连续两轮 `npm audit` 均 503，npm registry 维护中） |
 
 ---
 
@@ -931,6 +932,42 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 
 > **工具留痕**：首轮用源码 `Select-String '<h1'` 统计，8 个文档页显示 0 个 h1，一度疑似缺 h1。改以 **dist 渲染产物**为真相源后确认 h1 由组件注入 —— 与 R1 断链检查同源的教训：Astro 的 `href={expr}` / `{title}` 表达式语法会让源码扫描失真，产物才是真相。
 
+### 无发现记录（R11 密钥泄露）
+
+**密钥不入前端产物 — 0 缺陷**
+
+| 检查项 | 范围 | 结果 |
+|--------|------|------|
+| 密钥正则命中 · 产物 | `site/dist` 22 个文本文件，18 类模式 | **0 命中** |
+| 密钥正则命中 · 源码 | `site/src` 全部 `.astro`/`.css`/`.ts`/`.js` | **0 命中** |
+| 环境注入点 | `import.meta.env.*` / `process.env.*` | **0**（前端不读任何环境变量 → 结构性不可能把密钥打进产物） |
+| `.env` 跟踪状态 | 仓库根 `.env` | **未跟踪**，`.gitignore:10` 命中（`git check-ignore -v .env` exit 0）；键为 `EMBEDDING_API_KEY` / `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL`，属本地 embedding 管线，与站点无关 |
+| `.env.example` 入库内容 | 跟踪文件中 | 全占位符：`[your_embedding_api_key_here]` / `[https://your-embedding-service.example.com/v1]` 等，**无真实值** |
+| `site/.gitignore` | — | 不存在；根 `.gitignore` 递归覆盖（`git check-ignore -v site/.env` exit 0）→ 无纵深缺口 |
+| CI workflow 密钥 | 7 个 `.github/workflows/*.yml` | `ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}` 走 GitHub Secrets；`sk-` / `ghp_` / `ghs_` / `AKIA` / `xox` / `SG.` 硬编码 **0 命中** |
+| 仓库自带门禁 | `scripts/verify.mjs:134` `checkSecrets()` | `secrets PASS 未发现硬编码密钥`；`test/verify.test.mjs:158-166` 有其单元测试 |
+| 测试夹具排除 | `test/verify.test.mjs:162` | `const apiKey = "supersecretvalue123456789"` 系**故意写入临时目录**以断言 `checkSecrets()` 返回 FAIL —— 是扫描器的测试数据，非泄露 |
+
+**Basis**：`检查要点 · 安全`（密钥不入前端产物）。命令输出：
+```
+=== 1. 前端产物 dist/ 密钥扫描（最关键：实际部署内容）===
+  扫描文件数: 22
+  合计 dist 命中: 0（✓ 前端产物无密钥）
+=== 2. 前端源码 site/src/ 密钥扫描 ===
+  合计 src 命中: 0
+=== 3. 环境注入面（密钥如何进入前端）===
+  → 环境注入点文件数: 0（✓ 前端不读取任何环境变量）
+结果：dist 命中 0 | src 命中 0 | 环境注入点 0 | .env 文件 2
+结论：前端产物无密钥泄露。
+```
+仓库自带门禁：`node scripts/verify.mjs men --json` → `secrets PASS 未发现硬编码密钥`。
+
+> **两条误报排除**：(1) `.env:8` 命中「OpenAI/Anthropic Key」模式（值 `sk-t…`，51 字符）—— 位于**未跟踪且被忽略**的本地文件，key 名是 `EMBEDDING_API_KEY`（本地 embedding 服务），不属前端产物；(2) `test/verify.test.mjs:162` 命中「通用密钥赋值」—— 是 `checkSecrets()` 的**测试夹具**（写入临时目录后断言 FAIL），属合法测试数据。另 `.argus.yml` 中 4 处 `token` 字样全部是**设计 token**（`token-prefix: "--color-"`、`show-token-names: true`），非密钥。
+
+> **UNKNOWN**：依赖高危 CVE 仍无法判定 —— R10 与 R11 连续两轮 `npm audit --audit-level=high` 均返回 `503 Service Unavailable ... We are currently performing maintenance`（`https://status.npmjs.org`），属 npm registry 侧故障而非漏洞报告。需 registry 恢复后重跑 `npm audit --audit-level=high`。
+
+---
+
 ## 6. 提交与合并（⑥）
 
 | 项 | 状态 |
@@ -956,7 +993,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
 | 核心网页指标（LCP/INP/CLS） | R9 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录；实测 ms 值 UNKNOWN 待 Playwright） |
 | XSS 危险 API | R10 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；依赖 CVE UNKNOWN） |
-| 密钥泄露 | R11 | ⏳ |
+| 密钥泄露 | R11 | ✅ 完成（0 缺陷：产物 0 命中 / 源码 0 命中 / 环境注入点 0 / `.env` 未跟踪 / CI 无硬编码 / 自带 `checkSecrets()` 门禁） |
 | 交互态（七态） | R12 | ⏳ |
 | 视觉留档（③ 截图） | — | ⛔ **UNKNOWN**：需浏览器自动化依赖，待确认 |
 | axe / pa11y（②） | — | ⛔ **缺口**：无依赖，待确认 |
