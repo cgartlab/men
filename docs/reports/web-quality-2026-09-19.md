@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R2 / 维度：空实现（Lite 单维度循环第 2 项）
+> **轮次**：R3 / 维度：`!important` 与内联样式滥用（Lite 单维度循环第 3 项）
 > **日期**：2026-09-19
 
 ---
@@ -83,6 +83,14 @@
   2. 由用户在本地浏览器手动截图后放入 `docs/reports/screenshots/`，我据此写视觉结论。
 - 因此：**本轮所有视觉类结论一律标注 UNKNOWN**，不编造截图名。
 
+### 3.1 R3 补充：明暗维度塌缩（主题不存在）
+
+R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (prefers-color-scheme: dark)`、无 `data-theme` / `.dark` 选择器、`html { color-scheme: light }` 被显式钉死、`--color-accent` 全仓库仅 1 处定义（详见 §5 P3-5）。
+
+- 抽样计划的 `375/768/1440 × 明暗` 因此**塌缩为仅「明」一维**，共 3 张/页而非 6 张/页。
+- 所有 `*-dark.png` 标注为 **N/A（主题不存在）**，区别于「工具缺失导致的 UNKNOWN」。
+- 该塌缩是否可接受，需在 ③ 执行轮由用户确认（是否先补暗色主题再截图）。
+
 ---
 
 ## 4. 六簇覆盖（④）
@@ -90,7 +98,7 @@
 | 簇 | 已检查范围 | 结论 |
 |----|-----------|------|
 | 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`）+ 空实现 / skip-link / 空跳模式（`tmp/empty-check*.mjs`），产物 14 页全量扫描 | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0 / 空实现 0**（修复前 2 处锚点缺失，见 §5 P1-1）。查了什么：`<a>` 462 个的 href 形态、12 个 `<button>` 的处理器接线、`<form>`/`<input>`/`<select>` 存在性（0 个）、`window.open('')` / `location.href='#'` / `void(0)` / `alert()` 占位、`TODO`/`FIXME` 标记（7 命中全为误报）。表单防重复提交与 error boundary：**不适用**（站点无表单、无客户端路由） |
-| 样式代码 | — | ⏳ 待查（R2：`!important` 与内联滥用） |
+| 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 信息排版 | — | ⏳ 待查（R3：标题层级、正文 ≥16px、行高、行长、对比度） |
 | 元素一致性 | — | ⏳ 待查（R4：七态、焦点可见、目标 ≥24×24、alt） |
 | 交互体验 | — | ⏳ 待查（R5：反馈、可撤销、Tab 陷阱、模态焦点归还、`prefers-reduced-motion`、缩放） |
@@ -169,9 +177,158 @@
   定级依据：定级表「P1 关键流程受阻」—— 快速上手页是站点主入口的入门流程，`/ultrawork` 作为唯一编排命令在本页无章节，新用户的第一个任务在此页无法完成。
 - **Note（验证方式）**：`npm run build`（exit 0）→ `node tmp/link-check.mjs`（exit 0，锚点缺失 2 → 0）→ `node site/scripts/check-site.mjs`（exit 0）。引用的 3 个源路径（`.opencode/command/ultrawork.md`、`docs/guide/quickstart.md`、`scripts/install.mjs`）均已 `Test-Path` 确认存在。
 
-### P2 / P3
+### P2
 
-⏳ 后续轮次填写。
+⏳ 后续轮次填写（当前 0 项）。
+
+### P3（R3 · `!important` 与内联样式滥用）
+
+#### P3-1 样式代码 — `!important` 掩盖特异性债务（已修复）
+
+- **位置**：`site/src/styles/global.css:1201-1202`
+- **问题**：720px 断点下的 `.wiki-top` 单栏覆盖靠 `!important` 兜底。根因是 `:952-953` 两条 `:has()` 变体的特异性为 **0,3,1**（class + 两个 `:has` 内含 class），压过基线 `.wiki-top` 的 **0,1,0**，断点规则无法在层叠中胜出。
+- **Found（原文逐字，修复前）**：
+  ```css
+  @media (max-width: 720px) {
+    .wiki-top { grid-template-columns: 1fr !important; }
+  ```
+  竞争规则（同文件）：
+  ```css
+  .wiki-top { grid-template-columns: minmax(240px, 300px) 1fr; }                                  /* L945-947 · 0,1,0 */
+  .wiki-top:has(> .wiki-infobox):not(:has(> .wiki-toc)) { grid-template-columns: minmax(240px, 300px); } /* L952 · 0,3,1 */
+  .wiki-top:not(:has(> .wiki-infobox)):has(> .wiki-toc) { grid-template-columns: 1fr; }            /* L953 · 0,3,1 */
+  ```
+- **Expected**：断点覆盖以「等特异性 + 更靠后的层叠位置」胜出，不依赖 `!important`。
+- **Fix（已入库，可复制）**：
+  ```css
+  @media (max-width: 720px) {
+    /* 与 L945/L952/L953 三个竞争选择器对齐特异性（最高 0,3,1），靠层叠顺序胜出，无需 !important */
+    .wiki-top,
+    .wiki-top:has(> .wiki-infobox):not(:has(> .wiki-toc)),
+    .wiki-top:not(:has(> .wiki-infobox)):has(> .wiki-toc) { grid-template-columns: 1fr; }
+  ```
+- **Basis**：`定级表` — P3 润色（无用户可见影响，纯代码卫生）。命令输出（构建后）：
+  ```
+  .wiki-top,.wiki-top:has(>.wiki-infobox):not(:has(>.wiki-toc)),.wiki-top:not(:has(>.wiki-infobox)):has(>.wiki-toc){grid-template-columns:1fr}
+  !important anywhere in wiki-top rule? → none (good)
+  ```
+- **Note**：`npm run build` exit 0 → `node tmp/verify-r3.mjs` 断言 A/B/C/D/E/F 全 PASS → `check-site.mjs` exit 0。三条选择器语义均正确（基线双栏 / infobox-only / toc-only 在移动端都应塌缩为单栏）。
+
+#### P3-2 样式代码 — 重复的 `prefers-reduced-motion` 块 + 死代码（已修复）
+
+- **位置**：`site/src/styles/global.css:878-897`（修复前）
+- **问题**：文件内存在**第二个** `@media (prefers-reduced-motion: reduce)` 块，把 `:267-276` 已声明过的 `*` / `*::before` / `*::after` 通用规则整段重复了一遍，且数值不一致（`:271` 为 `0ms`，`:886` 为 `0.01ms`；后者靠层叠顺序生效，使前者的 `0ms` 意图失效）。此外该块内的 `.oc-hero-art pre { animation: none !important; }` 是**死代码** —— `.oc-hero-art pre` 规则（`:790-801`）与其唯一实现 `HeroArt.astro:209-218` 的 `.dither-band pre` 均无 `animation` 属性，全仓库无 `pre` + `animation` 组合。
+- **Found（原文逐字，修复前）**：
+  ```css
+  /* ---------- Reduced motion 全面覆盖 ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .oc-hero-art pre {
+      animation: none !important;
+    }
+
+    main {
+      animation: none !important;
+    }
+  }
+  ```
+- **Expected**：通用 `*` 规则只声明一次；无对应动画的选择器不写覆盖；`main { animation: none !important }` 必须保留（`global.css:380-381` 的 `main` 确有 `animation: page-fade-in`）。
+- **Fix（已入库，可复制）**：
+  ```css
+  /* ---------- Reduced motion 补充（全局 * 规则见 L266，避免重复声明与 0ms/0.01ms 不一致） ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    main {
+      animation: none !important;
+    }
+  }
+  ```
+- **Basis**：`定级表` — P3 润色（重复声明无用户影响；死代码 `animation: none` 作用于无动画元素为 no-op）。命令输出：
+  ```
+  === !important 计数（构建产物）===  总计: 10   （全部位于 prefers-reduced-motion）
+  B. .oc-hero-art pre { animation:none } 已移除: YES
+  C. main { animation:none !important } 保留: YES
+  ```
+- **Note**：行为变更仅一处 —— `transition-duration` 由实际生效的 `0.01ms` 变为 `0ms`（即 `:271` 的原始意图）。两者对用户均表现为「无过渡」，且 `.reveal` 块的 `transition: none` 更彻底，无回归风险。`npm run build` / `check-site.mjs` / `node --test` 均 exit 0。
+
+#### P3-3 样式代码 — 内联样式硬编码色值绕过令牌（已修复）
+
+- **位置**：`site/src/pages/index.astro:230`
+- **问题**：团队特性卡片的强调色以内联字面量写死，绕过了令牌系统。同一文件 `:208` 的其它卡片走 `a.color`（数据驱动），此处单独硬编码，形成不一致。
+- **Found（原文逐字，修复前）**：
+  ```html
+  <article class="showcase__card showcase__card--team" style={`--card-accent: #e85d04`}>
+  ```
+  该字面量与 `site/src/styles/global.css:122` 的令牌定义完全相同：
+  ```css
+  --color-accent: #e85d04;                     /* 主强调 · 仅大文本 / 填充 / 边框 · 3.4:1 on #fafafa */
+  ```
+- **Expected**：自定义属性应引用令牌（`var(--color-accent)`），使未来新增暗色主题时卡片强调色自动跟随，而非永久钉死为浅色系色值。
+- **Fix（已入库，可复制）**：
+  ```html
+  <article class="showcase__card showcase__card--team" style={`--card-accent: var(--color-accent)`}>
+  ```
+- **Basis**：`检查要点 · 样式`（内联滥用 / 裸色值）。命令输出：
+  ```
+  E. 内联硬编码 #e85d04 已移除（index.html）: YES
+  ```
+- **Note**：今日 `--color-accent` 全仓库仅 `global.css:122` 一处定义且值为 `#e85d04`，故本次改动**视觉零差异**；价值在于建立令牌纪律，避免站点未来引入暗色主题时该卡片成为唯一不跟随主题的元素。
+
+#### P3-4 样式代码 — 单属性内联样式（已修复）
+
+- **位置**：`site/src/pages/index.astro:234`
+- **问题**：单个 `font-size` 以内联样式覆盖，父元素 `.showcase__card--team` 已有类名可作为选择器前缀，无需内联。
+- **Found（原文逐字，修复前）**：
+  ```html
+  <p class="showcase__card-role" style="font-size: var(--font-size-h4);">团队特性</p>
+  ```
+  被覆盖的基线（同文件 `:624`）：
+  ```css
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--card-accent); }
+  ```
+- **Expected**：尺寸差异用修饰类表达，内联样式仅用于无法静态化的逐项动态值。
+- **Fix（已入库，可复制，2 行）**：
+  ```html
+  <p class="showcase__card-role showcase__card-role--team">团队特性</p>
+  ```
+  ```css
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--card-accent); }
+  .showcase__card--team .showcase__card-role { font-size: var(--font-size-h4); }
+  ```
+- **Basis**：`检查要点 · 样式`（内联滥用）。命令输出：
+  ```
+  D. showcase__card-role--team 生效: YES
+  F. inline font-size 已移除: YES
+  ```
+- **Note**：采用「父类 + 子类」后代选择器而非孤立修饰类，特异性 0,2,0 高于基线 0,1,0，无需 `!important`；Astro 作用域编译后为 `.showcase__card--team[data-astro-cid-lcdefpme] .showcase__card-role[data-astro-cid-lcdefpme]`，已在构建产物中确认。
+
+#### P3-5 样式代码 — 站点为单主题（仅浅色），无双主题令牌（未修 · 设计取舍）
+
+- **位置**：`site/src/layouts/BaseLayout.astro:23`、`site/src/styles/global.css:110-127`
+- **问题**：全站无暗色主题 —— 无 `prefers-color-scheme` 查询、无 `data-theme` / `.dark` 选择器、无第二套色令牌，`html` 上 `color-scheme: light` 被显式钉死；`theme-color` meta 为静态字面量。用户操作系统处于暗色模式时仍得到浅色页面。
+- **Found（原文逐字）**：
+  ```html
+  <!-- site/src/layouts/BaseLayout.astro:23 -->
+  <meta name="theme-color" content="#fafafa" />
+  ```
+  ```css
+  /* site/src/styles/global.css:110 */
+  --color-bg: #fafafa;
+  /* ... :236 附近 html 规则内 */
+  color-scheme: light;
+  ```
+  全仓库 `--color-accent:` 定义数：**1**（仅 `global.css:122`）；`grep -r "prefers-color-scheme|data-theme|\.dark"` 于 `site/src`：**0 命中**。
+- **Expected**：若声明支持双主题，则需第二套令牌 + `@media (prefers-color-scheme: dark)`（或 `data-theme` 开关）+ 动态 `theme-color`。
+- **Fix**：**本轮不改**。属视觉风格与令牌语义范畴，受「不重做视觉风格、不改令牌语义」硬约束限制；且 WCAG 2.x 未强制暗色模式，不构成 AA 违规。
+- **Basis**：`检查要点 · 样式`（断点与双主题令牌一致）；`定级表` — P3。令牌一致性本身是 **PASS**（单一定义，无冲突）。
+- **Note**：**对 ③ 视觉留档的影响** —— 抽样规则要求「明暗主题」，本站无暗色主题，故明暗维度**塌缩为仅「明」**；截图计划中的 `*-dark.png` 全部标注为 N/A（主题不存在），而非 UNKNOWN。此项在 ③ 执行轮需用户确认是否接受该塌缩。
 
 ### 无发现记录（R2 空实现）
 
@@ -208,7 +365,7 @@
 |------|------|------|
 | 断链 | R1 | ✅ 完成（P1-1 已修复） |
 | 空实现（`href="#"`） | R2 | ✅ 完成（0 缺陷） |
-| `!important` 与内联滥用 | R3 | ⏳ |
+| `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 | ⏳ |
 | 标题层级 | R5 | ⏳ |
 | 对比度 | R6 | ⏳ |
