@@ -47,11 +47,11 @@
 
 | 门禁 | 命令 | 退出码 | 结果 |
 |------|------|--------|------|
-| build | `npm run build`（`site/`） | **0** | 14 page(s) built |
+| build | `npm run build`（`site/`） | **0** | 15 page(s) built（R8 补 404 页后由 14 → 15） |
 | check-site | `node site/scripts/check-site.mjs` | **0** | UTF-8 / charset / mojibake / base 守卫 / 空 slot / 路由锚点 全通过 |
 | test | `node --test` | **0** | 149/149 pass |
-| verify | `node scripts/verify.mjs men` | **0** | PASS=9 FAIL=0 |
-| audit | `npm audit --audit-level=high` | **0** | 0 vulnerabilities |
+| verify | `node scripts/verify.mjs men` | **0** | PASS=9 FAIL=0 WARN=0 |
+| audit | `npm audit --audit-level=high` | **0** | 0 vulnerabilities（**R13 重跑确认**：R10/R11 因 npm registry 503 判为 UNKNOWN，R13 registry 恢复后通过，已覆盖新增的 `playwright` devDependency） |
 | **lint** | — | — | ⚠️ **缺口**：`package.json` 无 `lint` 脚本，无 `.eslintrc*` / `eslint.config.*` / `biome.json` |
 | **typecheck** | — | — | ⚠️ **缺口**：`site/tsconfig.json` 存在（`extends: astro/tsconfigs/strict`），但三个 `package.json` 均无 `typescript` 依赖、无 `tsc` 脚本 |
 
@@ -74,22 +74,51 @@
 
 ## 3. 视觉留档（③）
 
-**状态：UNKNOWN（R1 未执行）**
+**状态：已完成（R13 · 用户确认 `npm i -D playwright` 后执行）**
 
-缺什么：**截图工具链**。375/768/1440 × 明暗主题的截图需要浏览器自动化（Playwright / Puppeteer），属新增依赖，受「不新增依赖未经确认」硬约束限制，未经确认不安装。
+R1–R12 期间本节为 UNKNOWN，缺浏览器自动化依赖。R13 用户确认安装 Playwright 后，以**进程内 http server**（`finally` 中 `close()`，不 spawn 子进程、无常驻服务、避开 AGENTS.md 规定的 4399 端口，实测用 4891/4892/4893/4895，全部已释放）渲染 `site/dist` 产物并全页截图。脚本：`site/scripts/shot.mjs`（自写，单文件，零常驻进程）。
 
-- 可行的替代路径（需确认其一）：
-  1. `npm i -D playwright` 后以 `channel: chrome` 驱动本机已装 Chrome（不再依赖仓库常驻服务，遵守进程红线：单脚本内 spawn + finally kill，≤60s）；
-  2. 由用户在本地浏览器手动截图后放入 `docs/reports/screenshots/`，我据此写视觉结论。
-- 因此：**本轮所有视觉类结论一律标注 UNKNOWN**，不编造截图名。
+**抽样规则**（写入报告 §0.2）：4 类页面 × 3 断点 = 12 张。
+
+| 截图文件 | 页面类型 | 路由 | 断点 | 体积 | 文档高度 | 横向溢出 |
+|---|---|---|---|---|---|---|
+| `docs/reports/screenshots/home-375.png` | 首页 | `/` | 375×667 | 359 KB | 4990 | 0 |
+| `docs/reports/screenshots/home-768.png` | 首页 | `/` | 768×1024 | 648 KB | 4276 | 0 |
+| `docs/reports/screenshots/home-1440.png` | 首页 | `/` | 1440×900 | 940 KB | 4212 | 0 |
+| `docs/reports/screenshots/roles-375.png` | 列表 | `/roles` | 375×667 | 503 KB | 14419 | 0 |
+| `docs/reports/screenshots/roles-768.png` | 列表 | `/roles` | 768×1024 | 780 KB | 9599 | 0 |
+| `docs/reports/screenshots/roles-1440.png` | 列表 | `/roles` | 1440×900 | 1037 KB | 8184 | 0 |
+| `docs/reports/screenshots/quickstart-375.png` | 详情 | `/docs/quickstart` | 375×667 | 601 KB | 7093 | 0 |
+| `docs/reports/screenshots/quickstart-768.png` | 详情 | `/docs/quickstart` | 768×1024 | 818 KB | 4767 | 0 |
+| `docs/reports/screenshots/quickstart-1440.png` | 详情 | `/docs/quickstart` | 1440×900 | 1082 KB | 4206 | 0 |
+| `docs/reports/screenshots/error404-375.png` | 404 | `/404` | 375×667 | 156 KB | 1296 | 0 |
+| `docs/reports/screenshots/error404-768.png` | 404 | `/404` | 768×1024 | 375 KB | 1024 | 0 |
+| `docs/reports/screenshots/error404-1440.png` | 404 | `/404` | 1440×900 | 600 KB | 1035 | 0 |
+
+合计 **7891 KB / 12 张**，采集耗时 19.9 s（≤60 s 上限）。
+
+**采集期自动度量（全部 12 张）**：
+
+| 度量项 | 结果 |
+|---|---|
+| 横向溢出（`scrollWidth > clientWidth`，长文本破版信号） | **0 / 12** |
+| 浏览器控制台 `error` | **0** |
+| 失败请求（`requestfailed`） | **0** |
+| 字体加载状态（`document.fonts.status`） | **`loaded`**（OPPO Sans woff2 全部到位，R9 P2-7 的 `preconnect`+`preload` 生效） |
+| 正文字号（body 计算值） | 375px 下 15px / 768px 与 1440px 下 16px |
+| 行高（body 计算值） | 25.5–27.2px（正文 1.7–1.72，落在 1.4–1.7 区间上沿） |
+
+**视觉审计副产物**：截图过程中以 `tiny-text-audit.mjs` 对所有 `<16px` 文本元素实测「计算色 + 向上解析的真实背景色 + WCAG 相对亮度」，并把 `font-audit.mjs` 用于字号分布、`heading-size-audit.mjs` 用于标题尺寸。三条脚本各自起进程内 server、`finally` 关闭，端口 4892/4893/4895 均已确认释放。
+
+**该轮修复 3 项 WCAG AA 违规**（详见 §5 P2-3 / P2-10）：小字号对比度不合格从 **21 处降至 6 处**；剩余 6 处为角色色，需设计决策（§5 P2-11）。另发现 1 项标题尺寸失效（§5 P2-12）与 3 项 P3。
 
 ### 3.1 R3 补充：明暗维度塌缩（主题不存在）
 
 R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (prefers-color-scheme: dark)`、无 `data-theme` / `.dark` 选择器、`html { color-scheme: light }` 被显式钉死、`--color-accent` 全仓库仅 1 处定义（详见 §5 P3-5）。
 
-- 抽样计划的 `375/768/1440 × 明暗` 因此**塌缩为仅「明」一维**，共 3 张/页而非 6 张/页。
-- 所有 `*-dark.png` 标注为 **N/A（主题不存在）**，区别于「工具缺失导致的 UNKNOWN」。
-- 该塌缩是否可接受，需在 ③ 执行轮由用户确认（是否先补暗色主题再截图）。
+- 抽样计划的 `375/768/1440 × 明暗` 因此**塌缩为仅「明」一维**，共 3 张/页而非 6 张/页。R13 已按塌缩后的 12 张执行。
+- 所有 `*-dark.png` 标注为 **N/A（主题不存在）**，区别于「工具缺失导致的 UNKNOWN」。此点已复核实证：`grep -r prefers-color-scheme site/src` = 0 命中，`color-scheme: light` 见 `global.css:36`。
+- 明暗塌缩为设计现状而非工具缺失，故 ③ 本节按「已完成」结案。
 
 ---
 
@@ -103,7 +132,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
-| 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **2 项 P2 AA 违规，12 处已修**（§5 P2-1 / P2-2）；1 项 P2 待决（P2-3：`--color-fg-muted` 在次级背景上低于 4.5:1，需逐元素背景分析，超出单轮范围）；3 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准） |
+| 信息排版 · 对比度 | `tmp/contrast-check.mjs` + `tmp/contrast-fix.mjs`：以 WCAG 相对亮度公式实算全部色令牌，与 `global.css:106-153` 令牌定义逐一对照，并与 `--color-bg` / `--color-surface` / `--color-surface-warm` / `--color-bg-warm` / `--color-accent-tint` / `--color-code-bg` / `--color-meta` 七个背景构成矩阵；再 grep 出 `color: var(--color-*)` 的 94 处文本用法，逐个判定字号与大文本资格（≥24px 或 ≥18.66px 粗体） | ⚠️ **3 项 P2 AA 违规已修**（§5 P2-1 / P2-2 / P2-3，共 15 处；P2-3 由 R13 用真实背景解析定位到 3 个选择器后修复）；**1 项 P2 已修**（P2-10 主强调色底硬编码白字，R13）；**1 项 P2 待设计决策**（P2-11 六个角色色 14px 正文不达 4.5:1，但全部 ≥3:1，可经大文本资格达标）；4 项 P3（P3-10 死令牌 ×2、P3-11 死 CSS、P3-12 令牌注释声称值失准）+ R13 新增 P3-20（注释失准最大案例 3.14）、P3-21（死令牌再 +2）、P3-22（规则重复 ×3）。小字号对比度不合格总数：**21 → 6**（R13 实测） |
 | 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。七态 / 目标 ≥24×24 / alt 已在 R12 完成（见 §4 交互态行、§5 P2-9） |
 | 交互体验 · 键盘可达 | 同上：焦点陷阱风险扫描（`position:fixed` + `overflow:hidden` 层是否含焦点元素）、模态 / 抽屉焦点归还、Tab 顺序 | ✅ **Tab 无陷阱，模态焦点归还不适用**。焦点陷阱扫描仅命中 `HeroArt.astro:156 .hero-canvas`，该元素 `aria-hidden="true"` 且 `pointer-events:none`，内部无焦点元素 → 非陷阱。全站**无 `<dialog>` / `role="dialog"` / `aria-modal` / modal / drawer**，仅 2 处原生 `<details>/<summary>`（`Footer.astro:32`、`index.astro:497`），键盘可达为浏览器内建行为 → 模态焦点归还不适用。`prefers-reduced-motion`（R3 P3-2 已查）、`user-scalable` 缩放未在本轮检查（属 R12） |
 | 元素一致性 · 交互态 | `tmp/state-check.mjs`：七态规则计数（hover / focus-visible / active / disabled / loading / empty / error）+ 每个定义 `:hover` 的按钮选择器是否被 `:disabled` 覆盖 + 触控目标尺寸抽取（WCAG 2.5.8 AA ≥24×24）+ SVG 可访问性（99 个 SVG 的 role / aria-label / aria-hidden 分布）+ viewport 缩放禁用 + 破坏性操作确认 | ⚠️ **1 项 P2 已修 + 2 项 P3 记录**（§5 P2-9 按钮禁用态缺失、P3-18 装饰 SVG 未标 `aria-hidden`、P3-19 `.btn` 无 `:active`）。七态实测：hover 42、focus-visible 3、active 1、**disabled 0→3（已修）**、error 1；**loading / empty 不适用**（静态站无异步数据加载、无数据集合，R8 已确认 0 个 `<form>`）；`prefers-reduced-motion` 11 处覆盖 18 个 `@keyframes`（R3 P3-2）。触控目标全部达标：`button`/`details summary`/`a.btn` 全局 `min-height:44px`、`.terminal__copy` 32×32、`.showcase__arrow` 40px。**viewport 未禁用缩放**（`width=device-width, initial-scale=1.0`，无 `user-scalable=no` / `maximum-scale`，符合 WCAG 1.4.4）。**破坏性操作不适用**：6 个文件含 `remove`/`drop` 关键词，全部为 `classList.remove()` / `removeAttribute()` JS API 调用，无用户可执行的破坏性动作 |
@@ -243,9 +272,9 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   4. `roles.astro:877` `content: '·'` —— 伪元素装饰圆点标记
   另 20 处 `border-color` / `border-bottom-color` / `border-left-color` 属非文本，3:1 阈值下 3.35:1 达标。
 
-#### P2-3 信息排版 · 对比度 — `--color-fg-muted` 在次级背景上低于 4.5:1（未修 · 需逐元素背景分析）
+#### P2-3 信息排版 · 对比度 — `--color-fg-muted` 在次级背景上低于 4.5:1（R13 已修复）
 
-- **位置**：`site/src/styles/global.css:118`（令牌定义）+ 约 50 处使用点
+- **位置**：`site/src/styles/global.css:118`（令牌定义）；R13 实测定位到 **3 个选择器 / 12 处渲染实例**（非早前估计的 50 处 —— 多数使用点实际落在 `#fafafa` 页底或白卡上，达标）
 - **问题**：`--color-fg-muted`（`#737373`）在页面底色 `#fafafa` 上为 4.54:1（**勉强达标**），但在站点实际使用的次级背景上跌破阈值：
   | 背景 | 值 | 实测 |
   |------|-----|------|
@@ -253,13 +282,22 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   | `--color-accent-tint` | ≈`#fdefe6` | **4.21:1** ✗ |
   | `--color-meta` | `#efe7d2` | **3.85:1** ✗ |
   | `--color-bg-warm` | `#f0ebe2` | **3.99:1** ✗ |
-- **Expected**：在浅色次级背景上使用 `--color-fg-tertiary`（`#5c5c5c`，在 `#f5f5f5` 上 6.13:1）或 `--color-fg-secondary`（`#404040`，9.93:1）。
-- **Fix**：**本轮不改**。需对每个使用点解析其实际背景（依赖 CSS 层叠与父级继承），超出「≤3 文件 / 只改必要行」的单轮约束；且改动面达 50 处。建议交强模型做独立轮，或统一将 `--color-fg-muted` 的取值加深至 `#6b6b6b`（在 `#f5f5f5` 上约 4.8:1）—— 但后者触及令牌语义，须先经确认。
-- **Basis**：WCAG 2.2 §1.4.3。命令输出（`tmp/contrast-fix.mjs`）：
+- **Expected**：在浅色次级背景上使用 `--color-fg-tertiary`（`#5c5c5c`，在 `#f5f5f5` 上 6.13:1）。
+- **Fix（R13 已入库，3 处）**：不改令牌取值（避免触及语义与波及面），只对**实际落在次级背景上的 3 个选择器**改用 `--color-fg-tertiary`：
+  1. `site/src/components/Footer.astro:97` `.site-footer__version-text` —— `#f5f5f5` 上 4.35:1 → **6.13:1**
+  2. `site/src/components/Footer.astro:139,142,145` `.site-footer__legal`（三条重复规则，见 P3-22）—— 同上
+  3. `site/src/styles/global.css:1155` `.code-block__lang` —— `#f0ebe2` 上 3.99:1 → **5.63:1**
+  其余使用点经 R13 全量实测确认落在 `#fafafa` / `#ffffff` 上，本条不涉及。
+- **Basis**：WCAG 2.2 §1.4.3。修复前后命令输出（`site/scripts/tiny-text-audit.mjs`，逐元素解析真实背景）：
   ```
-  --color-fg-muted (#737373):  不达标 → #f5f5f5=4.35:1 | #f0ebe2=3.99:1 | accent-tint=4.21:1 | #efe7d2=3.85:1
+  修复前：小字号元素总数 302 | 对比度不合格 21
+    4.35:1  14px  #737373 on #f5f5f5  <site-footer__version-text>"v0.5.0"
+    4.35:1  14px  #737373 on #f5f5f5  <>"法律许可与隐私声明"
+    3.99:1  12px  #737373 on #f0ebe2  <code-block__lang>"bash"
+  修复后：roles 2→0 | quickstart 6→0 | 404 2→0 | index 11→9
   ```
-- **Note**：定级 P2（WCAG AA 违规不低于 P2）。当前 `--color-fg-muted` 的多数使用点落在 `#fafafa` 页底（4.54:1，勉强达标）或白卡（4.74:1）上，故未达 P1「严重不可读」。
+  令牌实测（`tmp/ratio-check.mjs`）：`--color-fg-tertiary on #f5f5f5 = 6.13:1`、`on #f0ebe2 = 5.63:1`，均 ≥4.5:1。
+- **Note**：定级 P2（WCAG AA 违规不低于 P2）。R6 估的「约 50 处使用点」在 R13 用真实背景解析后收窄为 3 个选择器 —— 原因是 R6 按「令牌 × 背景」做静态矩阵，无法区分每个使用点的真实层叠背景；R13 走 `getComputedStyle` + 向上遍历首个不透明背景，故能精确定位。截图证据：`home-1440.png` / `quickstart-1440.png`（页脚版本串与代码块语言标签）。
 
 #### P2-4 元素一致性 · 键盘焦点 — `role="img"` 容器剪除交互子节点，屏幕阅读器不可达（已修复）
 
@@ -504,6 +542,70 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   ```
   产物核验：`dist/BaseLayout.ry_r1Nzi.css` 含 `:disabled`（修复前 0 命中）。
 - **Note**：**唯一受影响的元素是 `#cg-play`** —— `grep setAttribute('disabled' / \bdisabled\b` 全仓库仅 `CollaborationGraph.astro:355,371` 两处，均作用于 `playBtn`（即 `.btn .btn--primary .cg__play`）；标记级 `disabled` 属性 0 处。`tmp/state-check.mjs` 第 2 节另报 `.terminal__copy:hover` / `.showcase__arrow:hover` / `.copy-btn:hover` 缺 `:disabled` 覆盖 —— **均为非缺陷**：这三个元素运行时从不被禁用，加规则属无意义代码。特异性核对：`.btn:disabled:hover` = (0,3,0) 高于 `.btn--primary:hover` (0,2,0) 且位于其后；`.btn:disabled .btn__arrow` (0,3,0) 与 `.btn:hover .btn__arrow` (0,3,0) 并列但位于其后 —— 均正确胜出，无需 `!important`。`opacity: 0.5` 使文字对比度降至约 2:1，但 **WCAG 1.4.3 明确豁免非活动 UI 组件**（"Text that is part of an inactive user interface component does not require a contrast ratio"），故不违反 AA。
+
+#### P2-10 信息排版 · 对比度 — 主强调色底上硬编码白色小字，3.50:1 不达 AA（R13 已修复）
+
+- **位置**：`site/src/pages/index.astro:530`（`.hero-cta--primary`）、`index.astro:535`（`.hero-version-badge`）
+- **问题**：两处均为 `color: #fff` 直接写在 `background: var(--color-accent)`（`#e85d04`）之上，字号 12–14px（非大文本）。白字压主橘实测 **3.50:1**，低于 AA 正文阈值 4.5:1。共 3 个渲染实例：`v0.5.0` 徽标（12px）、`阅读文档`（14px）、`认识角色`（14px）。同时这也是**裸色值**（绕过令牌，同类见 P3-7）。
+- **Expected**：改用站点既有令牌 `--color-accent-on-accent`（`#0a0a0a`，专为「橘底文字」设计）。
+- **Fix（R13 已入库，2 处）**：`color: #fff` → `color: var(--color-accent-on-accent)`，同时消除裸色值。
+- **Basis**：WCAG 2.2 §1.4.3。修复前后（`site/scripts/tiny-text-audit.mjs`）：
+  ```
+  修复前： 3.50:1  12px  #ffffff on #e85d04  <hero-version-badge>"v0.5.0"
+           3.50:1  14px  #ffffff on #e85d04  <hero-cta hero-cta--primary>"阅读文档"
+           3.50:1  14px  #ffffff on #e85d04  <hero-cta hero-cta--primary>"认识角色"
+  修复后：index 9→6，上述 3 条全部消失
+  ```
+  令牌实测（`tmp/ratio-check.mjs`）：`--color-accent-on-accent #0a0a0a on #e85d04 = 5.66:1`，≥4.5:1 达标。`hover` 态为 `color-mix(--color-accent 85%, #fff)`（更浅底 + 深色字），对比度只升不降。
+- **Note**：定级 P2（WCAG AA 违规不低于 P2）。截图证据：`home-1440.png` hero 区徽标与两枚 CTA。本条与 P3-20 有因果关系：令牌注释声称 `#0a0a0a` 在橘底为 8.8:1，实测 5.66:1（失准 3.14）—— 但即便按实测值仍达标，故修复有效。
+
+#### P2-11 信息排版 · 对比度 — 六个角色色在 14px 正文上不达 4.5:1（未修 · 需设计决策）
+
+- **位置**：`site/src/pages/index.astro:41,51,61,71,81,91`（JS 数据里的角色色）→ `:208` `style={--card-accent: ${a.color}}` → `.showcase__card-role` 文本
+- **问题**：六个 Agent 角色标签（14px 常规字重，白卡 `#ffffff` 底）全部低于 AA 正文阈值：
+  | 角色色 | 角色 | 实测 |
+  |---|---|---|
+  | `#bf8700` | chi 评审 | **3.14:1** ✗ |
+  | `#4a90d9` | si 思考 | **3.34:1** ✗ |
+  | `#a371f7` | yi 设计 | **3.35:1** ✗ |
+  | `#2ea043` | ji 工程 | **3.37:1** ✗ |
+  | `#e85d04` | men 编排 | **3.50:1** ✗ |
+  | `#8b5cf6` | xun 研究 | **4.23:1** ✗ |
+- **Expected**：正文阈值 4.5:1，或使文本满足**大文本**资格（≥24px，或 ≥18.66px 且字重 ≥700）以降至 3:1 阈值。
+- **Fix**：**本轮不改**（需设计决策）。关键事实：**六个颜色在 3:1 阈值下全部达标**（最低 `#bf8700` = 3.14:1 ≥ 3.0）。因此有两条互斥路径，都需要确认：
+  1. **改字号/字重**（1 行）：`.showcase__card-role` 提至 `≥18.66px + font-weight:700`，即满足大文本 3:1，六色全过。代价：角色标签视觉权重明显加重。
+  2. **加深六个角色色**（6 行，在 JS 数据数组内）：保持字号不变。代价：六个 Agent 的标识色相偏移，且与 P3-8「角色色双源真相」的重构耦合。
+  两条都触及「不重做视觉风格」边界，故交回设计决策。
+- **Basis**：WCAG 2.2 §1.4.3（正文 4.5:1）与 §1.4.6（大文本 3:1）。命令输出（`site/scripts/tiny-text-audit.mjs` + `tmp/ratio-check.mjs`）：
+  ```
+  3.14:1  14px  #bf8700 on #ffffff  <showcase__card-role>"数据/投资评审 / Judge"
+  3.34:1  14px  #4a90d9 on #ffffff  <showcase__card-role>"思考与知识管理"
+  3.35:1  14px  #a371f7 on #ffffff  <showcase__card-role>"文生图与审美"
+  3.37:1  14px  #2ea043 on #ffffff  <showcase__card-role>"代码与工程"
+  3.50:1  14px  #e85d04 on #ffffff  <showcase__card-role>"编排与路由核心"
+  4.23:1  14px  #8b5cf6 on #ffffff  <showcase__card-role>"搜索与研究"
+  ```
+- **Note**：定级 P2（WCAG AA 违规不低于 P2），非 P1 —— 六个颜色均在 3:1 以上，大文本阈值可达，且角色标签是辅助信息而非唯一信息载体（卡片同时有图标、名称、职责描述）。截图证据：`home-1440.png` 展示卡片区。与 **P3-8**（角色色双源真相）同源但不同维度：P3-8 是「颜色值分散在 JS 与 CSS」的架构债，本条是「颜色本身不达对比度」的 AA 违规。
+
+#### P2-12 信息排版 · 标题层级 — `--font-size-h5` 从未定义，4 处使用导致 `<h3>` 退化为正文字号（未修 · 意图不明）
+
+- **位置**：`site/src/styles/global.css:966`（`.wiki-infobox__title`）、`global.css:1048`（`.doc-section h3`）、`site/src/pages/docs/index.astro:95`（`.docs-category__title`）、`site/src/pages/mechanisms.astro:470`（`.step-card__header h3`）
+- **问题**：`--font-size-h5` 在全仓库**只有使用、没有定义**（`grep -r "font-size-h5" site/src` 命中 4 处，全部是 `var(--font-size-h5)`，令牌定义区 `global.css:163-172` 只有 display/h1/h2/h3/h4/body/caption/eyebrow 七个）。`var()` 引用未定义自定义属性且无 fallback 时，声明在 computed-value 阶段失效；`font-size` 是可继承属性，故**退化为继承值**。其中 2 处是 `<h3>`，实际渲染为 16px = 正文字号。
+- **Expected**：`<h3>` 应使用 `--font-size-h3`（`1.25rem` = 20px）；`.wiki-infobox__title` / `.docs-category__title` 需要一个真实存在的中间尺寸令牌。
+- **Fix**：**本轮不改**（意图不明）。补定义或改引用都取决于原作者意图，且都改标题视觉尺寸：
+  1. 定义 `--font-size-h5: 1.0625rem`（同 h4）→ h3 变 17px，仅比正文大 1px，层级仍不成立；
+  2. 把 2 处 h3 改用 `--font-size-h3`（20px）+ 定义 h5 给另 2 处 → 最符合语义，但需确认；
+  3. 删除这 4 处字号声明、交给 UA/继承 → 视觉更不可控。
+- **Basis**：`检查要点 · 排版`（标题层级）。命令输出（`site/scripts/heading-size-audit.mjs`，`getComputedStyle` 实测）：
+  ```
+  mechanisms/index.html   h1=57.6px | h2=20px | h3=16px h3=16px h3=16px   ← h3 = 正文 16px
+    h3 16px  .  "CERTAINTY 需求确认"
+    h3 16px  .  "TRIAGE 意图分诊"
+  index.html              h1=54.4px | h2=20px | h3=41.6px h3=16px h3=16px
+  docs/index.html         h1=57.6px | h2=16px h2=16px | h3=17px h3=17px h3=17px
+  ```
+  R5 的标题层级检查（`tmp/heading-check.mjs`）只校验 DOM 语义级次（h1/h2/h3 顺序、不跳级），**不校验渲染尺寸**，故 R5 判 0 缺陷与本报告不冲突 —— 两条检查互为补充。
+- **Note**：定级 P2（核心内容页视觉层级失效），非 WCAG 违规（WCAG 2.4.6 只要求标题描述准确，不要求视觉尺寸大于正文）。影响面：`mechanisms/index.html` 的 10 步协议卡（该页核心内容）与 `index.html` 机制区。截图证据：`home-1440.png`（机制区 h3 与正文同大）、`roles-1440.png`（h3=17px，勉强可辨）。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -970,6 +1072,51 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 - **Basis**：`检查要点 · 元素`（七态之 active）。**无 WCAG AA 违规** —— WCAG 2.2 无「按钮须有按压态」的准则；定级 P3 基于交互完整度。
 - **Note**：与 P2-9 同区块，若后续补 `:active` 可直接追加在禁用态块之后。`details summary`、`a` 亦无 `:active`，但二者由浏览器 UA 样式提供默认反馈，风险更低。
 
+#### P3-20 样式代码 — 令牌注释声称的对比度值失准（R13 新增案例，延续 P3-12）
+
+- **位置**：`site/src/styles/global.css:125` `--color-accent-on-accent`
+- **问题**：注释声称 `8.8:1 on #e85d04`，实测 **5.66:1**，失准 **3.14** —— 迄今发现的最大失准（P3-12 记录的 6 例失准幅度均小于此）。
+  ```
+  --color-accent-on-accent: #0a0a0a;  /* 橘底文字 · 8.8:1 on #e85d04 */   ← 声称 8.8
+  实测：--color-accent-on-accent #0a0a0a on #e85d04 = 5.66:1
+  ```
+- **Expected**：注释写实测值 `5.66:1`。
+- **Fix**：**本轮不改**（同 P3-12，文档类）。注意：失准方向是「高估」，但 5.66:1 仍 ≥4.5:1，故 P2-10 的修复依然有效 —— 未因注释错误而引入新的 AA 违规。
+- **Basis**：命令输出（`tmp/ratio-check.mjs`）：
+  ```
+  5.66:1  --color-accent-on-accent on --color-accent  （注释声称 8.8:1，失准 3.14）
+  ```
+- **Note**：定级 P3（文档准确性）。R13 用 `tmp/ratio-check.mjs` 对本轮实际改动的全部令牌做了声称值 vs 实测值复核：`--color-accent-on-accent` 失准 3.14；`--color-fg-tertiary on #f5f5f5` 与 `on #f0ebe2` 无注释声称（本条不涉及）。P3-12 建议由强模型统一重算全部令牌注释，本条是该建议的又一佐证。
+
+#### P3-21 样式代码 — 死令牌新增 2 例（延续 P3-10）
+
+- **位置**：`site/src/styles/global.css:126` `--color-accent-on-accent-soft`、`global.css:172` `--font-size-eyebrow-rail`
+- **问题**：两个令牌定义后**全仓库 0 处引用**（仅定义本身 1 处命中）。
+  ```
+  --color-accent-on-accent-soft : 1 处引用（= 定义本身）
+  --font-size-eyebrow-rail      : 1 处引用（= 定义本身）
+  ```
+- **Expected**：删除定义，或补上使用。
+- **Fix**：**本轮不改**（同 P3-10，需确认是否保留）。`--font-size-eyebrow-rail`（`0.625rem` = 10px）疑为侧栏目录小字预留；`--color-accent-on-accent-soft`（`#1a1a1a`）与已在用的 `--color-accent-on-accent`（`#0a0a0a`）功能重叠，后者已满足 P2-10 的修复需求。
+- **Basis**：命令输出（`Select-String -Pattern 'eyebrow-rail|color-accent-on-accent-soft'`）各仅 1 处命中，均为定义行。
+- **Note**：定级 P3（死代码）。至此死令牌累计 4 例：P3-10 记录的 `--color-fg-decorative`、`--color-accent-soft`，加本条 2 例。另 `--font-size-h5` 是**反向问题** —— 有 4 处引用但无定义，见 P2-12。两个方向的令牌债务建议一并清理。
+
+#### P3-22 样式代码 — `.site-footer__legal` 三组规则完全重复（未修 · 复制粘贴残留）
+
+- **位置**：`site/src/components/Footer.astro:139-141`、`:142-144`、`:145-147`
+- **问题**：同一组三条规则被**逐字粘贴三次**，共 9 行，其中 6 行为纯重复（CSS 层叠下同值规则无行为差异，仅增加解析与维护成本）。
+  ```
+  139: .site-footer__legal { margin-top: var(--space-6); border-top: 1px dotted var(--color-line-soft); padding-top: var(--space-3); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
+  140: .site-footer__legal summary { cursor: pointer; font-family: var(--font-mono); letter-spacing: 0.04em; }
+  141: .site-footer__legal-body p { margin-top: var(--space-2); line-height: 1.7; max-width: 68ch; }
+  142-144: （同上，140 行缺 letter-spacing）
+  145-147: （同 142-144）
+  ```
+- **Expected**：保留 1 组（6 行中的 3 行差异：`140` 含 `letter-spacing: 0.04em`，`143`/`146` 不含 —— 说明三次粘贴并非完全同值，需择一）。
+- **Fix**：**本轮不改**。R13 修 P2-3 时对该选择器的 `color` 用了 `replace_all`（3 处同步改为 `--color-fg-tertiary`），保证重复行内行为一致；但删除重复行属独立清理，避免与对比度修复混在同一提交。
+- **Basis**：命令输出（`Select-String -Path site\src\components\Footer.astro -Pattern 'site-footer__legal \{'`）→ 命中 L139 / L142 / L145。
+- **Note**：定级 P3（死代码 / 维护成本）。无渲染影响。与 P3-11（`.oc-hero-art` 死 CSS）、P3-21（死令牌）同属令牌/规则卫生债务，建议合并为一次清理轮。
+
 ### 无发现记录（R2 空实现）
 
 | 检查项 | 范围 | 结果 |
@@ -1046,7 +1193,13 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 
 > **两条误报排除**：(1) `.env:8` 命中「OpenAI/Anthropic Key」模式（值 `sk-t…`，51 字符）—— 位于**未跟踪且被忽略**的本地文件，key 名是 `EMBEDDING_API_KEY`（本地 embedding 服务），不属前端产物；(2) `test/verify.test.mjs:162` 命中「通用密钥赋值」—— 是 `checkSecrets()` 的**测试夹具**（写入临时目录后断言 FAIL），属合法测试数据。另 `.argus.yml` 中 4 处 `token` 字样全部是**设计 token**（`token-prefix: "--color-"`、`show-token-names: true`），非密钥。
 
-> **UNKNOWN**：依赖高危 CVE 仍无法判定 —— R10 与 R11 连续两轮 `npm audit --audit-level=high` 均返回 `503 Service Unavailable ... We are currently performing maintenance`（`https://status.npmjs.org`），属 npm registry 侧故障而非漏洞报告。需 registry 恢复后重跑 `npm audit --audit-level=high`。
+> **UNKNOWN 已解除（R13）**：R10 与 R11 连续两轮 `npm audit --audit-level=high` 均返回 `503 Service Unavailable ... We are currently performing maintenance`（`https://status.npmjs.org`），当时判为 UNKNOWN。R13 重跑同一命令，npm registry 已恢复：
+> ```
+> npm audit --audit-level=high
+> found 0 vulnerabilities
+> （exit 0）
+> ```
+> 注：R13 已新增 `playwright` 为 devDependency，本次 audit 已覆盖该新增依赖，仍为 0 高危。
 
 ---
 
@@ -1055,8 +1208,8 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 项 | 状态 |
 |----|------|
 | 分支 | `fix/web-quality-2026-09-19` |
-| 提交规范 | `fix(web): …` / `docs(reports): …`（Conventional Commits）—— 12 轮全部按维度拆分为「代码 + 报告」两笔 |
-| PR + Squash merge | ⏳ **待办**：分支 `fix/web-quality-2026-09-19` 已完成 12 个提交，尚未 push / 开 PR / squash |
+| 提交规范 | `fix(web): …` / `docs(reports): …`（Conventional Commits）—— 13 轮全部按维度拆分为「代码 + 报告」两笔 |
+| PR + Squash merge | ⏳ **待办**：分支 `fix/web-quality-2026-09-19` 已完成 13 轮提交，尚未 push / 开 PR / squash |
 | `git status` 干净 | ✅ 每轮提交后复查均 clean（`git status --porcelain=v1` 无输出） |
 
 ---
@@ -1070,18 +1223,20 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 | ✅ 完成（P3-6/P3-7 已修 11 处；P3-8 双源真相待重构；P3-9 合法字面量留档） |
 | 标题层级 | R5 | ✅ 完成（0 缺陷） |
-| 对比度 | R6 | ✅ 完成（P2-1/P2-2 共 12 处已修；P2-3 待逐元素背景分析；P3-10～P3-12 记录） |
+| 对比度 | R6 / R13 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10～P3-12、P3-20～P3-21 记录。R13 实测不合格总数 21→6） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
-| 核心网页指标（LCP/INP/CLS） | R9 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录；实测 ms 值 UNKNOWN 待 Playwright） |
-| XSS 危险 API | R10 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；依赖 CVE UNKNOWN） |
+| 核心网页指标（LCP/INP/CLS） | R9 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录；实测 ms 值仍 **UNKNOWN** —— R13 已装 Playwright 但本轮未接 Lighthouse/`PerformanceObserver`，R9 结论不变） |
+| XSS 危险 API | R10 / R13 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；**依赖 CVE 已由 UNKNOWN 转为 0** —— R13 `npm audit --audit-level=high` exit 0，npm registry 恢复，已覆盖新增的 `playwright` 依赖） |
 | 密钥泄露 | R11 | ✅ 完成（0 缺陷：产物 0 命中 / 源码 0 命中 / 环境注入点 0 / `.env` 未跟踪 / CI 无硬编码 / 自带 `checkSecrets()` 门禁） |
 | 交互态（七态） | R12 | ✅ 完成（P2-9 按钮 `:disabled` 缺失已修；P3-18 SVG aria、P3-19 `:active` 记录；触控目标 / 缩放 / 破坏性操作全达标） |
-| 视觉留档（③ 截图） | — | ⛔ **UNKNOWN · 双重障碍**：(1) 缺浏览器引擎（无 Playwright/Puppeteer，纯 Node 无法渲染 HTML 为位图，无 grep 替代路径）；(2) **明暗主题无法产出** —— `global.css:36` 声明 `color-scheme: light;`，全站 `prefers-color-scheme` 媒体查询 **0 处**，唯一 `theme-color` 为 `#fafafa`，站点确定只有浅色主题，暗色截图将与浅色逐字节相同 |
+| 视觉留档（③ 截图） | R13 | ✅ **完成**（用户确认 `npm i -D playwright` 后执行）。4 类页面 × 3 断点 = **12 张**，见 `docs/reports/screenshots/`，合计 7891 KB，见 §3 清单。采集期自动度量：横向溢出 0/12、控制台 error 0、失败请求 0、`document.fonts.status = loaded`。**明暗维度经实证确认为 N/A 而非 UNKNOWN**：`global.css:36` 钉死 `color-scheme: light`，全站 `prefers-color-scheme` 媒体查询 0 处 → 暗色截图将与浅色逐字节相同，产出重复图无信息量 |
+| 视觉审计（③ 副产物） | R13 | ✅ 完成。`tiny-text-audit.mjs` 实测全部 `<16px` 文本的计算色与真实背景 → 21 处 AA 不合格，修复后 6 处；`font-audit.mjs` 字号分布；`heading-size-audit.mjs` 标题尺寸 → 发现 P2-12（`--font-size-h5` 未定义，h3 退化为 16px） |
 | axe / pa11y（②） | — | ⛔ **缺口**：无依赖，待确认 |
 
 ### 需用户确认
 
-1. **是否允许 `npm i -D playwright`**（或复用本机 Chrome）以完成 ③ 视觉留档的 375/768/1440 截图？否则 ③ 以 UNKNOWN 结案。
-   **注意**：即便装了 Playwright，「× 明暗主题」仍无法满足 —— 站点为**确定单主题**（`global.css:36 color-scheme: light`、`prefers-color-scheme` 媒体查询 0 处）。可行方案是产出 3 断点 × 1 主题的 9 张（抽样 3 页）并标注「暗色塌缩为重复图」，而非伪造差异。
-2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注（12 轮已全程如此，六簇覆盖无缺口）。
+1. ~~**是否允许 `npm i -D playwright`**~~ → **R13 已确认并已执行**：`npm i -D playwright` 已入库（`site/package.json` / `site/package-lock.json`），Chromium 经 `npx playwright install chromium` 装到 `C:\Users\cgart\AppData\Local\ms-playwright`（不进仓库）。12 张截图已产出。**明暗维度按实证判为 N/A**（`global.css:36 color-scheme: light`、`prefers-color-scheme` 媒体查询 0 处），未产出重复图。
+2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注（13 轮已全程如此，六簇覆盖无缺口）。R13 已用 Playwright 实测替代了部分 axe 能力（对比度、字号、标题尺寸、横向溢出），但**语义层规则**（表单 label 关联、`aria-*` 完整性、地标角色）仍无自动化覆盖。
+3. **新增（R13）：P2-11 六个角色色的修复路径** —— 二选一：(a) `.showcase__card-role` 提至 `≥18.66px + font-weight:700`（1 行，满足大文本 3:1，六色全过，代价是标签视觉权重加重）；(b) 加深六个角色色（6 行，在 JS 数据数组内，代价是标识色相偏移）。六色当前均为 3.14–4.23:1，全部 ≥3:1。
+4. **新增（R13）：P2-12 `--font-size-h5` 未定义** —— 二选一：(a) 定义该令牌（需给出取值，建议 `1.0625rem`，但 h3 仅变 17px，层级仍弱）；(b) 把 2 处 `<h3>` 改用 `--font-size-h3`（20px）并为另 2 处标题类元素定义 h5 令牌。当前 `mechanisms/index.html` 的 h3 渲染为 16px = 正文字号。
