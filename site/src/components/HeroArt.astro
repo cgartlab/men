@@ -50,16 +50,25 @@ const GLYPHS_EN = ['M', 'S', 'J', 'C', 'Y', 'X'];
       const ROWS = 28; // 行数（覆盖全屏）
       const total = COLS * ROWS;
 
-      // 生成 HTML：每个 glyph 用 span，随机 delay
-      let html = '';
+      // 生成符号矩阵：用 createElement + textContent 构造，避免 innerHTML 解析字符串
+      // （GLYPHS 与 delay/dur/opacity 均为字面量与 Math.random().toFixed() 数字，
+      //  当前无注入路径；改为结构化 API 后消除该 sink，杜绝后续改动引入回归）
+      const frag = document.createDocumentFragment();
       for (let i = 0; i < total; i++) {
         const ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
         const delay = (Math.random() * 20).toFixed(2);
         const dur = (8 + Math.random() * 12).toFixed(1);
         const opacity = (0.04 + Math.random() * 0.08).toFixed(2);
-        html += '<span data-glyph class="sym" style="--sd:' + delay + 's;--dur:' + dur + 's;opacity:' + opacity + ';">' + ch + '</span>';
+        const span = document.createElement('span');
+        span.dataset.glyph = '';
+        span.className = 'sym';
+        span.style.setProperty('--sd', delay + 's');
+        span.style.setProperty('--dur', dur + 's');
+        span.style.setProperty('opacity', opacity);
+        span.textContent = ch;
+        frag.appendChild(span);
       }
-      matrix.innerHTML = html;
+      matrix.appendChild(frag);
     }
 
     // ────────────────────────────────────────────

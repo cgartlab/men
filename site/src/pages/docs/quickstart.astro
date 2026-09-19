@@ -51,6 +51,39 @@ const seealso = [
       <p><strong>协议计数说明</strong>：<code>ultrawork.md</code> 共 <strong>10 步</strong>：第 1–9 步为编排闭环，第 10 步 LEARN 触发学习回路（M7 加入）。</p>
     </section>
 
+    <section id="clone" class="doc-section">
+      <h2>克隆与启动</h2>
+      <p>前置：Node.js ≥ 18、已安装 OpenCode。推荐用 npm 一步安装，无需 clone 仓库：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>npx @cgartlab/men
+opencode</code></pre>
+      </div>
+      <ul>
+        <li><strong>方式 A：npm 一步安装（首选）</strong> — 在任意目录运行 <code>npx @cgartlab/men</code>，自动 scaffold 运行时资产（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。首次 npx 会询问 <code>Ok to proceed? (y)</code>，输入 <code>y</code>（或 <code>npx -y</code> 跳过确认）。当前目录若已是 men 仓库根则幂等跳过复制，就地安装。</li>
+        <li><strong>方式 B：Git 仓库（备选）</strong> — <code>cd</code> 进入 men 仓库目录后直接运行 <code>opencode</code>，会自动读取 <code>opencode.json</code> 并把 <code>men</code> 设为默认 agent；首次或修改配置后需重启 OpenCode（<code>/quit</code> 后重开）。</li>
+        <li><strong>任意目录生效</strong> — 加 <code>--global</code> 将 agents/commands/skills/plugins 部署到 <code>~/.config/opencode/</code>，合并全局 <code>opencode.json</code> 仅设置 <code>default_agent: men</code>（不触碰 mcp 与 plugin，由 CC Switch 统一管理）；<code>--global-remove</code> 幂等还原原配置。</li>
+        <li><strong>.env 说明</strong> — 安装器生成的 <code>.env</code> 内全是占位符，仅用于知识检索（Embedding）与内网数据源，<strong>基础对话不需要填写</strong>。</li>
+      </ul>
+      <SrcRef files={['scripts/install.mjs','docs/guide/quickstart.md']} />
+    </section>
+
+    <section id="first-task" class="doc-section">
+      <h2>第一个任务</h2>
+      <p>日常绝大多数任务用 <code>/ultrawork</code> 一键编排，men 自动完成意图分诊 → 拆分 → 分发 → 验证 → 汇总：</p>
+      <div class="code-block">
+        <span class="code-block__lang">text</span>
+        <pre><code>/ultrawork 查一下本周 AI 领域最新发布的开源模型有哪些</code></pre>
+      </div>
+      <ul>
+        <li><strong>search 类（单路执行）</strong> — 例：查最新开源模型 → men 判定 <code>search</code> 意图，直接 spawn <code>xun</code> 搜索并整理报告。</li>
+        <li><strong>analyze 类（需 chi judge）</strong> — 例：评估某模型定价对行业的影响 → spawn <code>xun</code> 搜集资料 → 再 spawn <code>chi</code> 做 fresh-context 独立复核 → 输出四段报告。</li>
+        <li><strong>team 类（多路 Wave 并行 + 汇总）</strong> — 例：写周报需查最新新闻和配图概念 → spawn <code>si</code> 规划 → Wave 1 <code>xun</code> 查新闻 + <code>yi</code> 出配图概念（并行）→ Wave 2 <code>si</code> 撰写正文 → chi 独立复核全部产物。</li>
+        <li><strong>三命令速查</strong> — <code>/ultrawork &lt;任务&gt;</code> 一键编排（men 是唯一 spawner）· <code>/verify &lt;角色或路径&gt;</code> 双层验证（chi，fresh-context Judge）· <code>/hyperplan &lt;项目&gt;</code> 访谈式规划产出 plan envelope（men → si，只规划不执行）。</li>
+      </ul>
+      <SrcRef files={['.opencode/command/ultrawork.md','docs/guide/quickstart.md']} />
+    </section>
+
     <section id="verify" class="doc-section">
       <h2>验收产物</h2>
       <p><code>/verify &lt;角色名或路径&gt; [附加标准]</code> 用于独立验收某个角色的产物，由 chi 以 fresh-context Judge 身份执行双层验证：</p>

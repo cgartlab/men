@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+---
+
+<BaseLayout title="404 · 页面不存在 · men（门）" description="请求的页面不存在。返回 men 首页或浏览文档、角色与机制说明。">
+  <div class="notfound">
+
+    <p class="notfound__eyebrow">HTTP 404</p>
+
+    <h1 class="notfound__title">
+      <span class="notfound__code" aria-hidden="true">404</span>
+      <span class="notfound__heading">页面不存在</span>
+    </h1>
+
+    <p class="notfound__msg">
+      你请求的地址在 men 站点中找不到对应页面。链接可能已失效、地址拼写有误，或该页面已被移动。
+    </p>
+
+    <p class="notfound__hint">
+      <strong>可以试试：</strong>检查地址拼写，或从下方入口重新进入。
+    </p>
+
+    <nav class="notfound__nav" aria-label="站点导航">
+      <a class="btn btn--primary" href="/">
+        <span>返回首页</span>
+        <span class="btn__arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="btn btn--ghost" href="/docs/">浏览文档</a>
+      <a class="btn btn--ghost" href="/roles/">角色说明</a>
+      <a class="btn btn--ghost" href="/mechanisms/">协作机制</a>
+    </nav>
+
+    <p class="notfound__meta">
+      men {SITE.version} · 如果你认为这是链接错误，可以在
+      <a class="notfound__link" href="https://github.com/cgartlab/men/issues">GitHub Issues</a>
+      反馈。
+    </p>
+
+  </div>
+</BaseLayout>
+
+<style>
+  .notfound {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: calc(var(--space-12)) var(--space-6) var(--space-16);
+    text-align: center;
+  }
+
+  .notfound__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: 0.2em;
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-4);
+  }
+
+  .notfound__title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-6);
+  }
+
+  .notfound__code {
+    font-family: var(--font-mono);
+    font-size: clamp(4rem, 16vw, 7rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--color-accent);
+  }
+
+  .notfound__heading {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-fg);
+  }
+
+  .notfound__msg {
+    font-size: var(--font-size-body);
+    line-height: 1.6;
+    color: var(--color-fg-secondary);
+    margin: 0 0 var(--space-3);
+  }
+
+  .notfound__hint {
+    font-size: var(--font-size-caption);
+    line-height: 1.6;
+    color: var(--color-fg-muted);
+    margin: 0 0 var(--space-8);
+  }
+
+  .notfound__hint strong {
+    color: var(--color-fg-secondary);
+    font-weight: var(--font-weight-semi);
+  }
+
+  .notfound__nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-10);
+  }
+
+  .notfound__meta {
+    font-size: var(--font-size-caption);
+    line-height: 1.7;
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  .notfound__link {
+    color: var(--color-accent-dark);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .notfound__link:hover {
+    color: var(--color-accent-dark);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 480px) {
+    .notfound { padding-top: var(--space-8); }
+    .notfound__nav { flex-direction: column; align-items: stretch; }
+    .notfound__nav .btn { justify-content: center; }
+  }
+</style>
