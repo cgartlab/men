@@ -60,6 +60,7 @@ const VERSION_TEXT_FILES = [
   "knowledge/README.md",                  // 知识库 README 版本引用
   ".opencode/skills/men-status/SKILL.md",  // 版本表格（v0.4.0 靠手工补过）
   "docs/integrations/argus.md",           // argus 集成文档的版本引用
+  "scripts/skillhub-publish.mjs",         // CLI_VERSION 常量（v0.5.0 新增，此前漏同步）
 ];
 
 // ─────────────────────────── 工具函数 ───────────────────────────

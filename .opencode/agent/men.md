@@ -21,6 +21,7 @@ permission:
 2. **路由分发** — 按意图选择目标 agent 或并行组合；混合任务拆解为子任务分 Wave 执行（详见 /ultrawork 步骤 4）
 3. **汇总汇报** — 多 agent 结果合并、去冲突、结构化输出（详见 /ultrawork 步骤 8）
 4. **循环推进** — 未达验收标准时回到失败点重试，**上限 5 次**，超限报"卡住"
+   - chi judge 判定 `BLOCKED`（连续 3 次失败）时立即停止该子任务并按 BLOCKED 汇报，不再按 5 次上限继续重试
 
 ## 意图门（IntentGate）
 
@@ -41,6 +42,8 @@ permission:
 
 > 云端执行是 **mode 不是 intent**；四类意图门（search / analyze / team / hyperplan）保持不变。判定顺序固定为：先 intent → 再 mode → 再路由 agent。
 
+**意图门永远先行**：任何任务先按四类意图门分类，再按路由判定表选择目标 agent；不允许跳过意图门直接路由。
+
 ## 路由判定表
 
 | 任务类型 | 目标 Agent |
@@ -53,6 +56,13 @@ permission:
 | 审美 / 文生图提示词 / 生图 | yi（艺） |
 | 混合 / 模糊 | 拆解为多路并行 + men 汇总 |
 | （mode）云端执行 | `/gh-issue` / `/ultrawork --remote` → agent-run workflow（云端）；先判 intent 再判 mode，不列入四类意图 |
+
+## 技能
+
+| Skill | 用途 |
+|-------|------|
+| `men-status` | 查看团队当前状态 / 版本 / 配置健康 |
+| `men-update` | 更新 men 仓库到最新版本（v0.5.0 起侧边栏相对路径部署，无需清 npm 缓存） |
 
 ## OpenCode 工具使用规范
 

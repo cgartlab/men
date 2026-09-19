@@ -23,9 +23,11 @@ const read = (p) => fs.readFileSync(p, 'utf-8');
 // ── 轻量 markdown 解析辅助 ─────────────────────────────
 
 // 提取所有 fenced code block：返回 [{lang, body}]
+// 注意 `\r?\n`：core.autocrlf=true 的 Windows 检出为 CRLF，
+// 只写 `\n` 会导致本文件在 Windows 本地 0 匹配（CI 为 LF 检出，故只在本地暴露）。
 function codeBlocks(text) {
   const out = [];
-  const re = /```([a-zA-Z]*)\n([\s\S]*?)```/g;
+  const re = /```([a-zA-Z]*)\r?\n([\s\S]*?)```/g;
   let m;
   while ((m = re.exec(text)) !== null) {
     out.push({ lang: m[1], body: m[2] });
@@ -207,4 +209,112 @@ test('H. 结构级：men.md 的 subagent prompt contract 为表格结构（字�
   for (const f of PROMPT_CONTRACT_FIELDS) {
     assert.ok(sec.includes(f), `prompt contract 章节缺少字段: ${f}`);
   }
+});
+
+// ── 自洽性检查（合并自 main）─────────────────────────
+
+const FOOTER = '> 见 AGENTS.md「全员红线」段落（7 条），所有 agent 逐字遵守。';
+const readRel = (rel) => fs.readFileSync(path.join(REPO, rel), 'utf8');
+
+test('全部 agent 定义包含逐字一致的全员红线引用', () => {
+  for (const name of AGENTS) {
+    const text = readRel(`.opencode/agent/${name}.md`);
+    assert.ok(text.includes('## 全员红线'), `${name}.md 缺少全员红线段落`);
+    assert.ok(text.includes(FOOTER), `${name}.md 缺少统一红线引用`);
+  }
+});
+
+test('AGENTS.md 提供全员红线最小锚点', () => {
+  const text = readRel('AGENTS.md');
+  assert.ok(text.includes('## 全员红线'));
+  assert.ok(text.includes('docs/guide/quickstart.md'));
+});
+
+test('agent frontmatter model 与 opencode.json 一致', () => {
+  const config = JSON.parse(readRel('opencode.json'));
+  for (const name of AGENTS) {
+    const text = readRel(`.opencode/agent/${name}.md`);
+    const m = text.match(/^model:\s*(.+)$/m);
+    assert.ok(m, `${name}.md 缺少 model`);
+    assert.strictEqual(m[1].trim(), config.agent[name].model, `${name}.md model 与 opencode.json 不一致`);
+  }
+});
+
+test('yi 协作边界：chi 不作为视觉意图来源', () => {
+  const text = readRel('.opencode/agent/yi.md');
+  assert.ok(!text.includes('chi（研究/分析需求）'));
+  assert.ok(text.includes('chi（评审判断）'));
+  assert.ok(text.includes('chi 不作为视觉意图来源'));
+});
+
+test('xun 只读边界与临时落盘自洽', () => {
+  const text = readRel('.opencode/agent/xun.md');
+  assert.ok(text.includes('临时产物落盘'));
+  assert.ok(text.includes('会话临时目录'));
+  assert.ok(text.includes('回传'));
+  assert.ok(!text.includes('结果落盘为 .md 文件'));
+});
+
+test('si 落盘标准允许临时目录或保存建议', () => {
+  const text = readRel('.opencode/agent/si.md');
+  assert.ok(text.includes('临时目录'));
+  assert.ok(text.includes('保存建议'));
+  assert.ok(!text.includes('写作产物落盘为 `.md` 文件'));
+});
+
+test('chi 每轮复验所有标准', () => {
+  const text = readRel('.opencode/agent/chi.md');
+  assert.ok(text.includes('每轮复验所有标准'));
+});
+
+test('ultrawork 意图门先行且复验所有标准', () => {
+  const text = readRel('.opencode/command/ultrawork.md');
+  assert.ok(text.includes('意图门永远先行'));
+  assert.ok(text.includes('每轮复验所有标准'));
+  assert.ok(!text.includes('只需重新验证失败项'));
+});
+
+test('men 定义含技能表与意图门先行', () => {
+  const text = readRel('.opencode/agent/men.md');
+  assert.ok(text.includes('`men-status`'));
+  assert.ok(text.includes('`men-update`'));
+  assert.ok(text.includes('意图门永远先行'));
+});
+
+test('chi-judge 技能不把语义/视觉评审推给其他角色', () => {
+  const text = readRel('.opencode/skills/chi-judge/SKILL.md');
+  assert.ok(!text.includes('内容风格评审（由 si 负责）'));
+  assert.ok(!text.includes('视觉设计评审（由 yi 负责）'));
+});
+
+test('yi-design 技能将内容写作转交 ji', () => {
+  const text = readRel('.opencode/skills/yi-design/SKILL.md');
+  assert.ok(text.includes('内容写作（由 ji 负责）'));
+  assert.ok(!text.includes('内容写作（由 si 负责）'));
+});
+
+test('si-plan-compose 示例不使用框架文件', () => {
+  const text = readRel('.opencode/skills/si-plan-compose/SKILL.md');
+  assert.ok(!text.includes('.tsx'));
+  assert.ok(text.includes('index.html 文件非空'));
+});
+
+test('men-update 技能不再强制清理 npm 缓存', () => {
+  const text = readRel('.opencode/skills/men-update/SKILL.md');
+  assert.ok(text.includes('无需删除缓存'));
+  assert.ok(!text.includes('更新后必须删除该缓存'));
+});
+
+test('xun 相关文件对 Exa MCP 的描述与 CC Switch 一致', () => {
+  for (const rel of ['.opencode/agent/xun.md', '.opencode/skills/xun-search/SKILL.md']) {
+    const text = readRel(rel);
+    assert.ok(text.includes('CC Switch'), `${rel} 未提及 CC Switch`);
+    assert.ok(!text.includes('已由 opencode.json 原生接入'), `${rel} 仍声称 opencode.json 原生接入`);
+  }
+});
+
+test('release.md 不再要求 opencode.json 声明 MCP', () => {
+  const text = readRel('docs/guide/release.md');
+  assert.ok(text.includes('CC Switch 统一管理'));
+  assert.ok(!text.includes('MCP 服务器一律在 `opencode.json` 中声明'));
 });

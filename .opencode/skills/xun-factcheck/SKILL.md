@@ -101,7 +101,7 @@ description: "Use when verifying the accuracy of specific claims, cross-referenc
 - **独立来源判定**：不同域名+不同编辑团队=独立；同一媒体集团旗下子刊=不独立；转载=不独立
 - **依赖 xun-search**：事实核查基于 xun-search 的搜索结果作为输入
 - **event.mjs 审计**：核查完成用 `event.mjs append --type decision.made` 记录到 events.jsonl
-- **只读约束**：不修改源数据，不写文件到生产目录
+- **只读约束**：不修改源数据，不写生产目录；可写入会话临时目录并回传结构化摘要
 - **CHARTER_CHECK**：xun 角色 Clarification level=LOW
 
 ## 与 xun-search 的协作

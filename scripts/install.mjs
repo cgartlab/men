@@ -297,6 +297,8 @@ function ensureOpencodePkg(dir) {
 
 // 跨平台检测命令是否存在（Windows: where，POSIX: command -v）
 function commandExists(cmd) {
+  // 安全：cmd 仅允许简单命令名，禁止 shell 元字符（CWE-78 命令注入防护）
+  if (!/^[a-zA-Z0-9._-]+$/.test(cmd)) return false;
   try {
     const win = process.platform === "win32";
     const r = win

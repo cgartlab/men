@@ -40,20 +40,12 @@ node <ROOT>/scripts/install.mjs
 
 重装 `.opencode` 依赖与配置。
 
-### 4. 强制刷新 opencode 的 npm 包缓存
+### 4. 侧边栏加载路径确认（v0.5.0 起无需清缓存）
 
-opencode 会把 `@cgartlab/men`（npm 包）缓存到本地，侧边栏插件从此缓存加载版本。**若只更新本地仓库而不刷新缓存，侧边栏会继续显示旧版本**（例如仓库已 v0.3.4 但侧边栏仍显示 v0.3.2）。更新后必须删除该缓存，强制下次启动重新拉取最新包：
+v0.5.0 起 `--global` 将 men-sidebar 直接部署到 `~/.config/opencode/plugins/men-sidebar/`，`tui.json` 用相对路径注册，**不再依赖 opencode 的 npm 缓存，更新后无需删除缓存**。
 
-- Windows：`C:\Users\<user>\.cache\opencode\packages\@cgartlab\men@latest`
-- macOS/Linux：`~/.cache/opencode/packages/@cgartlab/men@latest`
-
-```bash
-# 定位缓存目录（存在才删，用 rm -rf 语义；PowerShell 用 Remove-Item -Recurse -Force）
-$CACHE = "$env:USERPROFILE\.cache\opencode\packages\@cgartlab\men@latest"
-if (Test-Path $CACHE) { Remove-Item $CACHE -Recurse -Force }
-```
-
-- 若用户是**本地仓库开发**（非 npx 安装），同时确认全局 `~/.config/opencode/tui.json` 的 `plugin` 列表：若引用 `@cgartlab/men`，建议改指向本地仓库插件（`.opencode/plugins/men-sidebar`），彻底脱离 npm 缓存滞后问题。
+- 若仍在使用旧版 npm 包方式注册（`tui.json` 引用 `@cgartlab/men`），才需清理缓存 `%USERPROFILE%\.cache\opencode\packages\@cgartlab\men@latest`（macOS/Linux：`~/.cache/opencode/packages/@cgartlab/men@latest`），并建议迁移为相对路径注册。
+- 本仓库开发环境检查：`~/.config/opencode/plugins/men-sidebar` 是否存在。
 
 ### 5. 报告新版本号
 

@@ -12,7 +12,7 @@ description: "Use when making visual design decisions — color palettes, typogr
 - 用户要求根据设计稿写组件代码（由 ji 负责）
 - 用户要求生成 AI 图片/插画（用 yi-imagegen）
 - 用户要求进行代码审查（由 chi 负责）
-- 用户要求进行内容写作（由 si 负责）
+- 用户要求进行内容写作（由 ji 负责）
 
 ## 设计工作流（step-by-step）
 
