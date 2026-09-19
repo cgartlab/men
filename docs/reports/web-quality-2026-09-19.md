@@ -1272,6 +1272,23 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 
 ---
 
+### R20 复审：换簇后新维度扫描（无新发现）
+
+R15–R19 集中在样式/排版簇修复 P2/P3。R20 按规则「连续两轮无新发现即换簇」切换到元素一致性/功能稳定/前端安全簇，做以下新增检查（此前十二轮未显式覆盖）：
+
+| 检查项 | 范围 | 方法 | 结果 |
+|--------|------|------|------|
+| 页内重复 `id`（WCAG 4.1.1 Parsing） | 产物 15 页 × 逐页 | 解析每页全部 `id="..."`，检测同页重复 | ✅ 0 处（`main-content` / `page-title` / `seealso-title` 等布局级 id 各页唯一，跨页同名不违规） |
+| `target="_blank"` 缺 `rel`（WCAG 2.1.32 / 安全） | 产物 15 页 | grep `target="_blank"` 逐条检查 `rel` 属性 | ✅ 全部有 `rel`（含 `noopener`） |
+| 内联事件处理器（XSS 面） | 产物 15 页 | grep `on(click|load|error|...)="` | ✅ 0 处 |
+| `<html lang>` 缺失（WCAG 3.1.1 Language of Page） | 产物 15 页 | 正则 `<html(?!.*lang=)` | ✅ 全部有 `lang="zh-CN"` |
+| 每页 h1 唯一性（WCAG 1.3.1） | 产物 15 页 | 逐页数 `<h1` 标签数 | ✅ 全部恰好 1 个 |
+| 横向溢出 / 长文本破版（样式检查要点） | 7 页 × 3 断点（375/768/1440） | `site/scripts/overflow-check.mjs`：Playwright 测 `scrollWidth > clientWidth`，溢出时列出 culrpit 元素 | ✅ 0 处溢出 |
+
+**结论**：R20 换簇扫描 6 项均无新发现。站点在元素一致性、功能稳定、前端安全三个簇无遗漏缺陷。新增 `site/scripts/overflow-check.mjs` 作为横溢防回归工具入库。
+
+---
+
 ## 6. 提交与合并（⑥）
 
 | 项 | 状态 |
