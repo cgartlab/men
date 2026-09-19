@@ -1317,7 +1317,7 @@ R15–R19 集中在样式/排版簇修复 P2/P3。R20 按规则「连续两轮�
 | XSS 危险 API | R10 / R13 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；**依赖 CVE 已由 UNKNOWN 转为 0** —— R13 `npm audit --audit-level=high` exit 0，npm registry 恢复，已覆盖新增的 `playwright` 依赖） |
 | 密钥泄露 | R11 | ✅ 完成（0 缺陷：产物 0 命中 / 源码 0 命中 / 环境注入点 0 / `.env` 未跟踪 / CI 无硬编码 / 自带 `checkSecrets()` 门禁） |
 | 交互态（七态） | R12 | ✅ 完成（P2-9 按钮 `:disabled` 缺失已修；P3-18 SVG aria、P3-19 `:active` 记录；触控目标 / 缩放 / 破坏性操作全达标） |
-| 视觉留档（③ 截图） | R13 | ✅ **完成**（用户确认 `npm i -D playwright` 后执行）。4 类页面 × 3 断点 = **12 张**，见 `docs/reports/screenshots/`，合计 7891 KB，见 §3 清单。采集期自动度量：横向溢出 0/12、控制台 error 0、失败请求 0、`document.fonts.status = loaded`。**明暗维度经实证确认为 N/A 而非 UNKNOWN**：`global.css:36` 钉死 `color-scheme: light`，全站 `prefers-color-scheme` 媒体查询 0 处 → 暗色截图将与浅色逐字节相同，产出重复图无信息量 |
+| 视觉留档（③ 截图） | R13 / R21 | ✅ **完成**（用户确认 `npm i -D playwright` 后执行）。4 类页面 × 3 断点 = **12 张**，见 `docs/reports/screenshots/`。**R21 定点重摄首页 3 张**（`home-375/768/1440.png`）：P2-11 角色标签 14→20px + R18 infobox 标题 14→16px 后视觉变化，用 `shot-home.mjs` 重摄（`fullPage: true`，同 shot.mjs 参数）。重摄后尺寸增量 +0.2–1.4%，与 7 个标签从 14px/600 变为 20px/700 一致。采集期自动度量：横向溢出 0/12、控制台 error 0、失败请求 0、`document.fonts.status = loaded`。**明暗维度经实证确认为 N/A 而非 UNKNOWN**：`global.css:36` 钉死 `color-scheme: light`，全站 `prefers-color-scheme` 媒体查询 0 处 → 暗色截图将与浅色逐字节相同，产出重复图无信息量 |
 | 视觉审计（③ 副产物） | R13 | ✅ 完成。`tiny-text-audit.mjs` 实测全部 `<16px` 文本的计算色与真实背景 → 21 处 AA 不合格，修复后 6 处；`font-audit.mjs` 字号分布；`heading-size-audit.mjs` 标题尺寸 → 发现 P2-12（`--font-size-h5` 未定义，h3 退化为 16px） |
 | axe / pa11y（②） | — | ⛔ **缺口**：无依赖，待确认 |
 
