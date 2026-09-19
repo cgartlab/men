@@ -120,6 +120,59 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 - 所有 `*-dark.png` 标注为 **N/A（主题不存在）**，区别于「工具缺失导致的 UNKNOWN」。此点已复核实证：`grep -r prefers-color-scheme site/src` = 0 命中，`color-scheme: light` 见 `global.css:36`。
 - 明暗塌缩为设计现状而非工具缺失，故 ③ 本节按「已完成」结案。
 
+### 3.2 R14 补充：核心网页指标实测（lab · Chromium 153.0.8010.12）
+
+R9 只能做静态风险分析（识别 LCP 候选与阻塞资源、CLS 风险因子、INP 风险因子），**实际 ms 值标 UNKNOWN**（当时无浏览器引擎，无 grep 替代路径）。R13 安装 Playwright 后本轮实测。脚本：`site/scripts/cwv-measure.mjs`（进程内 http server，`finally` 关闭，端口 4896 已确认释放，未 spawn 子进程）。
+
+**可实测项**（4 页 × 3 断点 = 12 组合，每组合 2 次取中位，采集窗口 `load` + 900ms）：
+
+| 页面 | 断点 | FCP | DOM ready | load | 资源体积 | 资源数 | 点击延迟 | 最大资源（名称 · 体积 · 耗时） |
+|------|------|-----|-----------|------|---------|--------|---------|------------------------------|
+| home | 375 | 196ms ✓ | 178ms | 479ms | 59 KB | 4 | 1ms | `BaseLayout.kcFU6Rad.css` · 33 KB · 5ms |
+| home | 768 | 206ms ✓ | 171ms | 498ms | 59 KB | 4 | 1ms | `BaseLayout.kcFU6Rad.css` · 33 KB · 5ms |
+| home | 1440 | 206ms ✓ | 166ms | 497ms | 59 KB | 4 | 1ms | `BaseLayout.kcFU6Rad.css` · 33 KB · 5ms |
+| roles | 375 | 148ms ✓ | 135ms | **730ms** | 49 KB | 4 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 5ms |
+| roles | 768 | 152ms ✓ | 130ms | 532ms | 49 KB | 4 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 4ms |
+| roles | 1440 | 162ms ✓ | 129ms | 661ms | 49 KB | 4 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 4ms |
+| quickstart | 375 | 132ms ✓ | 108ms | 617ms | 33 KB | 3 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 7ms |
+| quickstart | 768 | 140ms ✓ | 108ms | 509ms | 33 KB | 3 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 5ms |
+| quickstart | 1440 | 154ms ✓ | 101ms | 525ms | 33 KB | 3 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 4ms |
+| error404 | 375 | 134ms ✓ | 61ms | 460ms | 33 KB | 3 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 4ms |
+| error404 | 768 | 146ms ✓ | 65ms | 487ms | 33 KB | 3 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 5ms |
+| error404 | 1440 | 154ms ✓ | 60ms | 491ms | 33 KB | 3 | — | `BaseLayout.kcFU6Rad.css` · 33 KB · 4ms |
+
+汇总：**12 组合 · FCP 最差 206ms**（阈值 1800ms，全部达标）· DOM ready 最差 178ms · load 最差 730ms · 首屏资源体积 **33–59 KB** · 单资源最大 33 KB（渲染阻塞 CSS，加载 4–7ms）· 点击响应延迟 **1ms**（`first-input` 条目，仅 home 页视口内有按钮，其余页无可见按钮故记 `—`）。
+
+**结论**：R9 识别的 LCP/CLS 风险因子在实测下未构成瓶颈 —— FCP 与点击延迟均远离阈值。R9 已修的 P2-7（字体 `preconnect`+`preload`）生效：字体来自外部 CDN（`code.oppo.com`，实测可达 157ms），且未出现在前 3 大资源中（前 3 均为本地 CSS/HTML）。
+
+#### UNKNOWN 项（LCP / CLS / INP）与证据
+
+| 指标 | 目标 | 结果 |
+|------|------|------|
+| LCP | ≤ 2500ms | **UNKNOWN** |
+| CLS | ≤ 0.1 | **UNKNOWN** |
+| INP | ≤ 200ms | **UNKNOWN** |
+
+**缺什么**：headless Chromium 153.0.8010.12 不产出 `largest-contentful-paint` / `layout-shift` / `interaction-contentful-paint` 三类 performance 条目。
+
+**已排除脚本缺陷（命令输出）**：
+
+```
+首页 375  docVis=visible  visibility-state 条目=[null]
+          LCP条目=0  layout-shift条目=0  interaction-contentful-paint条目=0
+PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-contentful-paint /
+  layout-shift / interaction-contentful-paint 全部三类）
+启动模式对比（4 种，结果一致）：默认 headless · headless:true · --headless=new ·
+  +--enable-features=PaintTimingAfterNavigationCommit
+反证：不受影响的 FCP（paint 条目）正常产出（132–206ms）；first-input 条目正常产出
+  （说明输入被记录），但 interaction-contentful-paint 不产出 —— 差异点在
+  「是否进入合成器绘制路径」而非「是否可见」。
+```
+
+**判读**：`document.visibilityState` 实测为 `"visible"`，但 `visibility-state` 性能条目的 `state` 为 `null`，三者条目计数均为 0。根因**未完全隔离**（指向 headless 合成器行为，headed 模式可复现但本环境无显示设备），故不写死机制结论。
+
+**替代路径**：接 `npx lighthouse`（自带可见性仿真）或真机 CrUX 数据。本轮未安装新依赖（受「不新增依赖未经确认」约束），故留 UNKNOWN。R9 的静态风险因子分析结论不变。
+
 ---
 
 ## 4. 六簇覆盖（④）
@@ -128,7 +181,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 |----|-----------|------|
 | 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`）+ 空实现 / skip-link / 空跳模式（`tmp/empty-check*.mjs`），产物 14 页全量扫描 | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0 / 空实现 0**（修复前 2 处锚点缺失，见 §5 P1-1）。查了什么：`<a>` 462 个的 href 形态、12 个 `<button>` 的处理器接线、`<form>`/`<input>`/`<select>` 存在性（0 个）、`window.open('')` / `location.href='#'` / `void(0)` / `alert()` 占位、`TODO`/`FIXME` 标记（7 命中全为误报）。表单防重复提交与 error boundary：**不适用**（站点无表单、无客户端路由） |
 | 功能稳定 · 错误容错 | `tmp/error-check.mjs`（产物 + 源码双扫）：404 页存在性（源码与产物）、空 `catch{}` / 空 `.catch` 回调静默吞错、错误文案是否含修法指引、`<form>` 存在性、`try`/`catch` 配对、客户端水合与 Error Boundary、空态文案 | ⚠️ **2 项 P2 已修**（§5 P2-5 空 catch 静默吞错、P2-6 无 404 页）。404 页已补（`site/src/pages/404.astro` → 产物 `dist/404.html` 9209 字节，含 h1 / 回站入口 / skip-link）；页面数 14 → 15。**表单防重复提交不适用**（`<form>` 0 个）；**error boundary 不适用**（纯静态 SSR，无 `astro:*` 客户端水合、无客户端路由，构建期错误在 `npm run build` 阶段暴露）；**空态不适用**（文档/角色/机制均为静态数据页，无运行时数据加载）。另更正 R2 记录：copy 按钮实际 **3 个**（`index.astro:158,172,187`），R2 误记为 7 |
-| 功能稳定 · 核心网页指标 | `tmp/cwv-check.mjs`：LCP 候选与阻塞资源、CLS 风险因子（无宽高图片 / `font-display` / `100vh`）、INP 风险因子（内联 JS 体积 / rAF / `will-change`）、资源总体积、`preconnect`/`preload`/`modulepreload`/`fetchpriority` 存在性 | ⚠️ **1 项 P2 已修**（§5 P2-7 外部字体 1.47 MB 无 `preconnect`/`preload`）+ 2 项 P3 记录（P3-15 `font-display: swap` 回流、P3-16 单字体 744 KB）。**实测 LCP/CLS/INP 值 = UNKNOWN**（需 Playwright + Lighthouse，见 ③ 待决项）。查了什么：`<img>` 0 个、`<canvas>` 1 个、渲染阻塞 CSS 1 个/页、`<head>` 内 `<script>` 0 个（无渲染阻塞 JS）、`100vh` 0 处（无移动端地址栏 CLS）、内联 JS 15 页共 11.3 KB（单页最大 6.7 KB）、`requestAnimationFrame` 16 处、`will-change` 1 处、站点自产资源合计 472.3 KB |
+| 功能稳定 · 核心网页指标 | R9 `tmp/cwv-check.mjs`（静态风险因子）+ **R14 `site/scripts/cwv-measure.mjs`（lab 实测，12 组合）**：LCP 候选与阻塞资源、CLS 风险因子（无宽高图片 / `font-display` / `100vh`）、INP 风险因子（内联 JS 体积 / rAF / `will-change`）、资源总体积、`preconnect`/`preload`/`modulepreload`/`fetchpriority` 存在性 | ⚠️ **1 项 P2 已修**（§5 P2-7 外部字体 1.47 MB 无 `preconnect`/`preload`）+ 2 项 P3 记录（P3-15 `font-display: swap` 回流、P3-16 单字体 744 KB）。**R14 实测（§3.2）**：FCP **132–206ms**（阈值 1800ms，12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏资源 33–59 KB、单资源最大 33 KB（渲染阻塞 CSS，4–7ms）、点击延迟 1ms —— **静态风险因子在实测下未构成瓶颈**。**LCP / CLS / INP 值仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（4 种启动模式结果一致，PerformanceObserver 注册无异常，不受影响的 FCP 与 first-input 正常产出，根因未完全隔离）。查了什么：`<img>` 0 个、`<canvas>` 1 个、渲染阻塞 CSS 1 个/页、`<head>` 内 `<script>` 0 个（无渲染阻塞 JS）、`100vh` 0 处（无移动端地址栏 CLS）、内联 JS 15 页共 11.3 KB（单页最大 6.7 KB）、`requestAnimationFrame` 16 处、`will-change` 1 处、站点自产资源合计 472.3 KB |
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
@@ -1228,7 +1281,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 对比度 | R6 / R13 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10～P3-12、P3-20～P3-21 记录。R13 实测不合格总数 21→6） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
-| 核心网页指标（LCP/INP/CLS） | R9 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录；实测 ms 值仍 **UNKNOWN** —— R13 已装 Playwright 但本轮未接 Lighthouse/`PerformanceObserver`，R9 结论不变） |
+| 核心网页指标（LCP/INP/CLS） | R9 / R14 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录）。**R14 已装 Playwright 并实测（§3.2）**：FCP 132–206ms（12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏 33–59 KB、点击延迟 1ms —— 静态风险因子未构成瓶颈。**LCP/CLS/INP 仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（已排除脚本缺陷，4 种启动模式一致；根因未完全隔离）；接 `npx lighthouse` 或 CrUX 可解除，属新增依赖待确认 |
 | XSS 危险 API | R10 / R13 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；**依赖 CVE 已由 UNKNOWN 转为 0** —— R13 `npm audit --audit-level=high` exit 0，npm registry 恢复，已覆盖新增的 `playwright` 依赖） |
 | 密钥泄露 | R11 | ✅ 完成（0 缺陷：产物 0 命中 / 源码 0 命中 / 环境注入点 0 / `.env` 未跟踪 / CI 无硬编码 / 自带 `checkSecrets()` 门禁） |
 | 交互态（七态） | R12 | ✅ 完成（P2-9 按钮 `:disabled` 缺失已修；P3-18 SVG aria、P3-19 `:active` 记录；触控目标 / 缩放 / 破坏性操作全达标） |
@@ -1242,3 +1295,4 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注（13 轮已全程如此，六簇覆盖无缺口）。R13 已用 Playwright 实测替代了部分 axe 能力（对比度、字号、标题尺寸、横向溢出），但**语义层规则**（表单 label 关联、`aria-*` 完整性、地标角色）仍无自动化覆盖。
 3. **新增（R13）：P2-11 六个角色色的修复路径** —— 二选一：(a) `.showcase__card-role` 提至 `≥18.66px + font-weight:700`（1 行，满足大文本 3:1，六色全过，代价是标签视觉权重加重）；(b) 加深六个角色色（6 行，在 JS 数据数组内，代价是标识色相偏移）。六色当前均为 3.14–4.23:1，全部 ≥3:1。
 4. **新增（R13）：P2-12 `--font-size-h5` 未定义** —— 二选一：(a) 定义该令牌（需给出取值，建议 `1.0625rem`，但 h3 仅变 17px，层级仍弱）；(b) 把 2 处 `<h3>` 改用 `--font-size-h3`（20px）并为另 2 处标题类元素定义 h5 令牌。当前 `mechanisms/index.html` 的 h3 渲染为 16px = 正文字号。
+5. **新增（R14）：是否允许 `npx lighthouse`（不入库依赖）以解除 LCP/CLS/INP 的 UNKNOWN？** R14 已实测 FCP 132–206ms、DOM ready 60–178ms、load 460–730ms、首屏资源 33–59 KB、点击延迟 1ms —— 全部远离阈值，故 UNKNOWN 不影响当前结论，但 LCP/CLS/INP 三项仍是空白。Lighthouse 自带可见性仿真，能绕过 headless 不产出这三类条目的限制（`npx` 临时拉取，不落 `package.json`）。不安装则维持 UNKNOWN 留档。
