@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R9 / 维度：核心网页指标（LCP / CLS / INP · 静态风险分析）（Lite 单维度循环第 9 项）
+> **轮次**：R10 / 维度：XSS 危险 API（innerHTML / eval / CSP 与安全头）（Lite 单维度循环第 10 项）
 > **日期**：2026-09-19
 
 ---
@@ -107,6 +107,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 元素一致性 · 焦点可见 | `tmp/focus-check.mjs`（产物 + 源码双扫）：`outline:none` 站点与其替代指示器配对、`:focus-visible` 声明唯一性、`tabindex` 取值合法性、`role="img"` 容器内含交互子元素（ARIA Children Presentational 陷阱）、交互元素 keydown 支持、skip-link | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-4 / P3-13）。`outline:none` 2 处均有替代指示器（CG 节点 stroke 变化、skip-link 自身外观变化）；正值 `tabindex` 0；skip-link 14/14；CG 节点有 `focus`/`blur`/`keydown(Enter+Space)` 完整处理（`CollaborationGraph.astro:317-331`）。**七态 / 目标 ≥24×24 / alt** 未在本轮检查（属 R12） |
 | 交互体验 · 键盘可达 | 同上：焦点陷阱风险扫描（`position:fixed` + `overflow:hidden` 层是否含焦点元素）、模态 / 抽屉焦点归还、Tab 顺序 | ✅ **Tab 无陷阱，模态焦点归还不适用**。焦点陷阱扫描仅命中 `HeroArt.astro:156 .hero-canvas`，该元素 `aria-hidden="true"` 且 `pointer-events:none`，内部无焦点元素 → 非陷阱。全站**无 `<dialog>` / `role="dialog"` / `aria-modal` / modal / drawer**，仅 2 处原生 `<details>/<summary>`（`Footer.astro:32`、`index.astro:497`），键盘可达为浏览器内建行为 → 模态焦点归还不适用。`prefers-reduced-motion`（R3 P3-2 已查）、`user-scalable` 缩放未在本轮检查（属 R12） |
 | 前端安全 | 外链 `rel=noopener`（随断链扫描顺带检查，134 条外链） | ✅ `target=_blank` 缺 `noopener` = 0；其余子项 ⏳ 待查（R6–R8：XSS 危险 API / CSP 与安全头 / 密钥进产物） |
+| 前端安全 · XSS | `tmp/xss-check.mjs`：7 类危险 API 全量扫描（`dangerouslySetInnerHTML` / `.innerHTML=` / `.outerHTML=` / `insertAdjacentHTML` / `document.write` / `eval(` / `new Function(`）+ 每个 sink 的 RHS 输入来源分类（静态字面量 / 内部生成 / 需人工核查）+ 8 类用户输入源存在性（`location.hash/search/href` / `URLSearchParams` / `localStorage` / `sessionStorage` / `document.cookie` / `dataTransfer` / `innerText` / `prompt()`）+ `postMessage`/`message` 事件 + CSP 与安全头 | ⚠️ **1 项 P2 已修 + 1 项 P3 已修**（§5 P2-8 `innerHTML` 未防护 sink、P3-17 无 CSP 与安全头）。**零可执行注入**：`dangerouslySetInnerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write`/`eval`/`new Function` 均 **0**；`innerHTML` 4 处全部为静态 SVG 字面量或字面量 const，**需人工核查 0**；**用户输入源 0**（营销站，无表单、无状态读取、无 URL 参数解析）；`postMessage` 0（无跨源消息 → `origin` 校验不适用）。**依赖高危 CVE = UNKNOWN**（`npm audit` 端点 503，npm registry 维护中） |
 
 ---
 
@@ -402,6 +403,55 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   <head> 内 preload:   15      ← 修复前 0
   ```
 - **Note**：**实测 LCP/CLS/INP 值仍为 UNKNOWN** —— 需 Playwright + Lighthouse 才能给出 ms 值（见 ③ 待决项）。本轮为静态风险分析：识别并修复风险因子，但无法证明阈值达标。只 preload Regular（400，正文与 LCP 候选字重）而不 preload Medium（500）：两者共享 `preconnect` 建立的同一连接，Medium 在 CSS 解析后即可在既有连接上取回，无需再付连接建立代价；同时避免把 1.47 MB 全部提升为高优先级请求与页面自身资源竞争带宽。`crossorigin` 为 `as="font"` 必需（字体按 CORS 加载）。
+
+#### P2-8 前端安全 · XSS — 符号矩阵 `innerHTML` sink 无结构防护（已修复）
+
+- **位置**：`site/src/components/HeroArt.astro:54-62`（修复前）
+- **问题**：Hero 区符号矩阵把 1120 个 `<span>`（`COLS=40` × `ROWS=28`）以字符串拼接后一次性赋给 `matrix.innerHTML`。字符串中混有 `style="..."` 属性，由 `+ delay + 's;--dur:' + dur + 's;opacity:' + opacity + ';'` 拼接而成。**当前无注入路径** —— `GLYPHS` 是硬编码数组，`delay`/`dur`/`opacity` 均为 `Math.random()` 经 `.toFixed()` 得到的纯数字字符串，全站亦无任何用户输入源。但这是 `innerHTML` + 属性字符串拼接的组合，**一旦后续改动把某个数字换成外部字符串（含 CSS 值）即成为注入点**，且当前代码没有任何结构性防线。OWASP 对此类 sink 的态度是「消除 sink」而非「审查输入」。
+- **Found（原文逐字，修复前）**：
+  ```js
+  // 生成 HTML：每个 glyph 用 span，随机 delay
+  let html = '';
+  for (let i = 0; i < total; i++) {
+    const ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    const delay = (Math.random() * 20).toFixed(2);
+    const dur = (8 + Math.random() * 12).toFixed(1);
+    const opacity = (0.04 + Math.random() * 0.08).toFixed(2);
+    html += '<span data-glyph class="sym" style="--sd:' + delay + 's;--dur:' + dur + 's;opacity:' + opacity + ';">' + ch + '</span>';
+  }
+  matrix.innerHTML = html;
+  ```
+- **Expected**：DOM 构造使用结构化 API（`createElement` / `textContent` / `style.setProperty`），文本与样式值不经过 HTML 解析器，`innerHTML` sink 不复存在。
+- **Fix（已入库，可复制）**：
+  ```js
+  // 生成符号矩阵：用 createElement + textContent 构造，避免 innerHTML 解析字符串
+  // （GLYPHS 与 delay/dur/opacity 均为字面量与 Math.random().toFixed() 数字，
+  //  当前无注入路径；改为结构化 API 后消除该 sink，杜绝后续改动引入回归）
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < total; i++) {
+    const ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    const delay = (Math.random() * 20).toFixed(2);
+    const dur = (8 + Math.random() * 12).toFixed(1);
+    const opacity = (0.04 + Math.random() * 0.08).toFixed(2);
+    const span = document.createElement('span');
+    span.dataset.glyph = '';
+    span.className = 'sym';
+    span.style.setProperty('--sd', delay + 's');
+    span.style.setProperty('--dur', dur + 's');
+    span.style.setProperty('opacity', opacity);
+    span.textContent = ch;
+    frag.appendChild(span);
+  }
+  matrix.appendChild(frag);
+  ```
+- **Basis**：OWASP XSS Prevention Cheat Sheet（「Use a safe API」优先于「Escape output」）；`检查要点 · 安全`（XSS 危险 API）。命令输出（`tmp/xss-check.mjs`）：
+  ```
+  === 2. 每个 innerHTML sink 的输入来源分类 ===
+  合计：静态/内部生成 4 | 注释 0 | 需人工核查 0
+  结果：需人工核查 sink 0 | 用户输入源 0 | postMessage 0
+  ```
+  产物核验：`dist/index.html` 中 `createElement`/`createDocumentFragment`/`setProperty`/`textContent` 均存在，`matrix.innerHTML` 已消失。
+- **Note**：**无 active 漏洞** —— 修复前也无注入路径（`tmp/xss-check.mjs` 第 3 节确认全站用户输入源为 0），定级 P2 的理由是「首页存在未防护 sink + 拼接 CSS 属性值」的组合风险，而非「当前可被利用」。`data-glyph` 属性经 grep 确认为**只写不读**（全仓库仅 1 处命中，即生成处本身），`span.dataset.glyph = ''` 与原始 `<span data-glyph>` 语义等价。保留它以免破坏潜在的 CSS 选择器依赖。`index.astro:838,842,848,852` 的 4 处 `innerHTML` **未改**：均为静态 SVG 字面量或字面量 const（`ICON_COPY`），单元素赋值无性能顾虑，改造属纯重构无安全收益。`npm run build` exit 0（15 页）。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -800,6 +850,43 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 - **Basis**：`检查要点 · 功能`（LCP≤2.5s）。命令输出：站点自产 472.3 KB vs 外部字体 1.47 MB，字体占比 75.7%。
 - **Note**：定级 P3 —— 体积大但站点自身体积极小（472 KB），且字体有 `font-display: swap` 不阻塞首屏文本；优化需引入子集化工具链或换字体源，属设计/授权决策，超「只改必要行」范围。另注：`--font-mono` 栈（JetBrains Mono / SF Mono / Menlo / Consolas）全为系统字体，**无网络加载成本**，等宽文本不占字体带宽。
 
+#### P3-17 前端安全 · 安全头 — 无任何 CSP 与安全响应头（已修复 · CSP 为务实基线）
+
+- **位置**：`site/public/_headers`（修复前不存在）→ 产物 `site/dist/_headers`
+- **问题**：全仓库无 `_headers` / `_redirects` / `netlify.toml` / `vercel.json`，无任何 `Content-Security-Policy` / `X-Frame-Options` / `X-Content-Type-Options` / `Referrer-Policy` 配置。部署目标为 GitHub Pages（`deploy.yml` → `actions/deploy-pages@v4`），原生支持 `_headers`。
+- **Found（修复前，命令输出）**：
+  ```
+  === CSP / 安全头 配置 ===
+  （无命中 —— 仅 scripts/setup.mjs 的 CSV 表头与 HTTP Accept 头，均无关）
+  === _headers / _redirects / netlify / vercel 配置 ===
+  （无输出 = 无托管方头配置文件）
+  ```
+- **Expected**：静态站至少具备 `nosniff`、`X-Frame-Options`、`Referrer-Policy` 与一条 CSP。
+- **Fix（已入库，可复制）**：新增 `site/public/_headers`（Astro 将 `public/` 原样拷入 `dist/` 根，与既有 `CNAME`、`favicon.svg` 同机制）：
+  ```
+  /*
+    X-Content-Type-Options: nosniff
+    X-Frame-Options: DENY
+    Referrer-Policy: strict-origin-when-cross-origin
+    Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+    Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' https://code.oppo.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'
+
+  /OPPOSansOS2-*.woff2
+    Cache-Control: public, max-age=86400
+  ```
+- **Basis**：`检查要点 · 安全`（CSP 与安全头）；OWASP Headers Cheat Sheet。命令输出（`tmp/xss-check.mjs`）：
+  ```
+  源码 public/_headers: ✓
+  产物 dist/_headers:   ✓
+  X-Content-Type-Options       ✓
+  X-Frame-Options              ✓
+  Referrer-Policy              ✓
+  Permissions-Policy           ✓
+  Content-Security-Policy      ✓
+  CSP 含 'unsafe-inline': 是 —— 见 Note
+  ```
+- **Note**：**CSP 是务实基线，不是强约束** —— `script-src` 与 `style-src` 均含 `'unsafe-inline'`，因为 Astro 会把 `.astro` 组件的 `<script>` / `<style>` 内联进 HTML（R9 已确认 `<head>` 内 `<script>` 为 0 但正文内有内联脚本，共 11.3 KB）。收紧 `'unsafe-inline'` 会打断复制按钮、Canvas 粒子与背景动画，需先把内联脚本抽为外部文件（Astro `hoist` / `<script>` 外提）—— 属结构调整，超本轮范围。即便如此，该 CSP 仍封住 `object-src 'none'`（插件内容）、`base-uri 'self'`（`<base>` 注入）、`form-action 'self'`（表单数据外泄）、`img-src`/`connect-src` 限制等攻击面。**无法本地验证响应头实际生效** —— GitHub Pages 才应用 `_headers`，本地 `astro preview` 不读取；受 AGENTS.md「静态站验证走产物级检查、不依赖活服务器」约束，仅验证了文件存在与语法。**`_headers` 不支持注释**（GitHub 文档未记载支持），故文件内无 `#` 注释，本条注释写在报告与提交信息中。
+
 ### 无发现记录（R2 空实现）
 
 | 检查项 | 范围 | 结果 |
@@ -868,7 +955,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
 | 核心网页指标（LCP/INP/CLS） | R9 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录；实测 ms 值 UNKNOWN 待 Playwright） |
-| XSS 危险 API | R10 | ⏳ |
+| XSS 危险 API | R10 | ✅ 完成（P2-8 消除 `innerHTML` sink；P3-17 补 CSP 与安全头；零可执行注入；依赖 CVE UNKNOWN） |
 | 密钥泄露 | R11 | ⏳ |
 | 交互态（七态） | R12 | ⏳ |
 | 视觉留档（③ 截图） | — | ⛔ **UNKNOWN**：需浏览器自动化依赖，待确认 |
