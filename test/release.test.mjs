@@ -170,6 +170,7 @@ test('release: 版本同步清单覆盖全部版本引用载体', () => {
     'knowledge/README.md',
     '.opencode/skills/men-status/SKILL.md',
     'docs/integrations/argus.md',
+    'scripts/skillhub-publish.mjs',
   ];
   for (const f of textMust) {
     assert.ok(VERSION_TEXT_FILES.includes(f), `${f} 必须在 VERSION_TEXT_FILES，否则发版会漏同步`);
