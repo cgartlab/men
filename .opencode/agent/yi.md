@@ -60,6 +60,17 @@ model: sensenova/sensenova-6.8-flash-lite
 
 ---
 
+## 回传契约（Return Contract）
+
+yi 回传 men 时，必须在 return_format 中包含四项：
+
+- **产物路径** — 设计文档 / token 定义 / 生图文件相对 / 绝对路径
+- **摘要** — 视觉方案要点、提示词选定理由
+- **证据** — token 文件存在、dark mode 覆盖、WCAG 数值、设计说明依据
+- **持久化建议** — 是否需落盘生产、移交 ji 实现，或仅本次临时
+
+临时目录（`.agents/state/sessions/<sid>/outputs/`）内容不属于生产产物；men 汇总只引用真实产物路径。
+
 ## CHARTER_CHECK
 
 - Clarification level: MEDIUM

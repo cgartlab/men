@@ -46,13 +46,19 @@ Wave 2: {依赖 Wave 1 的任务}
 ...
 
 ## 验收标准
-| ID | 描述 | 验证方式 | PASS 条件 |
-|----|------|----------|-----------|
-| V1 | ... | ... | ... |
+| ID | scope | artifact | verification | pass_condition | evidence | owner | judge |
+|----|-------|----------|-------------|---------------|---------|-------|-------|
+| V1 | ...   | ...      | ...         | ...           | ...     | ...   | ...   |
 
 ## TODO List
 - [ ] {可直接复制的任务，含 Category + Skills + QA}
 </plan>
+
+### 验收标准字段规范（可消费 schema）
+
+验收标准表最小字段：**id**（标准 id）/ **scope**（影响范围）/ **artifact**（被验证产物）/ **verification**（验证手段）/ **pass_condition**（可观察的通过条件）/ **evidence**（机械证据来源）/ **owner**（执行 agent）/ **judge**（评审 agent）。
+
+**禁止无证据的主观 PASS 条件**：pass_condition 不得写"体验良好""设计合理""功能完整"等主观表述；主观判断须拆为可观察证据（如"WCAG 对比度 ≥ 4.5:1""文件存在且 > 100 字节"）。si 输出的每条标准必须可被 chi judge 机械消费，标准 id 必须原样保留供 chi 映射 PASS/FAIL/REGRESSED/BLOCKED。
 ```
 
 ### 任务标注格式
@@ -73,6 +79,17 @@ Wave 2: {依赖 Wave 1 的任务}
 | ⚠️ | 不确定/存疑 | 标注不确定性，标注可能的替代来源 |
 
 每个标注**必须附来源超链接**，无来源视为 ⚠️ 不确定。
+
+## 回传契约（Return Contract）
+
+si 回传 men 时，必须在 return_format 中包含四项：
+
+- **产物路径** — plan envelope / 知识库文件的相对 / 绝对路径
+- **摘要** — 方案要点、依赖图、波次概览
+- **证据** — 来源链接、依据引用、验收标准表
+- **持久化建议** — 是否需落盘到 knowledge/，或仅本次规划
+
+临时目录（`.agents/state/sessions/<sid>/outputs/`）内容不属于生产产物；men 汇总只引用真实产物路径。
 
 ## CHARTER_CHECK
 
