@@ -3,7 +3,7 @@
 > **审查对象**：`@cgartlab/men` v0.5.0 文档站（`site/`，Astro 7.2.9，静态输出）
 > **代码基数**：`site/src` 共 31 个源文件（14 `.astro` 页面 + 13 `.astro` 组件 + `global.css` 1340 行 + 3 数据文件）；构建产物 14 页 / 21 个文件
 > **审查方式**：产物级机械检查为主（不启动常驻服务器，遵守 `AGENTS.md` 进程红线），源码 `file:line` 定位为辅
-> **轮次**：R8 / 维度：错误容错（404 · 空态 · error boundary · 防重复提交）（Lite 单维度循环第 8 项）
+> **轮次**：R9 / 维度：核心网页指标（LCP / CLS / INP · 静态风险分析）（Lite 单维度循环第 9 项）
 > **日期**：2026-09-19
 
 ---
@@ -99,6 +99,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 |----|-----------|------|
 | 功能稳定 | 断链 / 锚点 / src 可达性（`tmp/link-check.mjs`）+ 空实现 / skip-link / 空跳模式（`tmp/empty-check*.mjs`），产物 14 页全量扫描 | ✅ **断链 0 / 锚点缺失 0 / src 缺失 0 / 空实现 0**（修复前 2 处锚点缺失，见 §5 P1-1）。查了什么：`<a>` 462 个的 href 形态、12 个 `<button>` 的处理器接线、`<form>`/`<input>`/`<select>` 存在性（0 个）、`window.open('')` / `location.href='#'` / `void(0)` / `alert()` 占位、`TODO`/`FIXME` 标记（7 命中全为误报）。表单防重复提交与 error boundary：**不适用**（站点无表单、无客户端路由） |
 | 功能稳定 · 错误容错 | `tmp/error-check.mjs`（产物 + 源码双扫）：404 页存在性（源码与产物）、空 `catch{}` / 空 `.catch` 回调静默吞错、错误文案是否含修法指引、`<form>` 存在性、`try`/`catch` 配对、客户端水合与 Error Boundary、空态文案 | ⚠️ **2 项 P2 已修**（§5 P2-5 空 catch 静默吞错、P2-6 无 404 页）。404 页已补（`site/src/pages/404.astro` → 产物 `dist/404.html` 9209 字节，含 h1 / 回站入口 / skip-link）；页面数 14 → 15。**表单防重复提交不适用**（`<form>` 0 个）；**error boundary 不适用**（纯静态 SSR，无 `astro:*` 客户端水合、无客户端路由，构建期错误在 `npm run build` 阶段暴露）；**空态不适用**（文档/角色/机制均为静态数据页，无运行时数据加载）。另更正 R2 记录：copy 按钮实际 **3 个**（`index.astro:158,172,187`），R2 误记为 7 |
+| 功能稳定 · 核心网页指标 | `tmp/cwv-check.mjs`：LCP 候选与阻塞资源、CLS 风险因子（无宽高图片 / `font-display` / `100vh`）、INP 风险因子（内联 JS 体积 / rAF / `will-change`）、资源总体积、`preconnect`/`preload`/`modulepreload`/`fetchpriority` 存在性 | ⚠️ **1 项 P2 已修**（§5 P2-7 外部字体 1.47 MB 无 `preconnect`/`preload`）+ 2 项 P3 记录（P3-15 `font-display: swap` 回流、P3-16 单字体 744 KB）。**实测 LCP/CLS/INP 值 = UNKNOWN**（需 Playwright + Lighthouse，见 ③ 待决项）。查了什么：`<img>` 0 个、`<canvas>` 1 个、渲染阻塞 CSS 1 个/页、`<head>` 内 `<script>` 0 个（无渲染阻塞 JS）、`100vh` 0 处（无移动端地址栏 CLS）、内联 JS 15 页共 11.3 KB（单页最大 6.7 KB）、`requestAnimationFrame` 16 处、`will-change` 1 处、站点自产资源合计 472.3 KB |
 | 样式代码 | `!important` 全量（源码 18 → 产物 10）+ 内联 `style=` 17 处逐条人工判读 + `--color-accent` 令牌定义唯一性 + 双主题令牌存在性 | ✅ 4 项缺陷已修复（§5 P3-1～P3-4）。内联 17 处中 13 处合法（CSS 变量注入逐项动态值：`--delay` / `--wave-delay` / `--card-accent: ${a.color}` / `--sd` / `--dur` / `opacity`，均由循环或数据驱动，无法静态提取为类）。产物 `!important` 10 处**全部位于 `@media (prefers-reduced-motion: reduce)`**，属该场景的正当用法。**新发现：站点为单主题（仅浅色）** → P3-5 |
 | 样式代码 · 裸色值 | `tmp/color-check.mjs` 全量分类（BARE / SVG_ATTR / TOKEN_DEF 三类）+ 令牌定义块 `global.css:107-160` 对照 | 源码 166 个色值 → BARE 116 + SVG_ATTR 8 + TOKEN_DEF 31（**令牌定义按规则不报**）；剔除 5 处误报（1 处注释 `BackgroundCanvas.astro:5`、4 处 issue 编号 `releases.astro:144/147/148/149`）后 **119 处属可报告语境**。其中 **10 处主强调色 `#e85d04` 绕过令牌已修复**（P3-7）、**1 处 canvas 兜底值与令牌不符已修复**（P3-6）；残留 108 处分 4 类记录（P3-8），终端 chrome 配色与 macOS 红绿灯为刻意独立的视觉语言，本轮不改造 |
 | 信息排版 · 标题层级 | `tmp/heading-check.mjs` + `tmp/heading-check2.mjs`（产物级 14 页全量）：h1 唯一性、逐级差 ≤1、空标题、标题嵌套、`nav`/`aside` 内 h-tag 误用、标题文本长度 | ✅ **完全合规，0 缺陷**（详见 §5 无发现记录 R5）。14/14 页各恰好 1 个 h1；跳级 0；空标题 0；嵌套 0；目录容器内 h-tag 0；超 60 字标题 0。8 个文档页 h1 由 `WikiDoc.astro:35` / `WikiManual` 组件以 `title` prop 注入，非硬编码 |
@@ -363,6 +364,44 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   ```
   `npm run build` 输出 `/404.html (+8ms)`，页面数 14 → 15；`tmp/heading-check.mjs` 复核 15 页 15 个 h1，跳级 0。
 - **Note**：R1 抽样规则中已把「404 无自定义」记为抽样缺口（③ 视觉留档的采样盲区），R8 将其升级为实际缺陷并修复。新增页面不引入新路由（404 为特殊路由）、不改令牌语义、不重做视觉风格 —— 复用 `BaseLayout` 与 `.btn` 既有组件。
+
+#### P2-7 功能稳定 · 核心网页指标 — 1.47 MB 外部字体无 `preconnect`/`preload`，最低优先级加载（已修复）
+
+- **位置**：`site/src/layouts/BaseLayout.astro:22-24`（修复前 `<head>` 无字体预连接）；字体声明 `site/src/styles/global.css:9-22`
+- **问题**：站点自产资源合计仅 **472.3 KB**（15 页 HTML 374.5 + CSS 97.1 + SVG 0.7），但 `@font-face` 从 `https://code.oppo.com` 拉取 **2 个 woff2，各 744,800 字节 = 1.47 MB**，是站点自身体积的 **3.1 倍**。修复前 `<head>` 中 `preconnect`/`preload`/`modulepreload`/`fetchpriority` 均为 0 —— 字体请求要等 CSS 解析完才能发起，且需先完成 DNS + TCP + TLS 三次握手。1 Mbps 链路上 1.47 MB ≈ 11.8 s 传输。
+- **Found（修复前，命令输出）**：
+  ```
+  <head> 内 preconnect: 0
+  <head> 内 preload:   0
+  <head> 内 modulepreload: 0
+  fetchpriority 属性:  0
+  ```
+  字体可达性实测（`Invoke-WebRequest -Method Head`）：
+  ```
+  DNS  code.oppo.com → 106.3.18.178 (TTL 1200)
+  HTTP Status 200  Length 744800  Type application/octet-stream
+  ```
+- **Expected**：`preconnect` 提前建立到字体源的连接；LCP 候选字重 `preload` 提升优先级。
+- **Fix（已入库，可复制）**：
+  ```html
+  <!-- 外部字体预连接：OPPO Sans woff2 由 code.oppo.com 提供，每个约 744KB。
+       preconnect 提前建立 DNS+TCP+TLS，preload 提升 Regular（正文 LCP 候选）优先级。
+       Medium 字重不 preload —— 两者共享同一连接，CSS 解析后即可在既有连接上取回。 -->
+  <link rel="preconnect" href="https://code.oppo.com" crossorigin />
+  <link
+    rel="preload"
+    as="font"
+    type="font/woff2"
+    crossorigin
+    href="https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Regular.woff2"
+  />
+  ```
+- **Basis**：`检查要点 · 功能`（LCP≤2.5s）；web.dev「Preconnect to origin」与「Preload fonts」。命令输出（`tmp/cwv-check.mjs`）：
+  ```
+  <head> 内 preconnect: 15     ← 修复前 0
+  <head> 内 preload:   15      ← 修复前 0
+  ```
+- **Note**：**实测 LCP/CLS/INP 值仍为 UNKNOWN** —— 需 Playwright + Lighthouse 才能给出 ms 值（见 ③ 待决项）。本轮为静态风险分析：识别并修复风险因子，但无法证明阈值达标。只 preload Regular（400，正文与 LCP 候选字重）而不 preload Medium（500）：两者共享 `preconnect` 建立的同一连接，Medium 在 CSS 解析后即可在既有连接上取回，无需再付连接建立代价；同时避免把 1.47 MB 全部提升为高优先级请求与页面自身资源竞争带宽。`crossorigin` 为 `as="font"` 必需（字体按 CORS 加载）。
 
 ### P3（R3 · `!important` 与内联样式滥用）
 
@@ -723,6 +762,44 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
   ```
 - **Note**：`.skip-link:focus` 特异性 `0,1,1` 高于全局 `:focus-visible` 的 `0,1,0`，因此 outline 确实被关闭；替代指示器为元素位移 + 高对比度背景。定级 P3（合规实现，仅留档防未来回归）。
 
+#### P3-15 功能稳定 · 核心网页指标 — `font-display: swap` 字体回流导致 CLS（未修 · 已缓解）
+
+- **位置**：`site/src/styles/global.css:14,21`
+- **问题**：两个 `@font-face` 均用 `font-display: swap`。字体加载期间文本用回退栈（`"PingFang SC", "Microsoft YaHei", system-ui, sans-serif`）渲染，字体到达后**整页文本回流** = CLS 来源。单字体 744 KB，在多数链路上几乎必然晚于首屏。
+- **Found（原文逐字）**：
+  ```css
+  @font-face {
+    font-family: "OPPO Sans";
+    src: url("https://code.oppo.com/.../OPPOSansOS2-5000-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-display: swap;
+  }
+  ```
+- **Expected**：将 CLS 控制在 0.1 以内。
+- **Fix**：**本轮不改**。`swap` → `optional` 可消除回流，但 `optional` 的语义是「若 100 ms 内未就绪则永不交换」—— 744 KB 字体在 100 ms 内几乎不可能就绪，等于**站点永远用回退字体**，自定义字体形同虚设。已用 P2-7 的 `preconnect` + `preload` 缩短字体到达时间作为缓解手段。
+- **Basis**：`检查要点 · 功能`（CLS≤0.1）。命令输出：
+  ```
+  font-display 分布: {"swap":2}
+    swap   → 字体加载后文本回流 = CLS 来源（字体 744KB/个，极可能晚于首屏）
+  ```
+- **Note**：回退栈为 CJK 字体（PingFang SC / Microsoft YaHei），与 OPPO Sans 同为方块字，字形度量差异有限，故回流幅度有界（远小于西文比例字体换等宽的回流）。但 CJK 字体的字距与行高差异仍会产生可测量 CLS —— **实际幅度需 Playwright 实测才能判定是否超过 0.1**，本轮标记 UNKNOWN。定级 P3：已合规的字体加载策略 + 已有缓解，非当前最优但无更好低成本选项。
+
+#### P3-16 功能稳定 · 核心网页指标 — 单字体文件 744 KB 偏大（未修 · 需设计决策）
+
+- **位置**：`site/src/styles/global.css:11,18`
+- **问题**：单个 woff2 文件 744,800 字节，是常规 woff2（10–100 KB）的 **7–74 倍**。注释说明「覆盖约 5000 常用字，生僻字自动降级系统字体」—— 即已做过字符集裁剪，但 5000 字仍导致体积巨大。
+- **Found（原文逐字）**：
+  ```css
+  /* OPPO Sans（免费商用 · 官方 CDN woff2，覆盖约 5000 常用字，生僻字自动降级系统字体） */
+  ```
+  实测：`HTTP Length 744800`（2 个字重各一份 = 1.47 MB）。
+- **Expected**：字体体积应与服务端传输成本相称。
+- **Fix（建议，本轮不改）**：
+  1. `unicode-range` 分片 —— 将 5000 字按常用度拆为多份 `@font-face`，浏览器只下载当前文本实际用到的分片（Google Fonts 的标准做法）；
+  2. 或改用已做子集化的第三方分发（需评估 OPPO Sans 的授权范围是否允许二次分发与子集化）。
+- **Basis**：`检查要点 · 功能`（LCP≤2.5s）。命令输出：站点自产 472.3 KB vs 外部字体 1.47 MB，字体占比 75.7%。
+- **Note**：定级 P3 —— 体积大但站点自身体积极小（472 KB），且字体有 `font-display: swap` 不阻塞首屏文本；优化需引入子集化工具链或换字体源，属设计/授权决策，超「只改必要行」范围。另注：`--font-mono` 栈（JetBrains Mono / SF Mono / Menlo / Consolas）全为系统字体，**无网络加载成本**，等宽文本不占字体带宽。
+
 ### 无发现记录（R2 空实现）
 
 | 检查项 | 范围 | 结果 |
@@ -790,7 +867,7 @@ R3 审查令牌时发现**站点为单主题（仅浅色）**：无 `@media (pre
 | 对比度 | R6 | ✅ 完成（P2-1/P2-2 共 12 处已修；P2-3 待逐元素背景分析；P3-10～P3-12 记录） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
-| 核心网页指标（LCP/INP/CLS） | R9 | ⏳ |
+| 核心网页指标（LCP/INP/CLS） | R9 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录；实测 ms 值 UNKNOWN 待 Playwright） |
 | XSS 危险 API | R10 | ⏳ |
 | 密钥泄露 | R11 | ⏳ |
 | 交互态（七态） | R12 | ⏳ |
