@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { parseArgs, parseFrontmatter, readDefaultChangelog } from '../scripts/skillhub-publish.mjs';
+import { parseArgs, parseFrontmatter, readDefaultChangelog, main, CLI_VERSION } from '../scripts/skillhub-publish.mjs';
 
 const REPO_ROOT = fileURLToPath(new URL('../', import.meta.url));
 
@@ -59,4 +59,47 @@ test('skillhub blackbox: missing SKILL.md exits 2', () => {
     { cwd: REPO_ROOT, encoding: 'utf-8', shell: false, timeout: 10_000 },
   );
   assert.strictEqual(r.status, 2, `stdout: ${r.stdout} stderr: ${r.stderr}`);
+});
+
+test('skillhub parseArgs: unknown arg captured', () => {
+  const r = parseArgs(['node', 'script.mjs', 'skill', 'extra-positional']);
+  assert.strictEqual(r.skillDir, 'skill');
+  assert.strictEqual(r.unknownArg, 'extra-positional');
+});
+
+test('skillhub parseArgs: --version flag', () => {
+  const r = parseArgs(['node', 'script.mjs', '--version']);
+  assert.strictEqual(r.version, true);
+  assert.strictEqual(r.help, false);
+});
+
+test('skillhub parseFrontmatter: invalid version format rejected', () => {
+  const r = parseFrontmatter('---\nslug: s\ndisplayName: D\nversion: 1.2\nsummary: S\nlicense: MIT\n---\n');
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('version')));
+});
+
+test('skillhub blackbox: --version exits 0 and prints version', () => {
+  const r = spawnSync(
+    process.execPath,
+    [`${REPO_ROOT}scripts/skillhub-publish.mjs`, '--version'],
+    { cwd: REPO_ROOT, encoding: 'utf-8', shell: false, timeout: 10_000 },
+  );
+  assert.strictEqual(r.status, 0, `stderr: ${r.stderr}`);
+  assert.strictEqual(r.stdout.trim(), CLI_VERSION);
+});
+
+test('skillhub main: token-less non-dry-run returns error', () => {
+  const r = main(['node', 'script.mjs', '.opencode/skills/men-status']);
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.exitCode, 2);
+  assert.ok(r.error.includes('token'));
+});
+
+test('skillhub main: dry-run without token skips token check (CLI not installed)', () => {
+  const r = main(['node', 'script.mjs', '.opencode/skills/men-status', '--dry-run', '--json']);
+  // dry-run 不需要 token，应跳过 token 检查（exit 2），但 CLI 未安装会导致 publish 失败（exit 1）
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.exitCode, 1); // 不是 2（token 错误），说明 token 检查已通过
+  assert.strictEqual(r.result.dryRun, true);
 });

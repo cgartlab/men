@@ -17,8 +17,10 @@
  *
  * 流程：
  *   1. 校验 SKILL.md frontmatter 必需字段
- *   2. 调用 skillhub login --key --host
+ *   2. 通过环境变量 SKILLHUB_TOKEN / SKILLHUB_API_KEY 传递 API token（CLI 自动读取）
  *   3. 调用 skillhub publish <skill-dir> [--dry-run] --changelog ...
+ *
+ * 注意：CLI 不要求单独 login 步骤，token 通过 env 传递即生效。
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -30,6 +32,7 @@ const DEFAULT_HOST = "https://api.skillhub.cn";
 const DEFAULT_CLI = "skillhub";
 const REQUIRED_FRONTMATTER = ["slug", "displayName", "version", "summary", "license"];
 const CHANGELOG_VERSION_RE = /^## \[v?(\d+\.\d+\.\d+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/m;
+export const CLI_VERSION = "0.5.0";
 
 export function printHelp() {
   process.stdout.write(`men（门）Agent 团队 — SkillHub 发布器
@@ -45,6 +48,7 @@ export function printHelp() {
   --token <skh_...>    API token；默认读取 SKILLHUB_TOKEN / SKILLHUB_API_KEY
   --cli <path>         skillhub CLI 路径；默认使用 PATH 中的 skillhub
   --help, -h           显示本帮助
+   --version, -v        显示版本号
 
 前置条件:
   SKILL.md frontmatter 必须包含 slug/displayName/version/summary/license。
@@ -63,12 +67,14 @@ export function parseArgs(argv) {
     token: process.env.SKILLHUB_TOKEN || process.env.SKILLHUB_API_KEY || "",
     cli: DEFAULT_CLI,
     help: false,
+    version: false,
     unknownArg: null,
   };
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--help" || a === "-h") out.help = true;
+    else if (a === "--version" || a === "-v") out.version = true;
     else if (a === "--dry-run") out.dryRun = true;
     else if (a === "--json") out.json = true;
     else if (a === "--changelog") out.changelog = args[++i] || null;
@@ -136,6 +142,10 @@ export function main(argv = process.argv) {
   if (argv.includes("--help") || argv.includes("-h")) {
     printHelp();
     return { ok: true, exitCode: 0, help: true };
+  }
+  if (argv.includes("--version") || argv.includes("-v")) {
+    process.stdout.write(`${CLI_VERSION}\n`);
+    return { ok: true, exitCode: 0, version: true };
   }
 
   const cfg = parseArgs(argv);
