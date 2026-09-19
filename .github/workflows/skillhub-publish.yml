@@ -1,0 +1,59 @@
+name: SkillHub Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      skill-dir:
+        description: "Skill 目录（相对仓库根）"
+        required: true
+        default: ".opencode/skills/men-status"
+      changelog:
+        description: "SkillHub changelog"
+        required: false
+        default: "Auto publish from men repository"
+      dry-run:
+        description: "只执行本地预检，不发布"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skillhub-publish-${{ inputs.skill-dir }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SKILLHUB_HOST: "https://api.skillhub.cn"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install SkillHub CLI
+        run: |
+          curl -fsSL https://skillhub.cn/install/install.sh | bash -s -- --cli-only
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          skillhub --version
+
+      - name: Publish to SkillHub
+        env:
+          SKILLHUB_TOKEN: *** secrets.SKILLHUB_API_KEY }}
+          SKILL_DIR: ${{ inputs.skill-dir }}
+          CHANGELOG: ${{ inputs.changelog }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          ARGS="$SKILL_DIR --host $SKILLHUB_HOST --changelog \"$CHANGELOG\""
+          if [ "$DRY_RUN" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          node scripts/skillhub-publish.mjs $ARGS --json

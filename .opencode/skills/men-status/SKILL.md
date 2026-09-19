@@ -1,4 +1,9 @@
 ---
+slug: cgartlab-men-status
+displayName: Men Status
+version: 0.5.0
+summary: "Men 状态报告：版本、更新检查、忽略版本、Agent 名单与配置健康。"
+license: MIT
 name: men-status
 description: "Use when checking the current status of the men agent team — version, last update check, ignored version, agent roster, configuration health. 触发关键词：状态、版本、men-status、status、配置健康、agent 名单。Don't call when the user wants to actually update the repository (use men-update), or when the task is a full mechanical verification of deliverables (use chi-judge)."
 ---
