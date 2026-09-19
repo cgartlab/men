@@ -612,9 +612,9 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   令牌实测（`tmp/ratio-check.mjs`）：`--color-accent-on-accent #0a0a0a on #e85d04 = 5.66:1`，≥4.5:1 达标。`hover` 态为 `color-mix(--color-accent 85%, #fff)`（更浅底 + 深色字），对比度只升不降。
 - **Note**：定级 P2（WCAG AA 违规不低于 P2）。截图证据：`home-1440.png` hero 区徽标与两枚 CTA。本条与 P3-20 有因果关系：令牌注释声称 `#0a0a0a` 在橘底为 8.8:1，实测 5.66:1（失准 3.14）—— 但即便按实测值仍达标，故修复有效。
 
-#### P2-11 信息排版 · 对比度 — 六个角色色在 14px 正文上不达 4.5:1（未修 · 需设计决策）
+#### P2-11 信息排版 · 对比度 — 六个角色色在 14px 正文上不达 4.5:1（R20 已修复 · 路径 a 大文本资格）
 
-- **位置**：`site/src/pages/index.astro:41,51,61,71,81,91`（JS 数据里的角色色）→ `:208` `style={--card-accent: ${a.color}}` → `.showcase__card-role` 文本
+- **位置**：`site/src/pages/index.astro:618` `.showcase__card-role`（原 14px / weight 600）
 - **问题**：六个 Agent 角色标签（14px 常规字重，白卡 `#ffffff` 底）全部低于 AA 正文阈值：
   | 角色色 | 角色 | 实测 |
   |---|---|---|
@@ -624,21 +624,20 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   | `#2ea043` | ji 工程 | **3.37:1** ✗ |
   | `#e85d04` | men 编排 | **3.50:1** ✗ |
   | `#8b5cf6` | xun 研究 | **4.23:1** ✗ |
-- **Expected**：正文阈值 4.5:1，或使文本满足**大文本**资格（≥24px，或 ≥18.66px 且字重 ≥700）以降至 3:1 阈值。
-- **Fix**：**本轮不改**（需设计决策）。关键事实：**六个颜色在 3:1 阈值下全部达标**（最低 `#bf8700` = 3.14:1 ≥ 3.0）。因此有两条互斥路径，都需要确认：
-  1. **改字号/字重**（1 行）：`.showcase__card-role` 提至 `≥18.66px + font-weight:700`，即满足大文本 3:1，六色全过。代价：角色标签视觉权重明显加重。
-  2. **加深六个角色色**（**R15 后已降为 6 行**，改 `global.css:135-139` 的 `--role-*` 令牌即可）：保持字号不变。代价：六个 Agent 的标识色相偏移。~~与 P3-8「角色色双源真相」的重构耦合~~ → **R15 已解除该耦合**：P3-8 建立单一真相源后，改一处令牌即同时作用于卡片与拓扑图，不再需要协调两个真相源。
-  两条都触及「不重做视觉风格」边界，故交回设计决策。**R15 结论：路径 2 的执行成本已显著下降，但色相偏移属设计取舍，仍需确认。**
-- **Basis**：WCAG 2.2 §1.4.3（正文 4.5:1）与 §1.4.6（大文本 3:1）。命令输出（`site/scripts/tiny-text-audit.mjs` + `tmp/ratio-check.mjs`）：
+- **Fix（R20 已入库，1 行修改 + 1 行删除）**：采用**路径 a（大文本资格）**——`.showcase__card-role` 从 `font-size: var(--font-size-caption)`（14px）+ `font-weight: var(--font-weight-semi)`（600）改为 `font-size: var(--font-size-h3)`（20px）+ `font-weight: var(--font-weight-bold)`（700）。20px ≥ 18.66px 且 700 ≥ 700 → 满足 WCAG 大文本资格 → 3:1 阈值适用 → 六色全过（最低 3.14:1 ≥ 3.0）。同时删除 `.showcase__card--team .showcase__card-role { font-size: var(--font-size-h4); }` 覆盖（原 17px 也不达标，删除后团队卡继承基规则 20px）。
+- **Found（修复后实测，`site/scripts/p2-11-verify.mjs`）**：
   ```
-  3.14:1  14px  #bf8700 on #ffffff  <showcase__card-role>"数据/投资评审 / Judge"
-  3.34:1  14px  #4a90d9 on #ffffff  <showcase__card-role>"思考与知识管理"
-  3.35:1  14px  #a371f7 on #ffffff  <showcase__card-role>"文生图与审美"
-  3.37:1  14px  #2ea043 on #ffffff  <showcase__card-role>"代码与工程"
-  3.50:1  14px  #e85d04 on #ffffff  <showcase__card-role>"编排与路由核心"
-  4.23:1  14px  #8b5cf6 on #ffffff  <showcase__card-role>"搜索与研究"
+  [men]   20px weight=700 largeText=✓ text="编排与路由核心"
+  [si]    20px weight=700 largeText=✓ text="思考与知识管理"
+  [ji]    20px weight=700 largeText=✓ text="代码与工程"
+  [chi]   20px weight=700 largeText=✓ text="数据/投资评审 / Judge"
+  [yi]    20px weight=700 largeText=✓ text="文生图与审美"
+  [xun]   20px weight=700 largeText=✓ text="搜索与研究"
+  [team]  20px weight=700 largeText=✓ text="团队特性"
+  ✅ 全部满足大文本资格 → 3:1 阈值适用
   ```
-- **Note**：定级 P2（WCAG AA 违规不低于 P2），非 P1 —— 六个颜色均在 3:1 以上，大文本阈值可达，且角色标签是辅助信息而非唯一信息载体（卡片同时有图标、名称、职责描述）。截图证据：`home-1440.png` 展示卡片区。与 **P3-8**（角色色双源真相）同源但不同维度：P3-8 是「颜色值分散在 JS 与 CSS」的架构债（**R15 已修复**），本条是「颜色本身不达对比度」的 AA 违规（**仍未修**）。两者已解耦 —— P3-8 的重构反而降低了本条的修复成本。
+- **Basis**：WCAG 2.2 §1.4.3（正文 4.5:1）与 §1.4.6（大文本 3:1）。六色在 3:1 下全过（3.14–4.23:1）。路径 a 不改任何色值，对拓扑图/卡片图标/其他使用 `--role-*` 的元素零影响。
+- **Note**：定级 P2（WCAG AA 违规不低于 P2）。选择路径 a 而非路径 b（加深色值）的理由：(1) 不改色值 → 对拓扑图/卡片图标零影响，最符合「不重做视觉风格」约束；(2) 1 行修改 vs 6 行令牌改动，更小；(3) 角色标签 14→20px 的视觉变化限于标签文字本身，且角色标签本就是子标题性质，增大字重是合理的层级强化。截图证据：`home-1440.png` 展示卡片区（修复前 14px → 修复后 20px+700）。与 P3-8（R15 已修）已解耦：P3-8 建立的单一真相源使本条只需改 1 行 CSS，无需协调两个真相源。
 
 #### P2-12 信息排版 · 标题层级 — `--font-size-h5` 从未定义，4 处使用导致标题退化（R18 已修复 · 定义令牌 `1rem`）
 
@@ -1311,7 +1310,7 @@ R15–R19 集中在样式/排版簇修复 P2/P3。R20 按规则「连续两轮�
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 / R15 | ✅ 完成（P3-6/P3-7 已修 11 处；**P3-8 双源真相 R15 已重构**：新增 `--role-*` 令牌，角色色字面量 36→5，27 项浏览器断言零漂移；P3-9 合法字面量留档） |
 | 标题层级 | R5 / R18 | ✅ 完成（DOM 语义 0 缺陷；**P2-12 `--font-size-h5` 未定义 R18 已修**：定义 `1rem`，4 处标题退化修正，3/4 零变化、1 处 14px→16px） |
-| 对比度 | R6 / R13 / R16 / R17 / R19 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10 死令牌保留 2 枚（属文档化梯度）。**P3-12/P3-20 令牌注释失准 R16 已修**：11 处声称值 8 失准改为实算值 + 组注释修正 + `token-ratio-check.mjs` 防回归。**P3-11/P3-22 死 CSS R17 已修**：删除 `.oc-hero-art` 死规则块（25 行）+ `.site-footer__legal` 三重规则去重（删 6 行）。**P3-21 死令牌 R19 已修**：删除 `--color-accent-on-accent-soft`（冗余重复）+ `--font-size-eyebrow-rail`（10px 可访问性陷阱），保留 P3-10 的 2 枚（属文档化梯度）。R13 实测不合格总数 21→6） |
+| 对比度 | R6 / R13 / R16 / R17 / R19 / R20 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；**P2-11 六个角色色 R20 已修**：路径 a 大文本资格——`.showcase__card-role` 从 14px/600 改为 20px/700，六色 3.14–4.23:1 全过 3:1 阈值，不改任何色值；P3-10 死令牌保留 2 枚。**P3-12/P3-20 令牌注释失准 R16 已修** + `token-ratio-check.mjs` 防回归。**P3-11/P3-22 死 CSS R17 已修**。**P3-21 死令牌 R19 已修**：删除 2 枚冗余。**P2-12 `--font-size-h5` R18 已修**：定义 `1rem`。小字号对比度不合格总数：**21 → 6 → 0**（R13 实测 6 处全为 P2-11 角色色，R20 修复后归零） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
 | 核心网页指标（LCP/INP/CLS） | R9 / R14 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录）。**R14 已装 Playwright 并实测（§3.2）**：FCP 132–206ms（12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏 33–59 KB、点击延迟 1ms —— 静态风险因子未构成瓶颈。**LCP/CLS/INP 仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（已排除脚本缺陷，4 种启动模式一致；根因未完全隔离）；接 `npx lighthouse` 或 CrUX 可解除，属新增依赖待确认 |
@@ -1326,6 +1325,6 @@ R15–R19 集中在样式/排版簇修复 P2/P3。R20 按规则「连续两轮�
 
 1. ~~**是否允许 `npm i -D playwright`**~~ → **R13 已确认并已执行**：`npm i -D playwright` 已入库（`site/package.json` / `site/package-lock.json`），Chromium 经 `npx playwright install chromium` 装到 `C:\Users\cgart\AppData\Local\ms-playwright`（不进仓库）。12 张截图已产出。**明暗维度按实证判为 N/A**（`global.css:36 color-scheme: light`、`prefers-color-scheme` 媒体查询 0 处），未产出重复图。
 2. **是否允许新增 `axe-core` / `stylelint`** 以补齐 ② 的可访问性与样式规则自动化？否则沿用 grep + 自研脚本并标注（13 轮已全程如此，六簇覆盖无缺口）。R13 已用 Playwright 实测替代了部分 axe 能力（对比度、字号、标题尺寸、横向溢出），但**语义层规则**（表单 label 关联、`aria-*` 完整性、地标角色）仍无自动化覆盖。
-3. **新增（R13）：P2-11 六个角色色的修复路径** —— 二选一：(a) `.showcase__card-role` 提至 `≥18.66px + font-weight:700`（1 行，满足大文本 3:1，六色全过，代价是标签视觉权重加重）；(b) 加深六个角色色（**R15 后已简化**：P3-8 单一真相源建立后，只需改 `global.css:135-139` 的 6 行 `--role-*` 令牌，卡片与拓扑图同时生效，代价是六个 Agent 的标识色相偏移）。六色当前均为 3.14–4.23:1，全部 ≥3:1。R15 已做的前置：P3-8 双源真相重构完成，路径 (b) 不再需要协调两个真相源。
+3. ~~**新增（R13）：P2-11 六个角色色的修复路径**~~ → **R20 已修复（路径 a）**：`.showcase__card-role` 从 `font-size: var(--font-size-caption)`（14px）+ `font-weight: 600` 改为 `font-size: var(--font-size-h3)`（20px）+ `font-weight: 700` → 大文本资格 → 3:1 阈值 → 六色全过。不改任何色值，对拓扑图/卡片图标零影响。`p2-11-verify.mjs` 实测 7 张卡全部 20px/700 大文本 ✓。
 4. ~~**新增（R13）：P2-12 `--font-size-h5` 未定义**~~ → **R18 已修复**：定义 `--font-size-h5: 1rem`（16px）。取值依据：标题级 h1(30) > h2(24) > h3(20) > h4(17) > body(16) > caption(14)，h5 自然落在 h4 与 body 之间，间隙仅 1px，取 `1rem`（= body）—— 最小标题以字重区分。4 处使用点中 3 处零视觉变化（继承值 = 令牌值 = 16px），1 处 `.wiki-infobox__title` 从 14px→16px（修正了退化至 caption 字号的 bug）。R13 原建议 `1.0625rem`（17px）会造成 h5 = h4 重复，`1rem` 更合理。`h5-measure.mjs` 实测验证。
 5. **新增（R14）：是否允许 `npx lighthouse`（不入库依赖）以解除 LCP/CLS/INP 的 UNKNOWN？** R14 已实测 FCP 132–206ms、DOM ready 60–178ms、load 460–730ms、首屏资源 33–59 KB、点击延迟 1ms —— 全部远离阈值，故 UNKNOWN 不影响当前结论，但 LCP/CLS/INP 三项仍是空白。Lighthouse 自带可见性仿真，能绕过 headless 不产出这三类条目的限制（`npx` 临时拉取，不落 `package.json`）。不安装则维持 UNKNOWN 留档。
