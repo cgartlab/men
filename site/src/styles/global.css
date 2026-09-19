@@ -458,6 +458,23 @@ main {
   transform: translateX(2px);
 }
 
+/* ---------- 按钮禁用态 ----------
+   CSS 的 :hover 会匹配 disabled 元素（浏览器不抑制），故必须显式覆盖，
+   否则禁用期间仍会显示 accent 边框 / 文字色与 translateX 推门位移，
+   给「不可点」的控件输出「可点」的视觉反馈。
+   注：WCAG 1.4.3 明确豁免非活动 UI 组件的对比度要求，故 opacity 降弱可接受。 */
+.btn:disabled,
+.btn:disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.5;
+  border-color: var(--color-line-soft);
+  color: var(--color-fg-muted);
+  transform: none;
+}
+.btn:disabled .btn__arrow {
+  transform: none;
+}
+
 /* ---------- Utility: eyebrow 小字 ---------- */
 .eyebrow {
   font-size: var(--font-size-eyebrow);
