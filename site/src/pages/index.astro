@@ -39,7 +39,6 @@ const showcaseAgents = [
     id: 'men',
     cn: '门',
     role: '编排与路由核心',
-    color: '#e85d04',
     icon: 'lucide:door-open',
     desc: '唯一接收用户指令的角色。意图分诊、任务路由、多 Agent 编排、结果汇总。所有指令从这扇门进入。',
     skills: ['意图判定 (IntentGate)', '混合任务拆分', '多 Wave 调度', '结果汇总与去冲突', '事件审计写入'],
@@ -49,7 +48,6 @@ const showcaseAgents = [
     id: 'si',
     cn: '思',
     role: '思考与知识管理',
-    color: '#4a90d9',
     icon: 'lucide:pen-tool',
     desc: '深度思考与多角度方案，产出 plan envelope（依赖图 + 并行波次 + 验收标准）。知识库管理与沉淀。',
     skills: ['Plan Envelope 产出', '需求访谈拆解', '知识库沉淀', '回评子 Agent 产物'],
@@ -59,7 +57,6 @@ const showcaseAgents = [
     id: 'ji',
     cn: '记',
     role: '代码与工程',
-    color: '#2ea043',
     icon: 'lucide:code-2',
     desc: '按 plan 实现代码，前端开发优先。GitHub 操作、L1 机械验证、目录结构审计。',
     skills: ['前端实现 (HTML/CSS/JS)', 'GitHub PR/Issue 操作', 'L1 验证 (typecheck/lint)', '写作 (技术文档/周报)', '目录结构审计'],
@@ -69,7 +66,6 @@ const showcaseAgents = [
     id: 'chi',
     cn: '持',
     role: '数据/投资评审 / Judge',
-    color: '#bf8700',
     icon: 'lucide:scale',
     desc: '双重身份：投资持仓分析 + 独立 Judge。作为 judge 时用 fresh context 机械验证，只信产物不信自述。',
     skills: ['持仓分析与收益计算', '独立 Judge (fresh-context)', '机械验证复核', '质量门禁判定', '投资数据分析'],
@@ -79,7 +75,6 @@ const showcaseAgents = [
     id: 'yi',
     cn: '艺',
     role: '文生图与审美',
-    color: '#a371f7',
     icon: 'lucide:palette',
     desc: '文生图提示词专家：思考中生成多方案提示词，经 SenseNova 出图。审美分析、设计决策、配色与版式。',
     skills: ['设计决策与 Token 定义', '生图 (SenseNova U1)', '配色与版式', '审美分析', 'Logo 概念'],
@@ -89,7 +84,6 @@ const showcaseAgents = [
     id: 'xun',
     cn: '寻',
     role: '搜索与研究',
-    color: '#8b5cf6',
     icon: 'lucide:search',
     desc: '网络搜索、RSS 聚合、知识库检索、事实核查。只读约束，不修改源数据。',
     skills: ['网页搜索 (Exa)', 'RSS 聚合扫描', '事实核查 (多源交叉)', '知识库检索', '来源验证与可信度评分'],
@@ -205,7 +199,7 @@ const faq = install.faq || [];
     </div>
     <div class="showcase__track">
       {showcaseAgents.map((a) => (
-        <article class="showcase__card" data-agent={a.id} style={`--card-accent: ${a.color}`}>
+        <article class="showcase__card" data-agent={a.id} style={`--card-accent: var(--role-${a.id})`}>
           <div class="showcase__card-icon">
             <Icon name={a.icon} width="32" height="32" />
           </div>
@@ -301,9 +295,9 @@ const faq = install.faq || [];
           <!-- Arrowheads -->
           <marker id="mk-fg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8b949e" /></marker>
           <marker id="mk-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--color-accent)" /></marker>
-          <marker id="mk-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#2ea043" /></marker>
-          <marker id="mk-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#bf8700" /></marker>
-          <marker id="mk-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8b5cf6" /></marker>
+          <marker id="mk-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-ji)" /></marker>
+          <marker id="mk-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-chi)" /></marker>
+          <marker id="mk-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-xun)" /></marker>
 
           <!-- Forward paths -->
           <path id="tz-in" d="M200,282 L276,282" />
@@ -677,33 +671,33 @@ const faq = install.faq || [];
   .topo-bezier { fill: none; stroke-width: 1.5; }
   .topo-bezier--input { stroke: #8b949e; }
   .topo-bezier--branch { stroke: var(--color-accent); stroke-opacity: 0.45; }
-  .topo-bezier--return { stroke: #2ea043; stroke-opacity: 0.6; stroke-dasharray: 6 4; }
-  .topo-bezier--verdict { stroke: #2ea043; stroke-width: 1.8; }
-  .topo-bezier--fail { stroke: #bf8700; stroke-opacity: 0.7; stroke-dasharray: 5 4; }
-  .topo-bezier--report { stroke: #2ea043; stroke-opacity: 0.7; stroke-width: 1.8; }
-  .topo-bezier--learn { stroke: #8b5cf6; stroke-opacity: 0.85; stroke-dasharray: 2 4; }
-  .topo-bezier--judge { stroke: #bf8700; stroke-opacity: 0.7; stroke-dasharray: 4 3; stroke-width: 1.2; }
+  .topo-bezier--return { stroke: var(--role-ji); stroke-opacity: 0.6; stroke-dasharray: 6 4; }
+  .topo-bezier--verdict { stroke: var(--role-ji); stroke-width: 1.8; }
+  .topo-bezier--fail { stroke: var(--role-chi); stroke-opacity: 0.7; stroke-dasharray: 5 4; }
+  .topo-bezier--report { stroke: var(--role-ji); stroke-opacity: 0.7; stroke-width: 1.8; }
+  .topo-bezier--learn { stroke: var(--role-xun); stroke-opacity: 0.85; stroke-dasharray: 2 4; }
+  .topo-bezier--judge { stroke: var(--role-chi); stroke-opacity: 0.7; stroke-dasharray: 4 3; stroke-width: 1.2; }
 
   /* Animated dots */
   .topo-dot { fill: var(--color-accent); }
   .topo-dot--input { fill: #8b949e; }
-  .topo-dot--return { fill: #2ea043; }
-  .topo-dot--verdict { fill: #2ea043; }
-  .topo-dot--fail { fill: #bf8700; }
-  .topo-dot--report { fill: #2ea043; }
-  .topo-dot--learn { fill: #8b5cf6; }
-  .topo-dot--judge { fill: #bf8700; }
+  .topo-dot--return { fill: var(--role-ji); }
+  .topo-dot--verdict { fill: var(--role-ji); }
+  .topo-dot--fail { fill: var(--role-chi); }
+  .topo-dot--report { fill: var(--role-ji); }
+  .topo-dot--learn { fill: var(--role-xun); }
+  .topo-dot--judge { fill: var(--role-chi); }
 
   /* Nodes */
   .topo-node { rx: 10; ry: 10; }
   .topo-node--input { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
   .topo-node--hub { fill: var(--color-accent); stroke: none; }
   .topo-node--agent { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--judge { fill: #f6f8fa; stroke: #bf8700; stroke-width: 1.5; }
+  .topo-node--judge { fill: #f6f8fa; stroke: var(--role-chi); stroke-width: 1.5; }
   .topo-node--output { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--verify { fill: #f6f8fa; stroke: #2ea043; stroke-width: 1.5; }
-  .topo-node--knowledge { fill: #fafafa; stroke: #8b5cf6; stroke-width: 1.2; stroke-dasharray: 5 4; }
-  .topo-badge { fill: #bf8700; fill-opacity: 0.14; stroke: #bf8700; stroke-opacity: 0.5; stroke-width: 1; }
+  .topo-node--verify { fill: #f6f8fa; stroke: var(--role-ji); stroke-width: 1.5; }
+  .topo-node--knowledge { fill: #fafafa; stroke: var(--role-xun); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .topo-badge { fill: var(--role-chi); fill-opacity: 0.14; stroke: var(--role-chi); stroke-opacity: 0.5; stroke-width: 1; }
 
   /* Labels */
   .topo-label { font-family: var(--font-mono); }
@@ -715,16 +709,16 @@ const faq = install.faq || [];
   .topo-label--agent-id { fill: #656d76; font-size: 11px; }
   .topo-label--judge-cn { fill: #1f2328; font-size: 15px; font-weight: 600; }
   .topo-label--judge-sub { fill: #656d76; font-size: 11px; }
-  .topo-label--judge-tag { fill: #bf8700; font-size: 11px; font-weight: 600; font-style: italic; }
-  .topo-label--badge { fill: #bf8700; font-size: 9px; font-weight: 600; }
+  .topo-label--judge-tag { fill: var(--role-chi); font-size: 11px; font-weight: 600; font-style: italic; }
+  .topo-label--badge { fill: var(--role-chi); font-size: 9px; font-weight: 600; }
   .topo-label--hub-sub2 { fill: rgba(255,255,255,0.75); font-size: 10px; }
   .topo-label--node-title { fill: #1f2328; font-size: 13px; font-weight: 600; }
   .topo-label--node-sub { fill: #656d76; font-size: 10px; }
   .topo-label--node-micro { fill: #8b949e; font-size: 8.5px; }
   .topo-elabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
-  .topo-elabel--pass { fill: #2ea043; }
-  .topo-elabel--fail { fill: #bf8700; }
-  .topo-elabel--report { fill: #2ea043; }
+  .topo-elabel--pass { fill: var(--role-ji); }
+  .topo-elabel--fail { fill: var(--role-chi); }
+  .topo-elabel--report { fill: var(--role-ji); }
   .topo-label--output { fill: #1f2328; font-size: 16px; font-weight: 600; }
 
   /* Pulse animation on hub */
@@ -738,9 +732,9 @@ const faq = install.faq || [];
   }
 
   /* Status dots on nodes */
-  .topo-status { fill: #2ea043; }
+  .topo-status { fill: var(--role-ji); }
   .topo-status--active { animation: topo-blink 2s ease-in-out infinite; }
-  .topo-status--verify { fill: #bf8700; animation: topo-blink 1.5s ease-in-out infinite; }
+  .topo-status--verify { fill: var(--role-chi); animation: topo-blink 1.5s ease-in-out infinite; }
   @keyframes topo-blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
@@ -752,10 +746,10 @@ const faq = install.faq || [];
   .topo-legend__dot--input { background: #8b949e; }
   .topo-legend__dot--hub { background: var(--color-accent); }
   .topo-legend__dot--agent { background: #f6f8fa; border: 1px solid #d0d7de; }
-  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid #bf8700; }
-  .topo-legend__dot--verify { background: #f6f8fa; border: 1.5px solid #2ea043; }
-  .topo-legend__dot--report { background: #2ea043; }
-  .topo-legend__dot--fail { background: #bf8700; }
+  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid var(--role-chi); }
+  .topo-legend__dot--verify { background: #f6f8fa; border: 1.5px solid var(--role-ji); }
+  .topo-legend__dot--report { background: var(--role-ji); }
+  .topo-legend__dot--fail { background: var(--role-chi); }
 
   /* ===== Mechanisms ===== */
   .mechanisms { padding: var(--space-10) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }

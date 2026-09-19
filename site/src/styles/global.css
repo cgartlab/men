@@ -127,6 +127,17 @@ body::before {
   --color-accent-tint: color-mix(in srgb, #e85d04 10%, #ffffff);  /* 橘色浅底 */
   --color-accent-tint-strong: color-mix(in srgb, #e85d04 20%, #ffffff);
 
+  /* Agent 角色色（6 个 · 单一真相源）
+     用途一：首页滚动展示卡的强调色（index.astro showcase）
+     用途二：首页编排拓扑图借同一色板编码「哪一步由哪个角色完成」的流向状态
+     两处的颜色因此必须一致；改这里即可同时生效，不要在业务文件里再写字面量。 */
+  --role-men: var(--color-accent);              /* 门 · 编排核心（同主强调色，不重复字面量） */
+  --role-si: #4a90d9;                           /* 思 · 思考与知识 */
+  --role-ji: #2ea043;                           /* 记 · 代码与工程 */
+  --role-chi: #bf8700;                          /* 持 · 投资与评审 */
+  --role-yi: #a371f7;                           /* 艺 · 视觉与生成 */
+  --role-xun: #8b5cf6;                          /* 寻 · 研究与会话 */
+
   /* 边框 / 分割线 */
   --color-line: #d9d9d9;                       /* 标准边框 */
   --color-line-strong: #b0b0b0;                /* 加强边框（hover / focus） */
