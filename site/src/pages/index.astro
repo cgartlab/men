@@ -827,6 +827,9 @@ const faq = install.faq || [];
 
   /* Copy buttons */
   document.querySelectorAll('.terminal__copy').forEach(btn => {
+    const ICON_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const label = btn.getAttribute('aria-label') || '复制命令';
+    btn.setAttribute('aria-live', 'polite');
     btn.addEventListener('click', async () => {
       const cmd = (btn as HTMLElement).dataset.cmd;
       if (!cmd) return;
@@ -834,11 +837,23 @@ const faq = install.faq || [];
         await navigator.clipboard.writeText(cmd);
         btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
         (btn as HTMLElement).style.color = '#28c840';
+        btn.setAttribute('aria-label', '已复制');
         setTimeout(() => {
-          btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          btn.innerHTML = ICON_COPY;
           (btn as HTMLElement).style.color = '';
+          btn.setAttribute('aria-label', label);
         }, 1500);
-      } catch {}
+      } catch {
+        /* 剪贴板写入失败（权限被拒 / 非安全上下文）：显式报错并指明替代做法 */
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+        (btn as HTMLElement).style.color = '#cf222e';
+        btn.setAttribute('aria-label', '复制失败：请手动选中并复制');
+        setTimeout(() => {
+          btn.innerHTML = ICON_COPY;
+          (btn as HTMLElement).style.color = '';
+          btn.setAttribute('aria-label', label);
+        }, 1500);
+      }
     });
   });
 
