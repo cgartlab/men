@@ -227,11 +227,11 @@ const faq = install.faq || [];
         </article>
       ))}
       <!-- 团队特性卡片 -->
-      <article class="showcase__card showcase__card--team" style={`--card-accent: #e85d04`}>
+      <article class="showcase__card showcase__card--team" style={`--card-accent: var(--color-accent)`}>
         <div class="showcase__card-icon">
           <Icon name="lucide:users" width="32" height="32" />
         </div>
-        <p class="showcase__card-role" style="font-size: var(--font-size-h4);">团队特性</p>
+        <p class="showcase__card-role showcase__card-role--team">团队特性</p>
         <div class="showcase__team-traits">
           <div class="showcase__trait">
             <Icon name="lucide:git-branch" width="16" height="16" />
@@ -622,6 +622,7 @@ const faq = install.faq || [];
   .showcase__card-cn { font-family: var(--font-serif); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
   .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
   .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--card-accent); }
+  .showcase__card--team .showcase__card-role { font-size: var(--font-size-h4); }
   .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
   .showcase__card-skills { display: flex; flex-wrap: wrap; gap: 6px; }
   .showcase__skill {

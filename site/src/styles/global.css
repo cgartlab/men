@@ -876,21 +876,8 @@ main {
   border-radius: var(--radius-sm);
 }
 
-/* ---------- Reduced motion 全面覆盖 ---------- */
+/* ---------- Reduced motion 补充（全局 * 规则见 L266，避免重复声明与 0ms/0.01ms 不一致） ---------- */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .oc-hero-art pre {
-    animation: none !important;
-  }
-
   main {
     animation: none !important;
   }
@@ -1199,7 +1186,10 @@ main {
 
 /* ---- 响应式 ---- */
 @media (max-width: 720px) {
-  .wiki-top { grid-template-columns: 1fr !important; }
+  /* 与 L945/L952/L953 三个竞争选择器对齐特异性（最高 0,3,1），靠层叠顺序胜出，无需 !important */
+  .wiki-top,
+  .wiki-top:has(> .wiki-infobox):not(:has(> .wiki-toc)),
+  .wiki-top:not(:has(> .wiki-infobox)):has(> .wiki-toc) { grid-template-columns: 1fr; }
   .wiki-toc ol { columns: 1; }
   .wiki-infobox__row { grid-template-columns: 76px 1fr; }
 }
