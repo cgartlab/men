@@ -527,12 +527,12 @@ const faq = install.faq || [];
   .hero-desc { font-size: var(--font-size-body); color: var(--color-fg-secondary); max-width: 520px; line-height: var(--line-height-body); margin: 0 auto; }
   .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
-  .hero-cta--primary { background: var(--color-accent); color: #fff; }
+  .hero-cta--primary { background: var(--color-accent); color: var(--color-accent-on-accent); }
   .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent) 85%, #fff); border-color: color-mix(in srgb, var(--color-accent) 85%, #fff); text-decoration: none; }
   .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
   .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
-  .hero-version-badge { font-weight: var(--font-weight-semi); color: #fff; background: var(--color-accent); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
+  .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-accent-on-accent); background: var(--color-accent); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Install / Terminal (Light Theme) ===== */
   .install { padding: var(--space-8) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }

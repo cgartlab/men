@@ -1152,7 +1152,7 @@ main {
   right: var(--space-3);
   font-family: var(--font-mono);
   font-size: var(--font-size-eyebrow);
-  color: var(--color-fg-muted);
+  color: var(--color-fg-tertiary);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
