@@ -914,9 +914,9 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   ```
 - **Note**：`--color-accent-soft` 的注释声称「4.1:1 大文本」，实测在 `#fafafa` 上为 4.59:1（已达 AA 正文），在 `#f5f5f5` / `#f0ebe2` / `#efe7d2` 上仅 3.88–4.39:1（仅大文本）。若未来启用，须按 P2-1 同规则限制用途。
 
-#### P3-11 样式代码 — 死 CSS：`.oc-hero-art` 规则块无对应元素（未修）
+#### P3-11 样式代码 — 死 CSS：`.oc-hero-art` 规则块无对应元素（R17 已修复 · 删除死代码）
 
-- **位置**：`site/src/styles/global.css:778-801`（含 `.oc-hero-art` 与 `.oc-hero-art pre` 两条规则）
+- **位置**：`site/src/styles/global.css:804-828`（修复前；含 `.oc-hero-art` 与 `.oc-hero-art pre` 两条规则 + 注释）
 - **问题**：`.oc-hero-art` 类名在全部 14 个源文件与 14 个构建产物中**零出现**，对应 CSS 为死代码。其中 `.oc-hero-art pre` 声明 `font-size: 11px; color: var(--color-accent); opacity: 0.35` —— 若真被使用，11px 强调色文本将构成 P2 对比度违规。
 - **Found（原文逐字）**：
   ```css
@@ -928,14 +928,13 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
     color: var(--color-accent);
     opacity: 0.35;
   ```
-- **Expected**：删除无对应元素的规则块。
-- **Fix**：**本轮不改**（避免与 R6 的对比度修复混在同一提交；且需确认该块是否为预留的 Hero 变体）。
-- **Basis**：`检查要点 · 样式`（死代码）。命令输出：
+- **Fix（R17 已入库）**：删除 `global.css:804-828`（注释 `/* ---------- Hero 顶部抖动弧线占位 ---------- */` + `.oc-hero-art { ... }` + `.oc-hero-art pre { ... }`，共 25 行）。R3 已从 reduced-motion 块中删除 `.oc-hero-art pre { animation: none }`，本条删除主规则块，二者合并完成清理。
+- **Basis**：`检查要点 · 样式`（死代码）。R17 复核命令输出：
   ```
-  oc-hero-art 在 site/src 全部 .astro：0 命中
-  oc-hero-art 在 site/dist 全部 .html：0 命中
+  Select-String -Path site\src\styles\global.css -Pattern 'oc-hero-art'  → 0 命中 ✓
+  Select-String -Path site\dist\_astro\*.css -Pattern 'oc-hero-art'      → 0 残留 ✓
   ```
-- **Note**：与 R3 的 P3-2（重复 reduced-motion 块 + 死代码 `.oc-hero-art pre`）相关 —— R3 已从 reduced-motion 块中删除 `.oc-hero-art pre { animation: none }`，但主规则块 `:790-801` 仍存。可合并处理。
+- **Note**：定级 P3（死代码）。删除后 build 0（15 页）、check-site 0、11/11 检查器 0、`!important` 仍 13、`node --test` 149 pass / 0 fail、verify PASS=9。
 
 #### P3-12 样式代码 — 令牌注释声称的对比度值失准（R16 已修复 · 附防回归检查器）
 
@@ -1165,21 +1164,24 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 - **Basis**：命令输出（`Select-String -Pattern 'eyebrow-rail|color-accent-on-accent-soft'`）各仅 1 处命中，均为定义行。
 - **Note**：定级 P3（死代码）。至此死令牌累计 4 例：P3-10 记录的 `--color-fg-decorative`、`--color-accent-soft`，加本条 2 例。另 `--font-size-h5` 是**反向问题** —— 有 4 处引用但无定义，见 P2-12。两个方向的令牌债务建议一并清理。
 
-#### P3-22 样式代码 — `.site-footer__legal` 三组规则完全重复（未修 · 复制粘贴残留）
+#### P3-22 样式代码 — `.site-footer__legal` 三组规则完全重复（R17 已修复 · 去重）
 
-- **位置**：`site/src/components/Footer.astro:139-141`、`:142-144`、`:145-147`
-- **问题**：同一组三条规则被**逐字粘贴三次**，共 9 行，其中 6 行为纯重复（CSS 层叠下同值规则无行为差异，仅增加解析与维护成本）。
+- **位置**：`site/src/components/Footer.astro:139-141`、`:142-144`、`:145-147`（修复前）
+- **问题**：同一组三条规则被**逐字粘贴三次**，共 9 行，其中 6 行为纯重复。第二、三份的 `summary` 行缺失 `letter-spacing: 0.04em`，说明是复制粘贴残留而非刻意三份。
+- **Found（原文逐字，修复前）**：
   ```
-  139: .site-footer__legal { margin-top: var(--space-6); border-top: 1px dotted var(--color-line-soft); padding-top: var(--space-3); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
-  140: .site-footer__legal summary { cursor: pointer; font-family: var(--font-mono); letter-spacing: 0.04em; }
+  139: .site-footer__legal { margin-top: var(--space-6); ... color: var(--color-fg-tertiary); }
+  140: .site-footer__legal summary { cursor: pointer; font-family: var(--font-mono); letter-spacing: 0.04em; }  ← 仅此份含 letter-spacing
   141: .site-footer__legal-body p { margin-top: var(--space-2); line-height: 1.7; max-width: 68ch; }
-  142-144: （同上，140 行缺 letter-spacing）
+  142-144: （同 139-141，但 summary 行缺 letter-spacing）
   145-147: （同 142-144）
   ```
-- **Expected**：保留 1 组（6 行中的 3 行差异：`140` 含 `letter-spacing: 0.04em`，`143`/`146` 不含 —— 说明三次粘贴并非完全同值，需择一）。
-- **Fix**：**本轮不改**。R13 修 P2-3 时对该选择器的 `color` 用了 `replace_all`（3 处同步改为 `--color-fg-tertiary`），保证重复行内行为一致；但删除重复行属独立清理，避免与对比度修复混在同一提交。
-- **Basis**：命令输出（`Select-String -Path site\src\components\Footer.astro -Pattern 'site-footer__legal \{'`）→ 命中 L139 / L142 / L145。
-- **Note**：定级 P3（死代码 / 维护成本）。无渲染影响。与 P3-11（`.oc-hero-art` 死 CSS）、P3-21（死令牌）同属令牌/规则卫生债务，建议合并为一次清理轮。
+- **Fix（R17 已入库）**：保留第一份（含 `letter-spacing: 0.04em` 的完整版，L139-141），删除 L142-147（6 行）。R13 已用 `replace_all` 将三份的 `color` 同步改为 `--color-fg-tertiary`，保证去重前行为一致。
+- **Basis**：`检查要点 · 样式`（死代码 / 重复）。R17 复核命令输出：
+  ```
+  Select-String -Path site\src\components\Footer.astro -Pattern 'site-footer__legal \{'  → L139（唯一）
+  ```
+- **Note**：定级 P3（死代码 / 维护成本）。删除后 build 0、check-site 0、11/11 检查器 0。与 P3-11 同属本轮死 CSS 清理。
 
 ### 无发现记录（R2 空实现）
 
@@ -1289,7 +1291,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 / R15 | ✅ 完成（P3-6/P3-7 已修 11 处；**P3-8 双源真相 R15 已重构**：新增 `--role-*` 令牌，角色色字面量 36→5，27 项浏览器断言零漂移；P3-9 合法字面量留档） |
 | 标题层级 | R5 | ✅ 完成（0 缺陷） |
-| 对比度 | R6 / R13 / R16 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10/P3-11/P3-21/P3-22 记录。**P3-12/P3-20 令牌注释失准 R16 已修**：11 处声称值 8 失准改为实算值 + 组注释修正 + `token-ratio-check.mjs` 防回归。R13 实测不合格总数 21→6） |
+| 对比度 | R6 / R13 / R16 / R17 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10/P3-21 死令牌记录。**P3-12/P3-20 令牌注释失准 R16 已修**：11 处声称值 8 失准改为实算值 + 组注释修正 + `token-ratio-check.mjs` 防回归。**P3-11/P3-22 死 CSS R17 已修**：删除 `.oc-hero-art` 死规则块（25 行）+ `.site-footer__legal` 三重规则去重（删 6 行保留含 letter-spacing 的完整版）。R13 实测不合格总数 21→6） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
 | 核心网页指标（LCP/INP/CLS） | R9 / R14 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录）。**R14 已装 Playwright 并实测（§3.2）**：FCP 132–206ms（12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏 33–59 KB、点击延迟 1ms —— 静态风险因子未构成瓶颈。**LCP/CLS/INP 仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（已排除脚本缺陷，4 种启动模式一致；根因未完全隔离）；接 `npx lighthouse` 或 CrUX 可解除，属新增依赖待确认 |
