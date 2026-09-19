@@ -467,12 +467,9 @@ main {
   color: var(--color-fg-muted);
 }
 
-/* ---------- Focus visible ---------- */
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
+/* ---------- Focus visible ----------
+   全局唯一声明见下方 L873 的 :focus-visible 块（var(--color-accent-dark) / outline-offset: 3px）。
+   此处原有一份使用 var(--color-accent) 的副本，被下方块完全覆盖，R7 已删除。 */
 
 /* ---------- 侧栏竖排装饰 ---------- */
 .side-rail {
