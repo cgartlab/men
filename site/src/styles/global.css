@@ -178,6 +178,7 @@ body::before {
   --font-size-h2: 1.5rem;
   --font-size-h3: 1.25rem;
   --font-size-h4: 1.0625rem;
+  --font-size-h5: 1rem;            /* 最小标题级 · 同 body 但以字重区分（4 处引用原未定义 → h3/标题退化至继承值） */
   --font-size-body: 1rem;
   --font-size-caption: 0.875rem;
   --font-size-eyebrow: 0.75rem;
