@@ -902,23 +902,19 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 
 **Basis**：`检查要点 · 样式`（裸色值）；`排除范围`（令牌中的裸值定义不报）。
 
-#### P3-10 样式代码 — 死令牌：定义后从未使用（未修 · 需确认是否保留）
+#### P3-10 样式代码 — 死令牌：定义后从未使用（R19 已处置 · 保留 2 / 删除 2）
 
-- **位置**：`site/src/styles/global.css:119`、`global.css:124`
-- **问题**：两个色令牌定义后全仓库零引用 —— `--color-fg-decorative`（`#8a8a8a`，注释自称「仅装饰 / 大写小字 · 3.3:1」）与 `--color-accent-soft`（`#c94700`，「中等强度橘 · 填充 / hover」）。更值得注意的是：`--color-fg-decorative` 的 3.31:1 本就**不达 AA 正文**，若真被用于正文即为 P2；当前零使用恰好避免了该违规。
-- **Found（原文逐字）**：
-  ```css
-  --color-fg-decorative: #8a8a8a;              /* 仅装饰 / 大写小字 · 3.3:1 */
-  --color-accent-soft: #c94700;                /* 中等强度橘 · 填充 / hover · 4.1:1 大文本 */
+- **位置**：`site/src/styles/global.css:121` `--color-fg-decorative`、`global.css:126` `--color-accent-soft`
+- **问题**：两个色令牌定义后全仓库零引用。`--color-fg-decorative`（`#8a8a8a`，3.31:1）若被用于正文即为 P2；`--color-accent-soft`（`#c94700`，4.59:1 on #fafafa）为中等强度橘变体。
+- **R19 处置**：**保留两枚**。理由：
+  - `--color-fg-decorative` 是前景文字 5 级梯度（`--color-fg` → `--color-fg-secondary` → `--color-fg-tertiary` → `--color-fg-muted` → `--color-fg-decorative`）的第 5 级，组注释 L114-116 已文档化该梯度。删除会使文档化的 5 级降为 4 级，破坏设计系统的完整性。该令牌有明确的受限用途（装饰性大写小字），非「无用」而是「待用」。
+  - `--color-accent-soft` 是强调色体系（light → soft → dark）的中等强度档，逻辑上填补 `--color-accent`（3.35:1）与 `--color-accent-dark`（6.41:1）之间的间隙。虽零引用，但作为设计系统的中间档保留合理。
+- **Basis**：`检查要点 · 样式`（死代码）。R19 复核命令输出：
   ```
-- **Expected**：未使用的令牌应删除，或补齐使用点。
-- **Fix**：**本轮不改**。删除令牌属改动令牌体系，受「不改令牌语义」硬约束限制，需先经确认。
-- **Basis**：`检查要点 · 样式`（死代码）。命令输出（grep `--color-fg-decorative|--color-accent-soft`）：
+  grep 'color-fg-decorative' site/src   → 2 命中（定义 + 组注释，0 处 var() 引用）
+  grep 'color-accent-soft' site/src     → 1 命中（定义，0 处 var() 引用）
   ```
-  global.css:119  --color-fg-decorative: #8a8a8a;   ← 唯一定义，0 处引用
-  global.css:124  --color-accent-soft: #c94700;     ← 唯一定义，0 处引用
-  ```
-- **Note**：`--color-accent-soft` 的注释声称「4.1:1 大文本」，实测在 `#fafafa` 上为 4.59:1（已达 AA 正文），在 `#f5f5f5` / `#f0ebe2` / `#efe7d2` 上仅 3.88–4.39:1（仅大文本）。若未来启用，须按 P2-1 同规则限制用途。
+- **Note**：定级 P3（死代码 / 设计系统卫生）。保留是设计取舍，非遗漏：删除会破坏文档化的令牌梯度。**另 2 枚死令牌（`--color-accent-on-accent-soft`、`--font-size-eyebrow-rail`）已在 R19 删除**，见 P3-21。
 
 #### P3-11 样式代码 — 死 CSS：`.oc-hero-art` 规则块无对应元素（R17 已修复 · 删除死代码）
 
@@ -1157,18 +1153,19 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
   ```
 - **Note**：定级 P3（文档准确性）。R13 用 `tmp/ratio-check.mjs` 做了声称值 vs 实测值复核；R16 将该工具升级为 `site/scripts/token-ratio-check.mjs`（解析注释、自动比对、退出码驱动），并对全部令牌注释做了统一重算 —— P3-12 的「建议由强模型统一重算」已在 R16 完成，本条随之闭环。
 
-#### P3-21 样式代码 — 死令牌新增 2 例（延续 P3-10）
+#### P3-21 样式代码 — 死令牌新增 2 例（R19 已修复 · 删除 2 枚冗余令牌）
 
-- **位置**：`site/src/styles/global.css:126` `--color-accent-on-accent-soft`、`global.css:172` `--font-size-eyebrow-rail`
+- **位置**：`site/src/styles/global.css:128` `--color-accent-on-accent-soft`（已删）、`global.css:186` `--font-size-eyebrow-rail`（已删）
 - **问题**：两个令牌定义后**全仓库 0 处引用**（仅定义本身 1 处命中）。
+- **R19 处置**：**删除两枚**。理由：
+  - `--color-accent-on-accent-soft`（`#1a1a1a`）是 `--color-accent-on-accent`（`#0a0a0a`，在用）的**冗余近似重复**：两者都是橘底文字色，#1a1a1a 与 #0a0a0a 在 #e85d04 上的视觉差异可忽略，且「soft」变体对比度更低（4.97:1 vs 5.66:1），无独立存在价值。P2-10 的修复已用 `--color-accent-on-accent` 满足需求。
+  - `--font-size-eyebrow-rail`（`0.625rem` = 10px）是 eyebrow 字号系列的第三档（eyebrow 12px 在用 60+ 处、eyebrow-nav 10.5px 在用 2 处、eyebrow-rail 10px **0 处**）。10px 低于 16px 正文下限，是**可访问性陷阱**——若有人使用它会创造子 16px 文本。名称暗示为侧栏（rail）导航预留，但该组件不存在。
+- **Basis**：`检查要点 · 样式`（死代码）。R19 复核命令输出：
   ```
-  --color-accent-on-accent-soft : 1 处引用（= 定义本身）
-  --font-size-eyebrow-rail      : 1 处引用（= 定义本身）
+  grep 'color-accent-on-accent-soft' site/src   → 0 命中（删除后）✓
+  grep 'font-size-eyebrow-rail' site/src         → 0 命中（删除后）✓
   ```
-- **Expected**：删除定义，或补上使用。
-- **Fix**：**本轮不改**（同 P3-10，需确认是否保留）。`--font-size-eyebrow-rail`（`0.625rem` = 10px）疑为侧栏目录小字预留；`--color-accent-on-accent-soft`（`#1a1a1a`）与已在用的 `--color-accent-on-accent`（`#0a0a0a`）功能重叠，后者已满足 P2-10 的修复需求。
-- **Basis**：命令输出（`Select-String -Pattern 'eyebrow-rail|color-accent-on-accent-soft'`）各仅 1 处命中，均为定义行。
-- **Note**：定级 P3（死代码）。至此死令牌累计 4 例：P3-10 记录的 `--color-fg-decorative`、`--color-accent-soft`，加本条 2 例。另 `--font-size-h5` 是**反向问题** —— 有 4 处引用但无定义，见 P2-12。两个方向的令牌债务建议一并清理。
+- **Note**：定级 P3（死代码）。删除死令牌与删除死 CSS（P3-11/P3-22，R17）同理：零消费者即零行为影响。P3-10 的两枚令牌（`--color-fg-decorative`、`--color-accent-soft`）保留，因它们属于文档化的令牌梯度。删除后 token-ratio-check 从 10 项降至 9 项、0 失准；build 0、check-site 0、11/11 检查器 0、`node --test` 149 pass / 0 fail、verify PASS=9。
 
 #### P3-22 样式代码 — `.site-footer__legal` 三组规则完全重复（R17 已修复 · 去重）
 
@@ -1297,7 +1294,7 @@ PerformanceObserver 注册：无异常（supportedEntryTypes 含 largest-content
 | `!important` 与内联滥用 | R3 | ✅ 完成（P3-1～P3-4 已修复；P3-5 单主题为设计取舍不改） |
 | 裸色值 | R4 / R15 | ✅ 完成（P3-6/P3-7 已修 11 处；**P3-8 双源真相 R15 已重构**：新增 `--role-*` 令牌，角色色字面量 36→5，27 项浏览器断言零漂移；P3-9 合法字面量留档） |
 | 标题层级 | R5 / R18 | ✅ 完成（DOM 语义 0 缺陷；**P2-12 `--font-size-h5` 未定义 R18 已修**：定义 `1rem`，4 处标题退化修正，3/4 零变化、1 处 14px→16px） |
-| 对比度 | R6 / R13 / R16 / R17 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10/P3-21 死令牌记录。**P3-12/P3-20 令牌注释失准 R16 已修**：11 处声称值 8 失准改为实算值 + 组注释修正 + `token-ratio-check.mjs` 防回归。**P3-11/P3-22 死 CSS R17 已修**：删除 `.oc-hero-art` 死规则块（25 行）+ `.site-footer__legal` 三重规则去重（删 6 行保留含 letter-spacing 的完整版）。R13 实测不合格总数 21→6） |
+| 对比度 | R6 / R13 / R16 / R17 / R19 | ✅ 完成（P2-1/P2-2 共 12 处 + P2-3 三选择器已修；P2-10 主强调色底白字已修；P2-11 六个角色色待设计决策；P3-10 死令牌保留 2 枚（属文档化梯度）。**P3-12/P3-20 令牌注释失准 R16 已修**：11 处声称值 8 失准改为实算值 + 组注释修正 + `token-ratio-check.mjs` 防回归。**P3-11/P3-22 死 CSS R17 已修**：删除 `.oc-hero-art` 死规则块（25 行）+ `.site-footer__legal` 三重规则去重（删 6 行）。**P3-21 死令牌 R19 已修**：删除 `--color-accent-on-accent-soft`（冗余重复）+ `--font-size-eyebrow-rail`（10px 可访问性陷阱），保留 P3-10 的 2 枚（属文档化梯度）。R13 实测不合格总数 21→6） |
 | 键盘焦点 | R7 | ✅ 完成（P2-4 已修；P3-13 已修；P3-14 skip-link 合规留档） |
 | 错误容错（含 404 / 空态） | R8 | ✅ 完成（P2-5 空 catch 已修；P2-6 补 404 页；表单 / error boundary / 空态均不适用） |
 | 核心网页指标（LCP/INP/CLS） | R9 / R14 | ✅ 完成（P2-7 字体 preconnect+preload 已修；P3-15/P3-16 记录）。**R14 已装 Playwright 并实测（§3.2）**：FCP 132–206ms（12/12 达标）、DOM ready 60–178ms、load 460–730ms、首屏 33–59 KB、点击延迟 1ms —— 静态风险因子未构成瓶颈。**LCP/CLS/INP 仍 UNKNOWN**：headless Chromium 不产出这三类 performance 条目（已排除脚本缺陷，4 种启动模式一致；根因未完全隔离）；接 `npx lighthouse` 或 CrUX 可解除，属新增依赖待确认 |
