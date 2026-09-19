@@ -1293,10 +1293,10 @@ R15–R19 集中在样式/排版簇修复 P2/P3。R20 按规则「连续两轮�
 | 项 | 状态 |
 |----|------|
 | 分支 | `fix/web-quality-2026-09-19`（已 push 到 `origin`） |
-| 提交规范 | `fix(web): …` / `docs(reports): …`（Conventional Commits）—— 13 轮全部按维度拆分为「代码 + 报告」两笔，共 25 提交 |
-| PR | ✅ **#126** 已开：https://github.com/cgartlab/men/pull/126（`gh pr create`，base `main`，30 文件 +1940 / −57） |
-| CI 状态 | ✅ **4/4 实质门禁全绿**：`Build site (site/**)` pass · `CodeQL` pass · `Validate scripts & toolkit` pass · `Auto triage PR` pass。`argus-review`（第三方云端设计评审，写 PR 评论而非门禁）开 PR 后 6 分钟仍 `pending`，历史单次可达 15 分钟且可结束为 `action_required` / `cancelled`，故不视为阻塞 |
-| Squash merge | ⏳ **待办**：需由用户在 GitHub 上执行（本会话未做外部合并动作） |
+| 提交规范 | `fix(web): …` / `docs(reports): …`（Conventional Commits）—— R1–R21 按维度拆分为「代码 + 报告」两笔，共 **42 提交**（`7be1521`） |
+| PR | ✅ **#126** 已开：https://github.com/cgartlab/men/pull/126（`gh pr create`，base `main`，37 文件 +2637 / −138） |
+| CI 状态 | ✅ **5/5 实质门禁全绿**（`Build site (site/**)` / `CodeQL` / `Validate scripts & toolkit` / `Auto triage PR` / `CodeQL` 全 SUCCESS）。`argus-review` = FAILURE（第三方云端设计评审，写 PR 评论而非门禁，`mergeStateStatus=UNSTABLE` 因其非必需检查失败，可正常 Squash merge）。R22 复核确认 |
+| Squash merge | ⏳ **待办**：需由用户在 GitHub 上执行（本会话未做外部合并动作）。`mergeStateStatus=UNSTABLE` = 可合并（仅 argus 非必需检查失败） |
 | `git status` 干净 | ✅ 每轮提交后复查均 clean（`git status --porcelain=v1` 无输出） |
 
 ---
