@@ -1,0 +1,850 @@
+---
+// AgentFlow — 「门中涌出的任务流」WebGL GPU 加速背景
+// 视觉叙事：中心门发出粒子流 → 经过 5 个 Agent 区域变色 →
+//   汇聚到 verify 门禁 → 验证通过变绿 → 回流到门。
+// 渲染架构：WebGL1 instanced（ANGLE_instanced_arrays）+ Canvas2D fallback。
+//   粒子走 WebGL 单批次 drawArraysInstancedANGLE（GPU 端圆形裁剪 + 柔光），
+//   连线/门/门禁/标签走 Canvas2D（避免中文字体 atlas 复杂度）。
+// 性能：桌面 2400 / 移动 600 / reduced-motion 静态帧；DPR ≤2。
+// 纯 vanilla JS，零框架依赖，IIFE 包裹无全局泄漏。
+---
+
+<canvas
+  id="agent-flow"
+  class="agent-flow"
+  aria-hidden="true"
+  role="presentation"
+></canvas>
+
+<script is:inline>
+(() => {
+  'use strict';
+
+  // ════════════════════════════════════════════════════════════════
+  // §1  无障碍 & 设备检测
+  // ════════════════════════════════════════════════════════════════
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || innerWidth < 768;
+  const isLowEnd = isMobile && (navigator.hardwareConcurrency || 4) <= 4;
+
+  // ════════════════════════════════════════════════════════════════
+  // §2  配置
+  // ════════════════════════════════════════════════════════════════
+  const CFG = {
+    // 粒子
+    maxParticles:  isLowEnd ? 300  : isMobile ? 600  : 2400,
+    spawnRate:     isLowEnd ? 0.06 : isMobile ? 0.08 : 0.15,
+    particleLife:  isLowEnd ? 180  : isMobile ? 220  : 300,
+    baseSize:      2.2,
+    // 门
+    doorGlow:      0.55,       // 门框基础亮度
+    doorPulseHz:   0.6,        // 呼吸频率
+    // 流速
+    flowSpeed:     0.35,       // 粒子沿路径速度（归一化/帧）
+    // 弹簧（鼠标交互）
+    mouseRadius:   180,
+    mouseStrength: 0.5,
+    springK:       0.025,
+    damping:       0.93,
+    // verify 门禁
+    gateX:         0.80,       // 相对 canvas 宽度
+    gateH:         0.35,       // 相对 canvas 高度
+    // 颜色（RGB 0-1，从 design token 读取失败时的 fallback）
+    colors: {
+      men:  [0.91, 0.36, 0.02],   // #e85d04 橙
+      si:   [0.29, 0.56, 0.85],   // #4a90d9 蓝
+      ji:   [0.18, 0.63, 0.26],   // #2ea043 绿
+      chi:  [0.75, 0.53, 0.00],   // #bf8700 琥珀
+      yi:   [0.64, 0.44, 0.97],   // #a371f7 紫
+      xun:  [0.55, 0.36, 0.96],   // #8b5cf6 深紫
+      gate: [0.18, 0.63, 0.26],   // verify 绿
+    },
+    // Agent 区域（相对于 canvas 中心的偏移，稍后 layout() 中算实际像素）
+    agentAngles: [-90, -18, 54, 126, 198], // 度：思/记/持/艺/寻 等分
+    agentRadius: 0.24,  // 相对 min(W,H)
+    // 路径
+    pathSamples: 12,    // 每条路径的采样点数（用于 bezier 插值）
+    // 性能
+    dprCap: 2,
+  };
+
+  // 尝试从 CSS token 读取颜色（同 Argus readColorToken 模式）
+  function readToken(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const m = /^#([0-9a-f]{6})$/i.exec(v);
+    if (m) {
+      const n = parseInt(m[1], 16);
+      return [(n >> 16 & 0xff) / 255, (n >> 8 & 0xff) / 255, (n & 0xff) / 255];
+    }
+    return fallback;
+  }
+
+  // 覆盖 fallback
+  CFG.colors.men = readToken('--color-accent', CFG.colors.men);
+
+  // ════════════════════════════════════════════════════════════════
+  // §3  Canvas
+  // ════════════════════════════════════════════════════════════════
+  const canvas = document.getElementById('agent-flow');
+  if (!canvas) return;
+
+  let dpr = Math.min(devicePixelRatio || 1, CFG.dprCap);
+  let W = 0, H = 0;
+  let active = !reducedMotion;
+  let lastTs = 0;
+
+  // 鼠标
+  const mouse = { x: 0, y: 0, on: false, vx: 0, vy: 0, px: 0, py: 0 };
+
+  // 布局坐标（每帧 resize 时重算）
+  let doorX, doorY, gateX, gateY, gateW, gateH;
+  let agentPositions = []; // [{x, y, color, cn}]
+
+  function layout() {
+    dpr = Math.min(devicePixelRatio || 1, CFG.dprCap);
+    W = innerWidth;
+    H = Math.min(innerHeight, 960);
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+
+    // 门 = 中心偏左
+    doorX = W * 0.35;
+    doorY = H * 0.50;
+
+    // verify 门禁
+    gateX = W * CFG.gateX;
+    gateW = Math.max(40, W * 0.035);
+    gateY = H * (0.5 - CFG.gateH / 2);
+    gateH = H * CFG.gateH;
+
+    // 5 个 Agent 区域
+    const r = Math.min(W, H) * CFG.agentRadius;
+    const labels = ['si', 'ji', 'chi', 'yi', 'xun'];
+    const cn = ['思', '记', '持', '艺', '寻'];
+    agentPositions = [];
+    for (let i = 0; i < 5; i++) {
+      const rad = CFG.agentAngles[i] * Math.PI / 180;
+      agentPositions.push({
+        x: doorX + Math.cos(rad) * r,
+        y: doorY + Math.sin(rad) * r,
+        color: CFG.colors[labels[i]],
+        cn: cn[i],
+        id: labels[i],
+      });
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §4  路径生成（门 → Agent → verify → 门）
+  // ════════════════════════════════════════════════════════════════
+  // 每条路径是一组采样点，粒子沿路径线性插值移动。
+  // 路径形状：门中心 → 弧线到 Agent → 直线到 verify → 直线回门。
+
+  function generatePaths() {
+    const paths = [];
+    const N = CFG.pathSamples;
+
+    for (let i = 0; i < 5; i++) {
+      const ag = agentPositions[i];
+      const pts = [];
+
+      // 段 1：门 → Agent（二次贝塞尔，控制点偏移产生弧线）
+      const cp1x = doorX + (ag.x - doorX) * 0.5 + (Math.random() - 0.5) * 40;
+      const cp1y = doorY + (ag.y - doorY) * 0.5 + (Math.random() - 0.5) * 40;
+      for (let t = 0; t <= 1; t += 1 / N) {
+        const u = 1 - t;
+        pts.push({
+          x: u * u * doorX + 2 * u * t * cp1x + t * t * ag.x,
+          y: u * u * doorY + 2 * u * t * cp1y + t * t * ag.y,
+          color: ag.color,
+          alpha: 0.3 + 0.7 * Math.sin(t * Math.PI), // 两端淡
+        });
+      }
+
+      // 段 2：Agent → verify（直线）
+      const gateCenterX = gateX + gateW / 2;
+      const gateCenterY = gateY + gateH / 2 + (ag.y - doorY) * 0.3;
+      for (let t = 1; t <= 1; t += 1 / (N / 2)) {
+        // 上面的循环只执行一次，改用简单插值
+      }
+      const seg2 = N / 2;
+      for (let j = 1; j <= seg2; j++) {
+        const t = j / seg2;
+        pts.push({
+          x: ag.x + (gateCenterX - ag.x) * t,
+          y: ag.y + (gateCenterY - ag.y) * t,
+          color: lerpColor(ag.color, CFG.colors.gate, t * 0.5),
+          alpha: 0.4 + 0.3 * t,
+        });
+      }
+
+      // 段 3：verify → 门（直线，绿色）
+      const reportStartX = gateX;
+      const reportStartY = gateY + gateH * 0.5;
+      for (let j = 1; j <= seg2; j++) {
+        const t = j / seg2;
+        pts.push({
+          x: reportStartX + (doorX - reportStartX) * t,
+          y: reportStartY + (doorY + 20 - reportStartY) * t,
+          color: lerpColor(CFG.colors.gate, CFG.colors.men, t),
+          alpha: 0.5 - 0.4 * t, // 回流时逐渐淡出
+        });
+      }
+
+      paths.push(pts);
+    }
+    return paths;
+  }
+
+  function lerpColor(a, b, t) {
+    return [
+      a[0] + (b[0] - a[0]) * t,
+      a[1] + (b[1] - a[1]) * t,
+      a[2] + (b[2] - a[2]) * t,
+    ];
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §5  粒子状态
+  // ════════════════════════════════════════════════════════════════
+  // 紧凑 Float32 布局：每粒子 12 floats
+  // [x, y, vx, vy, r, g, b, alpha, pathIdx, pathT, life, maxLife]
+  const STRIDE = 12;
+  const maxP = CFG.maxParticles;
+  const pData = new Float32Array(maxP * STRIDE);
+  let pCount = 0;
+  let paths = [];
+
+  function spawn() {
+    if (pCount >= maxP) return;
+    const i = pCount * STRIDE;
+    const pathIdx = Math.floor(Math.random() * 5);
+    const c = agentPositions[pathIdx].color;
+
+    pData[i + 0] = doorX + (Math.random() - 0.5) * 12;   // x
+    pData[i + 1] = doorY + (Math.random() - 0.5) * 12;   // y
+    pData[i + 2] = 0;                                       // vx
+    pData[i + 3] = 0;                                       // vy
+    pData[i + 4] = CFG.colors.men[0];                       // r (初始橙色)
+    pData[i + 5] = CFG.colors.men[1];                       // g
+    pData[i + 6] = CFG.colors.men[2];                       // b
+    pData[i + 7] = 0.0;                                     // alpha（入场淡入）
+    pData[i + 8] = pathIdx;                                 // pathIdx
+    pData[i + 9] = 0.0;                                     // pathT (0→1)
+    pData[i + 10] = 0;                                      // life
+    pData[i + 11] = CFG.particleLife * (0.6 + Math.random() * 0.8); // maxLife
+
+    pCount++;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §6  物理更新
+  // ════════════════════════════════════════════════════════════════
+  function tick(time) {
+    // 鼠标速度
+    if (mouse.on) {
+      mouse.vx = mouse.x - mouse.px;
+      mouse.vy = mouse.y - mouse.py;
+      mouse.px = mouse.x;
+      mouse.py = mouse.y;
+    }
+
+    let w = 0; // 写指针
+    for (let r = 0; r < pCount; r++) {
+      const i = r * STRIDE;
+      const life = pData[i + 10];
+      const maxLife = pData[i + 11];
+      const newLife = life + 1;
+      if (newLife >= maxLife) continue;
+
+      const pathIdx = Math.floor(pData[i + 8]);
+      const path = paths[pathIdx];
+      if (!path) continue;
+
+      // 沿路径前进
+      let pathT = pData[i + 9];
+      pathT += CFG.flowSpeed / path.length;
+      if (pathT >= 1) pathT = 1;
+
+      // 插值位置
+      const pi = Math.min(Math.floor(pathT * (path.length - 1)), path.length - 2);
+      const frac = pathT * (path.length - 1) - pi;
+      const targetX = path[pi].x + (path[pi + 1].x - path[pi].x) * frac;
+      const targetY = path[pi].y + (path[pi + 1].y - path[pi].y) * frac;
+      const targetColor = lerpColor(path[pi].color, path[pi + 1].color, frac);
+
+      // 弹簧趋向目标
+      let x = pData[i + 0];
+      let y = pData[i + 1];
+      let vx = pData[i + 2];
+      let vy = pData[i + 3];
+
+      vx += (targetX - x) * CFG.springK;
+      vy += (targetY - y) * CFG.springK;
+
+      // 波浪扰动（有机感）
+      const wobble = Math.sin(time * 0.7 + pathIdx * 1.3 + pathT * 6) * 0.4;
+      const wobbleY = Math.cos(time * 0.5 + pathIdx * 0.9 + pathT * 4) * 0.3;
+      vx += wobble * 0.1;
+      vy += wobbleY * 0.1;
+
+      // 鼠标排斥
+      if (mouse.on) {
+        const dx = x - mouse.x;
+        const dy = y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < CFG.mouseRadius && dist > 0.5) {
+          const f = (1 - dist / CFG.mouseRadius) * CFG.mouseStrength;
+          vx += (dx / dist) * f * 0.4 + mouse.vx * f * 0.15;
+          vy += (dy / dist) * f * 0.4 + mouse.vy * f * 0.15;
+        }
+      }
+
+      vx *= CFG.damping;
+      vy *= CFG.damping;
+
+      // 速度限制
+      const spd = Math.sqrt(vx * vx + vy * vy);
+      if (spd > 4) { vx = vx / spd * 4; vy = vy / spd * 4; }
+
+      x += vx;
+      y += vy;
+
+      // alpha：入场淡入 + 路径尾部淡出
+      let alpha = targetColor ? (targetColor[0] + targetColor[1] + targetColor[2]) / 3 : 0.5;
+      alpha = Math.max(0.15, alpha * 0.6);
+      const lifeRatio = newLife / maxLife;
+      if (lifeRatio < 0.08) alpha *= lifeRatio / 0.08;
+      if (lifeRatio > 0.85) alpha *= 1 - (lifeRatio - 0.85) / 0.15;
+
+      // 边界
+      if (x < -60 || x > W + 60 || y < -60 || y > H + 60) continue;
+
+      // 写入
+      if (w !== r) {
+        const o = w * STRIDE;
+        pData[o + 0] = x; pData[o + 1] = y;
+        pData[o + 2] = vx; pData[o + 3] = vy;
+        pData[o + 4] = targetColor[0]; pData[o + 5] = targetColor[1]; pData[o + 6] = targetColor[2];
+        pData[o + 7] = alpha;
+        pData[o + 8] = pathIdx; pData[o + 9] = pathT;
+        pData[o + 10] = newLife; pData[o + 11] = maxLife;
+      } else {
+        pData[i + 0] = x; pData[i + 1] = y;
+        pData[i + 2] = vx; pData[i + 3] = vy;
+        pData[i + 4] = targetColor[0]; pData[i + 5] = targetColor[1]; pData[i + 6] = targetColor[2];
+        pData[i + 7] = alpha;
+        pData[i + 9] = pathT;
+        pData[i + 10] = newLife;
+      }
+      w++;
+    }
+    pCount = w;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §7  WebGL 渲染器（粒子）
+  // ════════════════════════════════════════════════════════════════
+  const GL_ATTRS = { antialias: false, alpha: true, premultipliedAlpha: true };
+  const SW_RE = /SwiftShader|llvmpipe|Software|ANGLE \(Google/i;
+
+  const VS = `
+attribute vec2 a_corner;
+attribute vec2 a_pos;
+attribute vec3 a_color;
+attribute float a_alpha;
+attribute float a_size;
+uniform vec2 u_res;
+varying vec3 v_col;
+varying float v_a;
+varying vec2 v_uv;
+void main(){
+  v_col = a_color;
+  v_a = a_alpha;
+  v_uv = a_corner * 0.5 + 0.5;
+  vec2 p = a_pos + a_corner * a_size;
+  vec2 c = (p / u_res) * 2.0 - 1.0;
+  c.y = -c.y;
+  gl_Position = vec4(c, 0.0, 1.0);
+}`;
+
+  const FS = `
+precision mediump float;
+varying vec3 v_col;
+varying float v_a;
+varying vec2 v_uv;
+void main(){
+  float d = length(v_uv - 0.5) * 2.0;
+  if(d > 1.0) discard;
+  float glow = 1.0 - smoothstep(0.0, 1.0, d);
+  glow = pow(glow, 1.8);
+  float core = 1.0 - smoothstep(0.0, 0.25, d);
+  vec3 c = v_col * (0.35 + 0.65 * glow) + vec3(core * 0.25);
+  gl_FragColor = vec4(c * v_a, v_a * glow * 0.7);
+}`;
+
+  class GL {
+    constructor(cv) {
+      const gl = cv.getContext('webgl', GL_ATTRS) || cv.getContext('experimental-webgl', GL_ATTRS);
+      if (!gl) throw new Error('no webgl');
+      const ext = gl.getExtension('ANGLE_instanced_arrays');
+      if (!ext) throw new Error('no instanced');
+      // 软渲染检测
+      const di = gl.getExtension('WEBGL_debug_renderer_info');
+      if (di) {
+        const rn = gl.getParameter(di.UNMASKED_RENDERER_WEBGL);
+        if (SW_RE.test(rn)) throw new Error('software renderer');
+      }
+      this.gl = gl; this.ext = ext;
+
+      this.prog = this._prog(VS, FS);
+      this.loc = {
+        a_corner: gl.getAttribLocation(this.prog, 'a_corner'),
+        a_pos:    gl.getAttribLocation(this.prog, 'a_pos'),
+        a_color:  gl.getAttribLocation(this.prog, 'a_color'),
+        a_alpha:  gl.getAttribLocation(this.prog, 'a_alpha'),
+        a_size:   gl.getAttribLocation(this.prog, 'a_size'),
+        u_res:    gl.getUniformLocation(this.prog, 'u_res'),
+      };
+
+      // Quad
+      this.qBuf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.qBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+      // Per-instance buffers
+      this.posBuf  = gl.createBuffer();
+      this.colBuf  = gl.createBuffer();
+      this.alpBuf  = gl.createBuffer();
+      this.sizBuf  = gl.createBuffer();
+
+      this.posArr = new Float32Array(maxP * 2);
+      this.colArr = new Float32Array(maxP * 3);
+      this.alpArr = new Float32Array(maxP);
+      this.sizArr = new Float32Array(maxP);
+    }
+
+    _shader(type, src) {
+      const gl = this.gl, s = gl.createShader(type);
+      gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+        throw new Error(gl.getShaderInfoLog(s));
+      return s;
+    }
+    _prog(vs, fs) {
+      const gl = this.gl, p = gl.createProgram();
+      gl.attachShader(p, this._shader(gl.VERTEX_SHADER, vs));
+      gl.attachShader(p, this._shader(gl.FRAGMENT_SHADER, fs));
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+        throw new Error(gl.getProgramInfoLog(p));
+      return p;
+    }
+
+    resize() {
+      this.gl.viewport(0, 0, W * dpr, H * dpr);
+    }
+
+    draw() {
+      const gl = this.gl;
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+      gl.useProgram(this.prog);
+
+      const n = pCount;
+      for (let i = 0; i < n; i++) {
+        const s = i * STRIDE;
+        this.posArr[i * 2]     = pData[s + 0];
+        this.posArr[i * 2 + 1] = pData[s + 1];
+        this.colArr[i * 3]     = pData[s + 4];
+        this.colArr[i * 3 + 1] = pData[s + 5];
+        this.colArr[i * 3 + 2] = pData[s + 6];
+        this.alpArr[i] = pData[s + 7];
+        this.sizArr[i] = CFG.baseSize * dpr * (0.6 + 0.4 * pData[s + 7] / 0.7);
+      }
+
+      const bind = (loc, buf, data, size, div) => {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, data.subarray(0, n * size / 4 * (size === 2 ? 2 : 1)), gl.DYNAMIC_DRAW);
+        // Actually just buffer the right amount
+      };
+
+      // Quad
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.qBuf);
+      gl.enableVertexAttribArray(this.loc.a_corner);
+      gl.vertexAttribPointer(this.loc.a_corner, 2, gl.FLOAT, false, 0, 0);
+
+      // Position
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, this.posArr.subarray(0, n * 2), gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(this.loc.a_pos);
+      gl.vertexAttribPointer(this.loc.a_pos, 2, gl.FLOAT, false, 0, 0);
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_pos, 1);
+
+      // Color
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.colBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, this.colArr.subarray(0, n * 3), gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(this.loc.a_color);
+      gl.vertexAttribPointer(this.loc.a_color, 3, gl.FLOAT, false, 0, 0);
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_color, 1);
+
+      // Alpha
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.alpBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, this.alpArr.subarray(0, n), gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(this.loc.a_alpha);
+      gl.vertexAttribPointer(this.loc.a_alpha, 1, gl.FLOAT, false, 0, 0);
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_alpha, 1);
+
+      // Size
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.sizBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, this.sizArr.subarray(0, n), gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(this.loc.a_size);
+      gl.vertexAttribPointer(this.loc.a_size, 1, gl.FLOAT, false, 0, 0);
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_size, 1);
+
+      gl.uniform2f(this.loc.u_res, W * dpr, H * dpr);
+
+      this.ext.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP, 0, 4, n);
+
+      // Cleanup
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_pos, 0);
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_color, 0);
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_alpha, 0);
+      this.ext.vertexAttribDivisorANGLE(this.loc.a_size, 0);
+      gl.disableVertexAttribArray(this.loc.a_corner);
+      gl.disableVertexAttribArray(this.loc.a_pos);
+      gl.disableVertexAttribArray(this.loc.a_color);
+      gl.disableVertexAttribArray(this.loc.a_alpha);
+      gl.disableVertexAttribArray(this.loc.a_size);
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §8  Canvas2D 层（连线 + 门 + 门禁 + 标签）
+  // ════════════════════════════════════════════════════════════════
+  // WebGL canvas 之上的第二个 canvas，用于矢量绘制。
+  // 也可作为完全 fallback（当 WebGL 不可用时，粒子也画在这里）。
+
+  let overlay = null; // overlay canvas（叠加在 WebGL canvas 之上）
+  let octx = null;
+
+  function createOverlay() {
+    overlay = document.createElement('canvas');
+    overlay.className = 'agent-flow-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;';
+    canvas.parentElement.appendChild(overlay);
+    octx = overlay.getContext('2d');
+    resizeOverlay();
+  }
+
+  function resizeOverlay() {
+    if (!overlay) return;
+    overlay.width = W * dpr;
+    overlay.height = H * dpr;
+    overlay.style.width = W + 'px';
+    overlay.style.height = H + 'px';
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function drawOverlay(time) {
+    if (!octx) return;
+    const ctx = octx;
+    ctx.clearRect(0, 0, W, H);
+
+    // ── 1. 连线（门 → Agent → verify → 门）──
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) {
+      const ag = agentPositions[i];
+      const alpha = 0.12 + 0.06 * Math.sin(time * 0.4 + i * 1.2);
+      const c = ag.color;
+
+      // 门 → Agent
+      ctx.strokeStyle = `rgba(${c[0]*255|0},${c[1]*255|0},${c[2]*255|0},${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(doorX, doorY);
+      // 贝塞尔弧线
+      const cp1x = doorX + (ag.x - doorX) * 0.5;
+      const cp1y = doorY + (ag.y - doorY) * 0.5 + (i % 2 === 0 ? -30 : 30);
+      ctx.quadraticCurveTo(cp1x, cp1y, ag.x, ag.y);
+      ctx.stroke();
+
+      // Agent → verify（汇聚线）
+      const gcX = gateX + gateW / 2;
+      const gcY = gateY + gateH * 0.5 + (ag.y - doorY) * 0.25;
+      ctx.strokeStyle = `rgba(140,160,140,${alpha * 0.6})`;
+      ctx.beginPath();
+      ctx.moveTo(ag.x, ag.y);
+      ctx.lineTo(gcX, gcY);
+      ctx.stroke();
+    }
+
+    // verify → 门（report 回流线，虚线）
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = `rgba(46,160,67,0.12)`;
+    ctx.beginPath();
+    ctx.moveTo(gateX, gateY + gateH * 0.5);
+    ctx.quadraticCurveTo(
+      (gateX + doorX) / 2, doorY + 60,
+      doorX, doorY + 15
+    );
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ── 2. 门框 ──
+    const doorPulse = 0.4 + CFG.doorGlow * (0.5 + 0.5 * Math.sin(time * CFG.doorPulseHz * Math.PI * 2));
+    const doorW = 36, doorH2 = 52;
+    ctx.strokeStyle = `rgba(${CFG.colors.men[0]*255|0},${CFG.colors.men[1]*255|0},${CFG.colors.men[2]*255|0},${doorPulse})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    // 门框：三边（底边开口 = 粒子涌出）
+    ctx.moveTo(doorX - doorW / 2, doorY - doorH2 / 2);
+    ctx.lineTo(doorX - doorW / 2, doorY + doorH2 / 2);
+    ctx.lineTo(doorX + doorW / 2, doorY + doorH2 / 2);
+    ctx.lineTo(doorX + doorW / 2, doorY - doorH2 / 2);
+    ctx.stroke();
+
+    // 门框发光（外发光）
+    ctx.shadowColor = `rgba(${CFG.colors.men[0]*255|0},${CFG.colors.men[1]*255|0},${CFG.colors.men[2]*255|0},0.4)`;
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = `rgba(${CFG.colors.men[0]*255|0},${CFG.colors.men[1]*255|0},${CFG.colors.men[2]*255|0},${doorPulse * 0.5})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(doorX - doorW / 2, doorY - doorH2 / 2);
+    ctx.lineTo(doorX - doorW / 2, doorY + doorH2 / 2);
+    ctx.lineTo(doorX + doorW / 2, doorY + doorH2 / 2);
+    ctx.lineTo(doorX + doorW / 2, doorY - doorH2 / 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 门内「门」字
+    ctx.fillStyle = `rgba(${CFG.colors.men[0]*255|0},${CFG.colors.men[1]*255|0},${CFG.colors.men[2]*255|0},${doorPulse * 0.8})`;
+    ctx.font = `bold 18px "OPPO Sans", system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('门', doorX, doorY);
+
+    // ── 3. Agent 区域标记 ──
+    for (const ag of agentPositions) {
+      const c = ag.color;
+      const pulse = 0.15 + 0.1 * Math.sin(time * 0.5 + ag.x * 0.01);
+      // 小圆点标记
+      ctx.fillStyle = `rgba(${c[0]*255|0},${c[1]*255|0},${c[2]*255|0},${pulse})`;
+      ctx.beginPath();
+      ctx.arc(ag.x, ag.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 角色名
+      ctx.fillStyle = `rgba(${c[0]*255|0},${c[1]*255|0},${c[2]*255|0},${0.25 + pulse})`;
+      ctx.font = `600 13px "OPPO Sans", system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ag.cn, ag.x, ag.y - 16);
+    }
+
+    // ── 4. verify 门禁 ──
+    const gatePulse = 0.3 + 0.25 * Math.sin(time * 1.5);
+    ctx.strokeStyle = `rgba(46,160,67,${gatePulse})`;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(gateX, gateY, gateW, gateH);
+
+    // 门禁发光
+    ctx.shadowColor = `rgba(46,160,67,0.35)`;
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = `rgba(46,160,67,${gatePulse * 0.6})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gateX, gateY, gateW, gateH);
+    ctx.shadowBlur = 0;
+
+    // 门禁标签
+    ctx.fillStyle = `rgba(46,160,67,${gatePulse + 0.15})`;
+    ctx.font = `500 10px "OPPO Sans", monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('verify', gateX + gateW / 2, gateY - 10);
+
+    // ── 5. 标语（底部，极淡）──
+    ctx.fillStyle = 'rgba(140,140,140,0.08)';
+    ctx.font = `400 11px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('IntentGate → Wave Dispatch → Verify → Report', W * 0.5, H - 20);
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §9  Canvas2D 完整 Fallback（无 WebGL 时）
+  // ════════════════════════════════════════════════════════════════
+  let fallbackCtx = null;
+
+  function drawFallbackParticles() {
+    if (!fallbackCtx) return;
+    const ctx = fallbackCtx;
+    for (let i = 0; i < pCount; i++) {
+      const s = i * STRIDE;
+      const x = pData[s + 0], y = pData[s + 1];
+      const r = pData[s + 4], g = pData[s + 5], b = pData[s + 6];
+      const a = pData[s + 7];
+      const sz = CFG.baseSize * (0.6 + 0.4 * a / 0.7);
+      ctx.beginPath();
+      ctx.arc(x, y, sz, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},${a})`;
+      ctx.fill();
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §10  主循环
+  // ════════════════════════════════════════════════════════════════
+  let gl = null; // WebGL renderer (null = fallback mode)
+
+  function loop(ts) {
+    if (!active) return;
+    const time = ts * 0.001;
+    lastTs = ts;
+
+    // Spawn
+    if (Math.random() < CFG.spawnRate && pCount < maxP) spawn();
+
+    // Physics
+    tick(time);
+
+    // Render
+    if (gl) {
+      gl.draw();
+    } else if (fallbackCtx) {
+      fallbackCtx.clearRect(0, 0, W * dpr, H * dpr);
+      fallbackCtx.save();
+      fallbackCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawFallbackParticles();
+      fallbackCtx.restore();
+    }
+
+    // Overlay（连线/门/门禁/标签）
+    drawOverlay(time);
+
+    requestAnimationFrame(loop);
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §11  静态帧（reduced-motion）
+  // ════════════════════════════════════════════════════════════════
+  function renderStatic() {
+    // 生成少量静态粒子
+    for (let i = 0; i < 60; i++) spawn();
+    tick(0);
+    if (gl) gl.draw();
+    drawOverlay(0);
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // §12  初始化
+  // ════════════════════════════════════════════════════════════════
+  function init() {
+    layout();
+    paths = generatePaths();
+
+    // 尝试 WebGL
+    try {
+      if (!reducedMotion && !isLowEnd) {
+        gl = new GL(canvas);
+        gl.resize();
+      }
+    } catch (e) {
+      gl = null;
+    }
+
+    // Overlay canvas（连线/门/标签，始终需要）
+    createOverlay();
+
+    // WebGL 不可用时，用主 canvas 做 2D fallback
+    if (!gl) {
+      canvas.style.zIndex = '0';
+      fallbackCtx = canvas.getContext('2d', { alpha: true });
+      if (fallbackCtx) {
+        fallbackCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+    }
+
+    if (reducedMotion) {
+      renderStatic();
+    } else {
+      lastTs = performance.now();
+      requestAnimationFrame(loop);
+    }
+  }
+
+  // ── 事件 ──
+  const heroEl = canvas.closest('.hero') || document.querySelector('.hero');
+  if (heroEl) {
+    heroEl.addEventListener('mousemove', e => {
+      const r = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - r.left;
+      mouse.y = e.clientY - r.top;
+      mouse.on = true;
+    }, { passive: true });
+    heroEl.addEventListener('mouseleave', () => { mouse.on = false; }, { passive: true });
+    heroEl.addEventListener('touchmove', e => {
+      const t = e.touches[0], r = canvas.getBoundingClientRect();
+      mouse.x = t.clientX - r.left;
+      mouse.y = t.clientY - r.top;
+      mouse.on = true;
+    }, { passive: true });
+    heroEl.addEventListener('touchend', () => { mouse.on = false; }, { passive: true });
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (reducedMotion) return;
+    active = !document.hidden;
+    if (active) {
+      lastTs = performance.now();
+      requestAnimationFrame(loop);
+    }
+  });
+
+  if (heroEl && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => {
+      if (reducedMotion) return;
+      if (e.isIntersecting && !active) {
+        active = true; lastTs = performance.now(); requestAnimationFrame(loop);
+      } else if (!e.isIntersecting && active) {
+        active = false;
+      }
+    }, { threshold: 0.05 }).observe(heroEl);
+  }
+
+  window.addEventListener('resize', () => {
+    layout();
+    if (gl) gl.resize();
+    resizeOverlay();
+    if (fallbackCtx) fallbackCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // 重新生成路径（坐标变了）
+    paths = generatePaths();
+  }, { passive: true });
+
+  // ── 启动 ──
+  init();
+
+})();
+</script>
+
+<style>
+  .agent-flow {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .agent-flow-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .agent-flow { opacity: 0.5; }
+  }
+</style>

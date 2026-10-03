@@ -795,7 +795,7 @@ async function offerPresetCreate(rl, models, cfg) {
   menSay("创建后会以所选预设同步当前项目 opencode.json。");
   blank();
   menSay("是否现在创建？");
-  menSay("1️⃣ default 预设（全功能推荐，需已有对应 provider 订阅）", "     ");
+  menSay("1️⃣ default 预设（SenseNova 混合：men/si/chi DeepSeek V4 Flash，ji/yi/xun 6.8 Flash Lite）", "     ");
   menSay("2️⃣ free 预设（OpenCode Zen 全免费，适合新用户）", "     ");
   menSay("3️⃣ 跳过（不创建 men.jsonc）", "     ");
   blank();

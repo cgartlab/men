@@ -254,42 +254,42 @@
       "roleName": "编排核心（men）",
       "description": "接收用户指令、路由任务、汇总结果，需要强力推理和代码理解",
       "priority": [
+        "sensenova/deepseek-v4-flash",
+        "sensenova/sensenova-6.8-flash-lite",
         "opencode-go/mimo-v2.5",
         "opencode-zen/hy3-free",
         "opencode-zen/deepseek-v4-flash-free",
         "opencode-go/hy3",
         "opencode-go/deepseek-v4-flash",
-        "sensenova/deepseek-v4-flash",
-        "deepseek/deepseek-v4-flash",
-        "sensenova/sensenova-6.8-flash-lite"
+        "deepseek/deepseek-v4-flash"
       ],
-      "fallback": "opencode-go/mimo-v2.5"
+      "fallback": "sensenova/deepseek-v4-flash"
     },
     "si": {
       "roleName": "规划与写作（si）",
       "description": "深度推理、任务拆解、文章写作，需要最强推理和写作能力",
       "priority": [
+        "sensenova/deepseek-v4-flash",
+        "sensenova/sensenova-6.8-flash-lite",
         "opencode-zen/deepseek-v4-flash-free",
         "opencode-zen/mimo-v2.5-free",
         "opencode-go/deepseek-v4-flash",
-        "sensenova/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash",
-        "opencode-go/claude-3.5-sonnet",
-        "sensenova/sensenova-6.8-flash-lite"
+        "opencode-go/claude-3.5-sonnet"
       ],
-      "fallback": "sensenova/sensenova-6.8-flash-lite"
+      "fallback": "sensenova/deepseek-v4-flash"
     },
     "ji": {
       "roleName": "代码与工程（ji）",
       "description": "代码实现、前端开发、Git 操作，需要强代码能力",
       "priority": [
+        "sensenova/sensenova-6.8-flash-lite",
         "opencode-zen/north-mini-code-free",
         "opencode-zen/deepseek-v4-flash-free",
         "opencode-go/deepseek-v4-flash",
         "sensenova/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash",
-        "opencode-go/claude-3.5-sonnet",
-        "sensenova/sensenova-6.8-flash-lite"
+        "opencode-go/claude-3.5-sonnet"
       ],
       "fallback": "sensenova/sensenova-6.8-flash-lite"
     },
@@ -297,22 +297,23 @@
       "roleName": "投资分析与评审（chi）",
       "description": "独立评审其他 agent 产物，需要客观、逻辑分析能力",
       "priority": [
+        "sensenova/deepseek-v4-flash",
+        "sensenova/sensenova-6.8-flash-lite",
         "opencode-zen/mimo-v2.5-free",
         "sensenova/glm-5.2",
         "opencode-go/deepseek-v4-flash",
-        "opencode-go/claude-3.5-sonnet",
-        "sensenova/sensenova-6.8-flash-lite"
+        "opencode-go/claude-3.5-sonnet"
       ],
-      "fallback": "sensenova/sensenova-6.8-flash-lite"
+      "fallback": "sensenova/deepseek-v4-flash"
     },
     "yi": {
       "roleName": "视觉与设计（yi）",
       "description": "设计决策、Token 定义、生图，偏向轻量推理",
       "priority": [
+        "sensenova/sensenova-6.8-flash-lite",
         "opencode-zen/nemotron-3-ultra-free",
         "opencode-zen/nemotron-3.5-lightning-free",
         "opencode-zen/muse-spark-1.2-contributor-free",
-        "sensenova/sensenova-6.8-flash-lite",
         "huoshan/doubao-lite",
         "opencode-go/deepseek-v4-flash"
       ],
@@ -322,10 +323,10 @@
       "roleName": "研究助理（xun）",
       "description": "搜索、事实核查、RSS 聚合，偏向轻量推理",
       "priority": [
+        "sensenova/sensenova-6.8-flash-lite",
         "opencode-zen/nemotron-3-ultra-free",
         "opencode-zen/nemotron-3.5-lightning-free",
         "opencode-zen/muse-spark-1.2-contributor-free",
-        "sensenova/sensenova-6.8-flash-lite",
         "huoshan/doubao-lite",
         "opencode-go/deepseek-v4-flash"
       ],
@@ -334,12 +335,12 @@
   },
   "presets": {
     "default": {
-      "name": "全功能推荐",
-      "description": "使用用户所有可用模型的最佳组合",
-      "men": "opencode-go/mimo-v2.5",
-      "si": "opencode-go/deepseek-v4-flash",
-      "ji": "opencode-go/deepseek-v4-flash",
-      "chi": "sensenova/glm-5.2",
+      "name": "SenseNova 混合",
+      "description": "men/si/chi 用 SenseNova DeepSeek V4 Flash，ji/yi/xun 用 SenseNova 6.8 Flash Lite（全部走 SenseNova 免费额度）",
+      "men": "sensenova/deepseek-v4-flash",
+      "si": "sensenova/deepseek-v4-flash",
+      "ji": "sensenova/sensenova-6.8-flash-lite",
+      "chi": "sensenova/deepseek-v4-flash",
       "yi": "sensenova/sensenova-6.8-flash-lite",
       "xun": "sensenova/sensenova-6.8-flash-lite"
     },

@@ -1,18 +1,21 @@
 /**
- * men-sidebar — server entry (V8)
+ * men-sidebar — server entry (OpenCode V2)
  *
- * 最小化 server 插件：空实现，无 hook，无输出。
- * TUI 插件在 ./tui 子路径导出。
+ * V2 迁移要点：
+ *   - 插件形态从 V1 `export default { id, tui: async (api) => … }`
+ *     改为 `export default Plugin.define({ id, setup(ctx) })`（@opencode/plugin）
+ *   - server 入口不注册任何 hook / 输出：TUI 侧边栏在 ./tui 子路径单独导出，
+ *     由 TUI 运行时按 host Entrypoints 的 `tui` 槽加载（dist/host.js）
  *
- * 说明：server entry 加载是内部行为，加载成功不需要可被 env 意外触发的
- * 顶层输出；调试日志由 ./tui.js 出口统一负责（MEN_DEBUG 门控）。
- * 参见 issue #113（2026-09-05）：曾在此处输出 SERVER ENTRY LOADED /
- * server() called 两行日志，MEN_DEBUG 被外部进程/用户环境设置时会污染宿主 stdout。
+ * 兼容说明：V1 下本文件导出的对象同时被 TUI 消费；V2 下 server / TUI 是两条独立加载路径，
+ * 因此 setup 保持空实现（无副作用），避免在纯 server 场景（`opencode run` / headless）多余开销。
  */
 
-export default {
+import { Plugin } from "@opencode/plugin";
+
+export default Plugin.define({
   id: "men-sidebar",
-  server: async () => {
-    return {};
+  async setup() {
+    /* 最小化 server 插件：无 hook，无输出。TUI 插件在 ./tui 子路径导出。 */
   },
-};
+});

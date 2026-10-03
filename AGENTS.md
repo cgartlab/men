@@ -63,11 +63,8 @@ v0.5.0（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 5. **model 分配**（配置优先级：`~/.config/opencode/men.jsonc` > 仓库 `opencode.json`；`men.jsonc` 不存在时回退到 `opencode.json`，CC Switch `~/.config/opencode/opencode.json` 会覆盖 provider/key）：
    - **职责划分**：CC Switch 管理 providers/keys，Men 管理 agent 分配（preset 切换 + 逐 Agent 覆盖）
    - 当前默认分配：
-     - men: `opencode-go/hy3`
-     - si: `sensenova/deepseek-v4-flash`
-     - ji: `opencode-go/deepseek-v4-flash`
-     - chi: `sensenova/glm-5.2`
-     - yi/xun: `sensenova/sensenova-6.8-flash-lite`
+     - men/si/chi: `sensenova/deepseek-v4-flash`
+     - ji/yi/xun: `sensenova/sensenova-6.8-flash-lite`
 6. **men 输出规范不得删除或弱化**（决策 D20）：`question` 工具交互、人类阅读优先（代号降噪）、todowrite 跟踪
 
 ## 常用命令
