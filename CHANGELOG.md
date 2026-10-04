@@ -21,8 +21,10 @@
 
 ### Fixed
 
+- **首页拓扑图 7 处小字对比度不达 WCAG AA**：`.topo-label--judge-tag`（11px）、`.topo-label--badge`（9px）、`.topo-elabel--pass/fail/report` 与 `.topo-status`（11px）用角色亮色作 `fill`，在节点底 `#f6f8fa` 上仅 **2.95–3.17:1**，而 <24px 文本需 4.5:1。新增 6 个同色相压暗的 `--role-*-text` 令牌（实测 4.64–4.67:1）并切换这 7 处；角色亮色仍用于大面积填充/描边与 20px 粗体大标题。`contrast-check.mjs` 同步纳入 12 组角色色断言，调色板守卫由 11 项扩到 **23 项**
+- **`contrast-check.mjs` 调色板守卫不解析 `var()` 引用**：`--role-men` 等令牌写作 `var(--color-accent)` 而非字面量，原守卫只匹配 `#hex`，误报「缺少令牌」。改为递归解析 `var(--…)` 引用链
 - **`token-ratio-check.mjs` 路径依赖 CWD**：用相对路径 `site/src/styles/global.css`，而脚本位于 `site/scripts/`、约定从 `site/` 运行，实际解析成 `site/site/src/...` 直接 ENOENT——即**从未被真正执行过**。改为基于 `import.meta.url` 解析（与 `check-site.mjs` 一致）
-- **`contrast-check.mjs` 调色板漂移会假阳性通过**：脚本内 `colors` 是 global.css 令牌的手工副本，改了 global.css 而脚本没改时，审计仍用旧值跑出 PASS。现从 `global.css` 读真值逐项校验 11 个令牌，不一致直接失败（与 `install.mjs` 兜底依赖漂移同源问题）
+- **`contrast-check.mjs` 调色板漂移会假阳性通过**：脚本内 `colors` 是 global.css 令牌的手工副本，改了 global.css 而脚本没改时，审计仍用旧值跑出 PASS。现从 `global.css` 读真值逐项校验，不一致直接失败（与 `install.mjs` 兜底依赖漂移同源问题）
 
 ## [v0.6.0] - 2026-10-04
 

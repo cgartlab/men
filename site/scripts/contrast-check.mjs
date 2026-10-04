@@ -15,9 +15,26 @@ import { readFileSync } from 'node:fs';
 // 路径基于 import.meta.url 解析，不依赖 CWD（脚本位于 site/scripts/，但约定从 site/ 运行）。
 const CSS_PATH = new URL('../src/styles/global.css', import.meta.url);
 const css = readFileSync(CSS_PATH, 'utf8');
+
+// 令牌可能写成字面量 #rrggbb，也可能写成 var(--another-token)（如 --role-men
+// 复用 --color-accent 以避免重复字面量）。先收集原始定义，再解析 var() 引用。
+const RAW = new Map();
+for (const m of css.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+  RAW.set(m[1], m[2].trim());
+}
+function resolveToken(name, depth = 0) {
+  const raw = RAW.get(name);
+  if (raw == null || depth > 8) return null;
+  const hex = raw.match(/^#[0-9a-fA-F]{3,8}$/);
+  if (hex) return hex[0].toLowerCase();
+  const ref = raw.match(/^var\(\s*(--[a-z0-9-]+)\s*\)$/);
+  if (ref) return resolveToken(ref[1], depth + 1);
+  return null;
+}
 const TOKENS = new Map();
-for (const m of css.matchAll(/(--[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\s*;/g)) {
-  TOKENS.set(m[1], m[2].toLowerCase());
+for (const name of RAW.keys()) {
+  const v = resolveToken(name);
+  if (v) TOKENS.set(name, v);
 }
 
 // colors 的键 → global.css 中的令牌名
@@ -33,6 +50,10 @@ const PALETTE_TOKEN_MAP = {
   accent: '--color-accent',
   accentDark: '--color-accent-dark',
   accentOnAccent: '--color-accent-on-accent',
+  roleMen: '--role-men', roleSi: '--role-si', roleJi: '--role-ji',
+  roleChi: '--role-chi', roleYi: '--role-yi', roleXun: '--role-xun',
+  roleMenText: '--role-men-text', roleSiText: '--role-si-text', roleJiText: '--role-ji-text',
+  roleChiText: '--role-chi-text', roleYiText: '--role-yi-text', roleXunText: '--role-xun-text',
 };
 
 function normalizeHex(hex) {
@@ -57,6 +78,12 @@ const colors = {
   accent:        '#e85d04',  // 主强调（仅大文本/填充） · 3.4:1
   accentDark:    '#a03c00',  // 小字安全橘 · 6.4:1
   accentOnAccent:'#0a0a0a',  // 橘底文字 · 5.7:1
+  // 角色色（首页拓扑图 / showcase 卡片）
+  roleMen:'#e85d04', roleSi:'#4a90d9', roleJi:'#2ea043',
+  roleChi:'#bf8700', roleYi:'#a371f7', roleXun:'#8b5cf6',
+  // 角色色文本变体（小字 AA ≥4.5:1）
+  roleMenText:'#be4c03', roleSiText:'#3b73ae', roleJiText:'#258036',
+  roleChiText:'#936800', roleYiText:'#825ac6', roleXunText:'#7e54e0',
 };
 
 // ---------- 对比度计算 ----------
@@ -90,6 +117,20 @@ function contrastRatio(color1, color2) {
 
 // ---------- 测试对（WCAG 2.2 AA） ----------
 const pairs = [
+  // 角色色 · 文本专用深色变体（AA 小文本 ≥4.5:1 @ #f6f8fa 拓扑图节点底）
+  { fg: colors.roleMenText,  bg: '#f6f8fa', label: 'role-men-text  小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleSiText,   bg: '#f6f8fa', label: 'role-si-text   小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleJiText,   bg: '#f6f8fa', label: 'role-ji-text   小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleChiText,  bg: '#f6f8fa', label: 'role-chi-text  小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleYiText,   bg: '#f6f8fa', label: 'role-yi-text   小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleXunText,  bg: '#f6f8fa', label: 'role-xun-text  小字标签 @ 拓扑节点', min: 4.5 },
+  // 角色色 · 亮色版：大文本场景（≥3:1，首页 showcase 卡片 20px 粗体 / 白底）
+  { fg: colors.roleMen, bg: colors.surface, label: 'role-men  大文本/描边 @ 卡片', min: 3.0 },
+  { fg: colors.roleSi,  bg: colors.surface, label: 'role-si   大文本/描边 @ 卡片', min: 3.0 },
+  { fg: colors.roleJi,  bg: colors.surface, label: 'role-ji   大文本/描边 @ 卡片', min: 3.0 },
+  { fg: colors.roleChi, bg: colors.surface, label: 'role-chi  大文本/描边 @ 卡片', min: 3.0 },
+  { fg: colors.roleYi,  bg: colors.surface, label: 'role-yi   大文本/描边 @ 卡片', min: 3.0 },
+  { fg: colors.roleXun, bg: colors.surface, label: 'role-xun  大文本/描边 @ 卡片', min: 3.0 },
   // 正文文本（≥ 4.5:1）
   { fg: colors.fg,        bg: colors.bg,           label: '正文(#1a1a1a) vs 背景(#fafafa)',          min: 4.5 },
   { fg: colors.fg,        bg: colors.surface,      label: '正文 vs 白底(#ffffff)',                    min: 4.5 },

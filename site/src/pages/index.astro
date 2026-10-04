@@ -709,16 +709,16 @@ const faq = install.faq || [];
   .topo-label--agent-id { fill: #656d76; font-size: 11px; }
   .topo-label--judge-cn { fill: #1f2328; font-size: 15px; font-weight: 600; }
   .topo-label--judge-sub { fill: #656d76; font-size: 11px; }
-  .topo-label--judge-tag { fill: var(--role-chi); font-size: 11px; font-weight: 600; font-style: italic; }
-  .topo-label--badge { fill: var(--role-chi); font-size: 9px; font-weight: 600; }
+  .topo-label--judge-tag { fill: var(--role-chi-text); font-size: 11px; font-weight: 600; font-style: italic; }
+  .topo-label--badge { fill: var(--role-chi-text); font-size: 9px; font-weight: 600; }
   .topo-label--hub-sub2 { fill: rgba(255,255,255,0.75); font-size: 10px; }
   .topo-label--node-title { fill: #1f2328; font-size: 13px; font-weight: 600; }
   .topo-label--node-sub { fill: #656d76; font-size: 10px; }
   .topo-label--node-micro { fill: #8b949e; font-size: 8.5px; }
   .topo-elabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
-  .topo-elabel--pass { fill: var(--role-ji); }
-  .topo-elabel--fail { fill: var(--role-chi); }
-  .topo-elabel--report { fill: var(--role-ji); }
+  .topo-elabel--pass { fill: var(--role-ji-text); }
+  .topo-elabel--fail { fill: var(--role-chi-text); }
+  .topo-elabel--report { fill: var(--role-ji-text); }
   .topo-label--output { fill: #1f2328; font-size: 16px; font-weight: 600; }
 
   /* Pulse animation on hub */
@@ -732,9 +732,9 @@ const faq = install.faq || [];
   }
 
   /* Status dots on nodes */
-  .topo-status { fill: var(--role-ji); }
+  .topo-status { fill: var(--role-ji-text); }
   .topo-status--active { animation: topo-blink 2s ease-in-out infinite; }
-  .topo-status--verify { fill: var(--role-chi); animation: topo-blink 1.5s ease-in-out infinite; }
+  .topo-status--verify { fill: var(--role-chi-text); animation: topo-blink 1.5s ease-in-out infinite; }
   @keyframes topo-blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
