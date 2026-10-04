@@ -123,14 +123,24 @@ export function checkCCSwitch() {
   return result;
 }
 
-// .opencode/package.json 缺失时的最小模板：从根 package.json 派生运行时依赖，加 @opencode-ai/plugin 兜底
-// 注意：版本号需与 .opencode/package.json 保持同步（发版时检查）
+// .opencode/package.json 缺失且根 package.json 不可用时的最后兜底。
+// 必须与仓库内 .opencode/package.json 的 dependencies 逐字一致 —— 由
+// test/install.test.mjs 锁定，防止再次漂移（曾出现兜底停在 1.18.25 而实际已 1.18.34）。
+export const FALLBACK_OPENCODE_DEPS = Object.freeze({
+  "@opencode-ai/plugin": "1.18.34",
+  "@opencode/plugin": "2.0.6",
+  "@opentui/core": "0.5.10",
+  "@opentui/solid": "0.5.10",
+  "solid-js": "1.9.12",
+});
+
+// .opencode/package.json 缺失时的最小模板：从根 package.json 派生运行时依赖，加兜底依赖
 export function buildOpencodePkgTemplate() {
   try {
     const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
-    return { dependencies: { "@opencode-ai/plugin": "1.18.25", ...(rootPkg.dependencies || {}) } };
+    return { dependencies: { ...FALLBACK_OPENCODE_DEPS, ...(rootPkg.dependencies || {}) } };
   } catch {
-    return { dependencies: { "@opencode-ai/plugin": "1.18.25", "@opentui/core": "^0.5.8", "@opentui/solid": "^0.5.8" } };
+    return { dependencies: { ...FALLBACK_OPENCODE_DEPS } };
   }
 }
 const OPCODE_PKG_TEMPLATE = buildOpencodePkgTemplate();

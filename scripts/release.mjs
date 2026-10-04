@@ -41,7 +41,7 @@ const SEMVER_RE = /^\d+\.\d+\.\d+$/;
 // bump 子命令 → 递增的版本段下标（0=major, 1=minor, 2=patch）
 const BUMP_SEGMENTS = { major: 0, minor: 1, patch: 2 };
 
-export { VERSION_JSON_FILES, VERSION_TEXT_FILES };
+export { VERSION_JSON_FILES, VERSION_TEXT_FILES, VERSION_TEXT_PATTERNS };
 
 // 发布时需同步版本号的 JSON 文件（相对仓库根）
 const VERSION_JSON_FILES = [
@@ -60,8 +60,51 @@ const VERSION_TEXT_FILES = [
   "knowledge/README.md",                  // 知识库 README 版本引用
   ".opencode/skills/men-status/SKILL.md",  // 版本表格（v0.4.0 靠手工补过）
   "docs/integrations/argus.md",           // argus 集成文档的版本引用
+  "docs/integrations/skillhub.md",        // SKILL.md frontmatter 示例（须与 men-status 同步）
+  "docs/dsh-customization.md",            // 「关联」行的当前项目版本
   "scripts/skillhub-publish.mjs",         // CLI_VERSION 常量（v0.5.0 新增，此前漏同步）
 ];
+
+// 文本文件中「应当被替换」的精确上下文（正则源串，`@VER@` 为旧版本号占位）。
+//
+// 为什么需要它：旧实现是 `text.split(old).join(new)` 全文件替换，会把**历史版本引用**
+// 或**他项目版本引用**一并改掉。v0.6.0 发版实测误改两处：
+//   - AGENTS.md「v0.5.0 发版手动补 releases.astro」→ 被改成 v0.6.0（历史事实被篡改）
+//   - docs/integrations/argus.md「若 argus v0.5.0 后 License 更新」→ 被改成 argus v0.6.0
+//     （argus 是另一个项目，当时实际为 0.5.8）
+// 未在此表登记的文件仍回退到全文件替换（向后兼容）。
+const VERSION_TEXT_PATTERNS = {
+  "AGENTS.md": ["v@VER@（M0–M7 完成）"],
+  "docs/guide/milestones.md": ["项目 v@VER@ 已发布"],
+  "docs/governance.md": ["> 版本：v@VER@ ｜ 日期："],
+  "knowledge/README.md": ["> 版本：v@VER@ ｜ 日期：", "## 当前内容（v@VER@）"],
+  ".opencode/skills/men-status/SKILL.md": ["^version: @VER@$", "\\| 版本 \\| v@VER@ \\|"],
+  "docs/integrations/argus.md": ["本项目 v@VER@（版本号由"],
+  "docs/integrations/skillhub.md": ["^version: @VER@$"],
+  "docs/dsh-customization.md": ["Agent 团队，v@VER@，M0–M7 完成"],
+  "site/src/pages/docs/configure.astro": ["<td><code>@VER@</code></td><td>配置版本号</td>"],
+  "scripts/skillhub-publish.mjs": ['CLI_VERSION = "@VER@"'],
+};
+
+const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
+
+/**
+ * 把文本里「应当更新」的版本号从 oldVersion 换成 newVersion。
+ *
+ * 登记在 VERSION_TEXT_PATTERNS 的文件只替换匹配到的上下文；未登记的沿用全文件替换。
+ * 已是最新版本时所有模式都不匹配，返回原文（幂等）。
+ */
+export function syncVersionText(text, file, oldVersion, newVersion) {
+  const patterns = VERSION_TEXT_PATTERNS[file];
+  if (!patterns) return text.split(oldVersion).join(newVersion);
+  const escapedVer = oldVersion.replace(REGEX_SPECIALS, "\\$&");
+  let out = text;
+  for (const source of patterns) {
+    const re = new RegExp(source.replace(/@VER@/g, escapedVer), "gm");
+    out = out.replace(re, (match) => match.split(oldVersion).join(newVersion));
+  }
+  return out;
+}
 
 // ─────────────────────────── 工具函数 ───────────────────────────
 
@@ -215,7 +258,7 @@ function syncVersionFiles(newVersion, oldVersion, dryRun) {
     }
     try {
       const text = fs.readFileSync(fullPath, "utf-8");
-      const next = text.split(oldVersion).join(newVersion);
+      const next = syncVersionText(text, f, oldVersion, newVersion);
       const changed = next !== text;
       if (changed && !dryRun) {
         fs.writeFileSync(fullPath, next);

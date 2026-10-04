@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import {
   checkNode,
   buildOpencodePkgTemplate,
+  FALLBACK_OPENCODE_DEPS,
   isMenRepoRoot,
   copyAllowlist,
   copyTree,
@@ -49,6 +50,19 @@ test('install buildOpencodePkgTemplate: includes plugin dep', () => {
   assert.ok(tpl.dependencies);
   assert.strictEqual(typeof tpl.dependencies['@opencode-ai/plugin'], 'string');
   assert.ok(tpl.dependencies['@opencode-ai/plugin'].length > 0);
+});
+
+test('install FALLBACK_OPENCODE_DEPS: 与 .opencode/package.json 逐字一致（防版本漂移）', () => {
+  // 先例：兜底停在 @opencode-ai/plugin 1.18.25，而实际已 1.18.34 —— 新装用户拿到旧依赖。
+  // 原测试只断言「是非空字符串」，版本漂移完全不可见；这里改为逐字比对。
+  const repoOpencode = JSON.parse(
+    fs.readFileSync(path.join(REPO_ROOT, '.opencode/package.json'), 'utf8'),
+  );
+  assert.deepStrictEqual(
+    { ...FALLBACK_OPENCODE_DEPS },
+    repoOpencode.dependencies,
+    'FALLBACK_OPENCODE_DEPS 必须与 .opencode/package.json 的 dependencies 一致',
+  );
 });
 
 // ── isMenRepoRoot ────────────────────────────────────────

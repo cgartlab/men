@@ -21,6 +21,7 @@ import {
   procFailInfo,
   VERSION_JSON_FILES,
   VERSION_TEXT_FILES,
+  syncVersionText,
 } from '../scripts/release.mjs';
 import { mdToHtml } from '../scripts/update-release-page.mjs';
 
@@ -170,11 +171,58 @@ test('release: 版本同步清单覆盖全部版本引用载体', () => {
     'knowledge/README.md',
     '.opencode/skills/men-status/SKILL.md',
     'docs/integrations/argus.md',
+    'docs/integrations/skillhub.md',
+    'docs/dsh-customization.md',
     'scripts/skillhub-publish.mjs',
   ];
   for (const f of textMust) {
     assert.ok(VERSION_TEXT_FILES.includes(f), `${f} 必须在 VERSION_TEXT_FILES，否则发版会漏同步`);
   }
+});
+
+// ── syncVersionText：精确上下文替换（防篡改历史/他项目版本）─────
+test('release syncVersionText: 只改「当前版本」上下文，不动历史引用', () => {
+  // 回归：v0.6.0 发版时全文件替换把 AGENTS.md 的先例句
+  // 「v0.5.0 发版手动补 releases.astro」误改成 v0.6.0（篡改历史）。
+  const text = [
+    'v0.6.0（M0–M7 完成）。npm 包已发布。',
+    '先例：v0.3.2 发版漏 6 处；v0.5.0 发版手动补 `releases.astro`。',
+  ].join('\n');
+  const out = syncVersionText(text, 'AGENTS.md', '0.6.0', '0.7.0');
+  assert.ok(out.includes('v0.7.0（M0–M7 完成）'), '当前版本行应更新');
+  assert.ok(out.includes('v0.5.0 发版手动补'), '历史先例句必须原样保留');
+  assert.ok(!out.includes('v0.6.0（M0–M7 完成）'), '旧版本不应残留');
+});
+
+test('release syncVersionText: 不动他项目版本引用', () => {
+  // 回归：argus.md 的「若 argus v0.5.0 后 License 更新」曾被改成 argus v0.6.0，
+  // 而 argus 是另一个项目（当时实际 0.5.8）。
+  const text = [
+    '| `AGENTS.md` | 本项目 v0.6.0（版本号由 `release.mjs` 发版时同步） |',
+    '| **License 追踪** | 若 argus 的 License 发生变更，请检查 §5。 |',
+  ].join('\n');
+  const out = syncVersionText(text, 'docs/integrations/argus.md', '0.6.0', '0.7.0');
+  assert.ok(out.includes('本项目 v0.7.0（版本号由'), '本项目版本应更新');
+  assert.ok(out.includes('若 argus 的 License 发生变更'), '他项目表述应原样保留');
+});
+
+test('release syncVersionText: 多站点文件全部更新（SKILL.md frontmatter + 表格）', () => {
+  const text = ['version: 0.6.0', '| 版本 | v0.6.0 |'].join('\n');
+  const out = syncVersionText(text, '.opencode/skills/men-status/SKILL.md', '0.6.0', '0.7.0');
+  assert.ok(out.includes('version: 0.7.0'), 'frontmatter 应更新');
+  assert.ok(out.includes('| 版本 | v0.7.0 |'), '版本表格应更新');
+});
+
+test('release syncVersionText: 幂等（已是新版本时不再改）', () => {
+  const text = 'v0.7.0（M0–M7 完成）\n';
+  const out = syncVersionText(text, 'AGENTS.md', '0.6.0', '0.7.0');
+  assert.strictEqual(out, text);
+});
+
+test('release syncVersionText: 未登记文件回退到全文件替换（向后兼容）', () => {
+  const text = 'a 0.6.0 b 0.6.0';
+  const out = syncVersionText(text, 'not-registered.txt', '0.6.0', '0.7.0');
+  assert.strictEqual(out, 'a 0.7.0 b 0.7.0');
 });
 
 // ── procFailInfo ─────────────────────────────────────────
