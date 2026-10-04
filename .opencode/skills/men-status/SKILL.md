@@ -1,7 +1,7 @@
 ---
 slug: cgartlab-men-status
 displayName: Men Status
-version: 0.5.0
+version: 0.6.0
 summary: "Men 状态报告：版本、更新检查、忽略版本、Agent 名单与配置健康。"
 license: MIT
 name: men-status
@@ -52,7 +52,7 @@ node -e "console.log(require('./package.json').version)"
 
 | 项 | 值 |
 |----|----|
-| 版本 | v0.5.0 |
+| 版本 | v0.6.0 |
 | 上次更新检查 | 2026-08-27 10:00（或：需在 OpenCode 内查看） |
 | 已忽略版本 | 无（或 v0.3.0） |
 | Node | v22.x ✅ |
