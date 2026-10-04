@@ -8,7 +8,40 @@
 
 import { readFileSync } from 'node:fs';
 
-// ---------- 颜色定义（R8.5 Token · 与 global.css 同步） ----------
+// ---------- 调色板同步守卫 ----------
+// 上面的 colors 是一份「与 global.css 手工同步」的副本。若 global.css 改了颜色而
+// 这里没改，脚本仍会用旧值跑出 PASS —— 这正是假阳性（检查通过但没测到真实值）。
+// 因此先从 global.css 读真值逐项比对，不一致直接 FAIL。
+// 路径基于 import.meta.url 解析，不依赖 CWD（脚本位于 site/scripts/，但约定从 site/ 运行）。
+const CSS_PATH = new URL('../src/styles/global.css', import.meta.url);
+const css = readFileSync(CSS_PATH, 'utf8');
+const TOKENS = new Map();
+for (const m of css.matchAll(/(--[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\s*;/g)) {
+  TOKENS.set(m[1], m[2].toLowerCase());
+}
+
+// colors 的键 → global.css 中的令牌名
+const PALETTE_TOKEN_MAP = {
+  fg: '--color-fg',
+  fgSecondary: '--color-fg-secondary',
+  fgTertiary: '--color-fg-tertiary',
+  fgMuted: '--color-fg-muted',
+  fgDecorative: '--color-fg-decorative',
+  bg: '--color-bg',
+  surface: '--color-surface',
+  surfaceWarm: '--color-surface-warm',
+  accent: '--color-accent',
+  accentDark: '--color-accent-dark',
+  accentOnAccent: '--color-accent-on-accent',
+};
+
+function normalizeHex(hex) {
+  const h = hex.replace('#', '').toLowerCase();
+  if (h.length === 3) return '#' + h.split('').map((c) => c + c).join('');
+  return '#' + h.slice(0, 6);
+}
+
+// ---------- 颜色定义（R8.5 Token · 由 global.css 真值逐项校验） ----------
 const colors = {
   // 前景文字（5 级梯度）
   fg:            '#1a1a1a',  // 正文 · 16.7:1
@@ -84,6 +117,24 @@ console.log('='.repeat(72));
 console.log('R8.5 · WCAG 2.2 AA 对比度检查');
 console.log('='.repeat(72));
 
+let drift = 0;
+for (const [key, token] of Object.entries(PALETTE_TOKEN_MAP)) {
+  const actual = TOKENS.get(token);
+  const declared = colors[key];
+  if (!actual) {
+    console.log(`FAIL  | 调色板守卫 | global.css 缺少令牌 ${token}`);
+    drift++;
+    continue;
+  }
+  if (normalizeHex(actual) !== normalizeHex(declared)) {
+    console.log(`FAIL  | 调色板守卫 | ${token}：脚本 ${declared} ≠ global.css ${actual}（请同步本文件 colors.${key}）`);
+    drift++;
+  }
+}
+if (drift === 0) {
+  console.log(`PASS  | 调色板守卫 | ${Object.keys(PALETTE_TOKEN_MAP).length} 项与 global.css 一致`);
+}
+
 let pass = 0;
 let fail = 0;
 
@@ -96,8 +147,13 @@ for (const { fg, bg, label, min } of pairs) {
 }
 
 console.log('-'.repeat(72));
-console.log(`结果：${pass} 通过 / ${fail} 失败`);
+console.log(`结果：${pass} 通过 / ${fail} 失败 · 调色板漂移 ${drift} 项`);
 console.log('='.repeat(72));
+
+if (drift > 0) {
+  console.error('❌ 本文件的调色板与 global.css 不一致：对比度结论不可信，请先同步');
+  process.exit(1);
+}
 
 if (fail > 0) {
   console.error('❌ 存在对比度不足的颜色对，请修正');

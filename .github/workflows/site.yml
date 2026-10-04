@@ -24,9 +24,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22          # 与 deploy.yml 保持一致
+      - name: Install
+        working-directory: site
+        run: npm ci
+      # 源码级质量门：只读 global.css，零依赖、秒级。先于 build 跑，
+      # 让配色/令牌回归在 ~1s 内失败，而不是等 astro 构建完。
+      # （这两个审计脚本原先只能手工运行，回归无人拦截；见 PR 描述）
+      - name: Source quality gates (contrast + token claims)
+        working-directory: site
+        run: npm run check:source
       - name: Build + artifact check
         working-directory: site
         run: |
-          npm ci
           npm run build
           npm run check-site

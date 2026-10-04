@@ -12,9 +12,14 @@
 
 ### Added
 
+- **站点源码级质量门进 CI**：`contrast-check.mjs`（WCAG 2.2 AA 对比度）与 `token-ratio-check.mjs`（令牌注释声称值 vs 实测）此前只能手工运行，回归无人拦截。两者零依赖、秒级，现经 `npm run check:source` 接入 `.github/workflows/site.yml`，且排在 astro 构建**之前**，配色回归在 ~1s 内失败而非等构建完成
+
 ### Changed
 
 ### Fixed
+
+- **`token-ratio-check.mjs` 路径依赖 CWD**：用相对路径 `site/src/styles/global.css`，而脚本位于 `site/scripts/`、约定从 `site/` 运行，实际解析成 `site/site/src/...` 直接 ENOENT——即**从未被真正执行过**。改为基于 `import.meta.url` 解析（与 `check-site.mjs` 一致）
+- **`contrast-check.mjs` 调色板漂移会假阳性通过**：脚本内 `colors` 是 global.css 令牌的手工副本，改了 global.css 而脚本没改时，审计仍用旧值跑出 PASS。现从 `global.css` 读真值逐项校验 11 个令牌，不一致直接失败（与 `install.mjs` 兜底依赖漂移同源问题）
 
 ## [v0.6.0] - 2026-10-04
 

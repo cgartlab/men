@@ -7,7 +7,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check-site": "node scripts/check-site.mjs"
+    "check-site": "node scripts/check-site.mjs",
+    "check-contrast": "node scripts/contrast-check.mjs",
+    "check-tokens": "node scripts/token-ratio-check.mjs",
+    "check:source": "npm run check-contrast && npm run check-tokens"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.138",
