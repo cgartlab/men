@@ -12,7 +12,19 @@
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [v0.6.0] - 2026-10-04
+
+### Added
+
 - **Agent 自洽性机械检查**：新增 `test/agent-consistency.test.mjs`，锁定 6 个 agent 的红线引用、模型分配、角色边界、技能清单与关键流程表述，防后续提示词漂移
+- **OpenCode V2 API 迁移**：3 个插件（`men-verify` / `men-learn` / `men-sidebar`）迁移到 OpenCode V2 API，并新增 SenseNova 混合预设（`config/models.json`、`config/models.schema.json`、`opencode.json`、`scripts/setup.mjs`）（#133）
+- **跨 Agent 执行契约**：补齐 prompt 模板、临时产物协议、事件类型、验收可消费性与重试归属，落到 6 个 agent 定义与 `ultrawork` / `verify` 命令（#122）
+- **SkillHub 发布链路**：新增 `scripts/skillhub-publish.mjs`、`.github/workflows/skillhub-publish.yml` 与 `docs/integrations/skillhub.md`
+- **DSH 定制文档**：新增 `docs/dsh-customization.md`
 
 ### Changed
 
@@ -20,17 +32,24 @@
 - **流程阈值统一**：意图门判定永远先行；chi 连续 3 次 FAIL 即 BLOCKED，编排层立即停止，不再与通用 5 次上限冲突；judge 每轮复验所有标准
 - **Exa MCP 表述修正**：xun 定义与 xun-search 技能改为「由 CC Switch 统一管理」，与仓库 `opencode.json` 不含 MCP 的实际配置一致
 - **架构文档同步**：si 角色描述、命令数量与 gh-issue 命令补齐
+- **依赖升级**：undici 8.10.0 → 8.11.2（#127）、astro 7.2.9 → 7.3.5（#131）、@iconify-json/lucide 1.2.127 → 1.2.138（#129）、@opentui/solid 0.5.9 → 0.5.14（#130）
+- **网页质量审查 R1–R22 闭环**：12 维度多轮修复，无障碍 AA 违规 21 → 6 → 0；新增 CWV / 字号 / 对比度 / 溢出等实测脚本与 12 张截图，报告见 `docs/reports/web-quality-2026-09-19.md`
 
 ### Fixed
 
-- **SkillHub Publish 工作流 token 表达式损坏**：`skillhub-publish.yml` 的 `SKILLHUB_TOKEN` 被写成 `*** secrets.SKILLHUB_API_KEY }}`（自 730627d 起），工作流文件非法导致每次 push 都产生一条失败运行；恢复为 `${{ secrets.SKILLHUB_API_KEY }}`
+- **SkillHub Publish 工作流 token 表达式损坏**：`skillhub-publish.yml` 的 `SKILLHUB_TOKEN` 被写成 `*** secrets.SKILLHUB_API_KEY }}`（自 730627d 起），工作流文件非法导致每次 push 都产生一条失败运行；恢复为 `${{ secrets.SKILLHUB_API_KEY }}`（#135）
 - **men-update 技能 v0.5.0 同步**：移除「必须删除 npm 缓存」的陈旧流程，改为相对路径部署说明
 - **评审转交修正**：chi-judge 不再把语义/视觉评审推给 si/yi；yi-design 内容写作转交 ji
 - **数据源与文档冲突**：8888 端口注明与 Wealth Tracker 共用；release.md 的 MCP 声明规则与 AGENTS.md 统一；si-plan-compose 示例移除框架 `.tsx`
+- **install.mjs 命令注入（CWE-78）**：修复 `scripts/install.mjs` 的注入路径，代码质量与安全审查 P0/P1 归零，报告见 `docs/reports/code-quality-2026-09-19.md`
+- **版本同步补齐**：`scripts/release.mjs` 补 3 处同步遗漏，lockfile 根版本泛化到任意 `*-lock.json`
 
 ### Security
 
-- **http-cache-semantics 4.2.0 → 4.3.0**（site 传递依赖，经 astro 引入）：修复 `GHSA-ch52-4w7c-c8xp`（high，`max-stale` 处理不当可泄露跨用户缓存响应）。`site/package-lock.json` 此前不在根目录 `npm audit` 的覆盖范围内，故 CI 全绿而 Dependabot 仍报 7 条告警；本次连同 devalue（#134）一并清零
+- **brace-expansion 2.1.4 → 2.1.7**（#132）：清除 high 级 advisory（`GHSA-q2hr-2g5m-vwhr`、`GHSA-qhr7-859c-m2p7`、`GHSA-6j4f-fj2g-mc7p`）。此前 `npm audit --audit-level=high` 在 CI 第 6 步失败，导致其后的 tests / verify / release --dry-run / install 全部被 skip——一个依赖告警掩盖了整条验证链
+- **gate.mjs 命令注入**（#124）：`scripts/gate.mjs` 不再经 shell 执行 `package.json` 脚本，改用固定 npm 入口 + 危险字符拒绝（修复 #123）
+- **http-cache-semantics 4.2.0 → 4.3.0**（#136）：修复 `GHSA-ch52-4w7c-c8xp`（high，`max-stale` 处理不当可泄露跨用户缓存响应）。`site/package-lock.json` 此前不在根目录 `npm audit` 的覆盖范围内，故 CI 全绿而 Dependabot 仍报 7 条告警
+- **devalue 5.9.1 → 5.9.4**（#134）：清除 6 条 advisory。与上一条合计使默认分支 Dependabot 告警 7 → 0
 
 ## [v0.5.0] - 2026-09-11
 

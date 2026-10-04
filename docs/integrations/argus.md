@@ -82,7 +82,7 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 | **BSL 1.1** | ⚠️ | 本项目（men）使用 MIT，但 argus 项目是 BSL 1.1。集成时**仅内部使用**，请在 docs 中标注警告（见下）。 |
 | **商业用途** | ❌ | BSL 1.1 5 年后转 Apache 2.0。若未来对外发布 men 包或在商业产品里使用 argus 评审结果，需推动 argus 改回 MIT/双 license。 |
 | **评审结果外传** | ✅ | Argus 输出的评审报告可转发给团队成员，但不得公开到 GitHub 外部（含社区、客户）而不经审查。 |
-| **License 追踪** | 📋 | 若 argus v0.5.0 后 License 更新，请检查 docs/integrations/argus.md §5 是否需要修订。 |
+| **License 追踪** | 📋 | 若 argus 的 License 发生变更（其当前版本见 argus 仓库 `VERSION` 文件），请检查 docs/integrations/argus.md §5 是否需要修订。 |
 
 ### License 警告（在项目 README 顶部或 AGENTS.md 开头加一句）
 
@@ -103,7 +103,7 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 
 | 文档 | 关联版本 |
 |------|----------|
-| `AGENTS.md` | 本项目 v0.5.0（版本号由 `release.mjs` 发版时同步，不手写日期） |
+| `AGENTS.md` | 本项目 v0.6.0（版本号由 `release.mjs` 发版时同步，不手写日期） |
 | `docs/integrations/argus.md` | Sync: 每次发版重审，确认 BSL/license 状态未变 |
 | `design-review.yml` | Sync: CI 变更同步至 main 分支（已提交） |
 | `.argus.yml` | Sync: 2026-08-31 commit，见 `git log 48f79c8` |
