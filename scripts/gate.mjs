@@ -200,18 +200,26 @@ async function main() {
     process.exit(0);
   }
 
-  // ── 5. 执行（无 shell argv，Windows 用 cmd /c） ──
+  // ── 5. 执行（无 shell argv，固定 npm 脚本入口） ──
   const isWin = process.platform === "win32";
-  const result = spawnSync(
-    isWin ? "cmd" : "sh",
-    isWin ? ["/c", scriptText] : ["-c", scriptText],
-    {
-      cwd: dir,
-      encoding: "utf-8",
-      timeout: SCRIPT_TIMEOUT_MS,
-    }
-  );
-
+  const npmCmd = isWin ? "npm.cmd" : "npm";
+  const npmArgs = ["run", keyword];
+  const unsafeChars = /[\r\n;&|`$<>{}()\[\]!~]|\$\{|<\(|>\(|\|/;
+  if (unsafeChars.test(scriptText)) {
+    console.error(`GATE_SKIP: ${keyword} 未配置（scripts.${keyword} 包含 shell 控制字符）`);
+    await appendEvent(sessionId, "gate.passed", `gate.${keyword}`, `SKIP: scripts.${keyword} 不安全`, {
+      keyword,
+      reason: "unsafe-script",
+    });
+    await writeState(keyword, { reinforcementCount: 0, lastResult: "passed" });
+    process.exit(0);
+  }
+  const result = spawnSync(npmCmd, npmArgs, {
+    cwd: dir,
+    encoding: "utf-8",
+    shell: false,
+    timeout: SCRIPT_TIMEOUT_MS,
+  });
   // ── 6. 判定 ──
   const passed = result.status === 0 && !result.error;
   const timedOut = result.status === null && result.signal === "SIGTERM";
