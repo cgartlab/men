@@ -48,7 +48,13 @@ for (const [name, raw] of RAW) {
   const hex = resolveToken(name);
   if (hex && hex.startsWith('#')) COLOR.set(name, hex);
   const rem = raw.match(/^([\d.]+)rem$/);
-  if (rem) FONT_SIZE.set(name, parseFloat(rem[1]) * 16);
+  if (rem) { FONT_SIZE.set(name, parseFloat(rem[1]) * 16); continue; }
+  // 令牌值本身可能是 clamp()/calc()：取 clamp 的 min 作保守下界
+  // （实际渲染只会 >= min，故不会把大文本误判成小文本）。
+  const clampRem = raw.match(/clamp\(\s*([\d.]+)rem/);
+  if (clampRem) { FONT_SIZE.set(name, parseFloat(clampRem[1]) * 16); continue; }
+  const clampPx = raw.match(/clamp\(\s*([\d.]+)px/);
+  if (clampPx) FONT_SIZE.set(name, parseFloat(clampPx[1]));
 }
 
 // ── 对比度 ──────────────────────────────────────────────────
@@ -84,8 +90,10 @@ function collect(dir, exts) {
 const DECORATIVE_COMPONENT_SEL = /\b(symbol-matrix|dither-band|hero-canvas|background-canvas)\b/i;
 // 明显是图形的选择器（SVG 形状 / 非文本）
 const NON_TEXT_SEL = /(dot|badge|rect|circle|node-bg|path|arrow|marker|spark|bar|track|-bg)\b/i;
-// 纯装饰伪元素（只放分隔符/项目符号）
-const DECORATIVE_PSEUDO = /^::(before|after)$/;
+// 纯装饰伪元素（只放分隔符/项目符号）。必须锚定在选择器**末尾**的 ::before/::after ——
+// 早前用 /^::(before|after)$/ 只能匹配整条就是伪元素的情况，复合选择器
+// （如 `.agent-card__list li::before`）永远匹配不上，导致项目符号被当成真文本。
+const DECORATIVE_PSEUDO = /::(before|after)\s*$/;
 
 const violations = [];
 // 无 font-size 的规则：字号靠继承/父级，CSS 里无法静态确定。但它们仍可能是
