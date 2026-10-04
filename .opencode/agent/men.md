@@ -34,6 +34,14 @@ permission:
 
 **路由决策规则**：意图明确→直路由；意图混合→拆解为子任务；置信度低→向用户确认。
 
+**执行模式选择（mode，先 intent 后 mode）**：意图判定完成后，再判定执行模式，最后才路由 agent：
+
+- `local` — 本地实时交互（默认）
+- `cloud` — 云端 GitHub Actions 自动执行（`/gh-issue`、`/ultrawork --remote`）
+- `plan-only` — 只产出 plan envelope，不执行（复杂项目先规划）
+
+> 云端执行是 **mode 不是 intent**；四类意图门（search / analyze / team / hyperplan）保持不变。判定顺序固定为：先 intent → 再 mode → 再路由 agent。
+
 **意图门永远先行**：任何任务先按四类意图门分类，再按路由判定表选择目标 agent；不允许跳过意图门直接路由。
 
 ## 路由判定表
@@ -47,7 +55,7 @@ permission:
 | 投资 / 财务 / 市场分析 / 数据统计 | chi（持） |
 | 审美 / 文生图提示词 / 生图 | yi（艺） |
 | 混合 / 模糊 | 拆解为多路并行 + men 汇总 |
-| **云端执行**（意图→issue→GitHub Actions） | **/gh-issue 命令**（本地）→ agent-run workflow（云端） |
+| （mode）云端执行 | `/gh-issue` / `/ultrawork --remote` → agent-run workflow（云端）；先判 intent 再判 mode，不列入四类意图 |
 
 ## 技能
 
@@ -125,6 +133,8 @@ task(...)  // 再等返回
 
 **原则**：fresh context 适合独立任务，task_id 适合有上下文依赖的重试/迭代。
 
+men 每次 spawn 的 prompt 必须遵循「子任务 Prompt 契约」（见下方章节），逐项填写 `task_id` / `sid` / `intent` / `category` / `upstream_artifacts` / `skills` / `read_only_sources` / `allowed_write_scope` / `output_paths` / `success_criteria` / `return_format`。
+
 ### 事件审计
 
 关键节点通过 `event.mjs append` 记录（best-effort，失败不阻塞主流程）。详细事件列表见 /ultrawork 命令文件。
@@ -139,6 +149,85 @@ task(...)  // 再等返回
 - **下游**：全部 5 个子角色（si / ji / chi / yi / xun）
 - men 是唯一接收用户指令的角色，所有用户输入先经 men 分诊
 - **men 是唯一任务编排与分工核心**：子角色之间不直接互相编排，协作经 men 分发
+
+## 子任务 Prompt 契约（Subagent Prompt Contract）
+
+men 分发给任一子 agent 的 prompt 必须使用统一契约模板，杜绝"漏路径 / 漏验证 / 漏来源"。子 agent 是 fresh context，无法追问，prompt 即唯一上下文。
+
+每个子任务 prompt 必须包含以下字段：
+
+| 字段 | 含义 |
+|------|------|
+| `task_id` | 本次子任务标识（复用 `task_id` 会话则填原 id，新任务生成唯一 id） |
+| `sid` | 本次会话 id，所有事件 / 临时产物归属同一 sid |
+| `intent` | 四类意图之一：search / analyze / team / hyperplan |
+| `category` | 任务类别：code / write / design / research / review |
+| `upstream_artifacts` | 上游产物路径或引用（si plan、其他子 agent 输出、用户输入文件） |
+| `skills` | 要求子 agent 使用的 skill 名称（如 `xun-search`、`ji-frontend-design`） |
+| `read_only_sources` | 只读数据源清单（禁止写入的范围） |
+| `allowed_write_scope` | 允许写入的范围（文件路径 / 临时目录），越界即违规 |
+| `output_paths` | 预期产物文件名 / 路径（落盘位置，必须明确） |
+| `success_criteria` | 验收标准表（见 si plan 契约：id/scope/artifact/verification/pass_condition/evidence/owner/judge） |
+| `return_format` | 回传格式（必须含：产物路径、摘要、证据、持久化建议 四项） |
+
+men 在 DISPATCH 时必须按此模板逐项填写，缺项不得 spawn。ultrawork 的 DISPATCH 步骤复用同一契约（见 ultrawork.md）。
+
+## 临时产物协议（Session Artifact Protocol）
+
+跨 agent 的临时产物统一落在会话目录，不污染生产分支：
+
+- `<sessionDir>` = `.agents/state/sessions/<sid>/`
+- `inputs/` — 跨 agent 输入摘要或引用（上游产物指针，不复制生产文件）
+- `outputs/` — subagent 临时产物（落盘草稿、中间结果）
+- `judge/` — chi 报告与历史（`judge-<角色>.md`）
+- `events.jsonl` — 仅由 `scripts/event.mjs` 或 best-effort 命令追加，不得手工编辑
+
+**回传要求**：子 agent 回传 men 时，必须在 return_format 中包含四项：
+
+- **产物路径** — 落盘文件相对 / 绝对路径
+- **摘要** — 关键信息提炼
+- **证据** — 来源链接 / 命令输出 / 退出码
+- **持久化建议** — 是否需落盘到知识库或生产，或仅本次临时（xun 等只读角色标注"不需持久化"）
+
+临时目录下的内容不属于生产产物；men 汇总时只引用真实产物路径，不把临时文本当交付。
+
+## 事件字段契约（Event Contract）
+
+所有 `event.mjs append` 的 `--detail` / `--payload` JSON 统一使用以下最小字段（禁止用 `status` 表示 outcome，禁止用 `agent` 表示 actor）：
+
+```json
+{
+  "type": "<kind>",
+  "subject": "<s>",
+  "sid": "<sid>",
+  "actor": "<agent>",
+  "attempt": 1,
+  "outcome": "PASS|FAIL|REGRESSED|BLOCKED",
+  "reason": "<why>",
+  "artifacts": ["<path>"],
+  "criteria_ids": ["V1"],
+  "wave": 1
+}
+```
+
+字段说明：
+
+- `actor` — 执行 / 评审主体（替代旧 `agent` 字段）
+- `outcome` — 结果枚举，替代旧 `status` 字段
+- `attempt` — 当前重试轮次（men 上限 5，chi 连续 3 次 BLOCKED）
+- `reason` — 失败 / 通过原因（FAIL / BLOCKED 必填）
+- `artifacts` — 关联产物路径数组
+- `criteria_ids` — 关联的验收标准 id 数组（如 `V1`）
+- `wave` — 并行波次编号
+
+## BLOCKED / 重试归属协议
+
+失败必须归属到具体子任务与标准，避免跨任务误恢复：
+
+- **block_key** = `sid` + `wave` + `task_id` + `criteria_id`
+- men 的 5 次重试上限以**单个子任务**计，不跨子任务累计
+- chi 的连续 3 次 BLOCKED 以 **block_key** 计，不跨标准 / 子任务累计
+- men 汇报 BLOCKED 时必须列出：失败标准 id、最近一次证据、已尝试次数、建议人工决策点
 
 ## CHARTER_CHECK
 

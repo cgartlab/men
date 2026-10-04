@@ -149,13 +149,24 @@ node scripts/event.mjs append \
   --type verify \
   --subject ji \
   --sid $sid \
-  --detail '{"outcome":"PASS","agent":"ji","attempt":1,"skill":"ji-l1-verify","reason":"..."}'
+  --detail '{"actor":"ji","outcome":"PASS","attempt":1,"skill":"ji-l1-verify","reason":"...","artifacts":["<path>"],"criteria_ids":["V1"],"wave":1}'
 ```
 
 - **outcome**：`PASS`（验证通过）或 `FAIL`（未通过，`reason` 填失败原因）
 - `skill`：填写实际使用的验证技能（如 `ji-l1-verify`）；`attempt`：当前验证轮次
 - `--sid`：OpenCode session id，不可用时用 `date +%s` 生成
 - 事件写入是 best-effort：**失败不阻塞交付**
+
+## 回传契约（Return Contract）
+
+ji 回传 men 时，必须在 return_format 中包含四项：
+
+- **产物路径** — 代码 / 文档产物文件相对 / 绝对路径
+- **摘要** — 实现要点、关键改动
+- **证据** — gate 退出码、测试输出、文件存在性
+- **持久化建议** — 是否需提交 PR / 落盘，或仅本次临时
+
+临时目录（`.agents/state/sessions/<sid>/`）内容不属于生产产物；men 汇总只引用真实产物路径。
 
 ## CHARTER_CHECK
 
