@@ -61,7 +61,7 @@ const seealso = [
       <div class="wiki-note">
         <code>install.mjs</code> 会在流程最前做 <strong>Node 版本检查</strong>，主版本低于 <code>18</code> 时直接报错并以非 0 退出码结束。
       </div>
-      <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
+      <SrcRef files={['install.sh','install.ps1','scripts/install.mjs']} />
     </section>
 
     <section id="npm" class="doc-section">
@@ -78,7 +78,7 @@ const seealso = [
         <span class="code-block__lang">bash</span>
         <pre><code>opencode</code></pre>
       </div>
-      <SrcRef files={['D:\github-repos\men\scripts\install.mjs','D:\github-repos\men\package.json']} />
+      <SrcRef files={['scripts/install.mjs','package.json']} />
     </section>
 
     <section id="linux-macos" class="doc-section">
@@ -97,7 +97,7 @@ const seealso = [
         若 <code>curl</code> 因网络/代理失败，进程替换可能静默成功（无任何输出）。建议先显式下载再执行，失败时能看到明确报错：
         <pre><code>curl -fsSL {rawBase}/install.sh -o /tmp/men-install.sh &amp;&amp; bash /tmp/men-install.sh [选项]</code></pre>
       </div>
-      <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\scripts\install.mjs']} />
+      <SrcRef files={['install.sh','scripts/install.mjs']} />
     </section>
 
     <section id="windows" class="doc-section">
@@ -113,7 +113,7 @@ const seealso = [
         <pre><code>irm {rawBase}/install.ps1 -OutFile install.ps1
 ./install.ps1 -Dir C:\men</code></pre>
       </div>
-      <SrcRef files={['D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
+      <SrcRef files={['install.ps1','scripts/install.mjs']} />
     </section>
 
     <section id="inplace" class="doc-section">
@@ -138,7 +138,7 @@ const seealso = [
       <div class="wiki-note">
         分发脚本中的 <code>INSTALL_URL</code> 与 <code>REPO_URL</code> 已<strong>硬编码为真实地址</strong>：前者指向安装脚本的原始 URL（即 <code>raw.githubusercontent.com/cgartlab/men/main/&lt;install.sh|install.ps1&gt;</code>），后者是 <code>git clone</code> 使用的仓库地址（<code>github.com/cgartlab/men.git</code>）。
       </div>
-      <SrcRef files={['D:\github-repos\men\install.sh','D:\github-repos\men\install.ps1','D:\github-repos\men\scripts\install.mjs']} />
+      <SrcRef files={['install.sh','install.ps1','scripts/install.mjs']} />
     </section>
 
     <section id="options" class="doc-section">
@@ -164,7 +164,7 @@ const seealso = [
       <div class="wiki-note">
         <strong>MCP 依赖说明</strong>：Men 仓库的 <code>opencode.json</code> <strong>不含 mcp 配置</strong>——MCP 由 <strong>CC Switch</strong> 统一管理（模型 / 密钥 / MCP 均本地托管）。需联网的 MCP 服务（Exa / Context7 / grep.app / GitHub / memory / sequential-thinking 等）由你的 OpenCode 运行环境按需提供并注入；MCP 连接失败通常只是降级提示，不阻塞核心使用。
       </div>
-      <SrcRef files={['D:\github-repos\men\scripts\install.mjs']} />
+      <SrcRef files={['scripts/install.mjs']} />
     </section>
 
     <section id="verify" class="doc-section">
@@ -179,7 +179,7 @@ node --version
 node scripts/verify.mjs men --json</code></pre>
       </div>
       <p>若输出中验证项全部 <code>PASS</code> 且退出码为 0，说明安装正确；安装完成后，在项目目录运行 <code>opencode</code> 即可进入 TUI 使用。</p>
-      <SrcRef files={['D:\github-repos\men\scripts\install.mjs']} />
+      <SrcRef files={['scripts/install.mjs']} />
       <div class="wiki-note"><strong>线上地址</strong>：站点正式环境部署于 <a href="https://men.cgartlab.com" target="_blank" rel="noopener">men.cgartlab.com</a>；本地预览仅用于开发验证，内容与线上一致。</div>
     </section>
   </WikiManual>

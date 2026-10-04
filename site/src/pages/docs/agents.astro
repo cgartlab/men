@@ -62,7 +62,7 @@ const seealso = [
         </p>
         <p class="src-ref">mode：<code>{role.mode}</code></p>
         <div class="wiki-note">
-          {roleTags[role.name]?.map((t) => `<span class="wiki-tag">${t}</span>`).join(' ') ?? ''}
+          {roleTags[role.name]?.map((t) => <span class="wiki-tag">{t}</span>)}
         </div>
       </section>
     ))}

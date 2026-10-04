@@ -26,9 +26,9 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
         <div>
           <p class="about-brand-meta">
             <span>开源项目</span>
-            <span class="about-brand-meta__sep">·</span>
+            <span class="about-brand-meta__sep" aria-hidden="true">·</span>
             <span>{SITE.version}</span>
-            <span class="about-brand-meta__sep">·</span>
+            <span class="about-brand-meta__sep" aria-hidden="true">·</span>
             <span>出品 {content.about.brand}</span>
           </p>
           <h1 class="about-brand-name">men（门）</h1>
@@ -199,7 +199,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     align-items: center;
   }
   .about-brand-meta__sep {
-    color: var(--color-line);
+    color: var(--color-fg-muted);
   }
 
   .about-brand-name {
