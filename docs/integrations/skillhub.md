@@ -11,7 +11,7 @@
 ```yaml
 slug: cgartlab-men-status
 displayName: Men Status
-version: 0.5.0
+version: 0.6.0
 summary: "Men 状态报告：版本、更新检查、忽略版本、Agent 名单与配置健康。"
 license: MIT
 ```
@@ -22,7 +22,7 @@ license: MIT
 
 ```bash
 npm run skillhub:check      # skillhub publish --dry-run，仅本地预检
-SKILLHUB_TOKEN=*** npm run skillhub:publish
+SKILLHUB_TOKEN=skh_xxx npm run skillhub:publish   # 替换为你的 SkillHub API token
 ```
 
 脚本入口：`node scripts/skillhub-publish.mjs <skill-dir>`。

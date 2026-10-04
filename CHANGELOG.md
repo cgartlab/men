@@ -37,6 +37,11 @@
 
 ### Fixed
 
+- **`release.mjs` 版本同步误改历史/他项目版本引用**：文本同步原为 `split(old).join(new)` 全文件替换，会把「当前版本号」之外的引用一并改掉——v0.6.0 发版实测把 `AGENTS.md` 的先例句「v0.5.0 发版手动补 `releases.astro`」改成 v0.6.0（篡改历史），把 `docs/integrations/argus.md` 的「若 argus v0.5.0 后 License 更新」改成 argus v0.6.0（argus 实际 0.5.8）。改为按文件登记的精确上下文替换（`VERSION_TEXT_PATTERNS`），未登记文件仍回退全文件替换
+- **`install.mjs` 兜底依赖版本漂移**：`.opencode/package.json` 缺失时的兜底模板停在 `@opencode-ai/plugin` 1.18.25，而实际已 1.18.34，且缺 `@opencode/plugin` / `solid-js`、`@opentui/*` 仍锁 `^0.5.8`——新装用户会拿到旧依赖。现与 `.opencode/package.json` 对齐，并由 `test/install.test.mjs` 逐字锁定（原测试只断言「是非空字符串」，漂移不可见）
+- **两处文档版本引用陈旧**：`docs/dsh-customization.md` 的「关联」行仍写 v0.5.0、`docs/integrations/skillhub.md` 的 frontmatter 示例仍写 `version: 0.5.0`；两者均已纳入版本同步清单
+- **SkillHub 文档 token 占位符是脱敏残留**：`docs/integrations/skillhub.md` 写的是 `SKILLHUB_TOKEN=***`（730627d 脱敏事故残留），照抄会把 token 设成字面量 `***` 导致认证失败；改为 `skh_xxx` + 注释说明
+- **设计文档日期在未来**：`docs/design/agent-flow-webgl.md` 标注 `2026-10-21`，而其提交日期为 2026-10-03（且晚于当前日期）；修正为 2026-10-03
 - **SkillHub Publish 工作流 token 表达式损坏**：`skillhub-publish.yml` 的 `SKILLHUB_TOKEN` 被写成 `*** secrets.SKILLHUB_API_KEY }}`（自 730627d 起），工作流文件非法导致每次 push 都产生一条失败运行；恢复为 `${{ secrets.SKILLHUB_API_KEY }}`（#135）
 - **men-update 技能 v0.5.0 同步**：移除「必须删除 npm 缓存」的陈旧流程，改为相对路径部署说明
 - **评审转交修正**：chi-judge 不再把语义/视觉评审推给 si/yi；yi-design 内容写作转交 ji
