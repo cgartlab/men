@@ -127,5 +127,6 @@ node scripts/install.mjs --skip-deps --skip-verify --json
 
 1. **常驻服务仅限受管形态**：只允许 `astro preview` 守护进程（自带 stop/status/logs）。必须使用仓库配置端口（4399），向用户报告 pid 与停止命令；禁止裸 `Start-Process` / detached / 管道截流。
 2. **静态站验证走产物级检查**：一律使用 `node site/scripts/check-site.mjs`（扫描 dist：UTF-8/mojibake/空 slot/base 回归/路由锚点），不依赖活服务器。
-3. **确需 HTTP 冒烟时的唯一合法形态**：单个 Node 脚本内 `spawn` 子进程 + `finally { kill }` 自终止，超时上限 60s，禁止脱离本次命令的进程树存活。
-4. **会话收尾自查**：结束前运行 `Get-CimInstance Win32_Process -Filter "Name='node.exe'"` 过滤本仓库路径残留并清理；确认 4399 端口无监听。
+3. **站点源码级检查用零依赖脚本**：配色对比度与令牌注释一致性用 `cd site && npm run check:source`（= `contrast-check.mjs` + `token-ratio-check.mjs`，只读 `global.css`、秒级、不启动浏览器）。这两个脚本已接入 `site.yml`，本地改动 `global.css` 后应先跑它再构建。需浏览器计算样式的其余审计（`font-audit` / `overflow-check` / `tiny-text-audit` 等）依赖 playwright，**不在 CI**，仅按需手工运行。
+4. **确需 HTTP 冒烟时的唯一合法形态**：单个 Node 脚本内 `spawn` 子进程 + `finally { kill }` 自终止，超时上限 60s，禁止脱离本次命令的进程树存活。
+5. **会话收尾自查**：结束前运行 `Get-CimInstance Win32_Process -Filter "Name='node.exe'"` 过滤本仓库路径残留并清理；确认 4399 端口无监听。

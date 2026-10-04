@@ -3,7 +3,11 @@
 // 用 WCAG 相对亮度公式实测并比对；任何 >0.05 的偏差即报错。
 import { readFile } from 'node:fs/promises';
 
-const css = await readFile('site/src/styles/global.css', 'utf8');
+// 路径必须基于 import.meta.url 解析，不能依赖 CWD：脚本在 site/scripts/ 下，
+// 但站点脚本约定从 site/ 运行（见 check-site.mjs）。早前用相对路径导致在 site/
+// 下运行变成 site/site/src/... 直接 ENOENT。
+const CSS = new URL('../src/styles/global.css', import.meta.url);
+const css = await readFile(CSS, 'utf8');
 
 const lum = (c) => {
   const [r, g, b] = c.map((v) => {
