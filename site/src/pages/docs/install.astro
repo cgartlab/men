@@ -5,6 +5,7 @@ import SrcRef from '../../components/SrcRef.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '安装 — ' + content.hero.title;
+const pageDesc = '两种安装方式：npx @cgartlab/men 一行完成脚手架、依赖安装与环境自检，或按平台运行一键安装脚本（Linux·macOS / Windows）克隆到本地。';
 const base = '/';
 const rawBase = 'https://raw.githubusercontent.com/cgartlab/men/main';
 
@@ -37,7 +38,7 @@ const seealso = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 安装">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="安装"
     title="安装"

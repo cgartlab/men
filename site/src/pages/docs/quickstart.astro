@@ -6,6 +6,7 @@ import content from '../../data/content.json';
 import { SITE } from '../../data/site';
 
 const pageTitle = '快速上手 — ' + content.hero.title;
+const pageDesc = '新用户入门路径：Node ≥ 18 与 OpenCode 前置条件、克隆启动，然后用 /ultrawork 下达第一个任务，产出可机械验证的 plan envelope 与验收产物。';
 const base = '/';
 
 const infobox = [
@@ -36,7 +37,7 @@ const seealso = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 快速上手">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="快速上手"
     title="快速上手"

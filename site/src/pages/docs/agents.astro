@@ -4,6 +4,7 @@ import WikiManual from '../../components/WikiManual.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '角色说明 — ' + content.hero.title;
+const pageDesc = 'men、si、ji、chi、yi、xun 六个 Agent 的职责与边界：路由判定表、意图门（IntentGate）如何拦截，以及全员必须遵守的 7 条红线。';
 const base = '/';
 
 /* 每个角色的准确标签（来源：AGENTS.md / .opencode/agent/*.md） */
@@ -43,7 +44,7 @@ const seealso = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 角色说明">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="角色说明"
     title="角色说明"

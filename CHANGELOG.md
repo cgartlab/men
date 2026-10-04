@@ -12,9 +12,12 @@
 
 ### Added
 
+- **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
 - **站点源码级质量门进 CI**：`contrast-check.mjs`（WCAG 2.2 AA 对比度）与 `token-ratio-check.mjs`（令牌注释声称值 vs 实测）此前只能手工运行，回归无人拦截。两者零依赖、秒级，现经 `npm run check:source` 接入 `.github/workflows/site.yml`，且排在 astro 构建**之前**，配色回归在 ~1s 内失败而非等构建完成
 
 ### Changed
+
+- **12 个页面的 meta description 改为逐页撰写**：原先几乎全部是「men（门）Agent 团队 — 架构设计」式的标题复述（19–25 字符），对搜索结果与分享卡片无信息量。现按每页真实内容改写为 54–93 字符的具体描述（如协议规范页写明「10 步编排协议（CERTAINTY → LEARN）、5 项机械验证、14 种事件类型」），并统一以 `pageDesc` 常量注入 `BaseLayout`，避免描述与标题再次脱节
 
 ### Fixed
 

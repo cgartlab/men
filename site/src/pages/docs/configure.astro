@@ -5,6 +5,7 @@ import SrcRef from '../../components/SrcRef.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '配置 — ' + content.hero.title;
+const pageDesc = '配置文件结构与模型分配：opencode.json 根配置、men.jsonc 全局预设、CC Switch 与 Men 的职责划分、MCP 服务声明，以及技能与命令的自定义路径。';
 const base = '/';
 
 const infobox = [
@@ -58,7 +59,7 @@ model: <model-id>
 （6 个 agent 必须逐字一致的 7 条红线）`;
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 配置指南">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="配置"
     title="配置"

@@ -65,6 +65,25 @@ for (const f of files) {
 }
 ok('全部页面：UTF-8 解码 / charset / mojibake 特征 / base 守卫 检查完成');
 
+// 7) meta description：每页必有、互不重复、长度合理
+// 动机：description 是站点最重要的「内容描述」载体。漏写或全是
+// 「men（门）Agent 团队 — XXX」这类同构短句时，搜索引擎与分享卡片拿不到
+// 任何页面信息。这里直接对产物断言，防止退化。
+const descSeen = new Map();
+for (const f of files) {
+  const rel = f.slice(DIST.length).replaceAll('\\', '/');
+  const text = new TextDecoder('utf-8').decode(readFileSync(f));
+  const m = text.match(/<meta\s+name="description"\s+content="([^"]*)"/i);
+  if (!m) { fail(`${rel} 缺少 <meta name="description">`); continue; }
+  const desc = m[1].trim();
+  if (!desc) { fail(`${rel} meta description 为空`); continue; }
+  if (desc.length < 20) fail(`${rel} meta description 过短（${desc.length} 字符）：${desc}`);
+  if (desc.length > 160) fail(`${rel} meta description 过长（${desc.length} 字符，搜索结果约 90 字符后截断）`);
+  if (descSeen.has(desc)) fail(`${rel} meta description 与 ${descSeen.get(desc)} 完全重复`);
+  else descSeen.set(desc, rel);
+}
+ok(`meta description：${files.length} 页均存在、互不重复、长度 20–160`);
+
 // 4) 路由锚点
 for (const [route, anchors] of Object.entries(ROUTE_ANCHORS)) {
   const f = join(DIST, route);

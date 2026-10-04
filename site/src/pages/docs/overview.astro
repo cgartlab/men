@@ -6,6 +6,7 @@ import { SITE } from '../../data/site';
 import content from '../../data/content.json';
 
 const pageTitle = '概览 — ' + content.hero.title;
+const pageDesc = 'men（门）是什么：一页看懂项目定位与设计原则、6+1 角色团队组成，以及从安装到第一个任务的快速开始路径。';
 const base = '/';
 
 const infobox = [
@@ -37,7 +38,7 @@ const seealso = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 概览">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="概览"
     title="概览"

@@ -5,11 +5,12 @@ import content from '../../data/content.json';
 
 const base = '/';
 const pageTitle = 'Wiki 手册 — ' + content.hero.title;
+const pageDesc = 'men（门）文档总览：安装、角色、协议、架构、配置、治理与路线图等全部章节索引，每章标注对应的仓库源文件，便于核对与追溯。';
 const groups = [...new Set(MANUAL.chapters.map((c) => c.group))];
 let counter = 0;
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — Wiki 手册">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <section class="docs-page" aria-labelledby="docs-title">
     <header class="docs-header">
       <nav class="doc-breadcrumb" aria-label="面包屑导航">
