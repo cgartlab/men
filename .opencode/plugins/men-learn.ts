@@ -1,127 +1,126 @@
 /**
- * men-learn — 学习自动化插件（非阻塞 best-effort）
+ * men-learn — 自动学习插件（渐进式第 2 步）
  *
- * 监听会话事件，在合适时机自动触发学习回路：
- *   - `session.idle`：会话空闲（一轮任务结束）→ 自动运行
- *       `node scripts/learn.mjs --sid <sid> --json`
- *     从 events.jsonl 提取经验（errors/ + knowledge/patterns/）。
- *   - `session.error`：会话出错 → 也触发一次（记录运行时错误经验）。
+ * 行为（OpenCode V2 · @opencode/plugin）：
+ *   - 会话结束事件 → spawn scripts/learn.mjs --sid <sid> --json（L0 经验提取）
+ *   - 60s 去重窗口，同一 session 不重复触发
+ *   - 子进程异步执行，不阻塞会话；日志落 .agents/logs/men-plugin.log
+ *   - 只读取 session transcript，不修改会话
  *
- * 非阻塞约定：
- *   - spawn 子进程后立即返回，绝不 await 阻塞主流程
- *   - 失败仅 console 提示，绝不 throw
- *   - 同会话去重：两次触发间隔 < DEDUP_MS 则跳过，避免每空闲一次就跑一次
- *
- * 与手动路径互补：/ultrawork 第 10 步仍保留 men 显式调用 learn.mjs，
- * 本插件在空闲时自动兜底，二者由 learn.mjs 内部 best-effort 去重。
- *
- * 运行环境：OpenCode 插件（Bun 运行，无需构建），类型来自 @opencode-ai/plugin。
+ * V2 迁移要点（对照 V1 @opencode-ai/plugin）：
+ *   - `Plugin.define({ id, setup(ctx) })` 取代 V1 的 default export 函数
+ *   - `ctx.event.subscribe({ signal })` 返回 AsyncIterable，取代 V1 的 `event: async ({event}) => …`
+ *     取消方式：`AbortController` + 从 setup 返回 cleanup 函数调用 `controller.abort()`
+ *   - 事件形状从 V1 `{ properties: { sessionID } }` 变为 `{ type, data: { sessionID } }`
+ *   - 事件类型映射：
+ *       V1 "session.idle"      → V2 "session.idle"（实测：`run` 一次性模式不发，仅 TUI 会话发）
+ *       V1 "session.error"     → V2 "session.execution.failed"
+ *       新增 "session.execution.succeeded"（一轮任务成功的可靠信号，run/TUI 均发）
+ *     三者都触发，保证两种运行模式下 learn 都会跑
  */
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { type Plugin } from "@opencode-ai/plugin";
+import { Plugin } from "@opencode/plugin";
 
 // ─────────────────────────── 常量 ───────────────────────────
 
-// learn.mjs 相对项目根的路径
 const LEARN_SCRIPT = ["scripts", "learn.mjs"];
-
-// 同会话两次学习触发的最小间隔（毫秒）：session.idle 在每轮对话结束后都会触发，
-// 阈值内跳过避免频繁跑 learn.mjs（其内部再对同一事件源做规则判定）
 const DEDUP_MS = 60_000;
 
-// 监听的会话事件 → 触发原因
-const TRIGGER_EVENTS: Record<string, string> = {
+const TRIGGER_EVENTS = {
   "session.idle": "session.idle",
-  "session.error": "session.error",
+  "session.execution.succeeded": "session.execution.succeeded",
+  "session.execution.failed": "session.execution.failed",
 };
 
-// ─────────────────────────── 工具函数 ───────────────────────────
+let cachedNodeBin;
 
-/**
- * 从事件对象中提取 sessionID（多字段容错）。
- * OpenCode 事件结构：{ type, properties: { sessionID, ... } }；
- * 部分旧版/变体事件可能把 sessionID 放在顶层，统一兜底。
- */
-function extractSessionID(event: any): string {
-  if (!event || typeof event !== "object") return "";
-  const props = event.properties ?? {};
-  const sid =
-    props?.sessionID ?? props?.sessionId ?? event?.sessionID ?? event?.sessionId;
-  return typeof sid === "string" && sid.length > 0 ? sid : "";
+/** V2 下 `process.execPath` 是 `opencode.exe`（Bun），必须显式解析 node。 */
+function resolveNodeBin() {
+  if (cachedNodeBin) return cachedNodeBin;
+  let found = "";
+  try {
+    const finder = process.platform === "win32" ? "where.exe" : "which";
+    const out = spawnSync(finder, ["node"], {
+      stdio: ["ignore", "pipe", "ignore"],
+      windowsHide: true,
+      encoding: "utf8",
+    });
+    const first = (out.stdout || "").split(/\r?\n/)[0];
+    if (out.status === 0 && first && first.trim()) found = first.trim();
+  } catch {
+    /* 回退 PATH 名 */
+  }
+  cachedNodeBin = found || "node";
+  return cachedNodeBin;
 }
 
-// ─────────────────────────── 插件主体 ───────────────────────────
+export default Plugin.define({
+  id: "men-learn",
+  async setup(ctx) {
+    const root = ctx.location.directory;
 
-const plugin: Plugin = async (input) => {
-  const root = input.directory || process.cwd();
-
-  // 安全日志：写入项目 .agents/logs/men-plugin.log，绝不写 stdout/stderr
-  // （插件的 console 输出会被 OpenCode TUI 捕获并污染输入框，见 UI 事故）。
-  function logToFile(msg: string) {
-    try {
-      const dir = path.join(root, ".agents", "logs");
-      fs.mkdirSync(dir, { recursive: true });
-      fs.appendFileSync(
-        path.join(dir, "men-plugin.log"),
-        `${new Date().toISOString()} [men-learn] ${msg}\n`
-      );
-    } catch {
-      /* best-effort，绝不阻塞主流程 */
+    function logToFile(msg) {
+      try {
+        const dir = path.join(root, ".agents", "logs");
+        fs.mkdirSync(dir, { recursive: true });
+        fs.appendFileSync(
+          path.join(dir, "men-plugin.log"),
+          `${new Date().toISOString()} [men-learn] ${msg}\n`
+        );
+      } catch {
+        /* best-effort */
+      }
     }
-  }
 
-  // 去重状态：sessionID → 上次触发时间戳（进程内有效）
-  const lastTrigger = new Map<string, number>();
+    // 5. 去重窗口
+    const lastTrigger = new Map();
 
-  /**
-   * 触发一次 learn.mjs（非阻塞 spawn，best-effort）。
-   * 去重：同会话 DEDUP_MS 内已触发则跳过；失败仅日志，绝不 throw。
-   */
-  function triggerLearn(sid: string, reason: string) {
-    const now = Date.now();
-    const prev = lastTrigger.get(sid) ?? 0;
-    if (now - prev < DEDUP_MS) {
-      logToFile(`skip（${DEDUP_MS / 1000}s 内已触发）sid=${sid || "unknown"} reason=${reason}`);
-      return;
+    function triggerLearn(sid, reason) {
+      const now = Date.now();
+      const last = lastTrigger.get(sid) || 0;
+      if (now - last < DEDUP_MS) return;
+      lastTrigger.set(sid, now);
+
+      const learnPath = path.join(root, ...LEARN_SCRIPT);
+      const nodeBin = resolveNodeBin();
+      const args = [learnPath, "--sid", sid || "unknown", "--json"];
+
+      const child = spawn(nodeBin, args, { cwd: root, windowsHide: true });
+
+      let stdout = "";
+      let stderr = "";
+      child.stdout && child.stdout.on("data", (d) => (stdout += d.toString()));
+      child.stderr && child.stderr.on("data", (d) => (stderr += d.toString()));
+
+      child.on("error", (err) => {
+        logToFile(`spawn 失败 (${reason}): ${err.message}`);
+      });
+
+      child.on("close", (code) => {
+        if (code !== 0) {
+          logToFile(`learn 退出码 ${code} (${reason}): ${stderr.slice(0, 200)}`);
+        }
+      });
     }
-    lastTrigger.set(sid, now);
 
-    const learnPath = path.join(root, ...LEARN_SCRIPT);
-    const args = [learnPath, "--sid", sid || "unknown", "--json"];
+    // 4. 订阅事件流（取消 = 抛入 signal）
+    const controller = new AbortController();
+    (async () => {
+      try {
+        for await (const ev of ctx.event.subscribe({ signal: controller.signal })) {
+          const reason = TRIGGER_EVENTS[ev && ev.type];
+          if (!reason) continue;
+          triggerLearn((ev && ev.data && ev.data.sessionID) || "", reason);
+        }
+      } catch {
+        /* 取消 / 连接断开：静默退出 */
+      }
+    })();
 
-    const child = spawn(process.execPath, args, {
-      cwd: root,
-      windowsHide: true,
-    });
-
-    // 消费 stdout，防止子进程输出积压阻塞
-    child.stdout?.on("data", () => {});
-    child.stderr?.on("data", () => {});
-    child.on("error", (err) => {
-      // spawn 失败：仅日志，不中断
-      logToFile(`spawn 失败: ${err.message}`);
-    });
-    child.on("close", (code) => {
-      logToFile(`learn.mjs 完成 sid=${sid || "unknown"} reason=${reason} exit=${code}`);
-    });
-  }
-
-  return {
-    /**
-     * event — 监听会话事件自动触发学习。
-     * 绝不 throw：所有错误路径都吞掉，只留日志。
-     */
-    event: async ({ event }: any) => {
-      if (!event || typeof event.type !== "string") return;
-      const reason = TRIGGER_EVENTS[event.type];
-      if (!reason) return;
-      const sid = extractSessionID(event);
-      triggerLearn(sid, reason);
-    },
-  };
-};
-
-export default plugin;
+    // 3. 返回 cleanup：TUI 退出 / 插件热重载时中止订阅
+    return () => controller.abort();
+  },
+});

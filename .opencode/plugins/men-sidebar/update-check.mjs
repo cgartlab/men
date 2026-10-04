@@ -1,17 +1,25 @@
 /**
- * update-check.mjs — men 插件自动版本检查（TUI 侧）
+ * update-check.mjs — men 插件自动版本检查（TUI 侧，OpenCode V2）
  *
- * 纯 Node ESM 模块（仅用 node:* 内置，不 import @opentui），导出纯函数 + 编排函数便于测试。
+ * 纯 ESM 模块（仅用 node:* 内置，不 import @opentui），导出纯函数 + 编排函数便于测试。
  *
  * 流程：
  *   1. 24h 内已检查过 → 直接返回（不打扰）
  *   2. fetch GitHub releases/latest（redirect: manual，拿 302 Location）
- *   3. 解析最新 tag → 与当前版本比较 → 弹 DialogConfirm 询问是否更新
- *   4. 用户确认 → invokeMenUpdate 触发 men-update skill；取消 → 记录 dismissed
+ *   3. 解析最新 tag → 与当前版本比较 → 弹 dialog 询问是否更新
+ *   4. 用户确认 → keymap.dispatch 打开命令面板 + toast 引导 men-update skill；取消 → 记录 dismissed
  *
- * 设计约束：
- *   - 任何错误只打日志，绝不向上抛（保证 OpenCode 启动不被卡住）
- *   - 插件进程内不执行 shell / git / npm —— 更新动作委托给 men-update skill
+ * V2 迁移对照（V1 TuiPluginApi → V2 @opencode/plugin/tui Context）：
+ *   - `api.kv.get/set`            → `ctx.storage.store("men-update", {initial})` 返回 [store, mutate]
+ *   - `api.lifecycle.onDispose`   → 由调用方（tui.js）的 cleanup 负责；本模块只用 fetch 兜底超时
+ *   - `api.ui.dialog.replace(fn)` + `api.ui.DialogConfirm`
+ *                               → `await ctx.ui.dialog.confirm({ title, message })` 返回 boolean|undefined
+ *   - `api.keymap.dispatchCommand`→ `ctx.keymap.dispatch`
+ *   - `api.ui.toast(opts)`        → `ctx.ui.toast.show(opts)`（message 为必填）
+ *   - `api.ui.dialog.open`        → 无对应 getter，改为在调用方节流（24h 缓存已足够）
+ *
+ * 设计约束：任何错误只打日志，绝不向上抛（保证 OpenCode 启动不被卡住）；
+ * 插件进程内不执行 shell / git / npm —— 更新动作委托给 men-update skill
  */
 
 // 调试日志门控：MEN_DEBUG=1（或 true）时输出，默认静默（与 ../tui.js 一致），避免污染 host stdout
@@ -19,6 +27,9 @@ const dbg = (...a) => { if (process.env.MEN_DEBUG === "1" || process.env.MEN_DEB
 
 // fetch 兜底超时（ms）：超过此时间仍未响应则 abort，避免插件启动被网络阻塞
 const FETCH_TIMEOUT_MS = 10_000;
+
+// 检查间隔（24h），与 V1 一致
+const CHECK_INTERVAL_MS = 24 * 3600 * 1000;
 
 // ─────────────────────────── 纯函数 ───────────────────────────
 
@@ -75,23 +86,17 @@ export function shouldNotify(current, latest, dismissed) {
 /**
  * 触发 men-update skill（best-effort，绝不抛错）。
  *
- * 路径决策（基于实际 SDK 类型 @opencode-ai/sdk@1.18.23）：
- *   - 候选 A：`api.client.session.prompt({ sessionID, parts: [{ type: "text", text: "/men-update" }] })`
- *     类型上存在，但【不可靠】：slash command 由 TUI 输入层解析展开，经 HTTP API 直发 prompt
- *     不会被服务端当作 command 处理，只会作为普通文本发给模型；且 prompt 是流式请求，
- *     会在当前会话立即产生 AI 回复、打断用户；还需 sessionID（插件加载时可能不在 session 路由）。
- *   - 候选 B：`api.keymap.dispatchCommand("command.palette.show")` —— tui.d.ts 中
- *     `api.command` 的 deprecation 注释明确推荐此路径，无副作用、不依赖 sessionID。
+ * V1 备注：`api.client.session.prompt(...)` 直发 slash command 不可靠（TUI 输入层才解析），
+ * 且会在当前会话立即产生 AI 回复打断用户，故采用「打开命令面板 + toast 引导」路径。
+ * V2 沿用同一策略：`ctx.keymap.dispatch("command.palette.show")`。
  *
- * 最终采用：候选 B（dispatchCommand + toast 引导），兜底纯 toast 提示。
- *
- * @param {object} api TuiPluginApi
+ * @param {object} ctx @opencode/plugin/tui Context
  */
-async function invokeMenUpdate(api) {
+function invokeMenUpdate(ctx) {
   try {
-    if (typeof api?.keymap?.dispatchCommand === "function") {
-      api.keymap.dispatchCommand("command.palette.show");
-      api.ui?.toast?.({
+    if (typeof ctx?.keymap?.dispatch === "function") {
+      ctx.keymap.dispatch("command.palette.show");
+      ctx.ui?.toast?.show({
         variant: "info",
         title: "更新 men",
         message: "命令面板已打开，选择 men-update（或在聊天输入 /men-update）",
@@ -99,7 +104,7 @@ async function invokeMenUpdate(api) {
       return;
     }
     // 兜底：无 keymap 时仅提示用户在聊天输入 /men-update
-    api.ui?.toast?.({
+    ctx.ui?.toast?.show({
       variant: "info",
       title: "更新 men",
       message: "请在聊天输入 /men-update 完成更新",
@@ -113,28 +118,33 @@ async function invokeMenUpdate(api) {
  * 版本检查编排：24h 缓存 → fetch → 弹窗 → 触发更新 / 记录忽略。
  * 最外层 try/catch：任何错误只打日志，绝不向上抛。
  *
- * @param {object} api TuiPluginApi
- * @param {object} meta TuiPluginMeta（本实现未直接使用，保留签名兼容）
+ * @param {object} ctx @opencode/plugin/tui Context
  * @param {string} currentVersion 当前插件版本
  * @returns {Promise<void>}
  */
-export async function runUpdateCheck(api, meta, currentVersion) {
+export async function runUpdateCheck(ctx, currentVersion) {
   try {
     // a. 防御：无 dialog API 直接返回，绝不抛错
-    if (!api?.ui?.dialog) return;
+    if (!ctx?.ui?.dialog) return;
 
-    // b. 24h 缓存：距上次检查不足一天则不打扰
-    const lastCheck = api.kv?.get ? Number(api.kv.get("men:lastCheck", 0)) : 0;
-    if (api.kv?.ready && Date.now() - lastCheck < 24 * 3600 * 1000) return;
+    // b. 读取持久状态（V2: ctx.storage.store 返回 Solid store + mutate 器）
+    const store = ctx.storage && typeof ctx.storage.store === "function"
+      ? ctx.storage.store("men-update", { initial: { lastCheck: 0, dismissed: "" } })
+      : null;
+    if (!store) { dbg("[men-update-check] storage 不可用，跳过"); return; }
+    const [state, mutate] = store;
 
-    // c. 用 ctrl.signal 做 fetch 超时/中断（生命周期销毁 + FETCH_TIMEOUT_MS 兜底超时）
+    // c. 24h 缓存：距上次检查不足一天则不打扰
+    if (Date.now() - Number(state().lastCheck) < CHECK_INTERVAL_MS) {
+      dbg("[men-update-check] 24h 内已检查，跳过");
+      return;
+    }
+
+    // d. fetch GitHub releases/latest，手动重定向以拿 Location（10s 兜底超时）
     const ctrl = new AbortController();
-    api.lifecycle?.onDispose?.(() => ctrl.abort());
     const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-
     let resp;
     try {
-      // d. fetch GitHub releases/latest，手动重定向以拿 Location
       resp = await fetch("https://github.com/cgartlab/men/releases/latest", {
         redirect: "manual",
         signal: ctrl.signal,
@@ -154,34 +164,35 @@ export async function runUpdateCheck(api, meta, currentVersion) {
     if (!latest) return;
 
     // g. 仅在成功拿到 latest 后缓存检查时间（网络错误可更快重试）
-    try { api.kv?.set?.("men:lastCheck", Date.now()); } catch (e) {
-      /* 缓存失败不阻塞 */
+    try { mutate((d) => { d.lastCheck = Date.now(); }); } catch (e) {
       dbg(`[men-update-check] 缓存写入失败: ${e.message}`);
     }
 
     // h. 已被忽略或非更新 → return
-    const dismissed = api.kv?.get ? String(api.kv.get("men:dismissed", "")) : "";
+    const dismissed = String(state().dismissed || "");
     if (!shouldNotify(currentVersion, latest, dismissed)) return;
 
-    // i. 弹窗询问（避免覆盖已有 dialog）
-    if (api.ui.dialog.open) return;
-    api.ui.dialog.replace(() =>
-      api.ui.DialogConfirm({
+    dbg(`[men-update-check] latest=${latest} current=${currentVersion} → 弹窗`);
+
+    // i. 弹窗询问（V2 dialog.confirm 返回 Promise<boolean|undefined>）
+    let ok;
+    try {
+      ok = await ctx.ui.dialog.confirm({
         title: "men 有新版本",
         message: `当前 v${currentVersion}，最新 v${latest}。是否更新？`,
-        onConfirm: () => {
-          api.ui.dialog.clear();
-          invokeMenUpdate(api);
-        },
-        onCancel: () => {
-          api.ui.dialog.clear();
-          try { api.kv.set("men:dismissed", latest); } catch (e) {
-            /* 忽略失败不阻塞 */
-            dbg(`[men-update-check] 记录忽略失败: ${e.message}`);
-          }
-        },
-      })
-    );
+      });
+    } catch (e) {
+      dbg(`[men-update-check] dialog 失败: ${e.message}`);
+      return;
+    }
+
+    if (ok) {
+      invokeMenUpdate(ctx);
+    } else {
+      try { mutate((d) => { d.dismissed = latest; }); } catch (e) {
+        dbg(`[men-update-check] 记录忽略失败: ${e.message}`);
+      }
+    }
   } catch (e) {
     // j. 任何错误只打日志，绝不向上抛
     console.error("[men-update-check] skipped:", e?.message ?? e);

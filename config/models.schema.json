@@ -63,7 +63,7 @@
     },
     "presets": {
       "type": "object",
-      "description": "预设方案：default（全功能推荐）和 free（全免费）。可扩展更多 preset。",
+      "description": "预设方案：default（SenseNova 混合：men/si/chi 用 DeepSeek V4 Flash，ji/yi/xun 用 6.8 Flash Lite）和 free（全免费）。可扩展更多 preset。",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
