@@ -1,6 +1,6 @@
 # AgentFlow — WebGL GPU 加速首页视觉特效设计文档
 
-> 版本：v0.1.0 · 2026-10-21
+> 版本：v0.1.0 · 2026-10-03
 > 状态：设计稿 + 原型代码（`site/src/components/AgentFlow.astro`）
 > 参考：Argus `DigitalWater.astro`（1325 行 WebGL instanced renderer）
 
