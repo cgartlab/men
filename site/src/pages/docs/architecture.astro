@@ -4,6 +4,7 @@ import WikiManual from '../../components/WikiManual.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '架构设计 — ' + content.hero.title;
+const pageDesc = 'men 的系统架构：1 primary + 5 subagent 的协作拓扑、10 步编排流程，以及 verify.mjs 机械检查与 chi 语义复核构成的双层验证体系与关键目录结构。';
 const base = '/';
 
 const infobox = [
@@ -31,7 +32,7 @@ const seealso = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 架构设计">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="架构设计"
     title="架构设计"

@@ -5,6 +5,7 @@ import { Icon } from 'astro-icon/components';
 
 const base = '/';
 const pageTitle = '核心机制 — ' + content.hero.title;
+const pageDesc = '系统如何运转：意图门拦截与路由、10 步编排协议、五项机械验证、门禁与事件审计，以及自主学习回路把经验写回知识库的全过程。';
 const steps = content.protocol.steps;
 const mechanisms = content.mechanisms;
 const commands = content.commands;
@@ -24,7 +25,7 @@ const pipeline = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 核心机制">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <section class="mech-page" aria-labelledby="page-title">
 
     <header class="mech-header">

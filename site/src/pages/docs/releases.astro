@@ -6,6 +6,7 @@ import content from '../../data/content.json';
 import { SITE } from '../../data/site';
 
 const pageTitle = '路线图 — ' + content.hero.title;
+const pageDesc = '版本历史与路线图：当前版本亮点、全部正式版本的发布记录与日期、M0–M7 里程碑进度，以及版本号如何按 SemVer 同步到各文件。';
 const base = '/';
 
 const infobox = [
@@ -33,7 +34,7 @@ const seealso = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 路线图与版本发布">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="路线图"
     title="路线图"

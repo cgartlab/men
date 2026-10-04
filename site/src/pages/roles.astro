@@ -5,6 +5,7 @@ import { Icon } from 'astro-icon/components';
 
 const base = '/';
 const pageTitle = '团队角色 — ' + content.hero.title;
+const pageDesc = 'men（门）六个 Agent 角色详解：各自的定位、职责边界与交付物，以及一个请求如何在 men 编排下被路由到合适的子角色。';
 const roles = content.roles;
 
 // Enhanced role details for agent cards
@@ -173,7 +174,7 @@ const routingRows = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 角色说明">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <section class="roles-page" aria-labelledby="page-title">
 
     <header class="roles-header">

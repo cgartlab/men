@@ -5,6 +5,7 @@ import SrcRef from '../../components/SrcRef.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '治理 — ' + content.hero.title;
+const pageDesc = '团队如何做决策：6+1 角色权限边界、架构/里程碑/日常/技术选型四类分级决策机制、变更流程，以及审查与发布策略。';
 const base = '/';
 
 const infobox = [
@@ -34,7 +35,7 @@ const seealso = [
 ];
 ---
 
-<BaseLayout title={pageTitle} description="men（门）Agent 团队 — 治理">
+<BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="治理"
     title="治理"
