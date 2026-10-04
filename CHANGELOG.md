@@ -28,6 +28,10 @@
 - **评审转交修正**：chi-judge 不再把语义/视觉评审推给 si/yi；yi-design 内容写作转交 ji
 - **数据源与文档冲突**：8888 端口注明与 Wealth Tracker 共用；release.md 的 MCP 声明规则与 AGENTS.md 统一；si-plan-compose 示例移除框架 `.tsx`
 
+### Security
+
+- **http-cache-semantics 4.2.0 → 4.3.0**（site 传递依赖，经 astro 引入）：修复 `GHSA-ch52-4w7c-c8xp`（high，`max-stale` 处理不当可泄露跨用户缓存响应）。`site/package-lock.json` 此前不在根目录 `npm audit` 的覆盖范围内，故 CI 全绿而 Dependabot 仍报 7 条告警；本次连同 devalue（#134）一并清零
+
 ## [v0.5.0] - 2026-09-11
 
 > Argus 云端设计评审 + 全局模型配置 + 工程加固
