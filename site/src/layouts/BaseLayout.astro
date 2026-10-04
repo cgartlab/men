@@ -21,6 +21,19 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#fafafa" />
+
+    <!-- 外部字体预连接：OPPO Sans woff2 由 code.oppo.com 提供，每个约 744KB。
+         preconnect 提前建立 DNS+TCP+TLS，preload 提升 Regular（正文 LCP 候选）优先级。
+         Medium 字重不 preload —— 两者共享同一连接，CSS 解析后即可在既有连接上取回。 -->
+    <link rel="preconnect" href="https://code.oppo.com" crossorigin />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Regular.woff2"
+    />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
   </head>

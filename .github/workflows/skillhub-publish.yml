@@ -47,7 +47,7 @@ jobs:
 
       - name: Publish to SkillHub
         env:
-          SKILLHUB_TOKEN: *** secrets.SKILLHUB_API_KEY }}
+          SKILLHUB_TOKEN: ${{ secrets.SKILLHUB_API_KEY }}
           SKILL_DIR: ${{ inputs.skill-dir }}
           CHANGELOG: ${{ inputs.changelog }}
           DRY_RUN: ${{ inputs.dry-run }}

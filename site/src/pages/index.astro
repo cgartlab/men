@@ -39,7 +39,6 @@ const showcaseAgents = [
     id: 'men',
     cn: '门',
     role: '编排与路由核心',
-    color: '#e85d04',
     icon: 'lucide:door-open',
     desc: '唯一接收用户指令的角色。意图分诊、任务路由、多 Agent 编排、结果汇总。所有指令从这扇门进入。',
     skills: ['意图判定 (IntentGate)', '混合任务拆分', '多 Wave 调度', '结果汇总与去冲突', '事件审计写入'],
@@ -49,7 +48,6 @@ const showcaseAgents = [
     id: 'si',
     cn: '思',
     role: '思考与知识管理',
-    color: '#4a90d9',
     icon: 'lucide:pen-tool',
     desc: '深度思考与多角度方案，产出 plan envelope（依赖图 + 并行波次 + 验收标准）。知识库管理与沉淀。',
     skills: ['Plan Envelope 产出', '需求访谈拆解', '知识库沉淀', '回评子 Agent 产物'],
@@ -59,7 +57,6 @@ const showcaseAgents = [
     id: 'ji',
     cn: '记',
     role: '代码与工程',
-    color: '#2ea043',
     icon: 'lucide:code-2',
     desc: '按 plan 实现代码，前端开发优先。GitHub 操作、L1 机械验证、目录结构审计。',
     skills: ['前端实现 (HTML/CSS/JS)', 'GitHub PR/Issue 操作', 'L1 验证 (typecheck/lint)', '写作 (技术文档/周报)', '目录结构审计'],
@@ -69,7 +66,6 @@ const showcaseAgents = [
     id: 'chi',
     cn: '持',
     role: '数据/投资评审 / Judge',
-    color: '#bf8700',
     icon: 'lucide:scale',
     desc: '双重身份：投资持仓分析 + 独立 Judge。作为 judge 时用 fresh context 机械验证，只信产物不信自述。',
     skills: ['持仓分析与收益计算', '独立 Judge (fresh-context)', '机械验证复核', '质量门禁判定', '投资数据分析'],
@@ -79,7 +75,6 @@ const showcaseAgents = [
     id: 'yi',
     cn: '艺',
     role: '文生图与审美',
-    color: '#a371f7',
     icon: 'lucide:palette',
     desc: '文生图提示词专家：思考中生成多方案提示词，经 SenseNova 出图。审美分析、设计决策、配色与版式。',
     skills: ['设计决策与 Token 定义', '生图 (SenseNova U1)', '配色与版式', '审美分析', 'Logo 概念'],
@@ -89,7 +84,6 @@ const showcaseAgents = [
     id: 'xun',
     cn: '寻',
     role: '搜索与研究',
-    color: '#8b5cf6',
     icon: 'lucide:search',
     desc: '网络搜索、RSS 聚合、知识库检索、事实核查。只读约束，不修改源数据。',
     skills: ['网页搜索 (Exa)', 'RSS 聚合扫描', '事实核查 (多源交叉)', '知识库检索', '来源验证与可信度评分'],
@@ -205,7 +199,7 @@ const faq = install.faq || [];
     </div>
     <div class="showcase__track">
       {showcaseAgents.map((a) => (
-        <article class="showcase__card" data-agent={a.id} style={`--card-accent: ${a.color}`}>
+        <article class="showcase__card" data-agent={a.id} style={`--card-accent: var(--role-${a.id})`}>
           <div class="showcase__card-icon">
             <Icon name={a.icon} width="32" height="32" />
           </div>
@@ -227,11 +221,11 @@ const faq = install.faq || [];
         </article>
       ))}
       <!-- 团队特性卡片 -->
-      <article class="showcase__card showcase__card--team" style={`--card-accent: #e85d04`}>
+      <article class="showcase__card showcase__card--team" style={`--card-accent: var(--color-accent)`}>
         <div class="showcase__card-icon">
           <Icon name="lucide:users" width="32" height="32" />
         </div>
-        <p class="showcase__card-role" style="font-size: var(--font-size-h4);">团队特性</p>
+        <p class="showcase__card-role showcase__card-role--team">团队特性</p>
         <div class="showcase__team-traits">
           <div class="showcase__trait">
             <Icon name="lucide:git-branch" width="16" height="16" />
@@ -300,10 +294,10 @@ const faq = install.faq || [];
         <defs>
           <!-- Arrowheads -->
           <marker id="mk-fg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8b949e" /></marker>
-          <marker id="mk-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#e85d04" /></marker>
-          <marker id="mk-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#2ea043" /></marker>
-          <marker id="mk-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#bf8700" /></marker>
-          <marker id="mk-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8b5cf6" /></marker>
+          <marker id="mk-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--color-accent)" /></marker>
+          <marker id="mk-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-ji)" /></marker>
+          <marker id="mk-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-chi)" /></marker>
+          <marker id="mk-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-xun)" /></marker>
 
           <!-- Forward paths -->
           <path id="tz-in" d="M200,282 L276,282" />
@@ -527,19 +521,19 @@ const faq = install.faq || [];
   .hero-desc { font-size: var(--font-size-body); color: var(--color-fg-secondary); max-width: 520px; line-height: var(--line-height-body); margin: 0 auto; }
   .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
-  .hero-cta--primary { background: var(--color-accent); color: #fff; }
+  .hero-cta--primary { background: var(--color-accent); color: var(--color-accent-on-accent); }
   .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent) 85%, #fff); border-color: color-mix(in srgb, var(--color-accent) 85%, #fff); text-decoration: none; }
   .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
-  .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent); background: var(--color-accent-tint); text-decoration: none; }
+  .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
   .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
-  .hero-version-badge { font-weight: var(--font-weight-semi); color: #fff; background: var(--color-accent); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
+  .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-accent-on-accent); background: var(--color-accent); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Install / Terminal (Light Theme) ===== */
   .install { padding: var(--space-8) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
   .install__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-4); }
   .install__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
   .install__guide { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
-  .install__guide:hover { color: var(--color-accent); text-decoration: none; }
+  .install__guide:hover { color: var(--color-accent-dark); text-decoration: none; }
 
   .terminal { background: #f6f8fa; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid #d0d7de; }
   .terminal__chrome { display: flex; align-items: center; gap: var(--space-4); padding: 10px var(--space-4); background: #eaeef2; border-bottom: 1px solid #d0d7de; }
@@ -554,7 +548,7 @@ const faq = install.faq || [];
     color: #656d76; background: none; border: none; border-bottom: 2px solid transparent;
     padding: 6px var(--space-4); cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
   }
-  .terminal__tab[aria-selected="true"] { color: #1f2328; border-bottom-color: #e85d04; }
+  .terminal__tab[aria-selected="true"] { color: #1f2328; border-bottom-color: var(--color-accent); }
   .terminal__tab:hover { color: #1f2328; }
 
   .terminal__body { padding: var(--space-5) var(--space-6); min-height: 120px; }
@@ -569,7 +563,7 @@ const faq = install.faq || [];
     display: flex; align-items: flex-start; gap: var(--space-2);
     background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 10px var(--space-3);
   }
-  .terminal__ps1 { font-family: var(--font-mono); font-size: var(--font-size-body); color: #e85d04; flex-shrink: 0; font-weight: var(--font-weight-bold); line-height: 1.5; }
+  .terminal__ps1 { font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-accent-dark); flex-shrink: 0; font-weight: var(--font-weight-bold); line-height: 1.5; }
   .terminal__ps1--agent { color: #0969da; }
   .terminal__cmd-line code {
     font-family: var(--font-mono); font-size: var(--font-size-body); color: #1f2328;
@@ -580,14 +574,14 @@ const faq = install.faq || [];
     width: 32px; height: 32px; border: 1px solid #d0d7de; border-radius: 6px;
     background: #f6f8fa; color: #656d76; cursor: pointer; transition: all 0.2s;
   }
-  .terminal__copy:hover { color: #e85d04; border-color: #e85d04; background: #fff; }
+  .terminal__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: #fff; }
   .terminal__panel { display: block; }
   .terminal__panel[hidden] { display: none; }
 
   /* ===== Showcase (scroll-driven agent cards) ===== */
   .showcase { padding: var(--space-12) 0 var(--space-8); overflow: hidden; }
   .showcase__header { text-align: center; padding: 0 var(--space-6); margin-bottom: var(--space-8); }
-  .showcase__label { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-3); }
+  .showcase__label { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-accent-dark); margin-bottom: var(--space-3); }
   .showcase__heading { font-family: var(--font-serif); font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: var(--font-weight-semi); color: var(--color-fg); line-height: 1.15; margin-bottom: var(--space-3); }
   .showcase__sub { font-size: var(--font-size-body); color: var(--color-fg-tertiary); }
 
@@ -621,7 +615,8 @@ const faq = install.faq || [];
   .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); }
   .showcase__card-cn { font-family: var(--font-serif); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
   .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
-  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--card-accent); }
+  /* P2-11: ≥18.66px + weight 700 → 大文本资格 → 3:1 阈值（六角色色 3.14–4.23:1 全过） */
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-h3); font-weight: var(--font-weight-bold); color: var(--card-accent); }
   .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
   .showcase__card-skills { display: flex; flex-wrap: wrap; gap: 6px; }
   .showcase__skill {
@@ -652,7 +647,7 @@ const faq = install.faq || [];
     color: var(--color-fg-secondary); cursor: pointer;
     transition: all 0.2s; flex-shrink: 0;
   }
-  .showcase__arrow:hover { border-color: var(--color-accent); color: var(--color-accent); background: var(--color-accent-tint); }
+  .showcase__arrow:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); }
   .showcase__arrow:active { transform: scale(0.92); }
   .showcase__dots { display: flex; gap: 8px; align-items: center; }
   .showcase__dot {
@@ -667,7 +662,7 @@ const faq = install.faq || [];
   .topo__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-3); }
   .topo__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
   .topo__all { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
-  .topo__all:hover { color: var(--color-accent); text-decoration: none; }
+  .topo__all:hover { color: var(--color-accent-dark); text-decoration: none; }
   .topo__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-6); }
   .topo-diagram { overflow-x: auto; }
   .topo-svg { width: 100%; height: auto; min-width: 860px; }
@@ -675,34 +670,34 @@ const faq = install.faq || [];
   /* Bézier lines */
   .topo-bezier { fill: none; stroke-width: 1.5; }
   .topo-bezier--input { stroke: #8b949e; }
-  .topo-bezier--branch { stroke: #e85d04; stroke-opacity: 0.45; }
-  .topo-bezier--return { stroke: #2ea043; stroke-opacity: 0.6; stroke-dasharray: 6 4; }
-  .topo-bezier--verdict { stroke: #2ea043; stroke-width: 1.8; }
-  .topo-bezier--fail { stroke: #bf8700; stroke-opacity: 0.7; stroke-dasharray: 5 4; }
-  .topo-bezier--report { stroke: #2ea043; stroke-opacity: 0.7; stroke-width: 1.8; }
-  .topo-bezier--learn { stroke: #8b5cf6; stroke-opacity: 0.85; stroke-dasharray: 2 4; }
-  .topo-bezier--judge { stroke: #bf8700; stroke-opacity: 0.7; stroke-dasharray: 4 3; stroke-width: 1.2; }
+  .topo-bezier--branch { stroke: var(--color-accent); stroke-opacity: 0.45; }
+  .topo-bezier--return { stroke: var(--role-ji); stroke-opacity: 0.6; stroke-dasharray: 6 4; }
+  .topo-bezier--verdict { stroke: var(--role-ji); stroke-width: 1.8; }
+  .topo-bezier--fail { stroke: var(--role-chi); stroke-opacity: 0.7; stroke-dasharray: 5 4; }
+  .topo-bezier--report { stroke: var(--role-ji); stroke-opacity: 0.7; stroke-width: 1.8; }
+  .topo-bezier--learn { stroke: var(--role-xun); stroke-opacity: 0.85; stroke-dasharray: 2 4; }
+  .topo-bezier--judge { stroke: var(--role-chi); stroke-opacity: 0.7; stroke-dasharray: 4 3; stroke-width: 1.2; }
 
   /* Animated dots */
-  .topo-dot { fill: #e85d04; }
+  .topo-dot { fill: var(--color-accent); }
   .topo-dot--input { fill: #8b949e; }
-  .topo-dot--return { fill: #2ea043; }
-  .topo-dot--verdict { fill: #2ea043; }
-  .topo-dot--fail { fill: #bf8700; }
-  .topo-dot--report { fill: #2ea043; }
-  .topo-dot--learn { fill: #8b5cf6; }
-  .topo-dot--judge { fill: #bf8700; }
+  .topo-dot--return { fill: var(--role-ji); }
+  .topo-dot--verdict { fill: var(--role-ji); }
+  .topo-dot--fail { fill: var(--role-chi); }
+  .topo-dot--report { fill: var(--role-ji); }
+  .topo-dot--learn { fill: var(--role-xun); }
+  .topo-dot--judge { fill: var(--role-chi); }
 
   /* Nodes */
   .topo-node { rx: 10; ry: 10; }
   .topo-node--input { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--hub { fill: #e85d04; stroke: none; }
+  .topo-node--hub { fill: var(--color-accent); stroke: none; }
   .topo-node--agent { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--judge { fill: #f6f8fa; stroke: #bf8700; stroke-width: 1.5; }
+  .topo-node--judge { fill: #f6f8fa; stroke: var(--role-chi); stroke-width: 1.5; }
   .topo-node--output { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--verify { fill: #f6f8fa; stroke: #2ea043; stroke-width: 1.5; }
-  .topo-node--knowledge { fill: #fafafa; stroke: #8b5cf6; stroke-width: 1.2; stroke-dasharray: 5 4; }
-  .topo-badge { fill: #bf8700; fill-opacity: 0.14; stroke: #bf8700; stroke-opacity: 0.5; stroke-width: 1; }
+  .topo-node--verify { fill: #f6f8fa; stroke: var(--role-ji); stroke-width: 1.5; }
+  .topo-node--knowledge { fill: #fafafa; stroke: var(--role-xun); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .topo-badge { fill: var(--role-chi); fill-opacity: 0.14; stroke: var(--role-chi); stroke-opacity: 0.5; stroke-width: 1; }
 
   /* Labels */
   .topo-label { font-family: var(--font-mono); }
@@ -714,21 +709,21 @@ const faq = install.faq || [];
   .topo-label--agent-id { fill: #656d76; font-size: 11px; }
   .topo-label--judge-cn { fill: #1f2328; font-size: 15px; font-weight: 600; }
   .topo-label--judge-sub { fill: #656d76; font-size: 11px; }
-  .topo-label--judge-tag { fill: #bf8700; font-size: 11px; font-weight: 600; font-style: italic; }
-  .topo-label--badge { fill: #bf8700; font-size: 9px; font-weight: 600; }
+  .topo-label--judge-tag { fill: var(--role-chi); font-size: 11px; font-weight: 600; font-style: italic; }
+  .topo-label--badge { fill: var(--role-chi); font-size: 9px; font-weight: 600; }
   .topo-label--hub-sub2 { fill: rgba(255,255,255,0.75); font-size: 10px; }
   .topo-label--node-title { fill: #1f2328; font-size: 13px; font-weight: 600; }
   .topo-label--node-sub { fill: #656d76; font-size: 10px; }
   .topo-label--node-micro { fill: #8b949e; font-size: 8.5px; }
   .topo-elabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
-  .topo-elabel--pass { fill: #2ea043; }
-  .topo-elabel--fail { fill: #bf8700; }
-  .topo-elabel--report { fill: #2ea043; }
+  .topo-elabel--pass { fill: var(--role-ji); }
+  .topo-elabel--fail { fill: var(--role-chi); }
+  .topo-elabel--report { fill: var(--role-ji); }
   .topo-label--output { fill: #1f2328; font-size: 16px; font-weight: 600; }
 
   /* Pulse animation on hub */
   .topo-pulse {
-    fill: none; stroke: #e85d04; stroke-width: 2; opacity: 0;
+    fill: none; stroke: var(--color-accent); stroke-width: 2; opacity: 0;
     animation: topo-pulse 3s ease-out infinite;
   }
   @keyframes topo-pulse {
@@ -737,9 +732,9 @@ const faq = install.faq || [];
   }
 
   /* Status dots on nodes */
-  .topo-status { fill: #2ea043; }
+  .topo-status { fill: var(--role-ji); }
   .topo-status--active { animation: topo-blink 2s ease-in-out infinite; }
-  .topo-status--verify { fill: #bf8700; animation: topo-blink 1.5s ease-in-out infinite; }
+  .topo-status--verify { fill: var(--role-chi); animation: topo-blink 1.5s ease-in-out infinite; }
   @keyframes topo-blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
@@ -749,19 +744,19 @@ const faq = install.faq || [];
   .topo-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
   .topo-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
   .topo-legend__dot--input { background: #8b949e; }
-  .topo-legend__dot--hub { background: #e85d04; }
+  .topo-legend__dot--hub { background: var(--color-accent); }
   .topo-legend__dot--agent { background: #f6f8fa; border: 1px solid #d0d7de; }
-  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid #bf8700; }
-  .topo-legend__dot--verify { background: #f6f8fa; border: 1.5px solid #2ea043; }
-  .topo-legend__dot--report { background: #2ea043; }
-  .topo-legend__dot--fail { background: #bf8700; }
+  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid var(--role-chi); }
+  .topo-legend__dot--verify { background: #f6f8fa; border: 1.5px solid var(--role-ji); }
+  .topo-legend__dot--report { background: var(--role-ji); }
+  .topo-legend__dot--fail { background: var(--role-chi); }
 
   /* ===== Mechanisms ===== */
   .mechanisms { padding: var(--space-10) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
   .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
   .mechanisms__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
   .mechanisms__all { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
-  .mechanisms__all:hover { color: var(--color-accent); text-decoration: none; }
+  .mechanisms__all:hover { color: var(--color-accent-dark); text-decoration: none; }
   .mechanisms__list { display: flex; flex-direction: column; }
   .mechanisms__item { display: flex; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-line-soft); transition: background 0.2s; }
   .mechanisms__item:last-child { border-bottom: none; }
@@ -826,6 +821,9 @@ const faq = install.faq || [];
 
   /* Copy buttons */
   document.querySelectorAll('.terminal__copy').forEach(btn => {
+    const ICON_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const label = btn.getAttribute('aria-label') || '复制命令';
+    btn.setAttribute('aria-live', 'polite');
     btn.addEventListener('click', async () => {
       const cmd = (btn as HTMLElement).dataset.cmd;
       if (!cmd) return;
@@ -833,11 +831,23 @@ const faq = install.faq || [];
         await navigator.clipboard.writeText(cmd);
         btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
         (btn as HTMLElement).style.color = '#28c840';
+        btn.setAttribute('aria-label', '已复制');
         setTimeout(() => {
-          btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          btn.innerHTML = ICON_COPY;
           (btn as HTMLElement).style.color = '';
+          btn.setAttribute('aria-label', label);
         }, 1500);
-      } catch {}
+      } catch {
+        /* 剪贴板写入失败（权限被拒 / 非安全上下文）：显式报错并指明替代做法 */
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+        (btn as HTMLElement).style.color = '#cf222e';
+        btn.setAttribute('aria-label', '复制失败：请手动选中并复制');
+        setTimeout(() => {
+          btn.innerHTML = ICON_COPY;
+          (btn as HTMLElement).style.color = '';
+          btn.setAttribute('aria-label', label);
+        }, 1500);
+      }
     });
   });
 

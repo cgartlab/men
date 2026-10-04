@@ -6,7 +6,7 @@
     "gh-runner": {
       "description": "云端执行 agent：读 issue → 建分支 → 开发 → 验证 → 开 PR。无权 merge。",
       "mode": "primary",
-      "model": "opencode-go/hy3",
+      "model": "sensenova/deepseek-v4-flash",
       "permission": {
         "bash": {
           "git push --force*": "deny",

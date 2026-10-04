@@ -1,145 +1,159 @@
 /**
  * men-verify — 产物机械验证自动插件（渐进式第 1 步：非阻塞）
  *
- * 在 `write` / `edit` 工具写完产物后，若目标路径指向本项目产物目录
- * （docs/、knowledge/、output/ 等），后台 spawn 运行
- *   `node scripts/verify.mjs <目标> --json`
- * 做机械检查（产物存在性 / 密钥扫描 / TODO / 结构 / gate 退出码）。
+ * 行为（OpenCode V2 · @opencode/plugin）：
+ *   - 监听 write / edit 工具执行完成
+ *   - 目标路径限定 docs/、knowledge/、output/ 三个产物目录
+ *   - spawn scripts/verify.mjs --json，仅记录结果，不中断、不改写 output
+ *   - 日志统一落 .agents/logs/men-plugin.log
+ *   - 非阻塞：绝不抛错、绝不 await 子进程、绝不修改 tool output
  *
- * 非阻塞约定：
- *   - 检查结果只作为提示（写 .agents/logs/men-plugin.log 日志）
- *   - 绝不 throw、绝不中断 tool 执行、绝不 await 阻塞写回
- *   - 命中 FAIL 时仅提示「建议运行 /verify」，不阻止写入
- *
- * 递归安全：verify.mjs 是独立脚本（不经过插件 Hook），不会再次触发本插件。
- *
- * 运行环境：OpenCode 插件（Bun 运行，无需构建），类型来自 @opencode-ai/plugin。
+ * V2 迁移要点（对照 V1 @opencode-ai/plugin）：
+ *   - `export default Plugin.define({ id, setup(ctx) })` 取代 `export default async (input) => ({...})`
+ *   - `ctx.tool.hook("execute.after", (event) => …)` 取代 V1 的 `"tool.execute.after": (toolInput, toolOutput) => …`
+ *     event = { tool, sessionID, agent, messageID, id, input }
+ *              + ({ status: "completed", result } | { status: "error", error })
+ *   - `event.input` 即 V1 的 `toolInput.args`；write 工具实测键为 `path` / `content`
+ *   - `event.result` 即 V1 的 `toolOutput`（`{ output, content, metadata? }`）
+ *   - `ctx.location.directory` 取代 `input.directory`
+ *   - ⚠️ V2 以 Bun 二进制加载插件，`process.execPath` 是 `opencode.exe` 而非 `node`；
+ *     verify.mjs 是纯 Node ESM，必须显式解析 node（见 resolveNodeBin）
  */
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { type Plugin } from "@opencode-ai/plugin";
+import { Plugin } from "@opencode/plugin";
 
 // ─────────────────────────── 常量 ───────────────────────────
 
-// 产物目录识别：命中这些相对前缀的写入路径才触发机械检查
-// （相对项目根解析；全部前缀须带尾部分隔符，避免误匹配如 `documentation/`）
 const PRODUCT_PREFIXES = [
   "docs" + path.sep,
   "knowledge" + path.sep,
   "output" + path.sep,
 ];
 
-// 触发机械检查的工具
 const WATCH_TOOLS = new Set(["write", "edit"]);
 
-// verify.mjs 相对项目根的路径
 const VERIFY_SCRIPT = ["scripts", "verify.mjs"];
 
-// ─────────────────────────── 工具函数 ───────────────────────────
+// ─────────────────────────── 路径判定 ───────────────────────────
 
-/** 判断一个相对路径是否属于产物目录（docs/、knowledge/、output/）。 */
-function isProductPath(relPath: string): boolean {
+function isProductPath(relPath) {
   const rel = relPath.replace(/\\/g, "/");
   return PRODUCT_PREFIXES.some((prefix) =>
     rel.startsWith(prefix.replace(/\\/g, "/"))
   );
 }
 
-/** 解析 verify.mjs 的 --json 输出，返回是否包含 FAIL 项。 */
-function reportHasFail(jsonText: string): boolean {
+// ─────────────────────────── node 解析 ───────────────────────────
+
+let cachedNodeBin;
+
+/**
+ * 解析可用于运行 verify.mjs 的 Node 可执行文件。
+ *
+ * V2 插件运行在 OpenCode 的 Bun 运行时内，`process.execPath` 指向 `opencode.exe`，
+ * 直接拿它 spawn 会退化成 `opencode.exe scripts/verify.mjs`。verify.mjs 零依赖、
+ * 纯 Node ESM，必须用 node 运行。解析失败时回退 PATH 名 "node"。
+ */
+function resolveNodeBin() {
+  if (cachedNodeBin) return cachedNodeBin;
+  let found = "";
+  try {
+    const finder = process.platform === "win32" ? "where.exe" : "which";
+    const out = spawnSync(finder, ["node"], {
+      stdio: ["ignore", "pipe", "ignore"],
+      windowsHide: true,
+      encoding: "utf8",
+    });
+    const first = (out.stdout || "").split(/\r?\n/)[0];
+    if (out.status === 0 && first && first.trim()) found = first.trim();
+  } catch {
+    /* 回退 PATH 名 */
+  }
+  cachedNodeBin = found || "node";
+  return cachedNodeBin;
+}
+
+// ─────────────────────────── 日志 ───────────────────────────
+
+function reportHasFail(jsonText) {
   try {
     const report = JSON.parse(jsonText);
-    return (
-      typeof report?.summary?.failed === "number" && report.summary.failed > 0
-    );
+    return typeof report?.summary?.failed === "number" && report.summary.failed > 0;
   } catch {
-    // 解析失败按无 FAIL 处理：verify 输出非预期 JSON 时保守返回 false，不误报、不阻塞
     return false;
   }
 }
 
-// ─────────────────────────── 插件主体 ───────────────────────────
+export default Plugin.define({
+  id: "men-verify",
+  async setup(ctx) {
+    const root = ctx.location.directory;
 
-const plugin: Plugin = async (input) => {
-  const root = input.directory || process.cwd();
-
-  // 安全日志：写入项目 .agents/logs/men-plugin.log，绝不写 stdout/stderr
-  // （插件的 console 输出会被 OpenCode TUI 捕获并污染输入框，见 UI 事故）。
-  function logToFile(msg: string) {
-    try {
-      const dir = path.join(root, ".agents", "logs");
-      fs.mkdirSync(dir, { recursive: true });
-      fs.appendFileSync(
-        path.join(dir, "men-plugin.log"),
-        `${new Date().toISOString()} [men-verify] ${msg}\n`
-      );
-    } catch {
-      // 日志器失败无可降级：日志本身是 best-effort，再失败只能静默（绝不 throw、绝不阻塞主流程）
-      /* best-effort，绝不阻塞主流程 */
+    function logToFile(msg) {
+      try {
+        const dir = path.join(root, ".agents", "logs");
+        fs.mkdirSync(dir, { recursive: true });
+        fs.appendFileSync(
+          path.join(dir, "men-plugin.log"),
+          `${new Date().toISOString()} [men-verify] ${msg}\n`
+        );
+      } catch {
+        /* best-effort，绝不阻塞主流程 */
+      }
     }
-  }
 
-  return {
-    /**
-     * tool.execute.after — 写产物后做非阻塞机械检查。
-     * 绝不 throw：所有错误路径都吞掉，只留日志。
-     */
-    "tool.execute.after": async (toolInput, toolOutput) => {
-      // 1. 只关注写类工具
-      if (!WATCH_TOOLS.has(toolInput.tool)) return;
+    await ctx.tool.hook("execute.after", (event) => {
+      // 1. 只关注 write/edit
+      if (!WATCH_TOOLS.has(event.tool)) return;
 
-      // 2. 提取目标路径。
-      //    tool.execute.after 的 input 实含 args 字段（见 @opencode-ai/plugin@1.18.23
-      //    dist/index.d.ts 第 249-253 行：{ tool, sessionID, callID, args }）。
-      //    write/edit 工具的目标路径参数名为 filePath（OpenCode 内置工具 schema）；
-      //    保留 args.path / args.file_path 与 output.metadata 作向后兼容回退。
+      // 2. 解析目标路径：优先 input.path（V2 write/edit 实测键），兼容其它常见键名
+      const input = event.input || {};
+      const result = event.status === "completed" ? event.result : undefined;
+      const metadata = result && result.metadata;
+      // 注意：?? 不能与 && 混用（JS 语法禁止，Bun 解析器报 "Unexpected &&"），必须加括号
       const filePath =
-        toolInput.args?.filePath ??
-        toolInput.args?.path ??
-        toolInput.args?.file_path ??
-        toolOutput?.metadata?.filePath ??
-        toolOutput?.metadata?.path;
+        input.path ??
+        input.filePath ??
+        input.file_path ??
+        (metadata && metadata.path) ??
+        (metadata && metadata.filePath);
       if (!filePath) return;
+
+      // 3. 限定产物目录
       const abs = path.resolve(root, filePath);
       const rel = path.relative(root, abs);
-
-      // 3. 只检查产物目录内的写入
-      if (rel.startsWith("..") || path.isAbsolute(rel)) return; // 项目根之外，跳过
+      if (rel.startsWith("..") || path.isAbsolute(rel)) return;
       if (!isProductPath(rel)) return;
 
-      // 4. 非阻塞 spawn verify.mjs（Windows 下用 node 直接调用，无需 shell）
       const target = rel;
       const verifyPath = path.join(root, ...VERIFY_SCRIPT);
+      const nodeBin = resolveNodeBin();
       const args = [verifyPath, target, "--json", "--sid", `men-verify-${Date.now()}`];
 
-      const child = spawn(process.execPath, args, {
-        cwd: root,
-        windowsHide: true,
-      });
+      // 4. 异步 spawn，不阻塞、不改写 output
+      const child = spawn(nodeBin, args, { cwd: root, windowsHide: true });
 
       let stdout = "";
-      child.stdout?.on("data", (d: Buffer) => (stdout += d.toString()));
+      child.stdout &&
+        child.stdout.on("data", (d) => {
+          stdout += d.toString();
+        });
+
       child.on("error", (err) => {
-        // spawn 失败：仅日志，不中断
         logToFile(`spawn 失败: ${err.message}`);
       });
+
       child.on("close", (code) => {
-        // verify.mjs 契约：非 0 退出 = 有检查项失败。以退出码为主信号，
-        // JSON 报告兜底（覆盖 spawn 崩溃/stdout 缺失等 code≠0 但无 FAIL 计数、
-        // 以及 code=0 但 JSON 异常含 FAIL 的边界）。任一命中即视为未通过。
         const failed = code !== 0 || reportHasFail(stdout);
         if (failed) {
-          // 非阻塞约定：仅写日志提示。不修改 toolOutput——spawn 后 async hook 立即
-          // resolve，close 回调触发时 output 已被消费，写入无效（M5/D4 修复）。
           logToFile(`${target} 未通过机械检查（exit=${code}）`);
         } else {
           logToFile(`${target} 机械检查通过（exit=${code}）`);
         }
       });
-    },
-  };
-};
-
-export default plugin;
+    });
+  },
+});

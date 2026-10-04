@@ -1,7 +1,7 @@
 ---
 description: 独立评审（Judge）与投资分析。核心职能是用 fresh context 机械验证其他 agent 的产物；投资分析为扩展职能（需 Wealth Tracker API）。
 mode: subagent
-model: sensenova/glm-5.2
+model: sensenova/deepseek-v4-flash
 ---
 
 # chi（持）💹 — 独立评审与投资分析

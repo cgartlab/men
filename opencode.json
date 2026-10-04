@@ -6,7 +6,7 @@
   ],
   "agent": {
     "men": {
-      "model": "opencode-go/hy3",
+      "model": "sensenova/deepseek-v4-flash",
       "permission": {
         "question": "allow"
       }
@@ -15,10 +15,10 @@
       "model": "sensenova/deepseek-v4-flash"
     },
     "ji": {
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "sensenova/sensenova-6.8-flash-lite"
     },
     "chi": {
-      "model": "sensenova/glm-5.2"
+      "model": "sensenova/deepseek-v4-flash"
     },
     "yi": {
       "model": "sensenova/sensenova-6.8-flash-lite"
@@ -27,9 +27,6 @@
       "model": "sensenova/sensenova-6.8-flash-lite"
     }
   },
-  "plugin": [
-    ".opencode/plugins/men-sidebar"
-  ],
   "skills": {
     "paths": [
       ".opencode/skills"
