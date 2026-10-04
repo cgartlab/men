@@ -23,6 +23,10 @@
 
 ### Fixed
 
+- **`gate.mjs` 在 Windows 上必然失败（且 5 次后自我放行）**：`spawnSync("npm.cmd", …, { shell: false })` 在 Windows 上返回 `EINVAL`，而 `npm` 裸名返回 `ENOENT`（npm 只是 `.cmd` shim）。结果是门禁每次都 `GATE_FAILED`，`reinforcementCount` 累加到上限后 gate 反而**返回 exit 0**（`GATE_EXHAUSTED … 允许收工`）——把「执行失败」变成「静默放行」。改为 `cmd /c npm run <script>`（与 `verify.mjs` / `install.mjs` 同一写法）；同时修正超时判定（Windows 下 spawnSync 超时是 `error.code === 'ETIMEDOUT'` 且 `signal` 为 `null`，原判 `signal === 'SIGTERM'` 使超时分支成为死代码）
+- **`test/gate.test.mjs` 用源码正则把上述 bug 钉死**：原断言要求 gate.mjs 源码里出现 `npm.cmd` + `shell: false` 的写法，于是 169 项测试全绿却从未真正执行过 runner。改为**黑盒行为测试**（造一个通过的 `test` 脚本、真跑、断言 exit 0 且无 `GATE_SKIP`），另保留一条最小源码护栏只锁平台分支写法
+- **`docs/agents.astro` 把原始 HTML 当正文打印 19 次**：`{roleTags[…].map((t) => `<span …>${t}</span>`).join(' ')}` 先被 `.join()` 压成字符串，Astro 遂将其 HTML 转义，页面直接显示 `<span class="wiki-tag">primary</span>` 字面量。改为 JSX map 直接渲染；产物中转义串由 19 处降为 0
+- **`docs/install.astro` 14 个来源链接全部 404**：`SrcRef` 传入 Windows 反斜杠绝对路径（如 `D:\github-repos\men\install.sh`），JS 把 `\g` `\m` `\i` 当转义吞掉，渲染成 `blob/main/D:github-reposmeninstall.sh`；且该路径与仓库实际目录不符。改为仓库相对正斜杠路径（`install.sh` / `scripts/install.mjs` 等），已逐个经 GitHub API 确认可解析
 - **`.agent-card__charter` 用 `--color-fg-muted` 于暖底面板，仅 3.99:1**：该块 `background: var(--color-bg-warm)`（`#f0ebe2`），而 `--color-fg-muted` 的对比度只在页面底 `#fafafa` 上验证过（4.54:1）——令牌自身注释已写明「勿用于浅底面板上的小字」，此处正是该误用。14px 文本需 4.5:1，故改用 `--color-fg-tertiary`（暖底 5.63:1 / 白底 6.69:1），层级不变
 - **首页拓扑图 7 处小字对比度不达 WCAG AA**：`.topo-label--judge-tag`（11px）、`.topo-label--badge`（9px）、`.topo-elabel--pass/fail/report` 与 `.topo-status`（11px）用角色亮色作 `fill`，在节点底 `#f6f8fa` 上仅 **2.95–3.17:1**，而 <24px 文本需 4.5:1。新增 6 个同色相压暗的 `--role-*-text` 令牌（实测 4.64–4.67:1）并切换这 7 处；角色亮色仍用于大面积填充/描边与 20px 粗体大标题。`contrast-check.mjs` 同步纳入 12 组角色色断言，调色板守卫由 11 项扩到 **23 项**
 - **`contrast-check.mjs` 调色板守卫不解析 `var()` 引用**：`--role-men` 等令牌写作 `var(--color-accent)` 而非字面量，原守卫只匹配 `#hex`，误报「缺少令牌」。改为递归解析 `var(--…)` 引用链
