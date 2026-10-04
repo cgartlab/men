@@ -13,6 +13,7 @@
 ### Added
 
 - **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
+- **`text-contrast-audit.mjs`：全规则文本着色对比度门**：新增零依赖脚本，扫描全部 `.astro` CSS 规则，找出「颜色令牌用作 `color:` 但对比度不足」的写法（区分大/小文本阈值 3:1 与 4.5:1；按规则内显式 `background` 取真实承载体，避免把深底反白字误判）。已并入 `npm run check:source` → `site.yml`。此前 `contrast-check.mjs` 只覆盖手工登记的令牌级颜色对，页面里新写的规则无人拦截，只能靠人工发现
 - **站点源码级质量门进 CI**：`contrast-check.mjs`（WCAG 2.2 AA 对比度）与 `token-ratio-check.mjs`（令牌注释声称值 vs 实测）此前只能手工运行，回归无人拦截。两者零依赖、秒级，现经 `npm run check:source` 接入 `.github/workflows/site.yml`，且排在 astro 构建**之前**，配色回归在 ~1s 内失败而非等构建完成
 
 ### Changed
@@ -21,6 +22,7 @@
 
 ### Fixed
 
+- **`.agent-card__charter` 用 `--color-fg-muted` 于暖底面板，仅 3.99:1**：该块 `background: var(--color-bg-warm)`（`#f0ebe2`），而 `--color-fg-muted` 的对比度只在页面底 `#fafafa` 上验证过（4.54:1）——令牌自身注释已写明「勿用于浅底面板上的小字」，此处正是该误用。14px 文本需 4.5:1，故改用 `--color-fg-tertiary`（暖底 5.63:1 / 白底 6.69:1），层级不变
 - **首页拓扑图 7 处小字对比度不达 WCAG AA**：`.topo-label--judge-tag`（11px）、`.topo-label--badge`（9px）、`.topo-elabel--pass/fail/report` 与 `.topo-status`（11px）用角色亮色作 `fill`，在节点底 `#f6f8fa` 上仅 **2.95–3.17:1**，而 <24px 文本需 4.5:1。新增 6 个同色相压暗的 `--role-*-text` 令牌（实测 4.64–4.67:1）并切换这 7 处；角色亮色仍用于大面积填充/描边与 20px 粗体大标题。`contrast-check.mjs` 同步纳入 12 组角色色断言，调色板守卫由 11 项扩到 **23 项**
 - **`contrast-check.mjs` 调色板守卫不解析 `var()` 引用**：`--role-men` 等令牌写作 `var(--color-accent)` 而非字面量，原守卫只匹配 `#hex`，误报「缺少令牌」。改为递归解析 `var(--…)` 引用链
 - **`token-ratio-check.mjs` 路径依赖 CWD**：用相对路径 `site/src/styles/global.css`，而脚本位于 `site/scripts/`、约定从 `site/` 运行，实际解析成 `site/site/src/...` 直接 ENOENT——即**从未被真正执行过**。改为基于 `import.meta.url` 解析（与 `check-site.mjs` 一致）
