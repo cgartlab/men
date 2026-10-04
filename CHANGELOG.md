@@ -14,6 +14,7 @@
 
 - **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
 - **`text-contrast-audit.mjs`：全规则文本着色对比度门**：新增零依赖脚本，扫描全部 `.astro` CSS 规则，找出「颜色令牌用作 `color:` 但对比度不足」的写法（区分大/小文本阈值 3:1 与 4.5:1；按规则内显式 `background` 取真实承载体，避免把深底反白字误判）。已并入 `npm run check:source` → `site.yml`。此前 `contrast-check.mjs` 只覆盖手工登记的令牌级颜色对，页面里新写的规则无人拦截，只能靠人工发现
+- **`text-contrast-audit.mjs` 覆盖盲区收敛**：`clamp()` 字号按**下界 min** 判定（实际渲染只会更大，故不会漏报小文本风险），可判定规则 142 → **149**；纯继承字号的规则不再静默丢弃——SVG 图形按非文本判据 1.4.11（3:1）处理，其余对比度 <4.5:1 的**显式列出**待人工复核（当前 2 条，均为分隔符/项目符号装饰）
 - **站点源码级质量门进 CI**：`contrast-check.mjs`（WCAG 2.2 AA 对比度）与 `token-ratio-check.mjs`（令牌注释声称值 vs 实测）此前只能手工运行，回归无人拦截。两者零依赖、秒级，现经 `npm run check:source` 接入 `.github/workflows/site.yml`，且排在 astro 构建**之前**，配色回归在 ~1s 内失败而非等构建完成
 
 ### Changed

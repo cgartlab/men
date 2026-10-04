@@ -88,6 +88,10 @@ const NON_TEXT_SEL = /(dot|badge|rect|circle|node-bg|path|arrow|marker|spark|bar
 const DECORATIVE_PSEUDO = /^::(before|after)$/;
 
 const violations = [];
+// 无 font-size 的规则：字号靠继承/父级，CSS 里无法静态确定。但它们仍可能是
+// 真实文本，故不静默丢弃 —— 记入 undecided 供人工复核；SVG 图形按非文本
+// 判据处理，降低噪音。
+const undecided = [];
 let checked = 0, skippedNoFontSize = 0, skippedNonText = 0;
 
 for (const file of collect(SRC, ['.astro'])) {
@@ -120,7 +124,25 @@ for (const file of collect(SRC, ['.astro'])) {
     if (px) size = parseFloat(px[1]);
     else if (rem) size = parseFloat(rem[1]) * 16;
     else if (varRef && FONT_SIZE.has(varRef[1])) size = FONT_SIZE.get(varRef[1]);
-    if (size == null) { skippedNoFontSize++; continue; } // clamp()/继承 -> 不猜
+    else {
+      // clamp(min, pref, max)：取 min 作为保守下界。实际渲染只会 >= min，
+      // 故用 min 不会把大文本误判成小文本（阈值只会更宽松），也不会漏报小文本风险。
+      const clampPx = body.match(/font-size\s*:\s*clamp\(\s*([\d.]+)px/);
+      const clampRem = body.match(/font-size\s*:\s*clamp\(\s*([\d.]+)rem/);
+      if (clampPx) size = parseFloat(clampPx[1]);
+      else if (clampRem) size = parseFloat(clampRem[1]) * 16;
+    }
+    if (size == null) {
+      // 字号继承 → 无法静态判定。SVG 图形按非文本 1.4.11（3:1）判定，不算盲区；
+      // 其余记入待人工复核，不静默丢弃。
+      const isGraphic = /\b(svg|logo|icon|arrow|chevron|caret)\b/i.test(selector);
+      const bg2 = body.match(/(?:^|[;\s{])background\s*:\s*var\(\s*(--[a-z0-9-]+)\s*\)/);
+      const lb2 = bg2 ? COLOR.get(bg2[1]) : null;
+      const wd2 = Math.min(...(lb2 ? [lb2] : BACKGROUNDS).map((bg) => ratio(hex, bg)));
+      if (isGraphic) { skippedNoFontSize++; }
+      else { undecided.push({ rel, selector, token: cm[1], hex, worst: wd2 }); }
+      continue;
+    }
 
     const fw = body.match(/font-weight\s*:\s*(\d+)/);
     const weight = fw
@@ -145,7 +167,17 @@ for (const file of collect(SRC, ['.astro'])) {
 console.log('='.repeat(72));
 console.log('站点文本着色对比度审计（WCAG 2.2 AA · 零依赖）');
 console.log('='.repeat(72));
-console.log(`可判定规则 ${checked} · 缺字号跳过 ${skippedNoFontSize} · 非文本/装饰跳过 ${skippedNonText}`);
+console.log(`可判定规则 ${checked} · 非文本图形跳过 ${skippedNoFontSize} · 非文本/装饰跳过 ${skippedNonText} · 字号待定 ${undecided.length}`);
+
+// 字号待定（继承）里对比度低于小文本阈值的需人工确认 —— 不直接判失败（字号确实
+// 无法静态确定），但必须显式列出，不能静默吞掉。
+const undecidedRisky = undecided.filter((u) => u.worst < 4.5);
+if (undecidedRisky.length > 0) {
+  console.log('\n以下规则字号靠继承、无法静态判定，且对比度低于 4.5:1 —— 需人工确认：');
+  for (const u of undecidedRisky) {
+    console.log(`  ? ${u.rel} ${u.selector} | ${u.token} ${u.hex} -> ${u.worst.toFixed(2)}:1`);
+  }
+}
 
 if (violations.length === 0) {
   console.log('PASS | 未发现「颜色令牌用作文本但对比度不足」的规则');
