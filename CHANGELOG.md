@@ -27,8 +27,6 @@
 
 ### Fixed
 
-### Fixed
-
 - **`verify.mjs` / `gate.mjs` 写出的事件缺 `eventId`，机械证据链自断**：`event.mjs` 的 `REQUIRED_FIELDS` 要求 `eventId`，但两个写入方都未写——实测 `node scripts/event.mjs validate --sid <verify-*>` 对**仓库自己产出的日志**一律 `合法行: 0 / 坏行数: 1 / 缺少必填字段: eventId`，退出 1。本仓库以「机械优先、拒绝 LLM 自评」为架构原则，而校验工具恰好无法校验自己的日志。补齐 `eventId: crypto.randomUUID()`（与 `learn.mjs` 一致），修复后 verify/gate 日志校验 1/1 通过、退出 0
 - **`checkOpenCode()` 在 Windows 上恒返回「未安装」**：`install.mjs` 用 `spawnSync("opencode", …, { shell: false })`，而 opencode 作为 npm 全局包是 `.cmd` shim，libuv 在无 shell 时不解析 → `ENOENT`。实测本机装有 opencode v2.0.6，修复前 `checkOpenCode()` 仍报 `installed: false`，安装器因此在每台 Windows 机器上误判并走错分支。新增通用 `runShim()`（Windows 走 `cmd /c`，与 `runNpm` 同一范式）并替换两处调用
 - **`gate.mjs` 在 Windows 上必然失败（且 5 次后自我放行）**：`spawnSync("npm.cmd", …, { shell: false })` 在 Windows 上返回 `EINVAL`，而 `npm` 裸名返回 `ENOENT`（npm 只是 `.cmd` shim）。结果是门禁每次都 `GATE_FAILED`，`reinforcementCount` 累加到上限后 gate 反而**返回 exit 0**（`GATE_EXHAUSTED … 允许收工`）——把「执行失败」变成「静默放行」。改为 `cmd /c npm run <script>`（与 `verify.mjs` / `install.mjs` 同一写法）。顺带把超时判定收紧为 `status === null && (signal === 'SIGTERM' || error.code === 'ETIMEDOUT')`——实测 Node v26 超时为 `status=null, signal='SIGTERM', error.code='ETIMEDOUT'` 三者并存，原判 `signal === 'SIGTERM'` 本已成立，此处只是补上 `error.code` 这一路以兼容平台差异

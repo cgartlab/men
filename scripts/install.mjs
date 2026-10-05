@@ -767,7 +767,14 @@ export function main(argv = process.argv) {
       );
       if (r.status === 0) {
         eprintf(">> 正在升级 OpenCode ...\n");
-        runShim("opencode", ["upgrade"], { timeout: 120_000 });
+        const up = runShim("opencode", ["upgrade"], { timeout: 120_000 });
+        // runShim 捕获输出（无 stdio:"inherit"），故需回显，否则用户只见提示后
+        // 全程静默、且失败也无从得知。
+        const upOut = `${up.stdout || ""}${up.stderr || ""}`.trim();
+        if (upOut) eprintf(upOut + "\n");
+        if (up.status !== 0) {
+          eprintf(`⚠ OpenCode 升级未成功（退出码 ${up.status ?? "null"}），可稍后手动执行: opencode upgrade\n`);
+        }
       }
     }
   } else {
