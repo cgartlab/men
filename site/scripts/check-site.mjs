@@ -16,9 +16,13 @@ import { readdirSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const DIST = new URL('../dist/', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-const REPO_ROOT = new URL('../../', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+// 用 fileURLToPath 而非 new URL(...).pathname：后者是**百分号编码**的 URL 路径，
+// 仓库路径含空格或非 ASCII 时会得到 'D:/My%20Projects/men'，导致 git 调用失败
+// 而「来源链接校验」被静默跳过（守卫形同虚设）。
+const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
+const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 const ROUTE_ANCHORS = {
   'index.html': ['6+1 Agent 团队系统'],
@@ -82,11 +86,11 @@ for (const f of files) {
   if (/class="doc-body"[^>]*><\/div>/.test(text)) fail(`${rel} doc-body 为空（slot 内容未传入）`);
 
   // 7) 转义 HTML 泄漏守卫：模板里用 `.map().join()` 拼 HTML 字符串会被 Astro 转义，
-  // 页面直接显示 `<span ...>` 字面量（曾真实发生 19 处）。带 class 的转义标签即证据。
-  // 白名单：<code>--dir &lt;path&gt;</code> 这类**刻意**展示的占位符。
+  // 页面直接显示 `<span ...>` 字面量（曾真实发生 19 处）。**带 class** 的转义标签
+  // 即证据；刻意展示的命令占位符（如 <code>--dir &lt;path&gt;</code>）不带 class，
+  // 本就不匹配此规则，无需白名单。
   const escapedTags = text.match(/&lt;\/?(?:span|strong|em|code|a|div|ul|ol|li|table|h[1-6])[^&]*class=/gi) || [];
   for (const t of escapedTags) {
-    if (/&lt;code[^&]*--dir/i.test(t)) continue; // 文档里的命令占位符
     fail(`${rel} 出现被转义的带 class HTML（模板字符串未用 JSX 渲染）：${t.slice(0, 60)}`);
   }
 

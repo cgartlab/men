@@ -726,6 +726,10 @@ export function main(argv = process.argv) {
             Object.assign(oc, oc2);
           }
         } else {
+          // runNpm 以 encoding:"utf-8" 捕获输出（无 stdio:"inherit"），故这里必须
+          // 把捕获到的输出回显，否则失败时用户只看到「安装失败」而无从排查。
+          const out = `${installR.stdout || ""}${installR.stderr || ""}`.trim();
+          if (out) eprintf(out + "\n");
           eprintf("⚠ OpenCode 安装失败，可稍后手动执行: npm install -g @opencode-ai/cli\n");
         }
       }
