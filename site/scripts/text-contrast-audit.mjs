@@ -48,7 +48,13 @@ for (const [name, raw] of RAW) {
   const hex = resolveToken(name);
   if (hex && hex.startsWith('#')) COLOR.set(name, hex);
   const rem = raw.match(/^([\d.]+)rem$/);
-  if (rem) FONT_SIZE.set(name, parseFloat(rem[1]) * 16);
+  if (rem) { FONT_SIZE.set(name, parseFloat(rem[1]) * 16); continue; }
+  // 令牌值本身可能是 clamp()/calc()：取 clamp 的 min 作保守下界
+  // （实际渲染只会 >= min，故不会把大文本误判成小文本）。
+  const clampRem = raw.match(/clamp\(\s*([\d.]+)rem/);
+  if (clampRem) { FONT_SIZE.set(name, parseFloat(clampRem[1]) * 16); continue; }
+  const clampPx = raw.match(/clamp\(\s*([\d.]+)px/);
+  if (clampPx) FONT_SIZE.set(name, parseFloat(clampPx[1]));
 }
 
 // ── 对比度 ──────────────────────────────────────────────────
@@ -82,10 +88,23 @@ function collect(dir, exts) {
 // 纯装饰组件（整块 aria-hidden 的背景美术），其内部配色不承载信息，不参与文本判据。
 // HeroArt 的 symbol-matrix 即属此类：aria-hidden + mask + opacity 0.7 的 ASCII 背景。
 const DECORATIVE_COMPONENT_SEL = /\b(symbol-matrix|dither-band|hero-canvas|background-canvas)\b/i;
+// 纯装饰分隔符：只渲染「·」这类分隔字符、且已 aria-hidden，不承载信息，
+// 按 WCAG 1.4.3 "pure decoration" 豁免。其视觉层级靠与正文不同的浅色体现，
+// 但不适用正文对比度阈值。
+// 注意两个坑：
+//  1) 不能写成 /\b__sep\b/ —— 下划线本身是「单词字符」，`.about-brand-meta__sep`
+//     中 `a` 与 `__sep` 之间没有词边界，该正则不会匹配。
+//  2) 必须锚在选择器**末尾**：`.table__separator-cell` 也会被
+//     /__(sep|separator)\b/ 命中（r 与 - 之间存在词边界），将来若这类选择器
+//     承载真实文本会被静默豁免。只有 `.about-brand-meta__sep` 这种以 __sep
+//     收尾的才是约定式装饰分隔符。
+const DECORATIVE_SEPARATOR_SEL = /__(sep|separator)\s*$/i;
 // 明显是图形的选择器（SVG 形状 / 非文本）
 const NON_TEXT_SEL = /(dot|badge|rect|circle|node-bg|path|arrow|marker|spark|bar|track|-bg)\b/i;
-// 纯装饰伪元素（只放分隔符/项目符号）
-const DECORATIVE_PSEUDO = /^::(before|after)$/;
+// 纯装饰伪元素（只放分隔符/项目符号）。必须锚定在选择器**末尾**的 ::before/::after ——
+// 早前用 /^::(before|after)$/ 只能匹配整条就是伪元素的情况，复合选择器
+// （如 `.agent-card__list li::before`）永远匹配不上，导致项目符号被当成真文本。
+const DECORATIVE_PSEUDO = /::(before|after)\s*$/;
 
 const violations = [];
 // 无 font-size 的规则：字号靠继承/父级，CSS 里无法静态确定。但它们仍可能是
@@ -107,11 +126,15 @@ for (const file of collect(SRC, ['.astro'])) {
     const cm = body.match(/(?:^|[;\s{])(?<![a-z-])color\s*:\s*var\(\s*(--[a-z0-9-]+)\s*\)/);
     if (!cm) continue;
     if (DECORATIVE_COMPONENT_SEL.test(selector)) { skippedNonText++; continue; }
+    if (DECORATIVE_SEPARATOR_SEL.test(selector)) { skippedNonText++; continue; }
     if (NON_TEXT_SEL.test(selector)) { skippedNonText++; continue; }
 
     if (DECORATIVE_PSEUDO.test(selector)) {
-      const content = body.match(/content\s*:\s*['"]([^'"]*)['"]/);
-      if (!content || !/[^\s·•\-—–|/]/.test(content[1])) { skippedNonText++; continue; }
+      // 只有「已证明是纯装饰」才豁免：content 为带引号字符串且只含分隔符/项目符号。
+      // content 为 counter()/attr()/var() 等未加引号的生成内容时**不豁免** —— 它们会
+      // 产出真实文本（如 TOC 序号「1.」），按 fail-safe 原则继续检查而非放过。
+      const quoted = body.match(/content\s*:\s*['"]([^'"]*)['"]/);
+      if (quoted && !/[^\s·•\-—–|/]/.test(quoted[1])) { skippedNonText++; continue; }
     }
 
     const hex = COLOR.get(cm[1]);

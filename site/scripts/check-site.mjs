@@ -15,8 +15,14 @@
 import { readdirSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const DIST = new URL('../dist/', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+// 用 fileURLToPath 而非 new URL(...).pathname：后者是**百分号编码**的 URL 路径，
+// 仓库路径含空格或非 ASCII 时会得到 'D:/My%20Projects/men'，导致 git 调用失败
+// 而「来源链接校验」被静默跳过（守卫形同虚设）。
+const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
+const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 const ROUTE_ANCHORS = {
   'index.html': ['6+1 Agent 团队系统'],
@@ -40,6 +46,22 @@ let fails = 0;
 const fail = (msg) => { console.error('FAIL | ' + msg); fails += 1; };
 const ok = (msg) => console.log('PASS | ' + msg);
 
+// 仓库真实文件清单（用于「来源」链接死链守卫）。从 git 读取；非 git 环境下
+// 降级为空集合并跳过该检查，而不是误报。
+const REPO_FILES = (() => {
+  try {
+    const out = spawnSync('git', ['ls-files'], {
+      cwd: REPO_ROOT, encoding: 'utf-8', timeout: 15_000,
+    });
+    if (out.status !== 0 || !out.stdout) return new Set();
+    return new Set(out.stdout.split(/\r?\n/).filter(Boolean));
+  } catch {
+    return new Set();
+  }
+})();
+if (REPO_FILES.size > 0) ok(`仓库文件清单：${REPO_FILES.size} 项（用于来源链接校验）`);
+else console.log('SKIP | 无法读取 git ls-files，跳过来源链接校验');
+
 const files = walk(DIST);
 ok(`dist HTML 总数: ${files.length}`);
 
@@ -62,6 +84,25 @@ for (const f of files) {
 
   // 6) 空 slot 守卫：doc-body 存在但为空 = 章节内容丢失
   if (/class="doc-body"[^>]*><\/div>/.test(text)) fail(`${rel} doc-body 为空（slot 内容未传入）`);
+
+  // 7) 转义 HTML 泄漏守卫：模板里用 `.map().join()` 拼 HTML 字符串会被 Astro 转义，
+  // 页面直接显示 `<span ...>` 字面量（曾真实发生 19 处）。**带 class** 的转义标签
+  // 即证据；刻意展示的命令占位符（如 <code>--dir &lt;path&gt;</code>）不带 class，
+  // 本就不匹配此规则，无需白名单。
+  const escapedTags = text.match(/&lt;\/?(?:span|strong|em|code|a|div|ul|ol|li|table|h[1-6])[^&]*class=/gi) || [];
+  for (const t of escapedTags) {
+    fail(`${rel} 出现被转义的带 class HTML（模板字符串未用 JSX 渲染）：${t.slice(0, 60)}`);
+  }
+
+  // 8) 死链守卫：blob/main/ 后的路径必须真实存在于仓库，避免「来源」链接 404
+  // REPO_FILES 为空（不在 git 仓库 / git 不可用）时**整项跳过**，否则会把
+  // 每条链接都误报成「不存在」。上面的 SKIP 分支只跳过了提示，没跳过检查本身。
+  if (REPO_FILES.size > 0) {
+    for (const m of text.matchAll(/href="https:\/\/github\.com\/cgartlab\/men\/blob\/main\/([^"#?]+)/g)) {
+      const p = decodeURIComponent(m[1]);
+      if (!REPO_FILES.has(p)) fail(`${rel} 来源链接指向仓库中不存在的文件：${p}`);
+    }
+  }
 }
 ok('全部页面：UTF-8 解码 / charset / mojibake 特征 / base 守卫 检查完成');
 

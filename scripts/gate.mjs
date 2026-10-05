@@ -202,8 +202,6 @@ async function main() {
 
   // ── 5. 执行（无 shell argv，固定 npm 脚本入口） ──
   const isWin = process.platform === "win32";
-  const npmCmd = isWin ? "npm.cmd" : "npm";
-  const npmArgs = ["run", keyword];
   const unsafeChars = /[\r\n;&|`$<>{}()\[\]!~]|\$\{|<\(|>\(|\|/;
   if (unsafeChars.test(scriptText)) {
     console.error(`GATE_SKIP: ${keyword} 未配置（scripts.${keyword} 包含 shell 控制字符）`);
@@ -214,6 +212,10 @@ async function main() {
     await writeState(keyword, { reinforcementCount: 0, lastResult: "passed" });
     process.exit(0);
   }
+  // Windows 上必须走 `cmd /c`：直接 spawn npm.cmd 且 shell:false 会 EINVAL，
+  // spawn npm 则 ENOENT（npm 只是 .cmd shim）。与 verify.mjs / install.mjs 同一写法。
+  const npmCmd = isWin ? "cmd" : "npm";
+  const npmArgs = isWin ? ["/c", "npm", "run", keyword] : ["run", keyword];
   const result = spawnSync(npmCmd, npmArgs, {
     cwd: dir,
     encoding: "utf-8",
@@ -222,7 +224,9 @@ async function main() {
   });
   // ── 6. 判定 ──
   const passed = result.status === 0 && !result.error;
-  const timedOut = result.status === null && result.signal === "SIGTERM";
+  // 超时判定（Node 实测）：spawnSync 超时表现为 status=null、signal='SIGTERM'、
+  // error.code='ETIMEDOUT'。三者任一即可判定，两个条件并写以兼容不同平台表现。
+  const timedOut = result.status === null && (result.signal === "SIGTERM" || result.error?.code === "ETIMEDOUT");
 
   if (timedOut) {
     console.error(`GATE_FAILED: ${keyword} 超时（60 秒），已 SIGKILL`);

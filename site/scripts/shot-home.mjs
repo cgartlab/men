@@ -3,7 +3,7 @@
 import http from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-import { chromium } from 'playwright';
+import { launchBrowser } from './lib/browser.mjs';
 
 const DIST = 'dist';
 const OUT = '../docs/reports/screenshots';
@@ -17,7 +17,7 @@ const srv = http.createServer(async (req, res) => {
   catch { res.writeHead(404); res.end('404'); }
 });
 await new Promise((r) => srv.listen(PORT, '127.0.0.1', r));
-const br = await chromium.launch();
+const br = await launchBrowser();
 const results = [];
 try {
   const ctx = await br.newContext();

@@ -14,7 +14,7 @@
 import http from 'node:http';
 import { readFile, stat, mkdir, writeFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-import { chromium } from 'playwright';
+import { launchBrowser } from './lib/browser.mjs';
 
 const DIST = 'dist';
 const OUT = '../docs/reports/screenshots';
@@ -88,7 +88,7 @@ try {
   const base = `http://127.0.0.1:${PORT}/`;
   console.log(`[serve] ${base}（进程内 server，finally 关闭）`);
 
-  browser = await chromium.launch();
+  browser = await launchBrowser();
   const context = await browser.newContext();
   const manifest = [];
   let totalBytes = 0;

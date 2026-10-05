@@ -26,9 +26,9 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
         <div>
           <p class="about-brand-meta">
             <span>开源项目</span>
-            <span class="about-brand-meta__sep">·</span>
+            <span class="about-brand-meta__sep" aria-hidden="true">·</span>
             <span>{SITE.version}</span>
-            <span class="about-brand-meta__sep">·</span>
+            <span class="about-brand-meta__sep" aria-hidden="true">·</span>
             <span>出品 {content.about.brand}</span>
           </p>
           <h1 class="about-brand-name">men（门）</h1>
@@ -199,6 +199,10 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     align-items: center;
   }
   .about-brand-meta__sep {
+    /* 纯装饰分隔符（已 aria-hidden，不承载信息）。刻意用 --color-line 的浅色以
+       与正文 --color-fg-muted 拉开层级；1.35:1 低于正文阈值，但 WCAG 1.4.3 对
+       "pure decoration" 豁免，故不应按文本对比度判定。此前一度改成
+       --color-fg-muted，与父级同值 → 规则退化为 no-op，分隔符失去作用。 */
     color: var(--color-line);
   }
 

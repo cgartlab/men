@@ -16,7 +16,7 @@
 import http from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-import { chromium } from 'playwright';
+import { launchBrowser } from './lib/browser.mjs';
 
 const DIST = 'dist', PORT = 4896;
 const MIME = {
@@ -80,7 +80,7 @@ const rows = [];
 const visProbe = [];
 try {
   srv = await serve();
-  br = await chromium.launch();
+  br = await launchBrowser();
   const base = `http://127.0.0.1:${PORT}`;
 
   for (const p of PAGES) {

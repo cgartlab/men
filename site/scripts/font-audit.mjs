@@ -5,7 +5,7 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-import { chromium } from 'playwright';
+import { launchBrowser } from './lib/browser.mjs';
 
 const DIST = 'dist';
 const PORT = 4892;
@@ -26,7 +26,7 @@ const srv = http.createServer(async (req, res) => {
 });
 
 await new Promise((r) => srv.listen(PORT, '127.0.0.1', r));
-const br = await chromium.launch();
+const br = await launchBrowser();
 const ctx = await br.newContext();
 
 const SELS = ['p', 'li', 'span', 'td', 'th', 'blockquote', 'dd', 'dt', 'figcaption'];

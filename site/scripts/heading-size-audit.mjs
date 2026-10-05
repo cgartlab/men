@@ -4,7 +4,7 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-import { chromium } from 'playwright';
+import { launchBrowser } from './lib/browser.mjs';
 
 const DIST = 'dist', PORT = 4895;
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
@@ -15,7 +15,7 @@ const srv = http.createServer(async (req, res) => {
   catch { res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' }); res.end(await readFile(join(DIST, '404.html')).catch(() => '404')); }
 });
 await new Promise((r) => srv.listen(PORT, '127.0.0.1', r));
-const br = await chromium.launch();
+const br = await launchBrowser();
 const ctx = await br.newContext();
 
 for (const pg of ['docs/index.html', 'docs/quickstart/index.html', 'mechanisms/index.html', 'roles/index.html', 'index.html']) {
