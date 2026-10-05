@@ -11,7 +11,8 @@
     "check-contrast": "node scripts/contrast-check.mjs",
     "check-tokens": "node scripts/token-ratio-check.mjs",
     "check-text-contrast": "node scripts/text-contrast-audit.mjs",
-    "check:source": "npm run check-contrast && npm run check-tokens && npm run check-text-contrast"
+    "check-dynamic-el": "node scripts/dynamic-el-audit.mjs",
+    "check:source": "npm run check-contrast && npm run check-tokens && npm run check-text-contrast && npm run check-dynamic-el"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.138",

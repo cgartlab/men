@@ -649,15 +649,18 @@ const faq = install.faq || [];
   }
   .showcase__arrow:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); }
   .showcase__arrow:active { transform: scale(0.92); }
-  .showcase__dots { display: flex; gap: 8px; align-items: center; }
-  .showcase__dot {
+  /* 分页点由 JS 的 document.createElement 动态创建，不会带上 Astro scoped 样式的
+     data-astro-cid-* 属性，故这些规则必须用 :global()，否则永不匹配 ——
+     实测曾导致分页点渲染为 0×0、完全不可见不可点。 */
+  :global(.showcase__dots) { display: flex; gap: 8px; align-items: center; }
+  :global(.showcase__dot) {
     width: 8px; height: 8px; border-radius: 50%;
     /* 分页点是「除填充外无任何可见内容」的控件（裸 button，无文字/图标），
        故其边界必须满足 WCAG 2.2 §1.4.11 的 3:1；--color-line 仅 1.35:1。 */
     background: var(--color-line-ui); border: none; padding: 0; cursor: pointer;
     transition: all 0.25s;
   }
-  .showcase__dot--active { background: var(--color-accent); width: 24px; border-radius: 4px; }
+  :global(.showcase__dot--active) { background: var(--color-accent); width: 24px; border-radius: 4px; }
 
   /* ===== Topology ===== */
   .topo { padding: var(--space-10) 0 var(--space-12); max-width: 1000px; margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
