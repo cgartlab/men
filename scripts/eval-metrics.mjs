@@ -14,9 +14,14 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const EVENTS_DIR = '.agents/state/sessions';
-const KPI_OUTPUT_DIR = '.agents/state/learn';
+// 状态路径按**脚本所在项目**解析，而非相对 cwd（与 event.mjs / verify.mjs 一致）。
+// 此前 `sid ? readEvents(sid) : []` 读的是 cwd 下的日志，而 event.mjs 写的是项目内
+// 那份 —— 换一个目录跑就得到空集，KPI 全部归零且与「无数据」无法区分。
+const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const EVENTS_DIR = path.join(PROJECT_ROOT, '.agents', 'state', 'sessions');
+const KPI_OUTPUT_DIR = path.join(PROJECT_ROOT, '.agents', 'state', 'learn');
 
 function ensureDir(d) {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });

@@ -178,3 +178,29 @@ test('event blackbox: verify/gate 写出的事件通过 validate（eventId 契�
     fs.rmSync(tmpPkg, { recursive: true, force: true });
   }
 });
+
+// ── 状态路径与 cwd 无关 ──
+test('event blackbox: 从子目录运行也写入仓库内，状态不随 cwd 分裂', () => {
+  // 回归：event.mjs 曾用 process.cwd() 解析 .agents/state，于是同一 sid 在不同
+  // 目录写出两份 events.jsonl；而 verify.mjs（按模块位置解析）写的是仓库内那份。
+  // 同一逻辑事件流被劈成两半，learn.mjs / eval-metrics.mjs 只看得到其中一片。
+  const sid = `cwd-${Date.now()}`;
+  const repoLog = path.join(REPO_ROOT, '.agents', 'state', 'sessions', sid, 'events.jsonl');
+  const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), 'event-cwd-'));
+  try {
+    const r = spawnSync(
+      process.execPath,
+      [EVENT_SCRIPT, 'append', '--type', 'session.created', '--subject', 'cwd-probe', '--sid', sid],
+      { cwd: elsewhere, encoding: 'utf-8', shell: false, timeout: 30_000 },
+    );
+    assert.strictEqual(r.status, 0, `append 失败：${r.stderr}`);
+    assert.ok(fs.existsSync(repoLog), '事件应落在仓库内的 .agents/state 下，而非 cwd');
+    assert.ok(
+      !fs.existsSync(path.join(elsewhere, '.agents')),
+      '不应在 cwd 下另建一份 .agents（那会造成状态分裂）',
+    );
+  } finally {
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+    fs.rmSync(path.dirname(repoLog), { recursive: true, force: true });
+  }
+});
