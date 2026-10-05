@@ -224,9 +224,9 @@ async function main() {
   });
   // ── 6. 判定 ──
   const passed = result.status === 0 && !result.error;
-  // Windows 上 spawnSync 超时表现为 error.code === 'ETIMEDOUT' 且 signal 为 null，
-  // 只判 signal === 'SIGTERM' 会让超时分支变成死代码。
-  const timedOut = result.error?.code === "ETIMEDOUT" || result.signal === "SIGTERM";
+  // 超时判定（Node 实测）：spawnSync 超时表现为 status=null、signal='SIGTERM'、
+  // error.code='ETIMEDOUT'。三者任一即可判定，两个条件并写以兼容不同平台表现。
+  const timedOut = result.status === null && (result.signal === "SIGTERM" || result.error?.code === "ETIMEDOUT");
 
   if (timedOut) {
     console.error(`GATE_FAILED: ${keyword} 超时（60 秒），已 SIGKILL`);

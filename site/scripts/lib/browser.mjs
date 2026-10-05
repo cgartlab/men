@@ -31,8 +31,3 @@ export async function launchBrowser(opts = {}) {
   }
   throw new Error('无法启动浏览器，请先执行 `npx playwright install chromium` 或安装 Edge/Chrome。\n' + errors.join('\n'));
 }
-
-// DIST 统一基于脚本位置解析，避免依赖 CWD（脚本在 site/scripts/，约定从 site/ 运行）
-export function distPath() {
-  return new URL('../dist/', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-}

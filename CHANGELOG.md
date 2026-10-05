@@ -13,8 +13,11 @@
 ### Added
 
 - **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
+- **`check-site.mjs` 新增两类产物级守卫**：① **转义 HTML 泄漏**——模板里用 `.map().join()` 拼 HTML 会被 Astro 转义、页面直接显示标签字面量（曾真实发生 19 处），现断言产物中不得出现带 `class` 的转义标签（白名单：`<code>--dir &lt;path&gt;</code>` 这类刻意占位符）；② **来源死链**——`blob/main/` 后的路径必须真实存在于 `git ls-files`，此前治理页把中文章节名当文件名传入、install 页传 Windows 绝对路径，共 24 条 404 无人拦截。两项均随 `site.yml` 在 CI 执行，并做了负向验证（注入即 FAIL exit 1）
+- **`role-token-verify.mjs` 断言过期导致长期假红**：`.topo-status` 期望值硬编码为修复前的亮色 `--role-ji`（`#2ea043`），而 v0.6.0 已把该小字换成合规的 `--role-ji-text`（`#258036`）——脚本在浏览器可跑通后第一件事就是 exit 1。现改为**从页面令牌推导期望值**（不再硬编码 hex，令牌再变也不会过期），并新增 `--role-*-text` 的 4.5:1 对比度实测断言（6 项 4.64–4.67:1）
 - **`text-contrast-audit.mjs`：全规则文本着色对比度门**：新增零依赖脚本，扫描全部 `.astro` CSS 规则，找出「颜色令牌用作 `color:` 但对比度不足」的写法（区分大/小文本阈值 3:1 与 4.5:1；按规则内显式 `background` 取真实承载体，避免把深底反白字误判）。已并入 `npm run check:source` → `site.yml`。此前 `contrast-check.mjs` 只覆盖手工登记的令牌级颜色对，页面里新写的规则无人拦截，只能靠人工发现
-- **`text-contrast-audit.mjs` 覆盖盲区收敛**：`clamp()` 字号按**下界 min** 判定（实际渲染只会更大，故不会漏报小文本风险），可判定规则 142 → **149**；纯继承字号的规则不再静默丢弃——SVG 图形按非文本判据 1.4.11（3:1）处理，其余对比度 <4.5:1 的**显式列出**待人工复核（当前 2 条，均为分隔符/项目符号装饰）
+- **`text-contrast-audit.mjs` 覆盖盲区收敛**：`clamp()` 令牌按**下界 min** 判定（实际渲染只会更大，故不会漏报小文本风险），可判定规则 149 → **150**；装饰伪元素豁免改为锚定选择器末尾（原 `/^::(before|after)$/` 匹配不到 `.x li::before` 这类复合选择器），并只豁免「已证明是纯装饰」的带引号 `content`（`counter()`/`attr()` 等生成内容按 fail-safe 继续检查）。纯继承字号的规则不再静默丢弃——SVG 图形按非文本判据 1.4.11（3:1）处理，其余对比度 <4.5:1 的显式列出待人工复核；本轮收敛后该列表为 **0 条**
+- **站点审计支持系统浏览器**：`site/scripts/lib/browser.mjs` 统一启动器 —— 先试 playwright 自带 chromium，失败回退系统 Edge/Chrome（`channel`）。此前 10 个审计脚本一律 `chromium.launch()`，依赖已下载的浏览器二进制；本机 `ms-playwright` 缓存为 0 字节、CDN 下载两次均卡死，这批审计因此长期无法运行。系统 Edge 可直接驱动（实测 ~790ms），`tiny-text-audit` / `overflow-check` 等随即可跑
 - **站点源码级质量门进 CI**：`contrast-check.mjs`（WCAG 2.2 AA 对比度）与 `token-ratio-check.mjs`（令牌注释声称值 vs 实测）此前只能手工运行，回归无人拦截。两者零依赖、秒级，现经 `npm run check:source` 接入 `.github/workflows/site.yml`，且排在 astro 构建**之前**，配色回归在 ~1s 内失败而非等构建完成
 
 ### Changed
@@ -23,10 +26,13 @@
 
 ### Fixed
 
-- **`gate.mjs` 在 Windows 上必然失败（且 5 次后自我放行）**：`spawnSync("npm.cmd", …, { shell: false })` 在 Windows 上返回 `EINVAL`，而 `npm` 裸名返回 `ENOENT`（npm 只是 `.cmd` shim）。结果是门禁每次都 `GATE_FAILED`，`reinforcementCount` 累加到上限后 gate 反而**返回 exit 0**（`GATE_EXHAUSTED … 允许收工`）——把「执行失败」变成「静默放行」。改为 `cmd /c npm run <script>`（与 `verify.mjs` / `install.mjs` 同一写法）；同时修正超时判定（Windows 下 spawnSync 超时是 `error.code === 'ETIMEDOUT'` 且 `signal` 为 `null`，原判 `signal === 'SIGTERM'` 使超时分支成为死代码）
+- **`gate.mjs` 在 Windows 上必然失败（且 5 次后自我放行）**：`spawnSync("npm.cmd", …, { shell: false })` 在 Windows 上返回 `EINVAL`，而 `npm` 裸名返回 `ENOENT`（npm 只是 `.cmd` shim）。结果是门禁每次都 `GATE_FAILED`，`reinforcementCount` 累加到上限后 gate 反而**返回 exit 0**（`GATE_EXHAUSTED … 允许收工`）——把「执行失败」变成「静默放行」。改为 `cmd /c npm run <script>`（与 `verify.mjs` / `install.mjs` 同一写法）。顺带把超时判定收紧为 `status === null && (signal === 'SIGTERM' || error.code === 'ETIMEDOUT')`——实测 Node v26 超时为 `status=null, signal='SIGTERM', error.code='ETIMEDOUT'` 三者并存，原判 `signal === 'SIGTERM'` 本已成立，此处只是补上 `error.code` 这一路以兼容平台差异
 - **`test/gate.test.mjs` 用源码正则把上述 bug 钉死**：原断言要求 gate.mjs 源码里出现 `npm.cmd` + `shell: false` 的写法，于是 169 项测试全绿却从未真正执行过 runner。改为**黑盒行为测试**（造一个通过的 `test` 脚本、真跑、断言 exit 0 且无 `GATE_SKIP`），另保留一条最小源码护栏只锁平台分支写法
 - **`docs/agents.astro` 把原始 HTML 当正文打印 19 次**：`{roleTags[…].map((t) => `<span …>${t}</span>`).join(' ')}` 先被 `.join()` 压成字符串，Astro 遂将其 HTML 转义，页面直接显示 `<span class="wiki-tag">primary</span>` 字面量。改为 JSX map 直接渲染；产物中转义串由 19 处降为 0
-- **`docs/install.astro` 14 个来源链接全部 404**：`SrcRef` 传入 Windows 反斜杠绝对路径（如 `D:\github-repos\men\install.sh`），JS 把 `\g` `\m` `\i` 当转义吞掉，渲染成 `blob/main/D:github-reposmeninstall.sh`；且该路径与仓库实际目录不符。改为仓库相对正斜杠路径（`install.sh` / `scripts/install.mjs` 等），已逐个经 GitHub API 确认可解析
+- **`docs/install.astro` 的 14 个来源链接全部 404**：`SrcRef` 传入 Windows 反斜杠绝对路径（如 `D:\github-repos\men\install.sh`），JS 把 `\g` `\m` `\i` 当转义吞掉，渲染成 `blob/main/D:github-reposmeninstall.sh`；且该路径与仓库实际目录不符。改为仓库相对正斜杠路径（`install.sh` / `scripts/install.mjs` 等）
+- **`SrcRef` 把中文章节名当文件名，治理页 9 条来源链接 404 + 概览页 1 条 glob 404**：与上一条同属「`blob/main/` 路径不存在」但发生在别的页面——`governance.astro` 传入 `'一、角色与责任'` 等**小节标题**，`CODEOWNERS` 漏了 `.github/` 前缀，`overview.astro` 传 glob `.opencode/agent/*.md`（GitHub blob 不展开）。组件现支持 `路径#小节` 形式并对锚点做 URL 编码，调用点相应改为锚点引用。**本轮共修复 24 条来源死链**（install 14 + governance 9 + overview 1），并已在 `check-site.mjs` 加产物级死链守卫防回归
+- **`install.mjs` 交互式装 OpenCode 在 Windows 上恒失败**：调用点用 `spawnSync("npm", …, { shell: false })`，而 npm 只是 `.cmd` shim → 必然 `ENOENT`；同文件 `runNpm`（`cmd /c npm`）早已存在却漏用。失败被吞成一句「⚠ 可稍后手动执行」的警告。改为走 `runNpm`
+- **`about.astro` 分隔符会被读屏念出**：`.about-brand-meta__sep`（内容为 `·`）是真实 DOM 文本节点，屏幕阅读器会读出「中间点」。加 `aria-hidden="true"`；颜色维持 `--color-line` 的浅色以与正文拉开层级（纯装饰件，按 WCAG 1.4.3 "pure decoration" 豁免，不适用正文对比度阈值），并在 `text-contrast-audit.mjs` 中显式豁免
 - **`.agent-card__charter` 用 `--color-fg-muted` 于暖底面板，仅 3.99:1**：该块 `background: var(--color-bg-warm)`（`#f0ebe2`），而 `--color-fg-muted` 的对比度只在页面底 `#fafafa` 上验证过（4.54:1）——令牌自身注释已写明「勿用于浅底面板上的小字」，此处正是该误用。14px 文本需 4.5:1，故改用 `--color-fg-tertiary`（暖底 5.63:1 / 白底 6.69:1），层级不变
 - **首页拓扑图 7 处小字对比度不达 WCAG AA**：`.topo-label--judge-tag`（11px）、`.topo-label--badge`（9px）、`.topo-elabel--pass/fail/report` 与 `.topo-status`（11px）用角色亮色作 `fill`，在节点底 `#f6f8fa` 上仅 **2.95–3.17:1**，而 <24px 文本需 4.5:1。新增 6 个同色相压暗的 `--role-*-text` 令牌（实测 4.64–4.67:1）并切换这 7 处；角色亮色仍用于大面积填充/描边与 20px 粗体大标题。`contrast-check.mjs` 同步纳入 12 组角色色断言，调色板守卫由 11 项扩到 **23 项**
 - **`contrast-check.mjs` 调色板守卫不解析 `var()` 引用**：`--role-men` 等令牌写作 `var(--color-accent)` 而非字面量，原守卫只匹配 `#hex`，误报「缺少令牌」。改为递归解析 `var(--…)` 引用链

@@ -90,7 +90,7 @@ const seealso = [
         <li><strong>定义自维护</strong> — 每个 agent 的自身定义文件（<code>.opencode/agent/&lt;名字&gt;.md</code>）由对应角色自己维护，遵守「变更流程」约束。</li>
         <li><strong>独立 Judge</strong> — chi 兼任独立 judge，以 fresh-context spawn，不沿用上游 context，保证评审客观性。</li>
       </ul>
-      <SrcRef files={['docs/governance.md','一、角色与责任']} />
+      <SrcRef files={['docs/governance.md#一、角色与责任']} />
     </section>
 
     <section id="decisions" class="doc-section">
@@ -134,7 +134,7 @@ const seealso = [
         <li>机械验证退出码非 0，且 5 次强化后仍失败。</li>
         <li>用户明确要求放弃当前方案。</li>
       </ul>
-      <SrcRef files={['docs/governance.md','二、决策流程']} />
+      <SrcRef files={['docs/governance.md#二、决策流程']} />
     </section>
 
     <section id="changes" class="doc-section">
@@ -169,7 +169,7 @@ const seealso = [
         <li>验证 JSON 格式（<code>node -e "JSON.parse(...)"</code>）</li>
         <li>同步更新 README.md 和 architecture.md 中对应的描述</li>
       </ol>
-      <SrcRef files={['docs/governance.md','三、变更管理']} />
+      <SrcRef files={['docs/governance.md#三、变更管理']} />
     </section>
 
     <section id="review" class="doc-section">
@@ -205,7 +205,7 @@ const seealso = [
         <li>合并后删除分支</li>
         <li>禁止 force push</li>
       </ul>
-      <SrcRef files={['docs/governance.md','四、代码审查','CODEOWNERS']} />
+      <SrcRef files={['docs/governance.md#四、代码审查','.github/CODEOWNERS']} />
     </section>
 
     <section id="releases" class="doc-section">
@@ -238,7 +238,7 @@ const seealso = [
         <li>LICENSE 文件存在</li>
         <li>.github/ 模板文件完整</li>
       </ul>
-      <SrcRef files={['docs/governance.md','五、发布管理']} />
+      <SrcRef files={['docs/governance.md#五、发布管理']} />
     </section>
 
     <section id="security" class="doc-section">
@@ -274,7 +274,7 @@ const seealso = [
         <li>根目录 <code>package.json</code> 仅作 npm 发布载体，不含运行时依赖</li>
         <li>升级依赖前请核查 npm audit 结果</li>
       </ul>
-      <SrcRef files={['docs/governance.md','六、安全策略','SECURITY.md']} />
+      <SrcRef files={['docs/governance.md#六、安全策略','SECURITY.md']} />
     </section>
 
     <section id="community" class="doc-section">
@@ -315,7 +315,7 @@ const seealso = [
         </table>
       </div>
       <p>更新原则：文档与代码同步提交，禁止「代码先合、文档后补」；所有文档遵循第 7 条红线（粗体关键信息、列表优先、单段 ≤6 行）；治理规则有冲突时，以文档版本号最新者为准，并在 <code>CHANGELOG.md</code> 记录变更。</p>
-      <SrcRef files={['docs/governance.md','七、社区参与','八、文档维护','CONTRIBUTING.md','CODE_OF_CONDUCT.md']} />
+      <SrcRef files={['docs/governance.md#七、社区参与','docs/governance.md#八、文档维护','CONTRIBUTING.md','CODE_OF_CONDUCT.md']} />
     </section>
   </WikiManual>
 </BaseLayout>

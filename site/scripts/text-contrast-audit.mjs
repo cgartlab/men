@@ -88,6 +88,10 @@ function collect(dir, exts) {
 // 纯装饰组件（整块 aria-hidden 的背景美术），其内部配色不承载信息，不参与文本判据。
 // HeroArt 的 symbol-matrix 即属此类：aria-hidden + mask + opacity 0.7 的 ASCII 背景。
 const DECORATIVE_COMPONENT_SEL = /\b(symbol-matrix|dither-band|hero-canvas|background-canvas)\b/i;
+// 纯装饰分隔符：只渲染「·」这类分隔字符、且已 aria-hidden，不承载信息，
+// 按 WCAG 1.4.3 "pure decoration" 豁免。其视觉层级靠与正文不同的浅色体现，
+// 但不适用正文对比度阈值。
+const DECORATIVE_SEPARATOR_SEL = /\b(__sep|separator)\b/i;
 // 明显是图形的选择器（SVG 形状 / 非文本）
 const NON_TEXT_SEL = /(dot|badge|rect|circle|node-bg|path|arrow|marker|spark|bar|track|-bg)\b/i;
 // 纯装饰伪元素（只放分隔符/项目符号）。必须锚定在选择器**末尾**的 ::before/::after ——
@@ -115,11 +119,15 @@ for (const file of collect(SRC, ['.astro'])) {
     const cm = body.match(/(?:^|[;\s{])(?<![a-z-])color\s*:\s*var\(\s*(--[a-z0-9-]+)\s*\)/);
     if (!cm) continue;
     if (DECORATIVE_COMPONENT_SEL.test(selector)) { skippedNonText++; continue; }
+    if (DECORATIVE_SEPARATOR_SEL.test(selector)) { skippedNonText++; continue; }
     if (NON_TEXT_SEL.test(selector)) { skippedNonText++; continue; }
 
     if (DECORATIVE_PSEUDO.test(selector)) {
-      const content = body.match(/content\s*:\s*['"]([^'"]*)['"]/);
-      if (!content || !/[^\s·•\-—–|/]/.test(content[1])) { skippedNonText++; continue; }
+      // 只有「已证明是纯装饰」才豁免：content 为带引号字符串且只含分隔符/项目符号。
+      // content 为 counter()/attr()/var() 等未加引号的生成内容时**不豁免** —— 它们会
+      // 产出真实文本（如 TOC 序号「1.」），按 fail-safe 原则继续检查而非放过。
+      const quoted = body.match(/content\s*:\s*['"]([^'"]*)['"]/);
+      if (quoted && !/[^\s·•\-—–|/]/.test(quoted[1])) { skippedNonText++; continue; }
     }
 
     const hex = COLOR.get(cm[1]);

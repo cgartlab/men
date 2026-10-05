@@ -8,10 +8,27 @@ import { launchBrowser } from './lib/browser.mjs';
 const PORT = 4902;
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png' };
 
-// 预期值：与重构前 JS 数组字面量逐字一致
+// 预期值：亮色（用于大面积填充/描边/大文本）与 -text 变体（用于 <24px 小字，
+// 须满足 4.5:1）。两者分列，因为 v0.6.0 起小字已改用 -text 变体。
 const EXPECT = {
   men: '#e85d04', si: '#4a90d9', ji: '#2ea043',
   chi: '#bf8700', yi: '#a371f7', xun: '#8b5cf6',
+};
+const EXPECT_TEXT = {
+  men: '#be4c03', si: '#3b73ae', ji: '#258036',
+  chi: '#936800', yi: '#825ac6', xun: '#7e54e0',
+};
+// WCAG 相对亮度 → 对比度（小字合规判据）
+const relLum = (rgbStr) => {
+  const [r, g, b] = rgbStr.match(/\d+/g).slice(0, 3).map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => {
+  const l1 = relLum(a), l2 = relLum(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 };
 const toRgb = (hex) => {
   const n = parseInt(hex.slice(1), 16);
@@ -41,10 +58,13 @@ try {
       const cs = getComputedStyle(el);
       cards[id] = { cardAccent: cs.getPropertyValue('--card-accent').trim(), iconColor: el.querySelector('.showcase__card-icon') ? getComputedStyle(el.querySelector('.showcase__card-icon')).color : null, roleColor: el.querySelector('.showcase__card-role') ? getComputedStyle(el.querySelector('.showcase__card-role')).color : null };
     }
-    // 2) 令牌定义本身
+    // 2) 令牌定义本身（含小字合规用的 -text 变体）
     const root = getComputedStyle(document.documentElement);
     const tokens = {};
-    for (const k of ['men', 'si', 'ji', 'chi', 'yi', 'xun']) tokens['--role-' + k] = root.getPropertyValue('--role-' + k).trim();
+    for (const k of ['men', 'si', 'ji', 'chi', 'yi', 'xun']) {
+      tokens['--role-' + k] = root.getPropertyValue('--role-' + k).trim();
+      tokens['--role-' + k + '-text'] = root.getPropertyValue('--role-' + k + '-text').trim();
+    }
     // 3) 拓扑图：抽样若干元素的实际 fill / stroke
     const topo = {};
     const pick = { '.topo-bezier--return': 'stroke', '.topo-bezier--fail': 'stroke', '.topo-bezier--learn': 'stroke', '.topo-dot--return': 'fill', '.topo-dot--judge': 'fill', '.topo-dot--learn': 'fill', '.topo-node--judge': 'stroke', '.topo-node--verify': 'stroke', '.topo-node--knowledge': 'stroke', '.topo-node--hub': 'fill', '.topo-status': 'fill', '.topo-legend__dot--judge': 'border-color', '.topo-legend__dot--report': 'background-color', '.topo-legend__dot--fail': 'background-color' };
@@ -63,13 +83,25 @@ try {
   });
 
   let bad = 0;
-  console.log('=== 1) 6 个角色令牌定义 ===');
+  console.log('=== 1) 6 个角色令牌定义（亮色 + 小字合规 -text 变体）===');
   for (const [k, v] of Object.entries(r.tokens)) {
-    const id = k.replace('--role-', '');
-    const want = EXPECT[id];
+    const id = k.replace('--role-', '').replace('-text', '');
+    const isText = k.endsWith('-text');
+    const want = isText ? EXPECT_TEXT[id] : EXPECT[id];
     const ok = v === want;
     if (!ok) bad++;
     console.log(`  ${k} = ${v}  预期 ${want}  ${ok ? '✓' : '✗'}`);
+  }
+
+  // -text 变体的存在意义就是小字合规，故直接验算对比度（拓扑节点底 #f6f8fa）
+  console.log('\n=== 1b) --role-*-text 小字对比度（WCAG AA ≥4.5:1 @ #f6f8fa）===');
+  for (const [id, hex] of Object.entries(EXPECT_TEXT)) {
+    const actual = r.tokens['--role-' + id + '-text'];
+    if (!actual) { bad++; console.log(`  --role-${id}-text  未定义 ✗`); continue; }
+    const c = contrast(toRgb(actual), 'rgb(246, 248, 250)');
+    const ok = c >= 4.5;
+    if (!ok) bad++;
+    console.log(`  --role-${id}-text ${actual}  ${c.toFixed(2)}:1  ${ok ? '✓' : '✗'}`);
   }
 
   console.log('\n=== 2) 卡片 --card-accent 及其消费端 ===');
@@ -87,18 +119,21 @@ try {
   }
 
   console.log('\n=== 3) 拓扑图元素解析值（断言）===');
+  // 期望值一律从页面令牌推导，不再硬编码 hex。此前硬编码的亮色在 v0.6.0 把
+  // 小字换成 --role-*-text 后就过期，导致本脚本长期假红（exit 1）。
+  const tok = (n) => toRgb(r.tokens[n]);
   const TOPO_EXPECT = {
-    '.topo-bezier--fail (stroke)': toRgb('#bf8700'),
-    '.topo-bezier--learn (stroke)': toRgb('#8b5cf6'),
-    '.topo-dot--learn (fill)': toRgb('#8b5cf6'),
-    '.topo-node--judge (stroke)': toRgb('#bf8700'),
-    '.topo-node--verify (stroke)': toRgb('#2ea043'),
-    '.topo-node--knowledge (stroke)': toRgb('#8b5cf6'),
-    '.topo-node--hub (fill)': toRgb('#e85d04'),
-    '.topo-status (fill)': toRgb('#2ea043'),
-    '.topo-legend__dot--judge (border-color)': toRgb('#bf8700'),
-    '.topo-legend__dot--report (background-color)': toRgb('#2ea043'),
-    '.topo-legend__dot--fail (background-color)': toRgb('#bf8700'),
+    '.topo-bezier--fail (stroke)': tok('--role-chi'),
+    '.topo-bezier--learn (stroke)': tok('--role-xun'),
+    '.topo-dot--learn (fill)': tok('--role-xun'),
+    '.topo-node--judge (stroke)': tok('--role-chi'),
+    '.topo-node--verify (stroke)': tok('--role-ji'),
+    '.topo-node--knowledge (stroke)': tok('--role-xun'),
+    '.topo-node--hub (fill)': tok('--role-men'),
+    '.topo-status (fill)': tok('--role-ji-text'),
+    '.topo-legend__dot--judge (border-color)': tok('--role-chi'),
+    '.topo-legend__dot--report (background-color)': tok('--role-ji'),
+    '.topo-legend__dot--fail (background-color)': tok('--role-chi'),
   };
   for (const [k, v] of Object.entries(r.topo)) {
     const want = TOPO_EXPECT[k];

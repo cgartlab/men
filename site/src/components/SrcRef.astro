@@ -2,5 +2,13 @@
 interface Props { files: string[] }
 const { files } = Astro.props;
 const B = 'https://github.com/cgartlab/men/blob/main/';
+// 允许 "路径#小节" 形式指向文件内锚点（如 'docs/governance.md#一、角色与责任'）。
+// 此前若把中文章节名当成文件名传进来，会生成 blob/main/一、角色与责任 这样的 404 链接。
+const hrefOf = (f: string) => {
+  const i = f.indexOf('#');
+  if (i === -1) return B + f;
+  return B + f.slice(0, i) + '#' + encodeURIComponent(f.slice(i + 1));
+};
+const labelOf = (f: string) => (f.indexOf('#') === -1 ? f : f.slice(0, f.indexOf('#')));
 ---
-<p class="src-ref">来源：{files.map((f, i) => (<>{i > 0 && ' · '}<a href={B + f} target="_blank" rel="noopener"><code>{f}</code></a></>))}</p>
+<p class="src-ref">来源：{files.map((f, i) => (<>{i > 0 && ' · '}<a href={hrefOf(f)} target="_blank" rel="noopener"><code>{labelOf(f)}</code></a></>))}</p>

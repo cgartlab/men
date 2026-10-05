@@ -715,9 +715,10 @@ export function main(argv = process.argv) {
       );
       if (r.status === 0) {
         eprintf(">> 正在安装 @opencode-ai/cli ...\n");
-        const installR = spawnSync("npm", ["install", "-g", "@opencode-ai/cli"], {
-          encoding: "utf-8", shell: false, stdio: "inherit", timeout: 120_000,
-        });
+        // 必须走 runNpm：Windows 下 npm 是 .cmd shim，直接 spawnSync('npm', shell:false)
+        // 必然 ENOENT（本文件 :237 的注释已写明，调用点却漏用）。修前此步恒失败，
+        // 失败被 :728 吞成一句「可稍后手动执行」的警告。
+        const installR = runNpm(process.cwd(), ["install", "-g", "@opencode-ai/cli"]);
         if (installR.status === 0) {
           const oc2 = checkOpenCode();
           if (oc2.installed) {
