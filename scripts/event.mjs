@@ -27,10 +27,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
 // ================= 常量 =================
 
-const ROOT = process.cwd();
+// 状态根按**脚本所在项目**解析，而非 process.cwd()。
+// 此前用 cwd()：同一 sid 在不同目录会写进两份不同的 events.jsonl，
+// 而 verify.mjs（已按模块位置解析）写的是仓库内那份 —— 同一逻辑事件流被劈成两半，
+// learn.mjs / eval-metrics.mjs 只看得到其中一片，KPI 分母与学习结论随之失真。
+// 与 verify.mjs / release.mjs 一致，改用 import.meta.url。
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = [
   'session.created',
   'session.ended',

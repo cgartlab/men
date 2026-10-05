@@ -14,9 +14,10 @@
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
 
 // ─── 常量 ────────────────────────────────────────────────────────
 
@@ -75,7 +76,7 @@ function parseArgs(argv) {
  */
 async function appendEvent(sid, type, subject, detail, payload) {
   try {
-    const base = ".agents/state/sessions";
+    const base = join(STATE_ROOT, ".agents", "state", "sessions");
     const dir = join(base, sid);
     await mkdir(dir, { recursive: true });
     const line = JSON.stringify({
@@ -97,11 +98,18 @@ async function appendEvent(sid, type, subject, detail, payload) {
 
 // ─── 状态文件 ───────────────────────────────────────────────────
 
+// 状态路径按**脚本所在项目**解析，而非相对 cwd。
+// 此前 appendEvent / statePath 都用相对路径（由 fs 按 cwd 解析），于是
+// `cd site && node ../scripts/gate.mjs test` 会另写一份日志、并另建一份
+// gate-<kw>.json —— 强化次数上限 5 因而被绕开（换目录即重置）。
+// 与 verify.mjs / event.mjs 一致，改用 import.meta.url。
+const STATE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+
 /**
  * 状态文件路径：.agents/state/gates/gate-<keyword>.json
  */
 function statePath(keyword) {
-  return join(".agents/state/gates", `gate-${keyword}.json`);
+  return join(STATE_ROOT, ".agents", "state", "gates", `gate-${keyword}.json`);
 }
 
 async function readState(keyword) {

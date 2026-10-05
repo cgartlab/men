@@ -13,6 +13,7 @@
 ### Added
 
 - **`dynamic-el-audit.mjs`：JS 动态元素样式作用域守卫**：静态扫描全部 `.astro` 的 `<style>` 块，取出经 `createElement` + `className` 赋值的类名，校验其**每一条**规则都已被 `:global(...)` 覆盖；只要还剩一条 scoped 规则即失败。零依赖、**不需要浏览器**，故可进 CI（浏览器审计因 CI runner 未装浏览器本就覆盖不到此问题）。首次运行除已知的两处外，另揪出 `AgentFlow.astro` 一条冗余规则（该处因内联样式已覆盖，实为死 CSS 而非可见故障）。已对「整体未 `:global`」与「混用」两类回归分别做负向验证
+- **状态路径与 cwd 无关的回归测试**：`event.test.mjs` 新增黑盒用例，从临时目录 spawn `event.mjs append`，断言事件落在仓库内、且该目录下不会被另建 `.agents`。此前无任何测试覆盖 cwd 相关性，而 `npm test` 的 spawn 一律用 `cwd: REPO_ROOT`，因此这类分裂恰好从测试视野里漏过
 - **写入方契约回归测试**：新增黑盒测试跑一遍 `verify.mjs` / `gate.mjs`，再用 `event.mjs validate` 复核其产出的日志——不做源码正则匹配。此前两个写入方漏写 `eventId`（`event.mjs` 的 `REQUIRED_FIELDS` 要求），仓库自己的 verify/gate 日志一律校验失败，而没有任何测试能发现
 - **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
 - **`check-site.mjs` 新增两类产物级守卫**：① **转义 HTML 泄漏**——模板里用 `.map().join()` 拼 HTML 会被 Astro 转义、页面直接显示标签字面量（曾真实发生 19 处），现断言产物中不得出现带 `class` 的转义标签（白名单：`<code>--dir &lt;path&gt;</code>` 这类刻意占位符）；② **来源死链**——`blob/main/` 后的路径必须真实存在于 `git ls-files`，此前治理页把中文章节名当文件名传入、install 页传 Windows 绝对路径，共 24 条 404 无人拦截。两项均随 `site.yml` 在 CI 执行，并做了负向验证（注入即 FAIL exit 1）
@@ -28,6 +29,11 @@
 
 ### Fixed
 
+- **运行时状态按 cwd 解析，导致事件流被劈成两半、门禁上限可被绕过**：`event.mjs` 用 `process.cwd()`、`gate.mjs` / `learn.mjs` / `eval-metrics.mjs` 用相对路径（由 `fs` 按 cwd 解析），而 `verify.mjs` 早已按模块位置解析。后果：
+  - 同一 sid 在不同目录下写出**两份** `events.jsonl`，而 `learn.mjs` / `eval-metrics.mjs` 只看得到其中一片 —— 学习结论随工作目录翻转（一个目录判 `skip`、另一个判 `B`），KPI 分母失真且与「无数据」无法区分
+  - `gate.mjs` 的 `.agents/state/gates/gate-<kw>.json` **按目录各存一份**，于是「强化次数上限 5」只要 `cd` 到别处即重置 —— 反spin 预算形同虚设。实测 main 版从 `a/`、`b/` 各失败 3 次会生成两份独立状态文件（各计 3 次），修复后全项目只有一份共享状态
+  七个脚本（`event.mjs` / `gate.mjs` / `learn.mjs` / `learn-budget.mjs` / `eval-metrics.mjs` / `eval-report.mjs` / `migrate-events.mjs`）统一改为按 `import.meta.url` 解析（与 `verify.mjs` / `release.mjs` 一致），并在 `event.test.mjs` 加黑盒回归测试：从临时目录 spawn `event.mjs append`，断言日志落在仓库内、且 cwd 下**不会**被另建一份 `.agents`（反向验证：把 `ROOT` 改回 `process.cwd()` 该测试如期失败）
+- **`learn.mjs` 的知识内容目录刻意保持相对 cwd**：`.agents/state/*`（运行时状态）改为模块相对，但 `errors/` 与 `knowledge/patterns/` 仍相对 cwd —— 它们是用户可见产物，用户的工作目录即其项目根，且 `test/learn.test.mjs` 正是依赖 chdir 到临时目录来隔离；若一并模块相对化，测试将写进仓库真实的 `knowledge/patterns/index.md`
 - **JS 动态创建的元素样式被 Astro scoped 作用域挡掉（三处，分页点完全不可用）**：`.astro` 的 `<style>` 默认 scoped，Astro 依模板元素上的 `data-astro-cid-*` 改写选择器；而 `document.createElement()` 造出的元素拿不到该属性，于是对应规则**永不匹配**。实测（Edge，1440px）：
   - `index.astro` `.showcase__dot`（7 个分页点）→ 渲染为 **0×0、全透明**，即 carousel 分页控件从未显示、不可点。上一条 v0.6.0 记录的 §1.4.11 修复也因此**实际未生效**（改的是一条匹配不到的选择器）
   - `HeroArt.astro` `.sym`（1120 个字形）→ `animationName: none`，漂移动画不生效

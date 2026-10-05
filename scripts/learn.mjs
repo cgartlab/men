@@ -13,13 +13,26 @@
 
 import * as fs from 'node:fs';
 import * as crypto from 'node:crypto';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { classify } from './learn-rules.mjs';
 import { main as budgetMain } from './learn-budget.mjs';
 
-const EVENTS_DIR = '.agents/state/sessions';
+// 运行时状态按**脚本所在项目**解析（与 event.mjs / verify.mjs 一致）：
+// 此前相对 cwd 解析，导致同一 sid 在不同目录下读到的日志不同，学习结论随
+// 工作目录而变（一个目录判 skip、另一个判 B）。
+// 知识内容目录（errors / knowledge/patterns）则保持相对 cwd —— 它们是用户可见
+// 的产物，用户的工作目录即其项目根；test/learn.test.mjs 也正是依赖 chdir 到
+// 临时目录来隔离，避免测试写进仓库真实的 knowledge/patterns/index.md。
+const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const EVENTS_DIR = path.join(PROJECT_ROOT, '.agents', 'state', 'sessions');
 const ERRORS_DIR = 'errors';
 const PATTERNS_DIR = 'knowledge/patterns';
-const QUEUE_FILE = '.agents/state/learn/queue.json';
+const QUEUE_FILE = path.join(PROJECT_ROOT, '.agents', 'state', 'learn', 'queue.json');
+// queueGate() 的 ensureDir 必须与 QUEUE_FILE 同基准：此前写的是相对路径
+// （按 cwd 解析），而文件本身在项目内，cwd ≠ 项目根时会在用户目录里凭空
+// 建出一个空的 .agents/state/learn。
+const LEARN_STATE_DIR = path.join(PROJECT_ROOT, '.agents', 'state', 'learn');
 
 function ensureDir(d) {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
@@ -137,7 +150,7 @@ export function rebuildIndex() {
 
 /** 标记 human-gate 待确认 */
 function queueGate(action, sid) {
-  ensureDir('.agents/state/learn');
+  ensureDir(LEARN_STATE_DIR);
   let queue = [];
   if (fs.existsSync(QUEUE_FILE)) {
     try { queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8')); } catch { queue = []; }
