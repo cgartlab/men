@@ -33,7 +33,7 @@
   附带清掉 frontmatter 中三个从未被引用的常量（`GLYPHS` / `GLYPHS_CN` / `GLYPHS_EN` —— 脚本内另有自己的局部 `GLYPHS`）与 `const props = Astro.props`。
   浏览器实测：`.sym` / `.dither-band` / `.symbol-matrix` 计数均为 0，`.agent-flow-overlay` 仍为 1、`.agent-flow` 尺寸 1440×900。
   全站通用的 `BackgroundCanvas`（点阵 + 20s 漂移，挂在 `BaseLayout` 上、影响全部 15 页）不在本次范围，未改动
-- **7 个零引用死组件（1216 行）及其孤立 CSS**：`CollaborationGraph` 376 行、`MechanismSVG` 247、`HeroCanvas` 185、`MilestoneTimeline` 143、`RoleCard` 122、`SlideSection` 77、`Reveal` 65 —— 全站 16 个组件中从未被任何 `.astro` 引用，产物中也零出现。同步删除它们在 `global.css` 里留下的 `.reveal*` / `.slide-section*` 规则：这些 CSS 此前**仍被打进产物却不匹配任何元素**（实测 dist 存在 `.reveal` 规则，而 dist HTML 中 `data-reveal` 命中数为 0）。删除前重跑引用扫描，第一版扫描因相对/绝对路径混比导致「排除自身」失效、把 `CollaborationGraph` 自身文件头注释误判为一处引用，修正为绝对路径比较后结论不变
+- **7 个零引用死组件（1209 行）及其孤立 CSS**：`CollaborationGraph` 376 行、`MechanismSVG` 246、`HeroCanvas` 184、`MilestoneTimeline` 142、`RoleCard` 121、`SlideSection` 76、`Reveal` 64（行数以 `git diff --numstat` 为准）—— 全站 16 个组件中从未被任何 `.astro` 引用，产物中也零出现。同步删除它们在 `global.css` 里留下的 `.reveal*` / `.slide-section*` 规则：这些 CSS 此前**仍被打进产物却不匹配任何元素**（实测 dist 存在 `.reveal` 规则，而 dist HTML 中 `data-reveal` 命中数为 0）。删除前重跑引用扫描，第一版扫描因相对/绝对路径混比导致「排除自身」失效、把 `CollaborationGraph` 自身文件头注释误判为一处引用，修正为绝对路径比较后结论不变
 
 ### Fixed
 

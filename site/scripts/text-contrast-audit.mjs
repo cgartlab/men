@@ -86,8 +86,9 @@ function collect(dir, exts) {
 }
 
 // 纯装饰组件（整块 aria-hidden 的背景美术），其内部配色不承载信息，不参与文本判据。
-// HeroArt 的 symbol-matrix 即属此类：aria-hidden + mask + opacity 0.7 的 ASCII 背景。
-const DECORATIVE_COMPONENT_SEL = /\b(symbol-matrix|dither-band|hero-canvas|background-canvas)\b/i;
+// symbol-matrix / dither-band 已随首屏背景精简移除（见 CHANGELOG [Removed]），
+// 留在白名单里会让人误以为它们仍存在，故同步删去；hero-canvas 仍在用。
+const DECORATIVE_COMPONENT_SEL = /\b(hero-canvas|background-canvas)\b/i;
 // 纯装饰分隔符：只渲染「·」这类分隔字符、且已 aria-hidden，不承载信息，
 // 按 WCAG 1.4.3 "pure decoration" 豁免。其视觉层级靠与正文不同的浅色体现，
 // 但不适用正文对比度阈值。

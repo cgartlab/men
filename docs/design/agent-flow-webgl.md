@@ -175,19 +175,23 @@ gl_FragColor = vec4(col * v_alpha, v_alpha * glow * 0.8);
 
 ### 5.1 替换现有 HeroArt
 
-当前 `HeroArt.astro` 有 3 层：
-1. **符号矩阵**（CSS animation，1120 个 span）→ 保留作为底层纹理
-2. **ASCII dither arcs**（CSS animation）→ 保留作为装饰
+当前 `HeroArt.astro` 原本有 3 层：
+1. **符号矩阵**（CSS animation，1120 个 span）
+2. **ASCII dither arcs**（CSS animation）
 3. **Canvas 粒子**（60 个 2D 粒子）→ **替换为 AgentFlow WebGL**
 
-集成方式：在 `HeroArt.astro` 的 `.hero-canvas` 容器中添加 `<AgentFlow />`，z-index 置于符号矩阵和 dither 之间。
+集成方式：在 `HeroArt.astro` 的 `.hero-canvas` 容器中添加 `<AgentFlow />`。
+
+> **现状（2026-10-06 起）**：第 1、2 层（符号矩阵与 dither arcs）已按产品决策移除 ——
+> 它们是纯装饰噪音（满屏散落字形各自漂移 + 上下抖动字符带）。现 `HeroArt` 只剩
+> **AgentFlow WebGL** 一层，`.hero-canvas` 容器保留。
 
 ### 5.2 与 HeroCanvas（门动画）的关系
 
-`HeroCanvas.astro` 是独立的门开合动画（12 秒 sine 周期），位于 hero 下方区域。AgentFlow 是 hero 全屏背景。两者不冲突：
-- AgentFlow：hero 全屏背景（z-index: 0）
-- HeroArt 符号矩阵：叠加层（z-index: 1）
-- HeroCanvas 门动画：hero 区域独立组件（z-index: 2）
+`HeroCanvas.astro` 曾经是一个独立的门开合动画（12 秒 sine 周期），但它**从未被任何页面引用**，
+已随零引用死组件清理删除（0 引用）。当前 z-index 分层为：
+
+- AgentFlow：hero 全屏背景（z-index: 0）—— 现为 hero 唯一背景层
 
 ### 5.3 CSS Token 依赖
 
