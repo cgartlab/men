@@ -147,12 +147,21 @@ test('event blackbox: verify/gate 写出的事件通过 validate（eventId 契�
     path.join(tmpPkg, 'package.json'),
     JSON.stringify({ name: 'gate-eid-fixture', version: '0.0.0', scripts: { test: 'node --version' } }),
   );
+  // verify 同理必须避开仓库根：其 gate 步骤只对**仓库内**目标执行，会跑整套
+  // `npm run test` —— 那正是本测试自身所在的套件，形成嵌套。CI 上实测该子进程
+  // 跑满 120s 被杀，本测试遂报「verify.mjs 未在超时内结束」（本地因 Windows 的
+  // child-v8 短路而侥幸通过，属跨平台不一致）。指向仓库外的临时目标即可让
+  // checkGate 走 scaffold 分支直接 SKIP（verify.mjs:315），既不嵌套也不超时，
+  // 而 emitEvent 与目标无关、照常写事件 —— 本测试要断言的正是它。
+  const tmpTargetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-eid-'));
+  const tmpTarget = path.join(tmpTargetDir, 'men.md');
+  fs.writeFileSync(tmpTarget, '---\ndescription: fixture\n---\n\n# fixture\n');
 
   const dirs = [path.dirname(sidEventsPath(verifySid)), path.dirname(sidEventsPath(gateSid))];
   try {
     const vr = spawnSync(
       process.execPath,
-      [path.join(REPO_ROOT, 'scripts', 'verify.mjs'), 'men', '--sid', verifySid],
+      [path.join(REPO_ROOT, 'scripts', 'verify.mjs'), tmpTarget, '--sid', verifySid],
       { cwd: REPO_ROOT, encoding: 'utf-8', shell: false, timeout: 120_000 },
     );
     assert.notStrictEqual(vr.status, null, 'verify.mjs 未在超时内结束');
@@ -176,6 +185,7 @@ test('event blackbox: verify/gate 写出的事件通过 validate（eventId 契�
   } finally {
     for (const d of dirs) fs.rmSync(d, { recursive: true, force: true });
     fs.rmSync(tmpPkg, { recursive: true, force: true });
+    fs.rmSync(tmpTargetDir, { recursive: true, force: true });
   }
 });
 

@@ -27,8 +27,19 @@
 
 - **12 个页面的 meta description 改为逐页撰写**：原先几乎全部是「men（门）Agent 团队 — 架构设计」式的标题复述（19–25 字符），对搜索结果与分享卡片无信息量。现按每页真实内容改写为 54–93 字符的具体描述（如协议规范页写明「10 步编排协议（CERTAINTY → LEARN）、5 项机械验证、14 种事件类型」），并统一以 `pageDesc` 常量注入 `BaseLayout`，避免描述与标题再次脱节
 
+### Removed
+
+- **首页首屏的「杂乱」背景动画（按产品决策移除）**：`HeroArt` 原本是三层叠加 —— ①符号矩阵：40×28 = **1120 个** `M/E/N`、`门思记持艺寻` 等字形各自随机延迟/时长/透明度地漂移；②上下 ASCII dither 弧线字符带，16s 周期上下抖动；③AgentFlow WebGL 粒子流。前两层属纯装饰噪音，已连同其 CSS、生成脚本与 reduced-motion 覆盖一并移除；**保留第三层**（`门→Agent→verify→report` 网络流）与 `.hero-canvas` 全屏容器。
+  附带清掉 frontmatter 中三个从未被引用的常量（`GLYPHS` / `GLYPHS_CN` / `GLYPHS_EN` —— 脚本内另有自己的局部 `GLYPHS`）与 `const props = Astro.props`。
+  浏览器实测：`.sym` / `.dither-band` / `.symbol-matrix` 计数均为 0，`.agent-flow-overlay` 仍为 1、`.agent-flow` 尺寸 1440×900。
+  全站通用的 `BackgroundCanvas`（点阵 + 20s 漂移，挂在 `BaseLayout` 上、影响全部 15 页）不在本次范围，未改动
+- **7 个零引用死组件（1209 行）及其孤立 CSS**：`CollaborationGraph` 376 行、`MechanismSVG` 246、`HeroCanvas` 184、`MilestoneTimeline` 142、`RoleCard` 121、`SlideSection` 76、`Reveal` 64（行数以 `git diff --numstat` 为准）—— 全站 16 个组件中从未被任何 `.astro` 引用，产物中也零出现。同步删除它们在 `global.css` 里留下的 `.reveal*` / `.slide-section*` 规则：这些 CSS 此前**仍被打进产物却不匹配任何元素**（实测 dist 存在 `.reveal` 规则，而 dist HTML 中 `data-reveal` 命中数为 0）。删除前重跑引用扫描，第一版扫描因相对/绝对路径混比导致「排除自身」失效、把 `CollaborationGraph` 自身文件头注释误判为一处引用，修正为绝对路径比较后结论不变
+
 ### Fixed
 
+- **新增的事件契约测试自身形成递归，把整套测试拖到约 60s 并让 CI 变红**：PR #149 加的「verify/gate 写出的事件通过 validate」测试 spawn 了 `verify.mjs men`；而 `verify.mjs` 的 gate 步骤会对**仓库内**目标执行 `npm run test` —— 那正是本测试所在的套件，于是形成嵌套。Windows 上内层 `node --test` 被 `NODE_TEST_CONTEXT=child-v8` 短路而侥幸无事，CI（Linux）上则：内层套件跑满 **120s** 被杀，外层测试报 `verify.mjs 未在超时内结束`（`duration_ms: 120065`）；同时 gate 那层的 60s 预算耗尽，`status` 为 `null` 被记成 `exitCode: -1`，对外误报 `test 非零退出` —— 把超时说成了测试失败。
+  修复：测试改为指向**仓库外的临时目标**，使 `checkGate` 走 scaffold 分支直接 SKIP（`verify.mjs:315`）；`emitEvent` 与目标无关、照常写事件，断言强度不变。该测试耗时由约 120s 降到 **707ms**，整套 `npm test` 由约 60s 降到 **2.3s**，`npm run verify` 由约 60s 降到 **2.4s**
+- **verify 的 gate 步骤不再把「超时」误报成「测试失败」**：除上面的根因修复外，保留两项防御性改进 —— ①按脚本分档预算（`test` 300s、`lint`/`typecheck` 仍 60s，以便真出问题时快速失败）；②记录 `timedOut` 并在 evidence 中分开表述 `test（超时 300s）超时被杀（非测试失败）`，真实失败仍报「X 非零退出」。反向验证：把 test 预算压到 1ms，evidence 如期输出「超时被杀（非测试失败）」而非「非零退出」
 - **运行时状态按 cwd 解析，导致事件流被劈成两半、门禁上限可被绕过**：`event.mjs` 用 `process.cwd()`、`gate.mjs` / `learn.mjs` / `eval-metrics.mjs` 用相对路径（由 `fs` 按 cwd 解析），而 `verify.mjs` 早已按模块位置解析。后果：
   - 同一 sid 在不同目录下写出**两份** `events.jsonl`，而 `learn.mjs` / `eval-metrics.mjs` 只看得到其中一片 —— 学习结论随工作目录翻转（一个目录判 `skip`、另一个判 `B`），KPI 分母失真且与「无数据」无法区分
   - `gate.mjs` 的 `.agents/state/gates/gate-<kw>.json` **按目录各存一份**，于是「强化次数上限 5」只要 `cd` 到别处即重置 —— 反spin 预算形同虚设。实测 main 版从 `a/`、`b/` 各失败 3 次会生成两份独立状态文件（各计 3 次），修复后全项目只有一份共享状态

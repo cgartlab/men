@@ -1,81 +1,24 @@
 ---
-// HeroArt — R9 · 全屏动画背景画布
-// 三层叠加：符号矩阵（6 角色 glyph）+ AgentFlow WebGL 粒子 + ASCII dither + 纸感噪点
-// 性能：rAF + visibilitychange 暂停；首屏可见即激活（client:visible）
-// reduced-motion: 完全静态渲染
-// AgentFlow：WebGL GPU 加速 Agent 网络流（门→Agent→verify→report）
+// HeroArt — 首屏全屏背景容器
+//
+// 原为三层叠加：符号矩阵（40×28 = 1120 个 M/E/N、门思记持艺寻 字形漂移）
+// + ASCII dither 上下弧线带 + AgentFlow WebGL 粒子。前两层是纯装饰噪音
+// （满屏散落字形各自随机漂移 + 上下抖动字符带），已按产品决策移除。
+// 现只保留 AgentFlow 的「门→Agent→verify→report」网络流。
+//
+// 注：符号矩阵曾因 Astro scoped 样式不作用于 createElement 元素而整体失效
+// （实测 animationName 为 none），一度是「看得见但不动画」；其 :global() 修复
+// 与 reduced-motion 覆盖随之删除，因为该层已不复存在。
+//
+// AgentFlow：WebGL GPU 加速 Agent 网络流，其自身负责 prefers-reduced-motion。
 // ================================================================
 import AgentFlow from './AgentFlow.astro';
-const props = Astro.props;
-
-// 6 个 Agent 符号 + 中文单字（用于背景符号矩阵）
-const GLYPHS = ['M', 'E', 'N'];
-const GLYPHS_CN = ['门', '思', '记', '持', '艺', '寻'];
-const GLYPHS_EN = ['M', 'S', 'J', 'C', 'Y', 'X'];
 ---
 
 <section class="hero-canvas" aria-hidden="true">
-  <!-- 层 1：符号矩阵（6 角色 + 中英）—— 全屏铺满，CSS 动画漂移 -->
-  <div class="symbol-matrix" id="symbol-matrix"></div>
-
-  <!-- 层 2：ASCII dither 弧线（上下渐隐遮罩） -->
-  <div class="dither-band dither-band--top" aria-hidden="true">
-<pre>
-                   .::--==++====--::.
-                .:-=+xX##88@@88##Xx+=-:.
-              .:-=+xX#8@@@@@@88##Xx+=-:.
-             .:-+xX#8@@@@@@@@88##Xx+=-:.
-</pre>
-  </div>
-  <div class="dither-band dither-band--bottom" aria-hidden="true">
-<pre>
-             .:-+xX#8@@@@@@@@88##Xx+=-:.
-              .:-=+xX#8@@@@@@88##Xx+=-:.
-                .:-=+xX##88@@88##Xx+=-:.
-                   .::--==++====--::.
-</pre>
-  </div>
-
-  <!-- 层 3：AgentFlow WebGL 粒子（门→Agent→verify→report 网络流） -->
+  <!-- AgentFlow WebGL 粒子（门→Agent→verify→report 网络流） -->
   <AgentFlow />
 </section>
-
-<script is:inline>
-  (() => {
-    // ────────────────────────────────────────────
-    // 符号矩阵生成（DOM，CSS 动画漂移）
-    // ────────────────────────────────────────────
-    const matrix = document.getElementById('symbol-matrix');
-    if (matrix) {
-      const GLYPHS = ['门', '思', '记', '持', '艺', '寻', 'M', 'S', 'J', 'C', 'Y', 'X', '·', '×', '◦', '▲'];
-      const COLS = 40; // 每行符号数
-      const ROWS = 28; // 行数（覆盖全屏）
-      const total = COLS * ROWS;
-
-      // 生成符号矩阵：用 createElement + textContent 构造，避免 innerHTML 解析字符串
-      // （GLYPHS 与 delay/dur/opacity 均为字面量与 Math.random().toFixed() 数字，
-      //  当前无注入路径；改为结构化 API 后消除该 sink，杜绝后续改动引入回归）
-      const frag = document.createDocumentFragment();
-      for (let i = 0; i < total; i++) {
-        const ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-        const delay = (Math.random() * 20).toFixed(2);
-        const dur = (8 + Math.random() * 12).toFixed(1);
-        const opacity = (0.04 + Math.random() * 0.08).toFixed(2);
-        const span = document.createElement('span');
-        span.dataset.glyph = '';
-        span.className = 'sym';
-        span.style.setProperty('--sd', delay + 's');
-        span.style.setProperty('--dur', dur + 's');
-        span.style.setProperty('opacity', opacity);
-        span.textContent = ch;
-        frag.appendChild(span);
-      }
-      matrix.appendChild(frag);
-    }
-
-    // Canvas 粒子层已移至 AgentFlow.astro（WebGL GPU 加速）
-  })();
-</script>
 
 <style>
   /* ========== 全屏背景容器 ========== */
@@ -86,110 +29,5 @@ const GLYPHS_EN = ['M', 'S', 'J', 'C', 'Y', 'X'];
     pointer-events: none;
     user-select: none;
     overflow: hidden;
-  }
-
-  /* ========== 符号矩阵（层 1 · CSS 动画漂移） ========== */
-  .symbol-matrix {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    grid-template-columns: repeat(40, 1fr);
-    grid-auto-rows: minmax(28px, 1fr);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--color-accent);
-    opacity: 0.7;
-    mask-image: radial-gradient(ellipse at center, #000 0%, #000 35%, transparent 92%);
-    -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, #000 35%, transparent 92%);
-    animation: sym-scroll 60s linear infinite;
-    will-change: transform;
-  }
-  /* .sym 由 JS 动态创建，无 Astro scoped 的 data-astro-cid-*，故用 :global()。
-     否则这 1120 个字形的漂移动画永不生效（实测 animationName 为 none）。 */
-  :global(.symbol-matrix .sym) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: sym-drift 12s ease-in-out infinite;
-    animation-delay: var(--sd, 0s);
-  }
-  @keyframes sym-scroll {
-    from { transform: translateY(0); }
-    to   { transform: translateY(-60%); }
-  }
-  @keyframes sym-drift {
-    0%, 100% { opacity: var(--base-op, 0.06); transform: translate(0, 0); }
-    50%      { opacity: calc(var(--base-op, 0.06) * 2.5); transform: translate(0, -4px); }
-  }
-
-  /* ========== ASCII dither 弧线带 ========== */
-  .dither-band {
-    position: absolute;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: var(--color-accent);
-    opacity: 0.15;
-    pointer-events: none;
-  }
-  .dither-band pre {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    line-height: 1.2;
-    letter-spacing: 1px;
-    color: inherit;
-    background: none;
-    border: none;
-    padding: 0;
-    white-space: pre;
-    text-align: center;
-    mask-image: linear-gradient(transparent 0%, #000 30% 70%, transparent 100%);
-    -webkit-mask-image: linear-gradient(transparent 0%, #000 30% 70%, transparent 100%);
-  }
-  .dither-band--top {
-    top: 4%;
-    animation: dither-drift-top 16s ease-in-out infinite;
-  }
-  .dither-band--bottom {
-    bottom: 4%;
-    animation: dither-drift-bottom 16s ease-in-out infinite reverse;
-  }
-  @keyframes dither-drift-top {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(8px); }
-  }
-  @keyframes dither-drift-bottom {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-8px); }
-  }
-
-  /* ========== AgentFlow WebGL 层（已在自身 <style> 中定义） ========== */
-
-  /* ========== Reduced motion ==========
-     注意：.sym 是 JS 动态创建、无 data-astro-cid-*，故覆盖规则也必须 :global()，
-     否则选择 prefers-reduced-motion 的用户仍会看到 1120 个字形漂移。 */
-  @media (prefers-reduced-motion: reduce) {
-    .symbol-matrix { animation: none !important; }
-    :global(.symbol-matrix .sym) { animation: none !important; }
-    .dither-band--top, .dither-band--bottom { animation: none !important; }
-  }
-
-  @media (max-width: 768px) {
-    .symbol-matrix {
-      font-size: 9px;
-      grid-template-columns: repeat(24, 1fr);
-    }
-  }
-  @media (max-width: 480px) {
-    .symbol-matrix {
-      font-size: 7px;
-      grid-template-columns: repeat(16, 1fr);
-    }
-    .dither-band pre {
-      font-size: 7px;
-    }
   }
 </style>

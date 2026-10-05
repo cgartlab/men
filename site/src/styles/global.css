@@ -568,70 +568,10 @@ main {
 }
 
 /* ---------- Reveal · 滚动入场（R4 新增） ---------- */
-.reveal {
-  opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity var(--duration-normal) ease,
-    transform var(--duration-normal) ease;
-  will-change: opacity, transform;
-}
-
-.reveal.reveal--left {
-  transform: translateX(-12px);
-}
-
-.reveal.reveal--right {
-  transform: translateX(12px);
-}
-
-.reveal.reveal--up {
-  transform: translateY(12px);
-}
-
-.reveal.reveal--down {
-  transform: translateY(-12px);
-}
-
-.reveal.in-view {
-  opacity: 1;
-  transform: translate(0, 0);
-}
-
-.reveal.is-visible {
-  opacity: 1;
-  transform: translate(0, 0);
-}
-
-/* Stagger 延迟 —— 在组件/页面层用内联 style 或 modifier 设置 */
-.reveal[data-stagger="1"] { transition-delay: var(--stagger-1); }
-.reveal[data-stagger="2"] { transition-delay: var(--stagger-2); }
-.reveal[data-stagger="3"] { transition-delay: var(--stagger-3); }
-.reveal[data-stagger="4"] { transition-delay: var(--stagger-4); }
-
+/* Reveal.astro 已随死代码清理移除（0 引用），其 .reveal 规则随之删除 —— 此前
+   它们仍被打进产物 CSS 却不匹配任何元素。 */
 /* ---------- Slide Section · 整屏 slide（R4 新增） ---------- */
-.slide-section {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  position: relative;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-}
-
-.slide-section__content {
-  width: 100%;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: var(--space-16) var(--container-padding-x);
-}
-
-.slide-section--x {
-  min-width: 100vw;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-  height: 100%;
-}
+/* SlideSection.astro 同为 0 引用死组件，其 .slide-section* 规则一并移除。 */
 
 /* scroll-snap 容器 */
 .snap-container-y {
@@ -734,14 +674,6 @@ main {
 
 /* ---------- prefers-reduced-motion 强化（R4 补充） ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .reveal.in-view,
-  .reveal.is-visible {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-
   .snap-container-x,
   .snap-container-y {
     scroll-snap-type: none !important;
