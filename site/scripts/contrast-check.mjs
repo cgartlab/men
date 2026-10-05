@@ -54,6 +54,7 @@ const PALETTE_TOKEN_MAP = {
   roleChi: '--role-chi', roleYi: '--role-yi', roleXun: '--role-xun',
   roleMenText: '--role-men-text', roleSiText: '--role-si-text', roleJiText: '--role-ji-text',
   roleChiText: '--role-chi-text', roleYiText: '--role-yi-text', roleXunText: '--role-xun-text',
+  lineUi: '--color-line-ui',
 };
 
 function normalizeHex(hex) {
@@ -84,6 +85,8 @@ const colors = {
   // 角色色文本变体（小字 AA ≥4.5:1）
   roleMenText:'#be4c03', roleSiText:'#3b73ae', roleJiText:'#258036',
   roleChiText:'#936800', roleYiText:'#825ac6', roleXunText:'#7e54e0',
+  // 交互控件边界（非文本，§1.4.11）
+  lineUi:'#848484',
 };
 
 // ---------- 对比度计算 ----------
@@ -131,6 +134,13 @@ const pairs = [
   { fg: colors.roleChi, bg: colors.surface, label: 'role-chi  大文本/描边 @ 卡片', min: 3.0 },
   { fg: colors.roleYi,  bg: colors.surface, label: 'role-yi   大文本/描边 @ 卡片', min: 3.0 },
   { fg: colors.roleXun, bg: colors.surface, label: 'role-xun  大文本/描边 @ 卡片', min: 3.0 },
+  // 非文本对比度（WCAG 2.2 §1.4.11 · UI 控件边界 ≥3:1）
+  // 只针对「除填充外无其他可见内容」的控件；其余控件按 Boundaries 条款
+  // 由文字/图标承担识别，不在此列（此前全站无任何非文本对比度守卫）。
+  { fg: colors.lineUi, bg: colors.bg,          label: 'line-ui  控件边界 vs 页面底',   min: 3.0 },
+  { fg: colors.lineUi, bg: colors.surface,     label: 'line-ui  控件边界 vs 卡片白底', min: 3.0 },
+  { fg: colors.lineUi, bg: '#f0ebe2',          label: 'line-ui  控件边界 vs 暖底',     min: 3.0 },
+  { fg: colors.lineUi, bg: '#eaeef2',          label: 'line-ui  控件边界 vs 终端 chrome', min: 3.0 },
   // 正文文本（≥ 4.5:1）
   { fg: colors.fg,        bg: colors.bg,           label: '正文(#1a1a1a) vs 背景(#fafafa)',          min: 4.5 },
   { fg: colors.fg,        bg: colors.surface,      label: '正文 vs 白底(#ffffff)',                    min: 4.5 },

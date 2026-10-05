@@ -652,7 +652,9 @@ const faq = install.faq || [];
   .showcase__dots { display: flex; gap: 8px; align-items: center; }
   .showcase__dot {
     width: 8px; height: 8px; border-radius: 50%;
-    background: var(--color-line); border: none; padding: 0; cursor: pointer;
+    /* 分页点是「除填充外无任何可见内容」的控件（裸 button，无文字/图标），
+       故其边界必须满足 WCAG 2.2 §1.4.11 的 3:1；--color-line 仅 1.35:1。 */
+    background: var(--color-line-ui); border: none; padding: 0; cursor: pointer;
     transition: all 0.25s;
   }
   .showcase__dot--active { background: var(--color-accent); width: 24px; border-radius: 4px; }
