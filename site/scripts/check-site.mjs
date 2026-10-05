@@ -91,9 +91,13 @@ for (const f of files) {
   }
 
   // 8) 死链守卫：blob/main/ 后的路径必须真实存在于仓库，避免「来源」链接 404
-  for (const m of text.matchAll(/href="https:\/\/github\.com\/cgartlab\/men\/blob\/main\/([^"#?]+)/g)) {
-    const p = decodeURIComponent(m[1]);
-    if (!REPO_FILES.has(p)) fail(`${rel} 来源链接指向仓库中不存在的文件：${p}`);
+  // REPO_FILES 为空（不在 git 仓库 / git 不可用）时**整项跳过**，否则会把
+  // 每条链接都误报成「不存在」。上面的 SKIP 分支只跳过了提示，没跳过检查本身。
+  if (REPO_FILES.size > 0) {
+    for (const m of text.matchAll(/href="https:\/\/github\.com\/cgartlab\/men\/blob\/main\/([^"#?]+)/g)) {
+      const p = decodeURIComponent(m[1]);
+      if (!REPO_FILES.has(p)) fail(`${rel} 来源链接指向仓库中不存在的文件：${p}`);
+    }
   }
 }
 ok('全部页面：UTF-8 解码 / charset / mojibake 特征 / base 守卫 检查完成');
