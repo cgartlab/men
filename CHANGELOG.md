@@ -37,6 +37,9 @@
 
 ### Fixed
 
+- **verify 的 gate 步骤 60s 超时会误报成「测试失败」**：`checkGate` 对 `typecheck/test/lint` 一律用 `timeout: 60000`。CI 上整套 `node --test` 实测约 **60s**，runner 稍慢即被杀；被杀后 `status` 为 `null`，而 evidence 用 `r.status ?? -1` 记成 `-1`，于是对外报告 **`[FAIL] gate-exit-code test 非零退出`** —— 把**超时**说成了**代码坏了**（本分支的 CI 就这样红过一次，而本地 173/173 全绿）。
+  改为按脚本分档预算（`test` 300s、`lint`/`typecheck` 保持 60s），并把 `timedOut` 记入结果、在 evidence 中**分开表述**：`test（超时 300s）超时被杀（非测试失败）`。
+  反向验证：把 test 预算压到 1ms，evidence 如期输出「超时被杀（非测试失败）」而非「非零退出」；还原后 `[PASS] test 全部 exit 0`
 - **运行时状态按 cwd 解析，导致事件流被劈成两半、门禁上限可被绕过**：`event.mjs` 用 `process.cwd()`、`gate.mjs` / `learn.mjs` / `eval-metrics.mjs` 用相对路径（由 `fs` 按 cwd 解析），而 `verify.mjs` 早已按模块位置解析。后果：
   - 同一 sid 在不同目录下写出**两份** `events.jsonl`，而 `learn.mjs` / `eval-metrics.mjs` 只看得到其中一片 —— 学习结论随工作目录翻转（一个目录判 `skip`、另一个判 `B`），KPI 分母失真且与「无数据」无法区分
   - `gate.mjs` 的 `.agents/state/gates/gate-<kw>.json` **按目录各存一份**，于是「强化次数上限 5」只要 `cd` 到别处即重置 —— 反spin 预算形同虚设。实测 main 版从 `a/`、`b/` 各失败 3 次会生成两份独立状态文件（各计 3 次），修复后全项目只有一份共享状态

@@ -22,6 +22,12 @@ const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
 const AGENT_DIR = path.join(ROOT, ".opencode", "agent");
 const ROLE_MAP = ["ji", "si", "xun", "chi", "yi", "men"];
 
+// gate 各脚本的超时预算。`test` 要跑整套 node --test（CI 实测约 60s），
+// 60s 上限在 runner 稍慢时会被杀并被误报成「测试失败」，故单独放宽；
+// lint/typecheck 通常数秒内完成，保持较紧的上限以便快速失败。
+const TEST_TIMEOUT_MS = 300_000;
+const OTHER_TIMEOUT_MS = 60_000;
+
 // 截断长输出：保留头部 + 尾部，丢掉中间，避免丢关键错误信息
 export function clipErr(s, n = 200) {
   if (!s) return "";
@@ -345,17 +351,24 @@ function checkGate(targetPath) {
     const spawnArgs = win
       ? ["cmd", "/c", script]
       : ["sh", "-c", script];
+    // 超时按脚本分档：`test` 要跑整套测试（CI 上实测 ~60s），60s 上限会在
+    // runner 稍慢时被误杀。此前被杀后 status=null → exitCode 记为 -1，
+    // evidence 却报「test 非零退出」，把**超时**误报成**测试失败**。
+    const budgetMs = k === "test" ? TEST_TIMEOUT_MS : OTHER_TIMEOUT_MS;
     const r = spawnSync(spawnArgs[0], spawnArgs.slice(1), {
       cwd: path.dirname(chosen),
       encoding: "utf-8",
       env: { ...process.env, npm_config_loglevel: "silent" },
-      timeout: 60000,
+      timeout: budgetMs,
       shell: false,
     });
+    const timedOut = r.status === null && (r.signal === "SIGTERM" || r.error?.code === "ETIMEDOUT");
     results.push({
       script: k,
       command: script,
       exitCode: r.status ?? -1,
+      timedOut,
+      budgetMs,
       stdout: clipErr(r.stdout || ""),
       stderr: clipErr(r.stderr || ""),
     });
@@ -369,10 +382,16 @@ function checkGate(targetPath) {
       details: JSON.stringify(results, null, 2),
     };
   }
+  // 超时与真失败要分开说，否则会把 runner 慢误报成代码坏了
+  const timedOut = failed.filter(f => f.timedOut).map(f => `${f.script}（超时 ${Math.round(f.budgetMs / 1000)}s）`);
+  const realFail = failed.filter(f => !f.timedOut).map(f => f.script);
   return {
     id: "gate-exit-code",
     status: "FAIL",
-    evidence: `${failed.map(f => f.script).join(", ")} 非零退出`,
+    evidence: [
+      timedOut.length ? `${timedOut.join(", ")} 超时被杀（非测试失败）` : "",
+      realFail.length ? `${realFail.join(", ")} 非零退出` : "",
+    ].filter(Boolean).join("；"),
     details: JSON.stringify(results, null, 2),
   };
 }
