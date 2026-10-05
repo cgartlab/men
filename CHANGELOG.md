@@ -27,6 +27,14 @@
 
 - **12 个页面的 meta description 改为逐页撰写**：原先几乎全部是「men（门）Agent 团队 — 架构设计」式的标题复述（19–25 字符），对搜索结果与分享卡片无信息量。现按每页真实内容改写为 54–93 字符的具体描述（如协议规范页写明「10 步编排协议（CERTAINTY → LEARN）、5 项机械验证、14 种事件类型」），并统一以 `pageDesc` 常量注入 `BaseLayout`，避免描述与标题再次脱节
 
+### Removed
+
+- **首页首屏的「杂乱」背景动画（按产品决策移除）**：`HeroArt` 原本是三层叠加 —— ①符号矩阵：40×28 = **1120 个** `M/E/N`、`门思记持艺寻` 等字形各自随机延迟/时长/透明度地漂移；②上下 ASCII dither 弧线字符带，16s 周期上下抖动；③AgentFlow WebGL 粒子流。前两层属纯装饰噪音，已连同其 CSS、生成脚本与 reduced-motion 覆盖一并移除；**保留第三层**（`门→Agent→verify→report` 网络流）与 `.hero-canvas` 全屏容器。
+  附带清掉 frontmatter 中三个从未被引用的常量（`GLYPHS` / `GLYPHS_CN` / `GLYPHS_EN` —— 脚本内另有自己的局部 `GLYPHS`）与 `const props = Astro.props`。
+  浏览器实测：`.sym` / `.dither-band` / `.symbol-matrix` 计数均为 0，`.agent-flow-overlay` 仍为 1、`.agent-flow` 尺寸 1440×900。
+  全站通用的 `BackgroundCanvas`（点阵 + 20s 漂移，挂在 `BaseLayout` 上、影响全部 15 页）不在本次范围，未改动
+- **7 个零引用死组件（1216 行）及其孤立 CSS**：`CollaborationGraph` 376 行、`MechanismSVG` 247、`HeroCanvas` 185、`MilestoneTimeline` 143、`RoleCard` 122、`SlideSection` 77、`Reveal` 65 —— 全站 16 个组件中从未被任何 `.astro` 引用，产物中也零出现。同步删除它们在 `global.css` 里留下的 `.reveal*` / `.slide-section*` 规则：这些 CSS 此前**仍被打进产物却不匹配任何元素**（实测 dist 存在 `.reveal` 规则，而 dist HTML 中 `data-reveal` 命中数为 0）。删除前重跑引用扫描，第一版扫描因相对/绝对路径混比导致「排除自身」失效、把 `CollaborationGraph` 自身文件头注释误判为一处引用，修正为绝对路径比较后结论不变
+
 ### Fixed
 
 - **运行时状态按 cwd 解析，导致事件流被劈成两半、门禁上限可被绕过**：`event.mjs` 用 `process.cwd()`、`gate.mjs` / `learn.mjs` / `eval-metrics.mjs` 用相对路径（由 `fs` 按 cwd 解析），而 `verify.mjs` 早已按模块位置解析。后果：
