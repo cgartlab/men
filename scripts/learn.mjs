@@ -29,6 +29,10 @@ const EVENTS_DIR = path.join(PROJECT_ROOT, '.agents', 'state', 'sessions');
 const ERRORS_DIR = 'errors';
 const PATTERNS_DIR = 'knowledge/patterns';
 const QUEUE_FILE = path.join(PROJECT_ROOT, '.agents', 'state', 'learn', 'queue.json');
+// queueGate() 的 ensureDir 必须与 QUEUE_FILE 同基准：此前写的是相对路径
+// （按 cwd 解析），而文件本身在项目内，cwd ≠ 项目根时会在用户目录里凭空
+// 建出一个空的 .agents/state/learn。
+const LEARN_STATE_DIR = path.join(PROJECT_ROOT, '.agents', 'state', 'learn');
 
 function ensureDir(d) {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
@@ -146,7 +150,7 @@ export function rebuildIndex() {
 
 /** 标记 human-gate 待确认 */
 function queueGate(action, sid) {
-  ensureDir('.agents/state/learn');
+  ensureDir(LEARN_STATE_DIR);
   let queue = [];
   if (fs.existsSync(QUEUE_FILE)) {
     try { queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8')); } catch { queue = []; }

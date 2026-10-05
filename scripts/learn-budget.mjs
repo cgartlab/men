@@ -14,9 +14,15 @@
  */
 
 import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const STATE_DIR = '.agents/state/learn';
-const BUDGET_FILE = `${STATE_DIR}/budget.json`;
+// 与 event.mjs / gate.mjs / learn.mjs / eval-metrics.mjs 同一基准：按脚本所在
+// 项目解析。此前相对 cwd，cd 到别处即另建一份 .agents/state/learn，
+// 当日预算因而被拆成多份、各自独立计数。
+const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const STATE_DIR = path.join(PROJECT_ROOT, '.agents', 'state', 'learn');
+const BUDGET_FILE = path.join(STATE_DIR, 'budget.json');
 const MAX_DAILY_LLM = 3;
 const MAX_DAILY_EVENTS = 100;
 
