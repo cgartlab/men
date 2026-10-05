@@ -91,7 +91,9 @@ const DECORATIVE_COMPONENT_SEL = /\b(symbol-matrix|dither-band|hero-canvas|backg
 // 纯装饰分隔符：只渲染「·」这类分隔字符、且已 aria-hidden，不承载信息，
 // 按 WCAG 1.4.3 "pure decoration" 豁免。其视觉层级靠与正文不同的浅色体现，
 // 但不适用正文对比度阈值。
-const DECORATIVE_SEPARATOR_SEL = /\b(__sep|separator)\b/i;
+// 注意：不能写成 /\b__sep\b/ —— 下划线本身是「单词字符」，`.about-brand-meta__sep`
+// 中 `a` 与 `__sep` 之间没有词边界，该正则不会匹配。
+const DECORATIVE_SEPARATOR_SEL = /(__sep|separator)\b/i;
 // 明显是图形的选择器（SVG 形状 / 非文本）
 const NON_TEXT_SEL = /(dot|badge|rect|circle|node-bg|path|arrow|marker|spark|bar|track|-bg)\b/i;
 // 纯装饰伪元素（只放分隔符/项目符号）。必须锚定在选择器**末尾**的 ::before/::after ——
