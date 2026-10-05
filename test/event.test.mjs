@@ -14,6 +14,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import * as os from 'node:os';
 
 const REPO_ROOT = path.resolve(fileURLToPath(import.meta.url), '../..');
 const EVENT_SCRIPT = path.join(REPO_ROOT, 'scripts', 'event.mjs');
@@ -126,4 +127,54 @@ test('event blackbox: help exits 0', () => {
   const r = runEvent(['help']);
   assert.strictEqual(r.status, 0);
   assert.match(r.stdout, /用法/);
+});
+
+// ── 写入方契约：verify.mjs / gate.mjs 产出的日志必须能通过 validate ──
+test('event blackbox: verify/gate 写出的事件通过 validate（eventId 契约）', () => {
+  // 回归：verify.mjs 与 gate.mjs 的 emitEvent/appendEvent 早于漏写 eventId，
+  // 而 event.mjs:REQUIRED_FIELDS 要求它 —— 于是仓库自己 verify/gate 产出的日志
+  // 一律 `event.mjs validate` 退出 1（0 合法 / 1 坏行），「机械证据链」自断。
+  // 这里黑盒跑一遍写入方再用 validate 复核，不做源码正则匹配。
+  const stamp = Date.now();
+  const verifySid = `verify-eid-${stamp}`;
+  const gateSid = `gate-eid-${stamp}`;
+  // gate 必须用 --dir 指向临时包：否则它会对仓库根执行 `npm run test`，
+  // 既在 node --test 内嵌套触发（Node 置 NODE_TEST_CONTEXT=child-v8 后
+  // 内层 `node --test` 会静默跳过全部文件、0 测试退出 0），又会顺带改写
+  // 仓库的 .agents/state/gates/gate-test.json。test/gate.test.mjs 已是此做法。
+  const tmpPkg = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-eid-'));
+  fs.writeFileSync(
+    path.join(tmpPkg, 'package.json'),
+    JSON.stringify({ name: 'gate-eid-fixture', version: '0.0.0', scripts: { test: 'node --version' } }),
+  );
+
+  const dirs = [path.dirname(sidEventsPath(verifySid)), path.dirname(sidEventsPath(gateSid))];
+  try {
+    const vr = spawnSync(
+      process.execPath,
+      [path.join(REPO_ROOT, 'scripts', 'verify.mjs'), 'men', '--sid', verifySid],
+      { cwd: REPO_ROOT, encoding: 'utf-8', shell: false, timeout: 120_000 },
+    );
+    assert.notStrictEqual(vr.status, null, 'verify.mjs 未在超时内结束');
+
+    const gr = spawnSync(
+      process.execPath,
+      [path.join(REPO_ROOT, 'scripts', 'gate.mjs'), 'test', '--dir', tmpPkg, '--sid', gateSid],
+      { cwd: REPO_ROOT, encoding: 'utf-8', shell: false, timeout: 120_000 },
+    );
+    const gateOut = `${gr.stdout || ''}${gr.stderr || ''}`;
+    assert.match(gateOut, /GATE_PASSED/, `gate 应通过（实得：${gateOut.trim()}）`);
+    // GATE_SKIP 同样会写一条带 eventId 的事件，只校验日志会「空过」，
+    // 故显式断言确实走了执行路径。
+    assert.doesNotMatch(gateOut, /GATE_SKIP/, 'gate 不应走 GATE_SKIP 分支');
+
+    for (const [name, sid] of [['verify.mjs', verifySid], ['gate.mjs', gateSid]]) {
+      const v = runEvent(['validate', '--sid', sid]);
+      assert.strictEqual(v.status, 0, `${name} 产出的日志未通过 validate：\n${v.stdout}\n${v.stderr}`);
+      assert.match(v.stdout, /校验通过/);
+    }
+  } finally {
+    for (const d of dirs) fs.rmSync(d, { recursive: true, force: true });
+    fs.rmSync(tmpPkg, { recursive: true, force: true });
+  }
 });

@@ -16,6 +16,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
 
 // ─── 常量 ────────────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@ async function appendEvent(sid, type, subject, detail, payload) {
     const dir = join(base, sid);
     await mkdir(dir, { recursive: true });
     const line = JSON.stringify({
+      eventId: crypto.randomUUID(),
       type,
       ts: new Date().toISOString(),
       subject,

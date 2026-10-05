@@ -12,6 +12,7 @@
 
 ### Added
 
+- **写入方契约回归测试**：新增黑盒测试跑一遍 `verify.mjs` / `gate.mjs`，再用 `event.mjs validate` 复核其产出的日志——不做源码正则匹配。此前两个写入方漏写 `eventId`（`event.mjs` 的 `REQUIRED_FIELDS` 要求），仓库自己的 verify/gate 日志一律校验失败，而没有任何测试能发现
 - **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
 - **`check-site.mjs` 新增两类产物级守卫**：① **转义 HTML 泄漏**——模板里用 `.map().join()` 拼 HTML 会被 Astro 转义、页面直接显示标签字面量（曾真实发生 19 处），现断言产物中不得出现带 `class` 的转义标签（白名单：`<code>--dir &lt;path&gt;</code>` 这类刻意占位符）；② **来源死链**——`blob/main/` 后的路径必须真实存在于 `git ls-files`，此前治理页把中文章节名当文件名传入、install 页传 Windows 绝对路径，共 24 条 404 无人拦截。两项均随 `site.yml` 在 CI 执行，并做了负向验证（注入即 FAIL exit 1）
 - **`role-token-verify.mjs` 断言过期导致长期假红**：`.topo-status` 期望值硬编码为修复前的亮色 `--role-ji`（`#2ea043`），而 v0.6.0 已把该小字换成合规的 `--role-ji-text`（`#258036`）——脚本在浏览器可跑通后第一件事就是 exit 1。现**拓扑图一节的期望值改为从页面令牌推导**（`--role-*` / `--role-*-text` 实时读取，令牌再变不会过期；令牌定义与 SVG marker 两节仍按固定黄金值比对），并新增 `--role-*-text` 的 4.5:1 对比度实测断言（6 项 4.64–4.67:1）
@@ -26,6 +27,8 @@
 
 ### Fixed
 
+- **`verify.mjs` / `gate.mjs` 写出的事件缺 `eventId`，机械证据链自断**：`event.mjs` 的 `REQUIRED_FIELDS` 要求 `eventId`，但两个写入方都未写——实测 `node scripts/event.mjs validate --sid <verify-*>` 对**仓库自己产出的日志**一律 `合法行: 0 / 坏行数: 1 / 缺少必填字段: eventId`，退出 1。本仓库以「机械优先、拒绝 LLM 自评」为架构原则，而校验工具恰好无法校验自己的日志。补齐 `eventId: crypto.randomUUID()`（与 `learn.mjs` 一致），修复后 verify/gate 日志校验 1/1 通过、退出 0
+- **`checkOpenCode()` 在 Windows 上恒返回「未安装」**：`install.mjs` 用 `spawnSync("opencode", …, { shell: false })`，而 opencode 作为 npm 全局包是 `.cmd` shim，libuv 在无 shell 时不解析 → `ENOENT`。实测本机装有 opencode v2.0.6，修复前 `checkOpenCode()` 仍报 `installed: false`，安装器因此在每台 Windows 机器上误判并走错分支。新增通用 `runShim()`（Windows 走 `cmd /c`，与 `runNpm` 同一范式）并替换两处调用
 - **`gate.mjs` 在 Windows 上必然失败（且 5 次后自我放行）**：`spawnSync("npm.cmd", …, { shell: false })` 在 Windows 上返回 `EINVAL`，而 `npm` 裸名返回 `ENOENT`（npm 只是 `.cmd` shim）。结果是门禁每次都 `GATE_FAILED`，`reinforcementCount` 累加到上限后 gate 反而**返回 exit 0**（`GATE_EXHAUSTED … 允许收工`）——把「执行失败」变成「静默放行」。改为 `cmd /c npm run <script>`（与 `verify.mjs` / `install.mjs` 同一写法）。顺带把超时判定收紧为 `status === null && (signal === 'SIGTERM' || error.code === 'ETIMEDOUT')`——实测 Node v26 超时为 `status=null, signal='SIGTERM', error.code='ETIMEDOUT'` 三者并存，原判 `signal === 'SIGTERM'` 本已成立，此处只是补上 `error.code` 这一路以兼容平台差异
 - **`test/gate.test.mjs` 用源码正则把上述 bug 钉死**：原断言要求 gate.mjs 源码里出现 `npm.cmd` + `shell: false` 的写法，于是 169 项测试全绿却从未真正执行过 runner。改为**黑盒行为测试**（造一个通过的 `test` 脚本、真跑、断言 exit 0 且无 `GATE_SKIP`），另保留一条最小源码护栏只锁平台分支写法
 - **`docs/agents.astro` 把原始 HTML 当正文打印 19 次**：`{roleTags[…].map((t) => `<span …>${t}</span>`).join(' ')}` 先被 `.join()` 压成字符串，Astro 遂将其 HTML 转义，页面直接显示 `<span class="wiki-tag">primary</span>` 字面量。改为 JSX map 直接渲染；产物中转义串由 19 处降为 0
