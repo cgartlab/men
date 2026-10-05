@@ -10,10 +10,18 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { computeMetrics } from './eval-metrics.mjs';
 
+// EVAL_DIR 是**报告产物**目录（用户可见、与 knowledge/patterns 同类），保持相对
+// cwd —— docs/learning-architecture.md 约定其在项目根的 docs/eval/ 下。
+// HISTORY_FILE 则是运行时状态，必须按脚本所在项目解析，否则从子目录运行会把
+// 历史写进 cwd 下另一份，使 previousMetrics 永远拿不到上一次的数据。
 const EVAL_DIR = 'docs/eval';
-const HISTORY_FILE = '.agents/state/eval/history.json';
+const HISTORY_FILE = path.join(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+  '.agents', 'state', 'eval', 'history.json',
+);
 
 function ensureDir() {
   if (!fs.existsSync(EVAL_DIR)) fs.mkdirSync(EVAL_DIR, { recursive: true });

@@ -19,8 +19,12 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = process.cwd();
+// 按脚本所在项目解析（与 event.mjs / gate.mjs / learn.mjs 一致）。此前用
+// process.cwd()，于是从子目录运行时会去迁移「cwd 下那份」会话目录 —— 而那里
+// 什么都没有，脏数据仍在项目内，于是迁移静默变成空操作。
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const EVENTS_DIR = path.join(ROOT, '.agents', 'state', 'sessions');
 
 // 精确匹配：只命中 "type":"decision"，不会命中 "decision.made" / "decision.missing"

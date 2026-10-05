@@ -32,7 +32,7 @@
 - **运行时状态按 cwd 解析，导致事件流被劈成两半、门禁上限可被绕过**：`event.mjs` 用 `process.cwd()`、`gate.mjs` / `learn.mjs` / `eval-metrics.mjs` 用相对路径（由 `fs` 按 cwd 解析），而 `verify.mjs` 早已按模块位置解析。后果：
   - 同一 sid 在不同目录下写出**两份** `events.jsonl`，而 `learn.mjs` / `eval-metrics.mjs` 只看得到其中一片 —— 学习结论随工作目录翻转（一个目录判 `skip`、另一个判 `B`），KPI 分母失真且与「无数据」无法区分
   - `gate.mjs` 的 `.agents/state/gates/gate-<kw>.json` **按目录各存一份**，于是「强化次数上限 5」只要 `cd` 到别处即重置 —— 反spin 预算形同虚设。实测 main 版从 `a/`、`b/` 各失败 3 次会生成两份独立状态文件（各计 3 次），修复后全项目只有一份共享状态
-  四个脚本统一改为按 `import.meta.url` 解析（与 `verify.mjs` / `release.mjs` 一致），并在 `event.test.mjs` 加黑盒回归测试：从临时目录 spawn `event.mjs append`，断言日志落在仓库内、且 cwd 下**不会**被另建一份 `.agents`（反向验证：把 `ROOT` 改回 `process.cwd()` 该测试如期失败）
+  七个脚本（`event.mjs` / `gate.mjs` / `learn.mjs` / `learn-budget.mjs` / `eval-metrics.mjs` / `eval-report.mjs` / `migrate-events.mjs`）统一改为按 `import.meta.url` 解析（与 `verify.mjs` / `release.mjs` 一致），并在 `event.test.mjs` 加黑盒回归测试：从临时目录 spawn `event.mjs append`，断言日志落在仓库内、且 cwd 下**不会**被另建一份 `.agents`（反向验证：把 `ROOT` 改回 `process.cwd()` 该测试如期失败）
 - **`learn.mjs` 的知识内容目录刻意保持相对 cwd**：`.agents/state/*`（运行时状态）改为模块相对，但 `errors/` 与 `knowledge/patterns/` 仍相对 cwd —— 它们是用户可见产物，用户的工作目录即其项目根，且 `test/learn.test.mjs` 正是依赖 chdir 到临时目录来隔离；若一并模块相对化，测试将写进仓库真实的 `knowledge/patterns/index.md`
 - **JS 动态创建的元素样式被 Astro scoped 作用域挡掉（三处，分页点完全不可用）**：`.astro` 的 `<style>` 默认 scoped，Astro 依模板元素上的 `data-astro-cid-*` 改写选择器；而 `document.createElement()` 造出的元素拿不到该属性，于是对应规则**永不匹配**。实测（Edge，1440px）：
   - `index.astro` `.showcase__dot`（7 个分页点）→ 渲染为 **0×0、全透明**，即 carousel 分页控件从未显示、不可点。上一条 v0.6.0 记录的 §1.4.11 修复也因此**实际未生效**（改的是一条匹配不到的选择器）
