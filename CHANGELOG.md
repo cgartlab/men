@@ -12,6 +12,7 @@
 
 ### Added
 
+- **`dynamic-el-audit.mjs`：JS 动态元素样式作用域守卫**：静态扫描全部 `.astro` 的 `<style>` 块，取出经 `createElement` + `className` 赋值的类名，校验其**每一条**规则都已被 `:global(...)` 覆盖；只要还剩一条 scoped 规则即失败。零依赖、**不需要浏览器**，故可进 CI（浏览器审计因 CI runner 未装浏览器本就覆盖不到此问题）。首次运行除已知的两处外，另揪出 `AgentFlow.astro` 一条冗余规则（该处因内联样式已覆盖，实为死 CSS 而非可见故障）。已对「整体未 `:global`」与「混用」两类回归分别做负向验证
 - **写入方契约回归测试**：新增黑盒测试跑一遍 `verify.mjs` / `gate.mjs`，再用 `event.mjs validate` 复核其产出的日志——不做源码正则匹配。此前两个写入方漏写 `eventId`（`event.mjs` 的 `REQUIRED_FIELDS` 要求），仓库自己的 verify/gate 日志一律校验失败，而没有任何测试能发现
 - **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
 - **`check-site.mjs` 新增两类产物级守卫**：① **转义 HTML 泄漏**——模板里用 `.map().join()` 拼 HTML 会被 Astro 转义、页面直接显示标签字面量（曾真实发生 19 处），现断言产物中不得出现带 `class` 的转义标签（白名单：`<code>--dir &lt;path&gt;</code>` 这类刻意占位符）；② **来源死链**——`blob/main/` 后的路径必须真实存在于 `git ls-files`，此前治理页把中文章节名当文件名传入、install 页传 Windows 绝对路径，共 24 条 404 无人拦截。两项均随 `site.yml` 在 CI 执行，并做了负向验证（注入即 FAIL exit 1）
@@ -27,6 +28,13 @@
 
 ### Fixed
 
+- **JS 动态创建的元素样式被 Astro scoped 作用域挡掉（三处，分页点完全不可用）**：`.astro` 的 `<style>` 默认 scoped，Astro 依模板元素上的 `data-astro-cid-*` 改写选择器；而 `document.createElement()` 造出的元素拿不到该属性，于是对应规则**永不匹配**。实测（Edge，1440px）：
+  - `index.astro` `.showcase__dot`（7 个分页点）→ 渲染为 **0×0、全透明**，即 carousel 分页控件从未显示、不可点。上一条 v0.6.0 记录的 §1.4.11 修复也因此**实际未生效**（改的是一条匹配不到的选择器）
+  - `HeroArt.astro` `.sym`（1120 个字形）→ `animationName: none`，漂移动画不生效
+  - `AgentFlow.astro` `.agent-flow-overlay` → 该条规则本身是**冗余**而非可见故障：`createOverlay()` 已用内联 `cssText` 设了 `position/inset/pointer-events`（内联优先级高于样式表），故实测 main 与修复后渲染完全一致。此处仅把冗余规则一并 `:global` 化，消除死 CSS
+  三处均改为 `:global(...)`；修复后实测分页点为 8×8、`background: rgb(132,132,132)`，`.sym` 动画恢复为 `sym-drift`
+- **`prefers-reduced-motion` 对字形失效**：`.sym` 的 `animation: sym-drift` 修好后，reduced-motion 覆盖块里的 `.symbol-matrix .sym { animation: none !important }` 因同样是 scoped 而对动态元素无效 —— 结果是**选择「减少动态」的用户反而开始看到 1120 个字形漂移**（main 只是因为主规则也失效才侥幸无动画）。已一并 `:global` 化；实测 `reducedMotion: 'reduce'` 下 `.sym` 的 `animationName` 为 `none`，正常模式下为 `sym-drift`
+- **`dynamic-el-audit.mjs` 判据曾漏掉「混用」**：原判据只问「该类是否存在任一 `:global` 规则」，于是「主规则已 `:global`、`reduced-motion` 块里那条仍是 scoped」这类混合情况会被放行 —— 正是上面那条 reduced-motion 缺陷漏网的原因。改为**逐条检查**：剥离全部 `:global(...)` 后，若仍有 CSS 规则提到该类即判失败。同时限定只在 `<style>` 块内判定（扫全文会误报 JS 的 `querySelectorAll` 与注释），类名后用 `(?![-\w])` 防止匹配进 `.showcase__dot--active`。两类回归（整体未 `:global` / 混用）均做过负向验证
 - **首页 showcase 分页点不满足 WCAG 2.2 §1.4.11 非文本对比度**：`.showcase__dot` 是裸 `<button>`（JS 动态创建，除填充外无任何可见文字/图标），其 `background: var(--color-line)` 在页面底 `#fafafa` 上仅 **1.35:1**，而「无其他可见识别方式的控件边界」需 3:1。新增语义令牌 `--color-line-ui: #848484`（实测 #ffffff 3.74 / #fafafa 3.58 / #f6f8fa 3.51 / #f5f5f5 3.43 / #f0f0f0 3.28 / #eaeef2 3.21 / #f0ebe2 3.15，全数 ≥3:1）并切换该处
 - **缺少「控件边界」这一类非文本对比度守卫**：`text-contrast-audit.mjs` 已对 SVG 图形套用 §1.4.11 的 3:1，`contrast-check.mjs` 也有角色色的描边/圆点断言，但**没有任何一条针对「除填充外无可见文字/图标」的控件边界** —— 即本次的 showcase 分页点那一类，无人拦截。现新增 4 组 `--color-line-ui` 对真实承载体的 ≥3:1 断言，并纳入调色板漂移守卫（23 → 24 项）。两道防线分别做了负向验证：令牌漂移 → 守卫报错；两边「一致地」退回浅灰 → 对比度判据报错
 - **`verify.mjs` / `gate.mjs` 写出的事件缺 `eventId`，机械证据链自断**：`event.mjs` 的 `REQUIRED_FIELDS` 要求 `eventId`，但两个写入方都未写——实测 `node scripts/event.mjs validate --sid <verify-*>` 对**仓库自己产出的日志**一律 `合法行: 0 / 坏行数: 1 / 缺少必填字段: eventId`，退出 1。本仓库以「机械优先、拒绝 LLM 自评」为架构原则，而校验工具恰好无法校验自己的日志。补齐 `eventId: crypto.randomUUID()`（与 `learn.mjs` 一致），修复后 verify/gate 日志校验 1/1 通过、退出 0

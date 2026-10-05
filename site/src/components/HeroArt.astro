@@ -105,7 +105,9 @@ const GLYPHS_EN = ['M', 'S', 'J', 'C', 'Y', 'X'];
     animation: sym-scroll 60s linear infinite;
     will-change: transform;
   }
-  .symbol-matrix .sym {
+  /* .sym 由 JS 动态创建，无 Astro scoped 的 data-astro-cid-*，故用 :global()。
+     否则这 1120 个字形的漂移动画永不生效（实测 animationName 为 none）。 */
+  :global(.symbol-matrix .sym) {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -166,10 +168,12 @@ const GLYPHS_EN = ['M', 'S', 'J', 'C', 'Y', 'X'];
 
   /* ========== AgentFlow WebGL 层（已在自身 <style> 中定义） ========== */
 
-  /* ========== Reduced motion ========== */
+  /* ========== Reduced motion ==========
+     注意：.sym 是 JS 动态创建、无 data-astro-cid-*，故覆盖规则也必须 :global()，
+     否则选择 prefers-reduced-motion 的用户仍会看到 1120 个字形漂移。 */
   @media (prefers-reduced-motion: reduce) {
     .symbol-matrix { animation: none !important; }
-    .symbol-matrix .sym { animation: none !important; }
+    :global(.symbol-matrix .sym) { animation: none !important; }
     .dither-band--top, .dither-band--bottom { animation: none !important; }
   }
 

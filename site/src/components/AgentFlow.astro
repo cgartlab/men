@@ -839,7 +839,9 @@ void main(){
     z-index: 0;
     pointer-events: none;
   }
-  .agent-flow-overlay {
+  /* overlay 由 JS createElement 创建，无 data-astro-cid-*，故需 :global()，
+     否则覆盖层的绝对定位/穿透设置全部失效。 */
+  :global(.agent-flow-overlay) {
     position: absolute;
     inset: 0;
     pointer-events: none;
