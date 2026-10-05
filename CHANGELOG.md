@@ -37,9 +37,9 @@
 
 ### Fixed
 
-- **verify 的 gate 步骤 60s 超时会误报成「测试失败」**：`checkGate` 对 `typecheck/test/lint` 一律用 `timeout: 60000`。CI 上整套 `node --test` 实测约 **60s**，runner 稍慢即被杀；被杀后 `status` 为 `null`，而 evidence 用 `r.status ?? -1` 记成 `-1`，于是对外报告 **`[FAIL] gate-exit-code test 非零退出`** —— 把**超时**说成了**代码坏了**（本分支的 CI 就这样红过一次，而本地 173/173 全绿）。
-  改为按脚本分档预算（`test` 300s、`lint`/`typecheck` 保持 60s），并把 `timedOut` 记入结果、在 evidence 中**分开表述**：`test（超时 300s）超时被杀（非测试失败）`。
-  反向验证：把 test 预算压到 1ms，evidence 如期输出「超时被杀（非测试失败）」而非「非零退出」；还原后 `[PASS] test 全部 exit 0`
+- **新增的事件契约测试自身形成递归，把整套测试拖到约 60s 并让 CI 变红**：PR #149 加的「verify/gate 写出的事件通过 validate」测试 spawn 了 `verify.mjs men`；而 `verify.mjs` 的 gate 步骤会对**仓库内**目标执行 `npm run test` —— 那正是本测试所在的套件，于是形成嵌套。Windows 上内层 `node --test` 被 `NODE_TEST_CONTEXT=child-v8` 短路而侥幸无事，CI（Linux）上则：内层套件跑满 **120s** 被杀，外层测试报 `verify.mjs 未在超时内结束`（`duration_ms: 120065`）；同时 gate 那层的 60s 预算耗尽，`status` 为 `null` 被记成 `exitCode: -1`，对外误报 `test 非零退出` —— 把超时说成了测试失败。
+  修复：测试改为指向**仓库外的临时目标**，使 `checkGate` 走 scaffold 分支直接 SKIP（`verify.mjs:315`）；`emitEvent` 与目标无关、照常写事件，断言强度不变。该测试耗时由约 120s 降到 **707ms**，整套 `npm test` 由约 60s 降到 **2.3s**，`npm run verify` 由约 60s 降到 **2.4s**
+- **verify 的 gate 步骤不再把「超时」误报成「测试失败」**：除上面的根因修复外，保留两项防御性改进 —— ①按脚本分档预算（`test` 300s、`lint`/`typecheck` 仍 60s，以便真出问题时快速失败）；②记录 `timedOut` 并在 evidence 中分开表述 `test（超时 300s）超时被杀（非测试失败）`，真实失败仍报「X 非零退出」。反向验证：把 test 预算压到 1ms，evidence 如期输出「超时被杀（非测试失败）」而非「非零退出」
 - **运行时状态按 cwd 解析，导致事件流被劈成两半、门禁上限可被绕过**：`event.mjs` 用 `process.cwd()`、`gate.mjs` / `learn.mjs` / `eval-metrics.mjs` 用相对路径（由 `fs` 按 cwd 解析），而 `verify.mjs` 早已按模块位置解析。后果：
   - 同一 sid 在不同目录下写出**两份** `events.jsonl`，而 `learn.mjs` / `eval-metrics.mjs` 只看得到其中一片 —— 学习结论随工作目录翻转（一个目录判 `skip`、另一个判 `B`），KPI 分母失真且与「无数据」无法区分
   - `gate.mjs` 的 `.agents/state/gates/gate-<kw>.json` **按目录各存一份**，于是「强化次数上限 5」只要 `cd` 到别处即重置 —— 反spin 预算形同虚设。实测 main 版从 `a/`、`b/` 各失败 3 次会生成两份独立状态文件（各计 3 次），修复后全项目只有一份共享状态
