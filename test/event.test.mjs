@@ -127,3 +127,37 @@ test('event blackbox: help exits 0', () => {
   assert.strictEqual(r.status, 0);
   assert.match(r.stdout, /用法/);
 });
+
+// ── 写入方契约：verify.mjs / gate.mjs 产出的日志必须能通过 validate ──
+test('event blackbox: verify/gate 写出的事件通过 validate（eventId 契约）', () => {
+  // 回归：verify.mjs 与 gate.mjs 的 emitEvent/appendEvent 早于漏写 eventId，
+  // 而 event.mjs:REQUIRED_FIELDS 要求它 —— 于是仓库自己 verify/gate 产出的日志
+  // 一律 `event.mjs validate` 退出 1（0 合法 / 1 坏行），「机械证据链」自断。
+  // 这里黑盒跑一遍写入方再用 validate 复核，不做源码正则匹配。
+  const stamp = Date.now();
+  const cases = [
+    { sid: `verify-eid-${stamp}`, script: 'verify.mjs', args: ['men', '--sid'] },
+    { sid: `gate-eid-${stamp}`, script: 'gate.mjs', args: ['test', '--sid'] },
+  ];
+  const dirs = [];
+  try {
+    for (const c of cases) {
+      const r = spawnSync(
+        process.execPath,
+        [path.join(REPO_ROOT, 'scripts', c.script), ...c.args, c.sid],
+        { cwd: REPO_ROOT, encoding: 'utf-8', shell: false, timeout: 120_000 },
+      );
+      assert.notStrictEqual(r.status, null, `${c.script} 未在超时内结束`);
+
+      const v = runEvent(['validate', '--sid', c.sid]);
+      assert.strictEqual(
+        v.status, 0,
+        `${c.script} 产出的日志未通过 validate：\n${v.stdout}\n${v.stderr}`,
+      );
+      assert.match(v.stdout, /校验通过/);
+      dirs.push(path.dirname(sidEventsPath(c.sid)));
+    }
+  } finally {
+    for (const d of dirs) fs.rmSync(d, { recursive: true, force: true });
+  }
+});

@@ -14,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import crypto from "node:crypto";
 
 // ─────────────────────────── 工具函数 ───────────────────────────
 
@@ -73,6 +74,7 @@ function emitEvent(sid, type, subject, detail, payload = {}) {
     const file = path.join(dir, "events.jsonl");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const line = JSON.stringify({
+      eventId: crypto.randomUUID(),
       type,
       ts: ts(),
       subject,

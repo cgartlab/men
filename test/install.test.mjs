@@ -23,6 +23,7 @@ import {
   copyAllowlist,
   copyTree,
   parseArgs,
+  runShim,
 } from '../scripts/install.mjs';
 
 const REPO_ROOT = path.resolve(fileURLToPath(import.meta.url), '../..');
@@ -63,6 +64,22 @@ test('install FALLBACK_OPENCODE_DEPS: 与 .opencode/package.json 逐字一致（
     repoOpencode.dependencies,
     'FALLBACK_OPENCODE_DEPS 必须与 .opencode/package.json 的 dependencies 一致',
   );
+});
+
+// ── runShim ───────────────────────────────────────────────
+test('install runShim: 解析 .cmd shim（Windows）与可执行文件（POSIX）', () => {
+  // 回归：install.mjs 曾用 spawnSync("opencode", {shell:false})，而 Windows 上
+  // npm 全局包是 .cmd shim，libuv 不解析 → ENOENT。于是 checkOpenCode() 在
+  // 每台 Windows 机器上都误报「未安装」。用 npm 断言：它在 Windows 是 .cmd、
+  // 在 POSIX 是可执行文件，两边都应解析成功。
+  const r = runShim('npm', ['--version']);
+  assert.strictEqual(
+    r.error && r.error.code,
+    undefined,
+    `runShim 应能解析 npm，实际错误：${r.error && r.error.code}`,
+  );
+  assert.strictEqual(r.status, 0, `npm --version 应退出 0，stderr: ${r.stderr}`);
+  assert.match(String(r.stdout).trim(), /^\d+\.\d+\.\d+/);
 });
 
 // ── isMenRepoRoot ────────────────────────────────────────

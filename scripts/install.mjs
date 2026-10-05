@@ -44,7 +44,7 @@ const ENV_TARGET = ".env";
 export function checkOpenCode() {
   const result = { installed: false, version: null, path: null, error: null };
   try {
-    const r = spawnSync("opencode", ["--version"], { encoding: "utf-8", shell: false, timeout: 10_000 });
+    const r = runShim("opencode", ["--version"], { timeout: 10_000 });
     if (r.status === 0 && r.stdout) {
       const ver = r.stdout.trim().split("\n")[0].trim();
       result.installed = true;
@@ -241,6 +241,18 @@ function runNpm(cwd, args) {
   const cmdArgs = win ? ["/c", "npm", ...args] : args;
   return spawnSync(cmd, cmdArgs, {
     cwd, encoding: "utf-8", shell: false, timeout: 120_000,
+  });
+}
+
+// 通用 shim 执行器：Windows 上 npm 全局包（opencode 等）落地为 .cmd shim，
+// libuv 在 shell:false 下不解析 .cmd → 直接 spawn 返回 ENOENT。统一走 cmd /c。
+// 与 runNpm 同一范式；git / node / gh 是真 .exe，不受影响，仍可直接 spawn。
+// 导出以便 test/install.test.mjs 做跨平台回归断言（npm 在 Windows 是 .cmd、
+// 在 POSIX 是可执行文件，两边都应解析成功）。
+export function runShim(cmd, args, opts = {}) {
+  const win = process.platform === "win32";
+  return spawnSync(win ? "cmd" : cmd, win ? ["/c", cmd, ...args] : args, {
+    encoding: "utf-8", shell: false, timeout: 30_000, ...opts,
   });
 }
 
@@ -755,7 +767,7 @@ export function main(argv = process.argv) {
       );
       if (r.status === 0) {
         eprintf(">> 正在升级 OpenCode ...\n");
-        spawnSync("opencode", ["upgrade"], { encoding: "utf-8", shell: false, stdio: "inherit", timeout: 120_000 });
+        runShim("opencode", ["upgrade"], { timeout: 120_000 });
       }
     }
   } else {
