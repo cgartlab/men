@@ -11,7 +11,7 @@
 ```yaml
 slug: cgartlab-men-status
 displayName: Men Status
-version: 0.6.0
+version: 0.6.1
 summary: "Men 状态报告：版本、更新检查、忽略版本、Agent 名单与配置健康。"
 license: MIT
 ```

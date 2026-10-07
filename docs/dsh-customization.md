@@ -1,6 +1,6 @@
 # 将 men 团队迁入 dsh（Cordis）的设计分析
 
-> 关联：`men/` 项目（OpenCode 6 角色 Agent 团队，v0.6.0，M0–M7 完成）
+> 关联：`men/` 项目（OpenCode 6 角色 Agent 团队，v0.6.1，M0–M7 完成）
 > 目标：评估如何将 men 的编排/验证/学习体系适配到 dsh 的 Cordis 插件架构，给出可执行的定制路径
 > 日期：2026-08-26
 

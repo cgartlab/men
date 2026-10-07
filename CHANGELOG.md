@@ -12,6 +12,14 @@
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [v0.6.1] - 2026-10-07
+
+### Added
+
 - **OpenCode V2 兼容回归守护**：新增 `test/opencode-v2-compat.test.mjs`（13 项黑盒源码扫描），断言 3 插件用 `Plugin.define` + `@opencode/plugin`（非 V1 `@opencode-ai/plugin`）、各插件用对应 V2 Context API（`ctx.tool.hook` / `ctx.event.subscribe` / `ctx.ui.slot`）、agent frontmatter 无 V1 `tools` 字段、配置 `$schema` 指向 opencode.ai、V1 类型包已移除、README badge 为 v2。审计依据见 `docs/research/opencode-v2-compat-audit.md`
 - **OpenCode V2 兼容审计**：新增 `docs/research/opencode-v2-compat-audit.md`，对照官方 V2 `migrate-v1` / `permissions` / `plugins` / `cli/plugins` / `build/plugins/migrate-v1` 文档逐项核实。结论：插件 API native V2；V2 自动发现覆盖 men-sidebar（实测 `opencode v2.0.24 plugin list` 确认 3 插件加载）；V1 类型包已清理；`tui.json` 与权限 `permission` 已转 native V2（见下 Changed/Removed）
 - **`v1-compat` 分支**：新增 `v1-compat` 分支（含 `V1-COMPAT.md` 说明），保留 V1 配置形态（`tui.json` + `permission` V1 + `@opencode-ai/plugin`），供习惯 V1 配置或需逐步迁移的用户。仍需 V2 OpenCode 运行（插件 API 是 V2，V1 OpenCode 无法运行 V2 插件）
