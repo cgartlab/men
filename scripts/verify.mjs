@@ -141,17 +141,33 @@ function walk(dir, exts, acc = []) {
 // 1. 硬编码密钥扫描
 export function checkSecrets(targetPath) {
   const files = listFiles(targetPath, SECRET_EXTS);
-  const re = new RegExp(
-    '(password|secret|api_key|token|apikey)\\s*[:=]\\s*[\'"][^\'"]{8,}',
-    'gi'
-  );
+  // P2 修复（M6）：扩展密钥扫描模式，覆盖未加引号、base64、JWT 等格式
+  const patterns = [
+    // 原有：加引号值（单引号或双引号）
+    new RegExp('(password|secret|api_key|token|apikey)\\s*[:=]\\s*[\'"][^\\s\']{8,}', 'gi'),
+    // P2 新增：未加引号值（password=abc12345, token:xyz123456）
+    // 首字符必须不是引号，防止匹配 "short"; 等含引号的短值
+    new RegExp('\\b(password|secret|api_key|token|apikey)\\s*[:=]\\s*[^\\s\'\"]\\S{7,}', 'gi'),
+    // P2 新增：base64（password=base64chars）
+    new RegExp('\\b(password|secret|api_key|token|apikey)\\s*[:=]\\s*[A-Za-z0-9+/]{20,}={0,2}', 'gi'),
+    // P2 新增：JWT（token=eyJhbG...）
+    new RegExp('\\b(password|secret|api_key|token|apikey)\\s*[:=]\\s*eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+', 'gi'),
+  ];
   const hits = [];
   for (const f of files) {
     try {
       const txt = fs.readFileSync(f, "utf-8");
       const rel = path.relative(ROOT, f);
-      for (const m of txt.matchAll(re)) {
-        hits.push({ file: rel, snippet: m[0].replace(/\s+/g, " ").slice(0, 60) });
+      const seen = new Set();
+      for (const re of patterns) {
+        for (const m of txt.matchAll(re)) {
+          const lineNo = txt.slice(0, m.index).split("\n").length;
+          const key = `${rel}:${lineNo}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            hits.push({ file: rel, snippet: m[0].replace(/\s+/g, " ").slice(0, 60) });
+          }
+        }
       }
     } catch (_) { /* 忽略二进制等 */ }
   }
@@ -510,11 +526,14 @@ export function checkBinExportsTargets(targetPath) {
   // 向上收集候选 package.json（从近到远），优先选含 bin 或 exports 字段的（参照 checkGate 逻辑）
   const candidates = [];
   let cur = path.resolve(pkgDir);
+  // P2 修复（M1）：添加深度限制，防止无限循环（与 checkGate 一致）
+  let depth = 0;
   while (true) {
     const p = path.join(cur, "package.json");
     if (fs.existsSync(p)) candidates.push(p);
     const parent = path.dirname(cur);
     if (parent === cur) break;
+    if (++depth > 20) break;
     cur = parent;
   }
   const chosen = candidates.find(p => {
