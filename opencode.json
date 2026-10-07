@@ -7,9 +7,9 @@
   "agent": {
     "men": {
       "model": "sensenova/deepseek-v4-flash",
-      "permission": {
-        "question": "allow"
-      }
+      "permissions": [
+        { "action": "question", "resource": "*", "effect": "allow" }
+      ]
     },
     "si": {
       "model": "sensenova/deepseek-v4-flash"

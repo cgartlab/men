@@ -84,15 +84,10 @@ test("V2 compat: agent frontmatter 无 V1 tools 字段", () => {
   }
 });
 
-test("V2 compat: men.md 用 permission 字段（V2 兼容 legacy，自动归一化）", () => {
-  const men = readFile(".opencode/agent/men.md");
-  assert.ok(/^permission:/m.test(men), "men.md 应有 permission 字段");
-});
-
 // ── 配置 $schema 指向 opencode.ai ────────────────────────────────────────
 
-test("V2 compat: 配置文件 $schema 指向 opencode.ai", () => {
-  const configs = ["opencode.json", ".opencode/tui.json", "gh-flow/opencode.gh-flow.json"];
+test("V2 compat: 配置文件 $schema 指向 opencode.ai（tui.json 已移除）", () => {
+  const configs = ["opencode.json", "gh-flow/opencode.gh-flow.json"];
   for (const c of configs) {
     const src = readFile(c);
     assert.ok(
@@ -100,6 +95,11 @@ test("V2 compat: 配置文件 $schema 指向 opencode.ai", () => {
       `${c} $schema 应指向 opencode.ai`
     );
   }
+  // V2 迁移：.opencode/tui.json 已移除（V1 机制，V2 靠 .opencode/plugins/ 自动发现）
+  assert.ok(
+    !fs.existsSync(path.join(REPO_ROOT, ".opencode/tui.json")),
+    ".opencode/tui.json 应已移除（V2 靠自动发现）"
+  );
 });
 
 // ── 依赖：V2 包存在，V1 类型包已移除 ─────────────────────────────────────
@@ -144,4 +144,48 @@ test("V2 compat: men-sidebar 目录结构符合 V2 自动发现（index.js + tui
   const entries = readDir(".opencode/plugins/men-sidebar");
   assert.ok(entries.includes("index.js"), "应有 index.js（server 入口，V2 自动发现约定）");
   assert.ok(entries.includes("tui.js"), "应有 tui.js（TUI 入口，V2 自动发现约定）");
+});
+
+// ── 权限 native V2：permissions 数组（非 V1 permission 对象）──────────
+
+test("V2 compat: opencode.json men 权限转 native V2 permissions 数组", () => {
+  const oc = JSON.parse(readFile("opencode.json"));
+  const men = (oc.agent && oc.agent.men) || (oc.agents && oc.agents.men);
+  assert.ok(Array.isArray(men && men.permissions), "men 应有 permissions 数组");
+  assert.strictEqual(men.permission, undefined, "men 不应有 V1 permission 对象");
+  const hasQuestionAllow = (men.permissions || []).some(
+    (r) => r.action === "question" && r.effect === "allow"
+  );
+  assert.ok(hasQuestionAllow, "men permissions 应含 question allow 规则");
+});
+
+test("V2 compat: gh-flow gh-runner 权限转 native V2（shell/subagent，非 bash/task）", () => {
+  const gh = JSON.parse(readFile("gh-flow/opencode.gh-flow.json"));
+  const runner = (gh.agent && gh.agent["gh-runner"]) || (gh.agents && gh.agents["gh-runner"]);
+  assert.ok(Array.isArray(runner && runner.permissions), "gh-runner 应有 permissions 数组");
+  assert.strictEqual(runner.permission, undefined, "gh-runner 不应有 V1 permission 对象");
+  const perms = runner.permissions || [];
+  assert.ok(perms.some((r) => r.action === "shell"), "应用 V2 shell action（非 bash）");
+  assert.ok(perms.some((r) => r.action === "subagent"), "应用 V2 subagent action（非 task）");
+  // 安全关键 deny 仍存在（git push --force / gh pr merge / npm publish）
+  assert.ok(perms.some((r) => r.resource === "git push --force*"), "git push --force deny 应保留");
+  assert.ok(perms.some((r) => r.resource === "gh pr merge*"), "gh pr merge deny 应保留");
+  assert.ok(perms.some((r) => r.resource === "npm publish*"), "npm publish deny 应保留");
+});
+
+test("V2 compat: men.md frontmatter 用 permissions 数组（非 V1 permission）", () => {
+  const men = readFile(".opencode/agent/men.md");
+  assert.ok(/^permissions:/m.test(men), "men.md 应有 permissions 字段");
+  assert.ok(!/^permission:/m.test(men), "men.md 不应有 V1 permission 字段（permissions 不算）");
+  assert.ok(men.includes("- action: question"), "men.md permissions 应含 question action");
+});
+
+test("V2 compat: install.mjs writeTuiPlugin/unregisterTuiPlugin 已改 no-op", () => {
+  const src = readFile("scripts/install.mjs");
+  const writeFn = src.match(/function writeTuiPlugin[\s\S]*?\n\}/)?.[0] || "";
+  assert.ok(!writeFn.includes("writeFileSync"), "writeTuiPlugin 不应再 writeFileSync tui.json");
+  assert.ok(writeFn.includes("return { path: null"), "writeTuiPlugin 应返回 no-op");
+  const unregFn = src.match(/function unregisterTuiPlugin[\s\S]*?\n\}/)?.[0] || "";
+  assert.ok(!unregFn.includes("writeFileSync"), "unregisterTuiPlugin 不应再 writeFileSync");
+  assert.ok(!unregFn.includes("rmSync"), "unregisterTuiPlugin 不应再 rmSync tui.json");
 });

@@ -7,19 +7,15 @@
       "description": "云端执行 agent：读 issue → 建分支 → 开发 → 验证 → 开 PR。无权 merge。",
       "mode": "primary",
       "model": "sensenova/deepseek-v4-flash",
-      "permission": {
-        "bash": {
-          "git push --force*": "deny",
-          "git push origin main*": "deny",
-          "gh pr merge*": "deny",
-          "gh release*": "deny",
-          "npm publish*": "deny",
-          "*": "allow"
-        },
-        "task": {
-          "*": "allow"
-        }
-      }
+      "permissions": [
+        { "action": "shell", "resource": "*", "effect": "allow" },
+        { "action": "shell", "resource": "git push --force*", "effect": "deny" },
+        { "action": "shell", "resource": "git push origin main*", "effect": "deny" },
+        { "action": "shell", "resource": "gh pr merge*", "effect": "deny" },
+        { "action": "shell", "resource": "gh release*", "effect": "deny" },
+        { "action": "shell", "resource": "npm publish*", "effect": "deny" },
+        { "action": "subagent", "resource": "*", "effect": "allow" }
+      ]
     }
   }
 }
