@@ -30,16 +30,18 @@ function withPackageDir(name, scripts, fn) {
   }
 }
 
-test('gate blackbox: shell metacharacters in npm scripts are rejected', () => {
-  withPackageDir('unsafe-script', {
-    test: 'node --version; node -e "console.log(\'bad\')"',
+test('gate blackbox: shell metacharacters in npm scripts are allowed (P1 fix)', () => {
+  // P1 修复（H3b）：移除 unsafeChars 检查后，含 && / ; / | 等 shell 元字符的 npm 脚本
+  // 应正常执行而非被跳过。此前被误判为不安全而 silent pass。
+  withPackageDir('metachar-script', {
+    test: 'node -e "console.log(1+1)"',
   }, (tempRoot) => {
-    const sid = `gate-unsafe-${Date.now()}`;
+    const sid = `gate-meta-${Date.now()}`;
     const r = runGate(['test', '--dir', tempRoot, '--sid', sid]);
 
     assert.strictEqual(r.status, 0, `stderr: ${r.stderr}`);
-    assert.match(r.stderr, /scripts\.test 包含 shell 控制字符/);
-    assert.doesNotMatch(r.stderr, /node --version|bad/);
+    assert.doesNotMatch(r.stderr, /GATE_SKIP/);
+    assert.match(r.stdout + r.stderr, /GATE_PASSED/);
   });
 });
 
@@ -51,8 +53,8 @@ test('gate runner: actually executes a passing npm script (behavioral, not sourc
   //
   // 改为黑盒：造一个**通过**的 test 脚本，真跑一遍，断言 exit 0 + GATE_PASSED。
   withPackageDir('passing-script', {
-    // 注意：gate 的 unsafeChars 会拒绝含 () & | 等 shell 元字符的脚本，
-    // 所以这里用最朴素的 node -p，不带引号/括号。
+    // P1 修复（H3b）后：unsafeChars 检查已移除，含引号/括号的 npm 脚本正常执行。
+    // 用 node -p 简单输出避免复杂引号嵌套。
     test: 'node --version',
   }, (tempRoot) => {
     const sid = `gate-pass-${Date.now()}`;

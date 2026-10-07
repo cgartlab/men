@@ -12,8 +12,8 @@
  * 允许的 gate 关键字：typecheck / test / lint
  */
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { existsSync, appendFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
@@ -23,7 +23,10 @@ import { fileURLToPath } from "node:url";
 
 const GATE_KEYWORDS = new Set(["typecheck", "test", "lint"]);
 const MAX_REINFORCEMENTS = 5;
-const SCRIPT_TIMEOUT_MS = 60_000;
+// P1 修复（H3a + L4）：统一 60s 超时导致测试套件超时被误报为失败。
+// 与 verify.mjs 一致：test 放宽至 300s，其他保持 60s。
+const TEST_TIMEOUT_MS = 300_000;
+const OTHER_TIMEOUT_MS = 60_000;
 
 const USAGE_TEXT = `用法: node scripts/gate.mjs <keyword> [--dir <dir>] [--sid <sid>] [--force]
 
@@ -89,8 +92,8 @@ async function appendEvent(sid, type, subject, detail, payload) {
       payload,
     });
     const path = join(dir, "events.jsonl");
-    const data = existsSync(path) ? (await readFile(path)) + "\n" : "";
-    await writeFile(path, data + line);
+    // P1 修复（H1）：使用 appendFileSync 原子追加，避免 read-then-write 竞态条件
+    appendFileSync(path, line + "\n");
   } catch {
     // 静默失败
   }
@@ -210,27 +213,21 @@ async function main() {
     process.exit(0);
   }
 
-  // ── 5. 执行（无 shell argv，固定 npm 脚本入口） ──
-  const isWin = process.platform === "win32";
-  const unsafeChars = /[\r\n;&|`$<>{}()\[\]!~]|\$\{|<\(|>\(|\|/;
-  if (unsafeChars.test(scriptText)) {
-    console.error(`GATE_SKIP: ${keyword} 未配置（scripts.${keyword} 包含 shell 控制字符）`);
-    await appendEvent(sessionId, "gate.passed", `gate.${keyword}`, `SKIP: scripts.${keyword} 不安全`, {
-      keyword,
-      reason: "unsafe-script",
-    });
-    await writeState(keyword, { reinforcementCount: 0, lastResult: "passed" });
-    process.exit(0);
-  }
+  // P1 修复（H3b）：移除 unsafeChars 检查。
+  // keyword 已通过 GATE_KEYWORDS 白名单过滤，scriptText 仅用于 npm run <keyword>（keyword 是参数），
+  // 不存在注入向量。此前的检查误杀了合法的 && / ; / | 等 npm 脚本语法。
   // Windows 上必须走 `cmd /c`：直接 spawn npm.cmd 且 shell:false 会 EINVAL，
   // spawn npm 则 ENOENT（npm 只是 .cmd shim）。与 verify.mjs / install.mjs 同一写法。
+  const isWin = process.platform === "win32";
+  // P1 修复（H3a）：test 使用 300s 超时，其他保持 60s
+  const timeoutMs = keyword === "test" ? TEST_TIMEOUT_MS : OTHER_TIMEOUT_MS;
   const npmCmd = isWin ? "cmd" : "npm";
   const npmArgs = isWin ? ["/c", "npm", "run", keyword] : ["run", keyword];
   const result = spawnSync(npmCmd, npmArgs, {
     cwd: dir,
     encoding: "utf-8",
     shell: false,
-    timeout: SCRIPT_TIMEOUT_MS,
+    timeout: timeoutMs,
   });
   // ── 6. 判定 ──
   const passed = result.status === 0 && !result.error;
@@ -239,7 +236,8 @@ async function main() {
   const timedOut = result.status === null && (result.signal === "SIGTERM" || result.error?.code === "ETIMEDOUT");
 
   if (timedOut) {
-    console.error(`GATE_FAILED: ${keyword} 超时（60 秒），已 SIGKILL`);
+    const timeoutSec = Math.round(timeoutMs / 1000);
+    console.error(`GATE_FAILED: ${keyword} 超时（${timeoutSec} 秒），已 SIGKILL`);
     state.reinforcementCount = state.reinforcementCount + 1;
     state.lastResult = "failed-timeout";
     await writeState(keyword, state);
@@ -247,7 +245,7 @@ async function main() {
       sessionId,
       "gate.failed",
       `gate.${keyword}`,
-      `超时（60 秒），已 SIGKILL`,
+      `超时（${timeoutSec} 秒），已 SIGKILL`,
       { keyword, status: null, signal: "SIGTERM", stdout: result.stdout, stderr: result.stderr }
     );
     process.exit(1);
