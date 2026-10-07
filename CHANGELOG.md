@@ -12,6 +12,8 @@
 
 ### Added
 
+- **OpenCode V2 兼容回归守护**：新增 `test/opencode-v2-compat.test.mjs`（13 项黑盒源码扫描），断言 3 插件用 `Plugin.define` + `@opencode/plugin`（非 V1 `@opencode-ai/plugin`）、各插件用对应 V2 Context API（`ctx.tool.hook` / `ctx.event.subscribe` / `ctx.ui.slot`）、agent frontmatter 无 V1 `tools` 字段、配置 `$schema` 指向 opencode.ai、V1 类型包已移除、README badge 为 v2。审计依据见 `docs/research/opencode-v2-compat-audit.md`
+- **OpenCode V2 兼容审计**：新增 `docs/research/opencode-v2-compat-audit.md`，对照官方 V2 `migrate-v1` / `permissions` / `plugins` / `cli/plugins` / `build/plugins/migrate-v1` 文档逐项核实。结论：插件 API 已 native V2；V2 自动发现覆盖 men-sidebar（实测 `opencode v2.0.24 plugin list` 确认 3 插件加载，不依赖 tui.json）；V1 类型包已清理。剩余 `tui.json` 与权限 `permission`→`permissions` native 化为可选清理项（V2 归一化兼容 legacy）
 - **`dynamic-el-audit.mjs`：JS 动态元素样式作用域守卫**：静态扫描全部 `.astro` 的 `<style>` 块，取出经 `createElement` + `className` 赋值的类名，校验其**每一条**规则都已被 `:global(...)` 覆盖；只要还剩一条 scoped 规则即失败。零依赖、**不需要浏览器**，故可进 CI（浏览器审计因 CI runner 未装浏览器本就覆盖不到此问题）。首次运行除已知的两处外，另揪出 `AgentFlow.astro` 一条冗余规则（该处因内联样式已覆盖，实为死 CSS 而非可见故障）。已对「整体未 `:global`」与「混用」两类回归分别做负向验证
 - **状态路径与 cwd 无关的回归测试**：`event.test.mjs` 新增黑盒用例，从临时目录 spawn `event.mjs append`，断言事件落在仓库内、且该目录下不会被另建 `.agents`。此前无任何测试覆盖 cwd 相关性，而 `npm test` 的 spawn 一律用 `cwd: REPO_ROOT`，因此这类分裂恰好从测试视野里漏过
 - **写入方契约回归测试**：新增黑盒测试跑一遍 `verify.mjs` / `gate.mjs`，再用 `event.mjs validate` 复核其产出的日志——不做源码正则匹配。此前两个写入方漏写 `eventId`（`event.mjs` 的 `REQUIRED_FIELDS` 要求），仓库自己的 verify/gate 日志一律校验失败，而没有任何测试能发现
@@ -25,10 +27,12 @@
 
 ### Changed
 
+- **README OpenCode badge 对齐 V2**：`OpenCode-v1.18` → `OpenCode-v2`（v0.6.0 已迁移 V2，badge 此前未同步；CHANGELOG / docs/reports / docs/review 中的 v1.18 为历史记录，保留不改）
 - **12 个页面的 meta description 改为逐页撰写**：原先几乎全部是「men（门）Agent 团队 — 架构设计」式的标题复述（19–25 字符），对搜索结果与分享卡片无信息量。现按每页真实内容改写为 54–93 字符的具体描述（如协议规范页写明「10 步编排协议（CERTAINTY → LEARN）、5 项机械验证、14 种事件类型」），并统一以 `pageDesc` 常量注入 `BaseLayout`，避免描述与标题再次脱节
 
 ### Removed
 
+- **V1 类型包 `@opencode-ai/plugin`**：`@opencode/plugin@2.0.6` 的 `exports` 各子路径自带 `types`（`dist/*.d.ts`），V2 类型完全自足，插件代码不 import V1 包（仅迁移注释提及"对照 V1"）。从 `.opencode/package.json` / `install.mjs` `FALLBACK_OPENCODE_DEPS` / `verify.mjs` `DEP_IMPORT_WHITELIST` / `test/install.test.mjs` 移除；`npm test` 186 项全绿，实测 `opencode v2.0.24 plugin list` 确认 3 插件仍正常加载
 - **首页首屏的「杂乱」背景动画（按产品决策移除）**：`HeroArt` 原本是三层叠加 —— ①符号矩阵：40×28 = **1120 个** `M/E/N`、`门思记持艺寻` 等字形各自随机延迟/时长/透明度地漂移；②上下 ASCII dither 弧线字符带，16s 周期上下抖动；③AgentFlow WebGL 粒子流。前两层属纯装饰噪音，已连同其 CSS、生成脚本与 reduced-motion 覆盖一并移除；**保留第三层**（`门→Agent→verify→report` 网络流）与 `.hero-canvas` 全屏容器。
   附带清掉 frontmatter 中三个从未被引用的常量（`GLYPHS` / `GLYPHS_CN` / `GLYPHS_EN` —— 脚本内另有自己的局部 `GLYPHS`）与 `const props = Astro.props`。
   浏览器实测：`.sym` / `.dither-band` / `.symbol-matrix` 计数均为 0，`.agent-flow-overlay` 仍为 1、`.agent-flow` 尺寸 1440×900。

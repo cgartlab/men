@@ -19,7 +19,7 @@
  *      - 默认当前目录（仓库内运行则就地安装）
  *      - --dir 指向不存在的目录时，从当前仓库根复制源码（排除运行态目录）
  *   3. 安装 .opencode/ 依赖（npm install --prefix .opencode，Windows 用 cmd /c 无 shell）；
- *      失败仅告警不中止（@opencode-ai/plugin 仅类型声明，运行时不需要）
+ *      失败仅告警不中止（插件为增强项，加载失败不阻止 OpenCode 启动）
  *   4. 配置：.env 不存在时从 .env.example 复制
  *   5. 端到端验证：node scripts/verify.mjs men --json，退出码 0 才报"安装成功"
  *   6. 输出安装摘要
@@ -127,7 +127,6 @@ export function checkCCSwitch() {
 // 必须与仓库内 .opencode/package.json 的 dependencies 逐字一致 —— 由
 // test/install.test.mjs 锁定，防止再次漂移（曾出现兜底停在 1.18.25 而实际已 1.18.34）。
 export const FALLBACK_OPENCODE_DEPS = Object.freeze({
-  "@opencode-ai/plugin": "1.18.34",
   "@opencode/plugin": "2.0.6",
   "@opentui/core": "0.5.10",
   "@opentui/solid": "0.5.10",

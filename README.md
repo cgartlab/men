@@ -1,6 +1,6 @@
 # men（门）Agent 团队
 
-[![Node.js >= 18](https://img.shields.io/badge/Node.js->=18-brightgreen)](https://nodejs.org/) [![OpenCode](https://img.shields.io/badge/OpenCode-v1.18-blue)](https://opencode.ai/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![GitHub stars](https://img.shields.io/github/stars/cgartlab/men?style=social)](https://github.com/cgartlab/men) [![Last commit](https://img.shields.io/github/last-commit/cgartlab/men)](https://github.com/cgartlab/men/commits/main) [![Release](https://img.shields.io/github/v/release/cgartlab/men)](https://github.com/cgartlab/men/releases)
+[![Node.js >= 18](https://img.shields.io/badge/Node.js->=18-brightgreen)](https://nodejs.org/) [![OpenCode](https://img.shields.io/badge/OpenCode-v2-blue)](https://opencode.ai/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![GitHub stars](https://img.shields.io/github/stars/cgartlab/men?style=social)](https://github.com/cgartlab/men) [![Last commit](https://img.shields.io/github/last-commit/cgartlab/men)](https://github.com/cgartlab/men/commits/main) [![Release](https://img.shields.io/github/v/release/cgartlab/men)](https://github.com/cgartlab/men/releases)
 
 > 围绕一人内容创作与工程协作的 **6+1 Agent 团队系统** -- OpenCode 首发，Men Agent 团队出品。
 
