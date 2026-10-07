@@ -30,11 +30,11 @@ v0.6.1（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 | `gh-flow/` | 半自动化 GitHub 工作流模板：`AGENTS.gh-flow.md`（云端执行 agent 约束）+ `opencode.gh-flow.json`；由 `.github/workflows/agent-run.yml` 触发 |
 | `.opencode/plugins/men-verify.ts` | 产物机械验证自动插件（write/edit 后自动跑 verify.mjs） |
 | `.opencode/plugins/men-learn.ts` | 自动学习插件（任务完成后提取经验写入 knowledge/） |
-| `.opencode/plugins/men-sidebar/` | TUI 侧边栏插件；`tui.json` 声明入口，`@opentui/*` 为运行时依赖 |
+| `.opencode/plugins/men-sidebar/` | TUI 侧边栏插件；V2 自动发现（`index.js`+`tui.js`，无需 `tui.json`），`@opentui/*` 为运行时依赖 |
 | `scripts/*.mjs` | 验证/门禁/审计/学习/发布脚本，纯 Node 零依赖 |
 | `config/models.json` | 模型知识基（providers/roleDefaults/presets），`setup.mjs` 数据源；`config/men.schema.json` 为 men.jsonc schema |
 | `knowledge/` | 团队知识库（patterns/decisions）；`errors/` 在根目录 |
-| `.opencode/package.json` | `@opencode-ai/plugin` + `@opentui/*` 本地依赖 |
+| `.opencode/package.json` | `@opencode/plugin` + `@opentui/*` 本地依赖 |
 
 ## Agent 团队拓扑
 
@@ -100,7 +100,7 @@ node scripts/install.mjs --skip-deps --skip-verify --json
 
 ## Node 环境
 
-- **Node >= 18**（`@opencode-ai/plugin` engines 要求）
+- **Node >= 18**（OpenCode CLI 运行时要求；`@opencode/plugin@2.0.6` 自带类型，V1 `@opencode-ai/plugin` 已移除）
 - 依赖在 `.opencode/node_modules/` 下**本地安装**，不共享根目录
 - `.opencode/.gitignore` 排除了 `node_modules`、`package-lock.json`、`bun.lock`
 
