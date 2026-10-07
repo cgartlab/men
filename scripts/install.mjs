@@ -19,7 +19,7 @@
  *      - 默认当前目录（仓库内运行则就地安装）
  *      - --dir 指向不存在的目录时，从当前仓库根复制源码（排除运行态目录）
  *   3. 安装 .opencode/ 依赖（npm install --prefix .opencode，Windows 用 cmd /c 无 shell）；
- *      失败仅告警不中止（@opencode-ai/plugin 仅类型声明，运行时不需要）
+ *      失败仅告警不中止（插件为增强项，加载失败不阻止 OpenCode 启动）
  *   4. 配置：.env 不存在时从 .env.example 复制
  *   5. 端到端验证：node scripts/verify.mjs men --json，退出码 0 才报"安装成功"
  *   6. 输出安装摘要
@@ -127,7 +127,6 @@ export function checkCCSwitch() {
 // 必须与仓库内 .opencode/package.json 的 dependencies 逐字一致 —— 由
 // test/install.test.mjs 锁定，防止再次漂移（曾出现兜底停在 1.18.25 而实际已 1.18.34）。
 export const FALLBACK_OPENCODE_DEPS = Object.freeze({
-  "@opencode-ai/plugin": "1.18.34",
   "@opencode/plugin": "2.0.6",
   "@opentui/core": "0.5.10",
   "@opentui/solid": "0.5.10",
@@ -376,7 +375,6 @@ function scaffoldConflictPaths(entries) {
   return [
     ...entries.filter((n) => !n.endsWith("/")),
     ".opencode/package.json",
-    ".opencode/tui.json",
   ];
 }
 
@@ -481,18 +479,11 @@ function mergeGlobalOpencodeJson(dir) {
   return { path: p, changed };
 }
 
-// 注册全局 TUI 插件（写 tui.json）；从 v0.3.4 起迁移：写入相对路径时移除旧 npm 包名注册，避免重复加载侧边栏
-function writeTuiPlugin(dir, spec) {
-  const tuiPath = path.join(dir, "tui.json");
-  const tui = readJsonSafe(tuiPath) || {};
-  const plugins = Array.isArray(tui.plugin) ? tui.plugin.slice() : [];
-  const added = !plugins.includes(spec);
-  if (added) plugins.push(spec);
-  // 旧注册名（npm 包名 @cgartlab/men）与新注册（相对路径）语义等价：移除旧的，只保留新的
-  const migrated = plugins.filter((x) => !(x !== spec && (x === MEN_PLUGIN_SPEC || x === MEN_TUI_SPEC)));
-  tui.plugin = migrated;
-  fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
-  return { path: tuiPath, added, migrated: migrated.length !== plugins.length };
+// V2 迁移：TUI 插件靠 .opencode/plugins/<name>/{index,tui}.js 自动发现，不再写 tui.json（V1 机制，V2 已废弃）。
+// men-sidebar 目录已由 GLOBAL_ASSETS 部署到 ~/.config/opencode/plugins/men-sidebar/，V2 自动发现加载。
+// 保留函数签名以维持 installGlobal 返回值结构兼容；返回 no-op 结果。
+function writeTuiPlugin(_dir, _spec) {
+  return { path: null, added: false, migrated: false };
 }
 
 // 部署版本标记：让部署的 men-sidebar 能读到真实发布版本（不依赖 npm 缓存包）
@@ -572,7 +563,7 @@ function installGlobal(cfg) {
     process.stdout.write(`  plugins   ${assets.plugins} 个 → ${path.join(dir, "plugins", "men-sidebar")}\n`);
     process.stdout.write(`  opencode.json  ${merged.changed ? "已合并（default_agent=men）" : "已就绪（无需变更）"}\n`);
     if (backup.backedUp) process.stdout.write(`  （原 opencode.json 已备份: ${path.join(dir, GLOBAL_BACKUP_NAME)}）\n`);
-    process.stdout.write(`  tui.json  插件已${tui.added ? "新增注册" : "注册（幂等）"}（${MEN_TUI_SPEC}）\n`);
+    process.stdout.write(`  TUI 插件   V2 自动发现（men-sidebar 目录已部署，无需 tui.json 注册）\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
     process.stdout.write(`  ✓ 重启 OpenCode 后任意目录生效。卸载: node scripts/install.mjs --global-remove\n`);
     process.stdout.write(`  ℹ 已部署到本地（非 npm 缓存），侧边栏版本号直接读取部署目录，不再受 opencode 缓存影响\n`);
@@ -627,25 +618,10 @@ function restoreGlobalOpencodeJson(dir) {
   return { restored: changed, note: changed ? "已移除 default_agent=men" : "未发现 men 相关字段" };
 }
 
-// 从 tui.json 注销 men 插件（兼容新旧注册名：npm 包名 @cgartlab/men 与相对路径 ./plugins/men-sidebar/tui.js）；
-// 插件为空时删除整个文件（避免残留空数组）
-function unregisterTuiPlugin(dir) {
-  const tuiPath = path.join(dir, "tui.json");
-  const tui = readJsonSafe(tuiPath);
-  if (!tui) return { path: tuiPath, removed: false };
-  if (Array.isArray(tui.plugin)) {
-    const next = tui.plugin.filter((x) => x !== MEN_TUI_SPEC && x !== MEN_PLUGIN_SPEC);
-    if (next.length !== tui.plugin.length) {
-      if (next.length === 0) {
-        fs.rmSync(tuiPath, { force: true });
-        return { path: tuiPath, removed: true, deleted: true };
-      }
-      tui.plugin = next;
-      fs.writeFileSync(tuiPath, JSON.stringify(tui, null, 2) + "\n");
-      return { path: tuiPath, removed: true, deleted: false };
-    }
-  }
-  return { path: tuiPath, removed: false, deleted: false };
+// V2 迁移：TUI 插件靠自动发现，不再从 tui.json 注销（V1 机制已废弃）。
+// men-sidebar 目录由 removeGlobalAssets 删除，V2 自动发现随之失效。保留函数签名兼容返回值结构。
+function unregisterTuiPlugin(_dir) {
+  return { path: null, removed: false, deleted: false };
 }
 
 // --global-remove：卸载全局安装（删除部署资产 + 还原 opencode.json + 注销 TUI 插件）
@@ -675,7 +651,7 @@ function removeGlobal(cfg) {
     process.stdout.write(`  删除 skills    ${removed.skills} 个\n`);
     process.stdout.write(`  删除 plugins   ${removed.plugins} 个\n`);
     process.stdout.write(`  opencode.json  ${opencode.note}\n`);
-    process.stdout.write(`  tui.json       ${tui.removed ? (tui.deleted ? "已删除（无剩余插件）" : "已注销 men 插件") : "无需变更"}\n`);
+    process.stdout.write(`  TUI 插件     V2 自动发现（随 plugins 目录${removed.plugins > 0 ? "删除而失效" : "未变更"}）\n`);
     process.stdout.write(`${"=".repeat(54)}\n`);
     process.stdout.write(`  ✓ 全局安装已卸载。重启 OpenCode 生效\n`);
   }

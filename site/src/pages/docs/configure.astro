@@ -13,7 +13,7 @@ const infobox = [
   { k: '默认 Agent', v: '<strong>men</strong>（primary）' },
   { k: '模型数', v: '6 个（men / si / ji / chi / yi / xun）' },
   { k: 'MCP 服务', v: '<strong>7 个</strong>（3 remote + 4 本地）' },
-  { k: '插件', v: '<code>@opencode-ai/plugin</code> 1.18.23（本地安装）' },
+  { k: '插件', v: '<code>@opencode/plugin</code> 2.0.6（本地安装，V2 native）' },
   { k: '技能包', v: '15 个（<code>.opencode/skills</code>）' },
   { k: '自定义命令', v: '3 个（<code>ultrawork</code> / <code>verify</code> / <code>hyperplan</code>）' },
 ];
@@ -85,8 +85,8 @@ model: <model-id>
             <tr><td><code>default_agent</code></td><td><code>men</code></td><td>默认（primary）对话 Agent</td></tr>
             <tr><td><code>instructions</code></td><td><code>AGENTS.md</code></td><td>注入的全局说明文件</td></tr>
             <tr><td><code>agent</code></td><td>6 个角色模型映射</td><td>每个 Agent 的运行时模型（见下节）</td></tr>
-            <tr><td><code>plugin</code></td><td><code>.opencode/plugins/men-sidebar</code></td><td>本地 server 插件（TUI 侧边栏见 <code>tui.json</code>）</td></tr>
-            <tr><td><code>tui.json</code></td><td><code>.opencode/tui.json</code></td><td>TUI 插件声明：<code>./plugins/men-sidebar/tui.js</code>（侧边栏徽章 + agents 列表）</td></tr>
+            <tr><td><code>agent.men.permissions</code></td><td>V2 native 数组</td><td>men 权限：<code>[&#123; action: "question", resource: "*", effect: "allow" &#125;]</code>（V2 有序数组，最后匹配胜出；非 V1 <code>permission</code> 对象）</td></tr>
+            <tr><td>插件发现</td><td>V2 自动发现</td><td><code>.opencode/plugins/men-sidebar/&#123;index,tui&#125;.js</code> 自动加载，<strong>不再需要 <code>tui.json</code></strong>（V1 机制已废弃；V1 配置形态见 <code>v1-compat</code> 分支）</td></tr>
             <tr><td><code>skills.paths</code></td><td><code>.opencode/skills</code></td><td>技能包搜索路径</td></tr>
             <tr><td><code>mcp</code></td><td>7 个服务</td><td>外部工具服务（见 MCP 节）</td></tr>
           </tbody>

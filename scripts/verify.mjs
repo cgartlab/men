@@ -570,7 +570,9 @@ export function checkBinExportsTargets(targetPath) {
 }
 
 // 8. 依赖引用一致性（根 package.json.dependencies 必须在代码中被引用，或位于白名单）
-const DEP_IMPORT_WHITELIST = ["@opencode-ai/plugin"];
+// V2 迁移后无免检依赖（曾列 @opencode-ai/plugin V1 类型包，已随 V2 自带类型而移除）；
+// 如新增仅类型声明、运行时不 import 的依赖可在此登记。
+const DEP_IMPORT_WHITELIST = [];
 export function checkDepsImportConsistency(targetPath) {
   const rootPkgPath = path.join(ROOT, "package.json");
   if (!fs.existsSync(rootPkgPath)) {

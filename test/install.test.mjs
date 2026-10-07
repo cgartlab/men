@@ -46,11 +46,13 @@ test('install checkNode: current node version ok', () => {
 // 过低/NaN 分支在函数签名上不可测（无参数）。
 
 // ── buildOpencodePkgTemplate ─────────────────────────────
-test('install buildOpencodePkgTemplate: includes plugin dep', () => {
+test('install buildOpencodePkgTemplate: includes V2 plugin dep, not V1', () => {
   const tpl = buildOpencodePkgTemplate();
   assert.ok(tpl.dependencies);
-  assert.strictEqual(typeof tpl.dependencies['@opencode-ai/plugin'], 'string');
-  assert.ok(tpl.dependencies['@opencode-ai/plugin'].length > 0);
+  // V2 迁移：@opencode-ai/plugin（V1 类型包）已移除，@opencode/plugin@2.0.6 自带类型（dist/*.d.ts）
+  assert.strictEqual(typeof tpl.dependencies['@opencode/plugin'], 'string');
+  assert.ok(tpl.dependencies['@opencode/plugin'].length > 0);
+  assert.strictEqual(tpl.dependencies['@opencode-ai/plugin'], undefined, 'V1 类型包 @opencode-ai/plugin 应已移除');
 });
 
 test('install FALLBACK_OPENCODE_DEPS: 与 .opencode/package.json 逐字一致（防版本漂移）', () => {

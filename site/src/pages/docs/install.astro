@@ -72,7 +72,7 @@ const seealso = [
         <pre><code>npx @cgartlab/men</code></pre>
       </div>
       <p>首次执行 <code>npx</code> 会询问 "Ok to proceed? (y)"——输入 <code>y</code> 回车即可；或直接 <code>npx -y @cgartlab/men</code> 跳过确认。</p>
-      <p>安装器自动完成：scaffold 运行时资产到当前目录（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。若当前目录已是 men 仓库根，则幂等跳过复制、直接就地安装；依赖安装失败仅告警不中止（<code>@opencode-ai/plugin</code> 仅类型声明，运行时不需要）。</p>
+      <p>安装器自动完成：scaffold 运行时资产到当前目录（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。若当前目录已是 men 仓库根，则幂等跳过复制、直接就地安装；依赖安装失败仅告警不中止（插件为增强项，加载失败不阻止 OpenCode 启动；V2 下 <code>@opencode/plugin</code> 自带类型，无需 V1 <code>@opencode-ai/plugin</code>）。</p>
       <p>完成后在<strong>当前目录</strong>运行 <code>opencode</code> 即可进入 TUI：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
