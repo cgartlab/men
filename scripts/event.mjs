@@ -83,6 +83,12 @@ function parseArgs(argv) {
   let cmd = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    // P5 修复（L1）：-h 被错误地当作子命令处理，导致 exit code 2
+    // 之前 -h 会跳过所有检查（不以 -- 开头），cmd 为 null 时打印 usage 并 exit 2
+    if (a === '-h' || a === '--help') {
+      args.help = true;
+      continue;
+    }
     if (cmd === null && !a.startsWith('--') && !a.startsWith('-')) {
       cmd = a;
       continue;

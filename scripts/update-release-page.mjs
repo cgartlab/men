@@ -102,7 +102,7 @@ function buildHighlight(version, date, theme, notesLines) {
 
 function updateFile(content, cfg) {
   const { version, date, theme, notes } = cfg;
-  const notesLines = (notes || "").split("\\n").filter(Boolean);
+  const notesLines = (notes || '').split('\x00').filter(Boolean);
   let changed = false;
   const changes = [];
 

@@ -315,7 +315,14 @@ export function main(argv = process.argv) {
     return { ok: false, exitCode: 2, error: "package.json 不存在" };
   }
 
-  const pkg = JSON.parse(fs.readFileSync(PKG_PATH, "utf-8"));
+  // P4 修复（M2）：包装 JSON.parse 防止损坏的 package.json 导致未处理异常
+  let pkg;
+  try {
+    pkg = JSON.parse(fs.readFileSync(PKG_PATH, "utf-8"));
+  } catch (e) {
+    eprintf(`package.json 解析失败：${e.message}`);
+    return { ok: false, exitCode: 2, error: `package.json 解析失败: ${e.message}` };
+  }
   const oldVersion = String(pkg.version ?? "");
   if (!SEMVER_RE.test(oldVersion)) {
     eprintf(`非法 SemVer 版本号: "${oldVersion}"（要求形如 0.1.0）`);
@@ -393,7 +400,7 @@ export function main(argv = process.argv) {
           const listItems = versionBlock[0].match(/^- .+/gm);
           if (listItems) notesLines = listItems;
         }
-        const notesEsc = notesLines.join("\\n");
+        const notesEsc = notesLines.join('\x00');
         const updateArgs = [
           updateScript,
           "--version", newVersion,

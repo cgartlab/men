@@ -575,7 +575,10 @@ function installGlobal(cfg) {
 function removeGlobalAssets(dir) {
   const removed = { agents: 0, commands: 0, skills: 0, plugins: 0 };
   for (const a of GLOBAL_ASSETS) {
-    if (!fs.existsSync(a.src)) continue;
+    if (!fs.existsSync(a.src)) {
+      eprintf(`警告: 源目录 ${a.src} 不存在，跳过 ${a.name}（已部署的资产可能成为孤儿）`);
+      continue;
+    }
     const destDir = path.join(dir, a.dest);
     for (const entry of fs.readdirSync(a.src, { withFileTypes: true })) {
       if (entry.name.startsWith(".")) continue;
