@@ -14,7 +14,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // 状态路径按**脚本所在项目**解析，而非相对 cwd（与 event.mjs / verify.mjs 一致）。
 // 此前 `sid ? readEvents(sid) : []` 读的是 cwd 下的日志，而 event.mjs 写的是项目内
@@ -266,6 +266,6 @@ export function main(argv) {
   return result;
 }
 
-if (process.argv[1] && process.argv[1].endsWith('eval-metrics.mjs')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   console.log(main(process.argv.slice(2)));
 }

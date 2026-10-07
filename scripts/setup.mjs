@@ -24,7 +24,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 // ─────────────────────────── 常量 ───────────────────────────
 
@@ -1503,7 +1503,7 @@ async function main(argv = process.argv) {
 }
 
 // ── 自执行 ──
-if (process.argv[1] && process.argv[1].includes("setup.mjs")) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
     eprintf(`致命错误: ${e.message}`);
     if (e.stack) eprintf(e.stack);

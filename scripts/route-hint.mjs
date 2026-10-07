@@ -12,6 +12,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const PATTERNS_DIR = 'knowledge/patterns';
 
@@ -115,6 +116,6 @@ export function main(argv) {
   return JSON.stringify(output, null, 2);
 }
 
-if (process.argv[1] && process.argv[1].endsWith('route-hint.mjs')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   console.log(main(process.argv.slice(2)));
 }

@@ -19,7 +19,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // 按脚本所在项目解析（与 event.mjs / gate.mjs / learn.mjs 一致）。此前用
 // process.cwd()，于是从子目录运行时会去迁移「cwd 下那份」会话目录 —— 而那里
@@ -116,6 +116,6 @@ export function main(argv) {
   return summary;
 }
 
-if (process.argv[1] && process.argv[1].endsWith('migrate-events.mjs')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   console.log(main(process.argv.slice(2)));
 }

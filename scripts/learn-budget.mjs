@@ -15,7 +15,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // 与 event.mjs / gate.mjs / learn.mjs / eval-metrics.mjs 同一基准：按脚本所在
 // 项目解析。此前相对 cwd，cd 到别处即另建一份 .agents/state/learn，
@@ -136,6 +136,6 @@ export function main(argv) {
   }
 }
 
-if (process.argv[1] && process.argv[1].endsWith('learn-budget.mjs')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   console.log(main(process.argv.slice(2)));
 }
