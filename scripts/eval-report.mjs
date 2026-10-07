@@ -10,8 +10,27 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { computeMetrics } from './eval-metrics.mjs';
+
+// P0 修复（H2）：此前 computeMetrics 始终接收空数组，导致报告 8 项 KPI 全为 0。
+// readEvents 在 eval-metrics.mjs 中已实现（:230），此处直接复用。
+function readEvents(sid) {
+  const file = path.join(EVENTS_DIR, sid, 'events.jsonl');
+  if (!fs.existsSync(file)) return [];
+  const lines = fs.readFileSync(file, 'utf8').split('\n').filter(l => l.trim());
+  const events = [];
+  for (const line of lines) {
+    try { events.push(JSON.parse(line)); } catch { /* skip malformed */ }
+  }
+  return events;
+}
+
+// EVENTS_DIR 按脚本所在项目解析（与 eval-metrics.mjs 一致），避免 cwd 漂移
+const EVENTS_DIR = path.join(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+  '.agents', 'state', 'sessions',
+);
 
 // EVAL_DIR 是**报告产物**目录（用户可见、与 knowledge/patterns 同类），保持相对
 // cwd —— docs/learning-architecture.md 约定其在项目根的 docs/eval/ 下。
@@ -104,12 +123,13 @@ function usage() {
   return `eval-report — 评估报告生成
 
 用法:
-  eval-report [--date YYYY-MM-DD] [--json] [--dry-run]
+  eval-report [--date YYYY-MM-DD] [--json] [--dry-run] [--sid <session-id>]
 
 选项:
   --date      报告日期（默认今天）
   --json      输出 JSON 格式
   --dry-run   预览报告但不写入文件
+  --sid       会话 ID，从对应 events.jsonl 读取事件数据
   --help      显示此帮助
 
 输出:
@@ -126,8 +146,16 @@ export function main(argv) {
   const dryRun = args.includes('--dry-run');
   const jsonOut = args.includes('--json');
 
+  // P0 修复（H2）：解析 --sid，从 events.jsonl 读取事件数据
+  const sidIdx = args.indexOf('--sid');
+  const sid = sidIdx >= 0 ? args[sidIdx + 1] : null;
+
+  if (!sid) {
+    process.stderr.write('⚠ 警告：未指定 --sid，KPI 将全部为 0（需要 --sid 从 events.jsonl 读取数据）\n');
+  }
+
   ensureDir();
-  const metrics = computeMetrics([], { windowSize: 10 });
+  const metrics = computeMetrics(sid ? readEvents(sid) : [], { windowSize: 10 });
   const history = loadHistory();
   const previousMetrics = history.length > 0 ? history[history.length - 1].metrics : null;
 
@@ -151,6 +179,6 @@ export function main(argv) {
   return JSON.stringify({ ok: true, dryRun: true, preview: report.slice(0, 200) }, null, 2);
 }
 
-if (process.argv[1] && process.argv[1].endsWith('eval-report.mjs')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   console.log(main(process.argv.slice(2)));
 }
