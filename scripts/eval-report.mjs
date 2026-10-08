@@ -18,7 +18,8 @@ import { computeMetrics } from './eval-metrics.mjs';
 function readEvents(sid) {
   const file = path.join(EVENTS_DIR, sid, 'events.jsonl');
   if (!fs.existsSync(file)) return [];
-  const lines = fs.readFileSync(file, 'utf8').split('\n').filter(l => l.trim());
+  // F10：剥离 UTF-8 BOM
+  const lines = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
   const events = [];
   for (const line of lines) {
     try { events.push(JSON.parse(line)); } catch { /* skip malformed */ }
@@ -61,8 +62,27 @@ function saveHistory(history) {
 }
 
 function formatDate(d) {
+  // F19/F20：formatDate 此前只接受 Date，而 main 传入的是 --date 的字符串——
+  // 任何带 --date 的调用都在 `date.toISOString` 处 TypeError（实测崩溃点 main:165）。
+  if (typeof d === 'string') {
+    return d; // 调用方已做格式校验（parseReportDate）
+  }
   const date = d || new Date();
   return date.toISOString().slice(0, 10);
+}
+
+/** F19：--date 必须是合法 YYYY-MM-DD；缺值/flag 占位/非法日期 → 明确报错而非裸栈。 */
+function parseReportDate(raw) {
+  if (raw === null || raw === undefined) return { date: null, error: null };
+  if (typeof raw !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return { date: null, error: `--date 需要 YYYY-MM-DD 格式（收到: ${String(raw)}）` };
+  }
+  const [y, m, day] = raw.split('-').map(Number);
+  const probe = new Date(Date.UTC(y, m - 1, day));
+  if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== m - 1 || probe.getUTCDate() !== day) {
+    return { date: null, error: `--date 不是有效日期（收到: ${raw}）` };
+  }
+  return { date: raw, error: null };
 }
 
 function trend(current, previous) {
@@ -73,9 +93,11 @@ function trend(current, previous) {
   return 'stable';
 }
 
-function generateReport(metrics, previousMetrics) {
+function generateReport(metrics, previousMetrics, reportDate) {
   ensureDir();
-  const date = formatDate(new Date());
+  // F20：报告头必须与 --date 一致——此前头部恒用当天，而文件名/历史用 --date，
+  // 同一产物三个日期口径。
+  const date = reportDate || formatDate(new Date());
   const rows = [];
   let improved = 0, degraded = 0, stable = 0;
 
@@ -142,13 +164,23 @@ export function main(argv) {
   if (args.includes('--help') || args.includes('-h')) return usage();
 
   const dateIdx = args.indexOf('--date');
-  const date = dateIdx >= 0 ? args[dateIdx + 1] : null;
+  const dateRaw = dateIdx >= 0 ? args[dateIdx + 1] : null;
   const dryRun = args.includes('--dry-run');
   const jsonOut = args.includes('--json');
+  // F19：--date 校验——缺值（末位/--json 占位）与非法日期都明确报错，不再裸栈崩溃。
+  const { date, error: dateError } = parseReportDate(
+    dateIdx >= 0 && typeof dateRaw === 'string' && !dateRaw.startsWith('--') ? dateRaw : dateIdx >= 0 ? String(dateRaw) : null,
+  );
+  if (dateError) {
+    process.stderr.write(`[错误] ${dateError}\n`);
+    process.exitCode = 2; // 用法错误：与 verify/gate 的参数错误码对齐
+    return JSON.stringify({ ok: false, error: dateError }, null, 2);
+  }
 
   // P0 修复（H2）：解析 --sid，从 events.jsonl 读取事件数据
   const sidIdx = args.indexOf('--sid');
-  const sid = sidIdx >= 0 ? args[sidIdx + 1] : null;
+  const sidRaw = sidIdx >= 0 ? args[sidIdx + 1] : null;
+  const sid = typeof sidRaw === 'string' && sidRaw.trim() && !sidRaw.startsWith('--') ? sidRaw : null;
 
   if (!sid) {
     process.stderr.write('⚠ 警告：未指定 --sid，KPI 将全部为 0（需要 --sid 从 events.jsonl 读取数据）\n');
@@ -159,19 +191,23 @@ export function main(argv) {
   const history = loadHistory();
   const previousMetrics = history.length > 0 ? history[history.length - 1].metrics : null;
 
-  const report = generateReport(metrics, previousMetrics);
+  const report = generateReport(metrics, previousMetrics, date);
 
-  // 保存历史
-  history.push({ date: formatDate(date), metrics });
-  if (history.length > 30) history.shift();
-  saveHistory(history);
+  // F2：--dry-run 承诺「预览但不写入」——历史写入必须在 dry-run 判定之内。
+  // 此前 dry-run 也 push history，且 sid 缺失时会压入全 0 KPI，
+  // 成为下一次真实报告的对比基准（趋势判断被污染）。
+  if (!dryRun) {
+    history.push({ date: date || formatDate(new Date()), metrics });
+    if (history.length > 30) history.shift();
+    saveHistory(history);
+  }
 
   if (jsonOut) {
-    return JSON.stringify({ ok: true, date: formatDate(date), dryRun, report: report.slice(0, 200) }, null, 2);
+    return JSON.stringify({ ok: true, date: date || formatDate(new Date()), dryRun, report: report.slice(0, 200) }, null, 2);
   }
 
   if (!dryRun) {
-    const fileName = `docs/eval/${formatDate(date)}.md`;
+    const fileName = `docs/eval/${date || formatDate(new Date())}.md`;
     fs.writeFileSync(fileName, report, 'utf8');
     return JSON.stringify({ ok: true, file: fileName, length: report.length }, null, 2);
   }

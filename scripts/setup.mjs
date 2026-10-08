@@ -221,13 +221,20 @@ men.jsonc 全局配置:
 
 // ─────────────────────────── 数据加载 ───────────────────────────
 
+// F10：剥离 UTF-8 BOM（﻿）——PowerShell `Set-Content` / 记事本「另存为」默认写
+// UTF-8 with BOM，`JSON.parse` 遇到前导 BOM 直接 SyntaxError → setup 死在 exit 2。
+// 与 install.mjs:418 readJsonSafe 同一范式；setup 内所有 JSON 读取统一走本 helper。
+function stripBom(raw) {
+  return typeof raw === "string" && raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+}
+
 function loadModels() {
   if (!fs.existsSync(MODELS_JSON)) {
     eprintf(`错误: 模型知识基不存在：${MODELS_JSON}`);
     process.exit(2);
   }
   try {
-    return JSON.parse(fs.readFileSync(MODELS_JSON, "utf-8"));
+    return JSON.parse(stripBom(fs.readFileSync(MODELS_JSON, "utf-8")));
   } catch (e) {
     eprintf(`错误: 解析 models.json 失败：${e.message}`);
     process.exit(2);
@@ -240,7 +247,7 @@ function readOpencodeJson() {
     process.exit(2);
   }
   try {
-    return JSON.parse(fs.readFileSync(OPENCODE_JSON, "utf-8"));
+    return JSON.parse(stripBom(fs.readFileSync(OPENCODE_JSON, "utf-8")));
   } catch (e) {
     eprintf(`错误: 解析 opencode.json 失败：${e.message}`);
     process.exit(2);
@@ -490,7 +497,7 @@ function writeConfig(assignment, models, dryRun = false) {
 
   // 验证写入结果
   try {
-    const verifyConfig = JSON.parse(fs.readFileSync(OPENCODE_JSON, "utf-8"));
+    const verifyConfig = JSON.parse(stripBom(fs.readFileSync(OPENCODE_JSON, "utf-8")));
     const verifyOk = ROLES.every((r) => verifyConfig.agent?.[r]?.model === assignment[r]);
     if (!verifyOk) {
       result.error = "写入后验证失败：内容不一致";
@@ -522,7 +529,7 @@ function readMenConfig() {
   if (!fs.existsSync(MEN_CONFIG_PATH)) return null;
   try {
     const raw = fs.readFileSync(MEN_CONFIG_PATH, "utf8");
-    return JSON.parse(stripJsoncComments(raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw));
+    return JSON.parse(stripJsoncComments(stripBom(raw)));
   } catch (e) {
     eprintf(`警告: 解析 men.jsonc 失败（${MEN_CONFIG_PATH}）：${e.message}`);
     return null;
@@ -711,6 +718,17 @@ function createRL() {
     input: process.stdin,
     output: process.stdout,
   });
+}
+
+// F9：交互入口的 TTY 守卫。非 TTY（管道 / CI / ` < /dev/null`）下 readline 的 question
+// 回调在 EOF 后永不触发 → main 的 await 悬挂 → 事件循环清空 → 进程静默 exit 0 中途收场：
+// 既不写配置也不报错，多行管道输入还会在第一个提问后被吞。这里显式拒绝并非 0 退出。
+function requireTtyForInteractive() {
+  if (process.stdin.isTTY) return;
+  eprintf("错误: 交互模式需要 TTY（当前 stdin 是管道/重定向，无法问答）。");
+  eprintf("  非交互场景请改用: node scripts/setup.mjs --no-interactive");
+  eprintf("  或 --preset <name>（default | free）/ --json（自动化）");
+  process.exit(2);
 }
 
 function question(rl, prompt) {
@@ -1192,12 +1210,15 @@ function applyPreset(presetName, models) {
 
 async function main(argv = process.argv) {
   const cfg = parseArgs(argv);
-  const models = loadModels();
 
+  // F18：--help 必须先于 loadModels()——排障入口本身不能依赖 config/models.json 存在/可解析，
+  // 否则文件缺失时只会打印「错误: 模型知识基不存在」，帮助文本永远打不出来。
   if (cfg.help) {
     printHelp();
     process.exit(0);
   }
+
+  const models = loadModels();
 
   // ── 预设模式：直接应用，跳过交互 ──
   if (cfg.preset) {
@@ -1294,6 +1315,7 @@ async function main(argv = process.argv) {
   if (cfg.json) {
     let assignment;
     let mode;
+    let wr = null; // F7：接住 writeConfig 返回值，写失败不得再报 ok:true + exit 0
     // dry-run 时始终输出默认推荐（OpenCode Zen 免费预设），便于自动化校验 free 预设
     if (configured && !cfg.reset && !cfg.dryRun) {
       assignment = currentAssignment(config);
@@ -1316,7 +1338,7 @@ async function main(argv = process.argv) {
       }
       mode = source === "dynamic-free" ? "default-dynamic-free" : "default-free";
       if (!cfg.dryRun) {
-        writeConfig(assignment, models, false);
+        wr = writeConfig(assignment, models, false);
       }
     }
     const stats = calcStats(assignment, models);
@@ -1328,13 +1350,21 @@ async function main(argv = process.argv) {
       warnings: stats.warnings,
       fileWritten: cfg.dryRun ? null : "opencode.json",
     };
+    // 对齐 preset 分支（:1259-1267）：写入失败 → ok:false + error + 非 0 退出码
+    if (wr && !wr.ok) {
+      result.ok = false;
+      result.error = wr.error ?? "写入 opencode.json 失败";
+      result.fileWritten = null;
+    }
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
-    process.exit(0);
+    process.exit(result.ok ? 0 : 1);
   }
 
    // ── 非交互模式：跳过 readline，适合 CI/管道 ──
   if (cfg.noInteractive) {
-    if (configured) {
+    // F19：--reset 在此分支此前被静默忽略（已配置 → 打印当前配置即 exit 0）。
+    // 非交互无法问答 → 尊重 reset：以 default 预设强制重写，并显式提示。
+    if (configured && !cfg.reset) {
       const assignment = currentAssignment(config);
       process.stdout.write(`men（门）Agent 团队 — 当前模型配置\n`);
       process.stdout.write(`${"=".repeat(54)}\n`);
@@ -1344,9 +1374,14 @@ async function main(argv = process.argv) {
       process.exit(0);
     }
 
-    // 无配置 → 自动使用 default 预设
+    // 无配置 → 自动使用 default 预设；--reset → 同样以 default 预设重写
     const assignment = applyPreset("default", models);
-    process.stdout.write(`men（门）Agent 团队 — 非交互模式（使用 default 预设）\n`);
+    if (cfg.reset) {
+      process.stdout.write(`men（门）Agent 团队 — 非交互模式（--reset：以 default 预设重新写入）\n`);
+      process.stdout.write(`  提示: 需要问答式引导请在 TTY 终端运行 node scripts/setup.mjs --reset\n`);
+    } else {
+      process.stdout.write(`men（门）Agent 团队 — 非交互模式（使用 default 预设）\n`);
+    }
     process.stdout.write(`${"=".repeat(54)}\n`);
     const table = renderAssignmentTable(assignment, models);
     process.stdout.write(table + "\n");
@@ -1371,6 +1406,8 @@ async function main(argv = process.argv) {
 
   // ── 已配置 & 未 reset → 打印当前并退出 ──
   if (configured && !cfg.reset) {
+    // F9：本分支两个子路径都要开 readline，非 TTY 下会在「你的选择 (1-3):」处静默 exit 0
+    requireTtyForInteractive();
     const menCfg = readMenConfig();
     if (menCfg) {
       // 有 men.jsonc → 展示当前预设并提供切换
@@ -1404,6 +1441,7 @@ async function main(argv = process.argv) {
   }
 
   // ── 交互模式 ──
+  requireTtyForInteractive(); // F9：非 TTY 禁止进入问答，拒绝静默 exit 0 中途收场
   const rl = createRL();
 
   try {
@@ -1485,6 +1523,12 @@ async function main(argv = process.argv) {
     }
 
     blank();
+    // F8：交互路径此前漏了 dry-run 分支——writeConfig(dryRun) 直接返回 {ok:true} 不落盘，
+    // 却照常打印「已写入 opencode.json」。与 preset 分支（:1274）/ --no-interactive 分支（:1372）对齐。
+    if (cfg.dryRun) {
+      process.stdout.write("[DRY RUN] 未写入文件\n");
+      process.exit(0);
+    }
     process.stdout.write(`✅ 配置完成！已写入 opencode.json\n`);
     blank();
     if (wr.backupPath) {
@@ -1527,6 +1571,7 @@ export {
   currentAssignment,
   renderAssignmentTable,
   stripJsoncComments,
+  stripBom,
   readMenConfig,
   writeMenConfig,
   switchPreset,

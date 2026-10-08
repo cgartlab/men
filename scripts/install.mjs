@@ -193,7 +193,36 @@ export function parseArgs(argv) {
       process.exit(2);
     }
   }
+
+  // F20：flag 组合互斥校验——冲突组合此前被静默忽略：`--global --global-remove` 只执行卸载，
+  // 全局模式下 `--dir/--setup/--skip-deps/--skip-verify` 被无声吃掉。解析阶段直接报错 exit 2
+  // （与未知参数同一处理），冲突组合一律不执行任何写操作。
+  const conflicts = validateFlagCombos(out);
+  if (conflicts.length > 0) {
+    eprintf(`参数冲突: ${conflicts.join("；")}（用 --help 查看用法）`);
+    process.exit(2);
+  }
+
   return out;
+}
+
+// F20：纯函数式的 flag 互斥校验（返回冲突描述列表，不退出进程），供 parseArgs 与测试共用。
+// --global / --global-remove 是全局作用域，与项目级 flag（--dir/--setup/--skip-*）互斥；
+// --global 与 --global-remove 互斥。--help 不参与校验（帮助优先）。
+export function validateFlagCombos(out) {
+  if (out.help) return [];
+  const conflicts = [];
+  if (out.global && out.globalRemove) {
+    conflicts.push("--global 与 --global-remove 互斥（前者安装、后者卸载）");
+  }
+  if (out.global || out.globalRemove) {
+    const scope = out.globalRemove && !out.global ? "--global-remove" : "--global";
+    if (out.dir) conflicts.push(`${scope} 与 --dir 互斥（全局模式不作用于项目目录）`);
+    if (out.setup) conflicts.push(`${scope} 与 --setup 互斥（全局模式无模型配置引导）`);
+    if (out.skipDeps) conflicts.push(`${scope} 与 --skip-deps 互斥（全局模式不安装 .opencode 依赖）`);
+    if (out.skipVerify) conflicts.push(`${scope} 与 --skip-verify 互斥（全局模式不跑项目端到端验证）`);
+  }
+  return conflicts;
 }
 
 function printHelp() {
@@ -220,6 +249,9 @@ npm 一键安装（推荐，scaffold 到当前目录）:
   --setup           安装完成后立即进入模型配置引导（对话式，约 2 分钟）
   --json            输出 JSON 摘要
   --help, -h        显示本帮助
+
+  flag 互斥：--global / --global-remove 与 --dir、--setup、--skip-deps、--skip-verify 互斥，
+               冲突组合直接报错并以退出码 2 结束（不执行任何操作）。
 
 平台引导（推荐，自动拉取仓库）:
   Linux/macOS:  bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)
@@ -350,19 +382,51 @@ function detectModelConfig() {
   return { configured: false, file: null };
 }
 
-// scaffold 前冲突保护：对将覆盖的已存在文件做 .men.bak 备份，返回冲突列表
-// 覆盖顶层配置文件（opencode.json / AGENTS.md）与 .opencode/ 配置类文件（package.json / tui.json）
-// 绝不静默覆盖用户已有配置
+// scaffold 前冲突保护：对将覆盖的**已存在文件**做 .men.bak 备份，返回冲突列表。
+// 覆盖范围 = SCAFFOLD_ENTRIES 白名单中所有会被复制的文件（含 .opencode/ 整树）——
+// copyAllowlist → copyTree 会整树覆盖 .opencode/agent|command|skills|plugins，这些恰恰是
+// 允许用户自行改写的文件；注释曾只点名顶层配置 + .opencode/package.json，与真实覆盖面不符（F14）。
 const CONFLICT_BACKUP_SUFFIX = ".men.bak";
-function backupConflicts(targetDir, relativePaths) {
+
+// 逐字节比对两个文件（先比 size/mtime 短路，再比内容）
+function sameFileContent(a, b) {
+  const sa = fs.statSync(a);
+  const sb = fs.statSync(b);
+  if (sa.size !== sb.size || sa.mtimeMs !== sb.mtimeMs) return false;
+  return fs.readFileSync(a).equals(fs.readFileSync(b));
+}
+
+// 备份路径永不覆盖既有备份：`.men.bak` 已存在 → 写 `.men.bak-2`、`.men.bak-3` …
+// F14：二次安装时若覆盖 `.men.bak`，最初那份用户原文件的备份就永久丢失。
+function pickBackupPath(p) {
+  const base = `${p}${CONFLICT_BACKUP_SUFFIX}`;
+  if (!fs.existsSync(base)) return base;
+  for (let i = 2; ; i++) {
+    const c = `${base}-${i}`;
+    if (!fs.existsSync(c)) return c;
+  }
+}
+
+export function backupConflicts(targetDir, relativePaths) {
   const conflicts = [];
   for (const rel of relativePaths) {
     const p = path.join(targetDir, rel);
     if (!fs.existsSync(p) || !fs.statSync(p).isFile()) continue;
-    const bak = `${p}${CONFLICT_BACKUP_SUFFIX}`;
+    const src = path.join(ROOT, rel);
+    // 内容与待写入的源文件逐字节相同 → 无需备份也无需覆盖，跳过（重装不产生噪音备份）
+    if (fs.existsSync(src)) {
+      try {
+        if (sameFileContent(src, p)) continue;
+      } catch {
+        /* 比较失败按「不同」处理，走备份 */
+      }
+    }
+    const bak = pickBackupPath(p);
     try {
       fs.copyFileSync(p, bak);
-      conflicts.push(`${rel}（原文件已备份为 ${rel}${CONFLICT_BACKUP_SUFFIX}）`);
+      conflicts.push(bak === `${p}${CONFLICT_BACKUP_SUFFIX}`
+        ? `${rel}（原文件已备份为 ${rel}${CONFLICT_BACKUP_SUFFIX}）`
+        : `${rel}（原文件已备份为 ${path.basename(bak)}）`);
     } catch (e) {
       conflicts.push(`${rel}（备份失败：${e.message}）`);
     }
@@ -370,12 +434,26 @@ function backupConflicts(targetDir, relativePaths) {
   return conflicts;
 }
 
-// scaffold 冲突保护覆盖的文件清单：顶层配置 + .opencode/ 配置类文件
-function scaffoldConflictPaths(entries) {
-  return [
-    ...entries.filter((n) => !n.endsWith("/")),
-    ".opencode/package.json",
-  ];
+// scaffold 冲突保护覆盖的文件清单：遍历白名单，收集其中真实会被复制的文件（相对 ROOT 路径）
+export function scaffoldConflictPaths(srcRoot, entries) {
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (COPY_EXCLUDES.has(entry.name)) continue;
+      const s = path.join(dir, entry.name);
+      const rel = path.relative(srcRoot, s);
+      if (entry.isDirectory()) walk(s);
+      else if (entry.isFile()) out.push(rel);
+    }
+  };
+  for (const name of entries) {
+    const s = path.join(srcRoot, name);
+    if (!fs.existsSync(s)) continue;
+    const st = fs.statSync(s);
+    if (st.isDirectory()) walk(s);
+    else if (st.isFile()) out.push(name);
+  }
+  return out;
 }
 
 // 从 verify.mjs 的 JSON 报告提取 FAIL 项，生成人类可读摘要
@@ -427,9 +505,9 @@ function readJsonSafe(p) {
 }
 
 // 部署单类资产：把 src 下的每个条目复制到 destDir/<同名条目>
-// 返回 { copied, entries }（copied 为成功复制的条目数，entries 为复制到的绝对路径）
-function deployAssetGroup(src, destDir) {
-  const out = { copied: 0, entries: [] };
+// 返回 { copied, failed, entries, errors }（failed > 0 时调用方必须据此压低 ok / 提升退出码）
+export function deployAssetGroup(src, destDir) {
+  const out = { copied: 0, failed: 0, entries: [], errors: [] };
   if (!fs.existsSync(src)) return out;
   fs.mkdirSync(destDir, { recursive: true });
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
@@ -446,6 +524,9 @@ function deployAssetGroup(src, destDir) {
       out.copied += 1;
       out.entries.push(d);
     } catch (e) {
+      // F15：复制失败不再只是告警——计入 failed，由 installGlobal 汇总决定 ok/退出码
+      out.failed += 1;
+      out.errors.push(`${s}: ${e.message}`);
       eprintf(`警告: 复制 ${s} 失败: ${e.message}`);
     }
   }
@@ -515,9 +596,13 @@ function installGlobal(cfg) {
   }
 
   const assets = {};
+  let assetsFailed = 0; // F15：部分失败必须反映到 ok / 退出码
+  const assetErrors = [];
   for (const a of GLOBAL_ASSETS) {
     const r = deployAssetGroup(a.src, path.join(dir, a.dest));
     assets[a.name] = r.copied;
+    assetsFailed += r.failed;
+    assetErrors.push(...r.errors);
   }
 
   // 部署版本标记：让部署的 men-sidebar 能读到真实发布版本（不依赖 npm 缓存包）
@@ -528,8 +613,13 @@ function installGlobal(cfg) {
   const tui = writeTuiPlugin(dir, MEN_TUI_SPEC);
 
   const result = {
-    ok: true,
-    summary: "全局安装完成（agents/commands/skills/plugins 已部署，opencode.json 已合并 default_agent）",
+    ok: assetsFailed === 0,
+    assetsFailed,
+    ...(assetErrors.length > 0 ? { assetErrors } : {}),
+    summary:
+      assetsFailed === 0
+        ? "全局安装完成（agents/commands/skills/plugins 已部署，opencode.json 已合并 default_agent）"
+        : `全局安装未完全成功（${assetsFailed} 个条目复制失败，opencode.json 合并已执行）`,
     mode: "global",
     dir,
     assets: {
@@ -564,6 +654,10 @@ function installGlobal(cfg) {
     process.stdout.write(`  opencode.json  ${merged.changed ? "已合并（default_agent=men）" : "已就绪（无需变更）"}\n`);
     if (backup.backedUp) process.stdout.write(`  （原 opencode.json 已备份: ${path.join(dir, GLOBAL_BACKUP_NAME)}）\n`);
     process.stdout.write(`  TUI 插件   V2 自动发现（men-sidebar 目录已部署，无需 tui.json 注册）\n`);
+    if (!result.ok) {
+      process.stdout.write(`  ⚠ 全局安装未完全成功：${result.assetsFailed} 个条目复制失败（详见上方警告）\n`);
+      for (const ae of (result.assetErrors || []).slice(0, 5)) process.stdout.write(`    - ${ae}\n`);
+    }
     process.stdout.write(`${"=".repeat(54)}\n`);
     process.stdout.write(`  ✓ 重启 OpenCode 后任意目录生效。卸载: node scripts/install.mjs --global-remove\n`);
     process.stdout.write(`  ℹ 已部署到本地（非 npm 缓存），侧边栏版本号直接读取部署目录，不再受 opencode 缓存影响\n`);
@@ -600,25 +694,73 @@ function removeGlobalAssets(dir) {
   return removed;
 }
 
-// 还原全局 opencode.json：有备份则恢复；无备份则移除 default_agent（仅限 =men 的条目）。
-// plugin 数组不在此处处理——CC Switch 统一管理，避免误删用户/CC Switch 配置。
-function restoreGlobalOpencodeJson(dir) {
+// 还原全局 opencode.json：只回放安装时写入的 `default_agent=men` 差异（幂等删除），
+// 再把备份里的其余字段回填进当前文件。
+// F16：旧实现用安装前旧备份整文件覆盖并删除备份——`--global` 之后用户新增的 mcp/provider/agent
+// 等字段会被整段吞掉，且备份一并删除无法找回。现在：
+//   1. 先把当前文件另存为 opencode.json.before-restore（用户新增内容永不丢失）；
+//   2. 仅删除 current.default_agent === "men" 的字段（不动其他字段）；
+//   3. 备份中的其余字段逐个回填（当前文件已有字段优先），再删除备份；
+//   4. 备份不可解析 → 不做整文件还原，退化为「只移除 default_agent」+ 保留当前文件副本。
+export function restoreGlobalOpencodeJson(dir) {
   const p = path.join(dir, "opencode.json");
   const bak = path.join(dir, GLOBAL_BACKUP_NAME);
-  if (fs.existsSync(bak)) {
-    fs.copyFileSync(bak, p);
-    fs.rmSync(bak, { force: true });
-    return { restored: true, note: "已从备份还原" };
-  }
+  if (!fs.existsSync(p)) return { restored: false, note: "opencode.json 不存在，跳过" };
+
   const cfg = readJsonSafe(p);
-  if (!cfg) return { restored: false, note: "opencode.json 不存在或无法解析，跳过" };
+  if (!cfg) {
+    eprintf(`警告: 全局 opencode.json 无法解析，跳过还原（避免覆盖用户数据）: ${p}`);
+    return { restored: false, note: "opencode.json 无法解析，未改动" };
+  }
+
+  const backup = fs.existsSync(bak) ? readJsonSafe(bak) : null;
+  const backupNote = fs.existsSync(bak) ? null : "未找到安装时备份";
+
+  // 1. 保留当前文件副本，避免任何一步失败后用户新增内容无从找回
+  let kept = null;
+  try {
+    const keepPath = `${p}.before-restore`;
+    fs.copyFileSync(p, keepPath);
+    kept = keepPath;
+  } catch (e) {
+    eprintf(`警告: 无法为当前 opencode.json 留存副本: ${e.message}`);
+  }
+
+  // 2. 只回放 default_agent 差异
   let changed = false;
   if (cfg.default_agent === MEN_DEFAULT_AGENT) {
     delete cfg.default_agent;
     changed = true;
   }
-  if (changed) fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + "\n");
-  return { restored: changed, note: changed ? "已移除 default_agent=men" : "未发现 men 相关字段" };
+
+  // 3. 备份中的其余字段回填（用户新增字段优先，不被安装前值覆盖）
+  const restoredFields = [];
+  if (backup) {
+    for (const k of Object.keys(backup)) {
+      if (k === "default_agent") continue;
+      if (!(k in cfg)) {
+        cfg[k] = backup[k];
+        restoredFields.push(k);
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + "\n");
+    fs.rmSync(bak, { force: true });
+  }
+
+  return {
+    restored: changed,
+    note: changed
+      ? restoredFields.length > 0
+        ? `已移除 default_agent=men，并回填安装前备份的其余字段（${restoredFields.join(", ")}）`
+        : "已移除 default_agent=men"
+      : "未发现 men 相关字段",
+    keptCurrentCopy: kept,
+    backup: backupNote,
+  };
 }
 
 // V2 迁移：TUI 插件靠自动发现，不再从 tui.json 注销（V1 机制已废弃）。
@@ -670,14 +812,19 @@ export function main(argv = process.argv) {
     return { ok: true, exitCode: 0, help: true };
   }
 
-  // --global / --global-remove：不进入项目安装流程
-  if (cfg.globalRemove) {
-    removeGlobal(cfg);
-    process.exit(0);
-  }
-  if (cfg.global) {
-    const result = installGlobal(cfg);
-    return { ok: true, exitCode: 0, result };
+  // --global / --global-remove：不进入项目安装流程。
+  // F15：两个分支此前都在 try/catch 之外，文件系统异常会抛裸栈；--global-remove 还直接
+  // process.exit(0)，连 JSON 消费方都拿不到结构化失败。现在统一走下方 try/catch，
+  // 并据 result.ok 决定退出码（不再恒 exit 0）。
+  if (cfg.globalRemove || cfg.global) {
+    try {
+      const result = cfg.globalRemove ? removeGlobal(cfg) : installGlobal(cfg);
+      return { ok: result.ok !== false, exitCode: result.ok === false ? 1 : 0, result };
+    } catch (e) {
+      const msg = `全局${cfg.globalRemove ? "卸载" : "安装"}失败：${e.message}`;
+      eprintf(msg);
+      return { ok: false, exitCode: 1, error: msg };
+    }
   }
 
   // fail 通过抛错中断流程，由外层 catch 捕获并返回错误结果
@@ -818,8 +965,8 @@ export function main(argv = process.argv) {
     if (isMenRepoRoot(targetDir)) {
       copyMode = "in-place";
     } else {
-      // 冲突保护：已有 opencode.json / AGENTS.md / .opencode 配置时先备份，绝不静默覆盖
-      conflicts = backupConflicts(targetDir, scaffoldConflictPaths(SCAFFOLD_ENTRIES));
+      // 冲突保护：scaffold 整树覆盖前，先把内容不同的已存在文件备份（含 .opencode/ 整树），绝不静默覆盖
+      conflicts = backupConflicts(targetDir, scaffoldConflictPaths(ROOT, SCAFFOLD_ENTRIES));
       eprintf(">> [4/7] scaffold 运行时资产到当前目录 ...");
       try {
         copyAllowlist(ROOT, targetDir, SCAFFOLD_ENTRIES, COPY_EXCLUDES);

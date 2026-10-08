@@ -30,13 +30,25 @@ function ensureDir() {
   if (!fs.existsSync(STATE_DIR)) fs.mkdirSync(STATE_DIR, { recursive: true });
 }
 
-function load() {
+// F21：fail-closed 加载——预算文件存在但损坏（语法错 / 形状不符）时
+// 不再静默当成「新一天」重开预算（旧行为：b.date undefined → isSameDay 恒 false
+// → check 返回 'new day, budget reset'，当日上限被绕开）。
+// 返回 { state, corrupt }：corrupt=true 时 check/consume 拒绝执行，
+// status 如实报告，由人工 `learn-budget reset` 自愈。
+function loadState() {
   ensureDir();
-  if (!fs.existsSync(BUDGET_FILE)) return defaultBudget();
+  if (!fs.existsSync(BUDGET_FILE)) return { state: defaultBudget(), corrupt: false };
+  let parsed;
   try {
-    const raw = fs.readFileSync(BUDGET_FILE, 'utf8');
-    return JSON.parse(raw);
-  } catch { return defaultBudget(); }
+    parsed = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
+  } catch {
+    return { state: defaultBudget(), corrupt: true };
+  }
+  const valid =
+    parsed && typeof parsed === 'object' && !Array.isArray(parsed) &&
+    typeof parsed.date === 'string' && Number.isFinite(parsed.dailyLlmCalls);
+  if (!valid) return { state: defaultBudget(), corrupt: true };
+  return { state: parsed, corrupt: false };
 }
 
 function save(b) {
@@ -62,8 +74,12 @@ function isSameDay(d) {
 }
 
 /** 检查是否允许 L2 调用 */
+/** 检查是否允许 L2 调用（预算文件损坏时 fail-closed 拒绝） */
 function check() {
-  const b = load();
+  const { state: b, corrupt } = loadState();
+  if (corrupt) {
+    return { ok: false, reason: 'budget state corrupt — run learn-budget reset to heal' };
+  }
   if (!isSameDay(b.date)) return { ok: true, reason: 'new day, budget reset' };
   if (b.dailyLlmCalls >= MAX_DAILY_LLM) {
     return { ok: false, reason: `daily LLM limit reached (${b.dailyLlmCalls}/${MAX_DAILY_LLM})` };
@@ -71,9 +87,12 @@ function check() {
   return { ok: true, reason: 'within budget' };
 }
 
-/** 消耗一次 L2 预算 */
+/** 消耗一次 L2 预算（预算文件损坏时拒绝消耗，不隐式重置） */
 function consume() {
-  const b = load();
+  const { state: b, corrupt } = loadState();
+  if (corrupt) {
+    return { ok: false, reason: 'budget state corrupt — run learn-budget reset to heal' };
+  }
   if (!isSameDay(b.date)) {
     b.date = new Date().toISOString().slice(0, 10);
     b.dailyLlmCalls = 0;
@@ -86,9 +105,12 @@ function consume() {
   return { ok: true, dailyLlmCalls: b.dailyLlmCalls, limit: MAX_DAILY_LLM };
 }
 
-/** 显示当前预算状态 */
+/** 显示当前预算状态（损坏时如实报告） */
 function status() {
-  const b = load();
+  const { state: b, corrupt } = loadState();
+  if (corrupt) {
+    return { ok: false, corrupt: true, error: 'budget state corrupt — run learn-budget reset to heal' };
+  }
   return {
     ok: true,
     date: b.date,
@@ -100,7 +122,6 @@ function status() {
   };
 }
 
-/** 重置当日预算（手动） */
 function reset() {
   const b = defaultBudget();
   save(b);

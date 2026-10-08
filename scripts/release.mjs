@@ -33,7 +33,16 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 // ─────────────────────────── 常量 ───────────────────────────
 
-const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
+// ROOT 可被 MEN_ROOT 环境变量覆盖。
+// 设计动机：release.mjs 的 ROOT 默认绑死脚本自身路径，黑盒测试若想验证「真发版」
+// 就必须 spawn 真实仓库里的脚本，而 cwd 无法改变它算出的 ROOT —— 结果测试在真仓库上
+// 真的跑了 git tag/commit/push（实测把 0.6.12→0.6.15 推上了 origin）。
+// 覆盖后 ROOT 指向合成仓库，git 操作与版本文件全部落在临时目录，与真实仓库完全隔离。
+const ROOT = (() => {
+  const envRoot = process.env.MEN_ROOT;
+  if (envRoot) return path.resolve(envRoot);
+  return path.resolve(fileURLToPath(import.meta.url), "../..");
+})();
 const PKG_PATH = path.join(ROOT, "package.json");
 const CHANGELOG_PATH = path.join(ROOT, "CHANGELOG.md");
 const RELEASE_NOTES_PATH = path.join(ROOT, ".release-notes.md");
@@ -281,6 +290,25 @@ function git(args, cwd) {
 }
 
 /**
+ * 运行 git 子步骤并计入失败汇总（F2）。
+ * 失败时仅告警、不中断后续步骤（tag 已存在等情形需继续执行 push/npm），
+ * 但失败会记入 failures，最终由调用方汇总为 ok:false + exit 1。
+ *
+ * @returns {{ok: boolean}}
+ */
+function runGitStep({ name, args, gitResults, failures, actions, note }) {
+  const r = git(args, ROOT);
+  const ok = r.status === 0;
+  if (gitResults) gitResults.push({ step: name, command: `git ${args.join(" ")}`, ok, exitCode: r.status ?? -1 });
+  if (note) actions.push(note(ok));
+  if (!ok) {
+    eprintf(`警告: git ${name} 失败（${procFailInfo(r, 30_000)}）：${(r.stderr || r.stdout || "").trim().slice(-200)}`);
+    failures.push(`git ${name}`);
+  }
+  return { ok };
+}
+
+/**
  * 生成子进程失败/超时的诊断信息（exit code 或超时提示）。
  * spawnSync 在子进程被 timeout 杀掉时返回 status === null（error 为 timeout）——
  * 此时给出明确超时提示（X 为对应 timeout 秒数），而非笼统的「exit -1」。
@@ -336,6 +364,8 @@ export function main(argv = process.argv) {
   const gitOk = isGitRepo(ROOT);
   const actions = [];
   const gitResults = [];
+  // F2：收集全部失败子步骤，任一失败 → ok:false + exit 1
+  const failures = [];
 
   // 需随发布同步版本号的文件（仅计入实际存在的；git add 不存在文件会报错）
   const syncFiles = [...VERSION_JSON_FILES, ...VERSION_TEXT_FILES].filter((f) =>
@@ -400,23 +430,36 @@ export function main(argv = process.argv) {
           const listItems = versionBlock[0].match(/^- .+/gm);
           if (listItems) notesLines = listItems;
         }
-        const notesEsc = notesLines.join('\x00');
+        const notesEsc = notesLines.join('\n');
+        // F1：多行要点走 stdin，不进 argv —— spawnSync 的参数禁止含 NUL，
+        // 旧实现用 \x00 拼接，≥2 条要点时直接抛 ERR_INVALID_ARG_VALUE 未捕获崩溃，
+        // 崩溃点位于「已写盘」与「git add/commit/tag」之间，留下半完成发布态。
         const updateArgs = [
           updateScript,
           "--version", newVersion,
           "--date", date,
           "--theme", theme,
-          "--notes", notesEsc,
+          "--notes-stdin",
         ];
-        const updateResult = spawnSync("node", updateArgs, {
-          cwd: ROOT, encoding: "utf-8", shell: false, timeout: 30_000,
-        });
+        let updateResult;
+        try {
+          // MEN_ROOT 传递：子脚本（update-release-page.mjs）与自身 ROOT 语义一致
+          updateResult = spawnSync("node", updateArgs, {
+            cwd: ROOT, encoding: "utf-8", shell: false, timeout: 30_000,
+            env: { ...process.env, MEN_ROOT: ROOT },
+            input: notesEsc,
+          });
+        } catch (e) {
+          // 兜底：spawn 调用本身抛错也不能冒泡到模块顶层
+          updateResult = { status: -1, stdout: "", stderr: String(e && e.message ? e.message : e), error: e };
+        }
         const updateOk = updateResult.status === 0;
         actions.push(`releases.astro 更新 ${updateOk ? "OK" : "FAIL"}`);
         if (updateOk) {
           addFiles.push("site/src/pages/docs/releases.astro");
         } else {
           eprintf(`警告: update-release-page.mjs 失败：${procFailInfo(updateResult, 30_000)}：${(updateResult.stderr || "").trim().slice(-200)}`);
+          failures.push("update-release-page.mjs");
         }
       }
     }
@@ -429,12 +472,7 @@ export function main(argv = process.argv) {
         ["tag", ["tag", `v${newVersion}`]],
       ];
       for (const [name, args] of steps) {
-        const r = git(args, ROOT);
-        const ok = r.status === 0;
-        gitResults.push({ step: name, command: `git ${args.join(" ")}`, ok, exitCode: r.status ?? -1 });
-        if (!ok) {
-          eprintf(`警告: git ${name} 失败（${procFailInfo(r, 30_000)}）：${(r.stderr || r.stdout || "").trim().slice(-200)}`);
-        }
+        runGitStep({ name, args, gitResults, failures });
       }
     } else {
       actions.push("git 操作跳过（尚未 git init，已更新版本号与 CHANGELOG）");
@@ -447,13 +485,10 @@ export function main(argv = process.argv) {
         ["push-tags", ["push", "origin", "--tags"]],
       ];
       for (const [name, args] of pushSteps) {
-        const r = git(args, ROOT);
-        const ok = r.status === 0;
-        gitResults.push({ step: name, command: `git ${args.join(" ")}`, ok, exitCode: r.status ?? -1 });
-        actions.push(`git ${name} ${ok ? "OK" : "FAIL"}`);
-        if (!ok) {
-          eprintf(`警告: git ${name} 失败（${procFailInfo(r, 30_000)}）：${(r.stderr || r.stdout || "").trim().slice(-200)}`);
-        }
+        runGitStep({
+          name, args, gitResults, failures, actions,
+          note: (ok) => `git ${name} ${ok ? "OK" : "FAIL"}`,
+        });
       }
     }
 
@@ -464,6 +499,7 @@ export function main(argv = process.argv) {
       if (fs.existsSync(notesScript)) {
         const notesResult = spawnSync("node", [notesScript, "--output", RELEASE_NOTES_PATH], {
           cwd: ROOT, encoding: "utf-8", shell: false, timeout: 30_000,
+          env: { ...process.env, MEN_ROOT: ROOT },
         });
         if (notesResult.status === 0 && fs.existsSync(RELEASE_NOTES_PATH)) {
           // 2. 读取 CHANGELOG 获取主题行（首个 > 开头的 blockquote）
@@ -487,6 +523,7 @@ export function main(argv = process.argv) {
             if (url) actions.push(`  ${url}`);
           } else {
             eprintf(`警告: gh release create 失败：${procFailInfo(ghResult, 60_000)}：${(ghResult.stderr || "").trim().slice(-200)}`);
+            failures.push("gh release create");
           }
           // 清理临时 notes 文件
           try { fs.unlinkSync(RELEASE_NOTES_PATH); } catch { /* 临时文件清理失败可忽略 */ }
@@ -513,13 +550,16 @@ export function main(argv = process.argv) {
       actions.push(`npm publish ${npmOk ? "OK" : "FAIL"}`);
       if (!npmOk) {
         eprintf(`警告: npm publish 失败：${(npmResult.stderr || npmResult.stdout || "").trim().slice(-200)}`);
+        failures.push("npm publish");
       }
     }
   }
 
   // ── 摘要输出 ──
+  // F2：汇总各子步骤 ok —— 任一失败则 ok:false + exit 1，失败项写入 --json 摘要
+  const ok = failures.length === 0;
   const result = {
-    ok: true,
+    ok,
     name: "men（门）Agent 团队 版本发布",
     dryRun: cfg.dryRun,
     bump: cfg.bump,
@@ -533,9 +573,18 @@ export function main(argv = process.argv) {
     },
     actions,
     gitResults,
+    failures,
   };
 
+  // 摘要行两种模式都打印：JSON 模式下单独一行（JSON.parse 前先 grep，或调用方取首行 JSON），
+  // 人读模式下跟在表格之后。修复：此前「完成 ✗」只出现在人读分支，
+  // --json 时失败是沉默的，调用方无法从 stdout 判断成败。
+  const summary = ok ? "完成 ✓" : `完成 ✗（失败子步骤：${failures.join(", ")}）`;
+
+  result.summary = summary;
   if (cfg.json) {
+    // 摘要只进 result.summary，不额外打印一行——否则 stdout 不再是合法 JSON。
+    // F2 修复目标：JSON 调用方也能看到「完成 ✗」，而非从 silence 推断成败。
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
   } else {
     const mode = cfg.dryRun ? "（dry-run 预览）" : "";
@@ -562,11 +611,12 @@ export function main(argv = process.argv) {
     if (cfg.dryRun) {
       process.stdout.write(`dry-run 模式：以上为预览，未写入任何文件\n`);
     } else {
-      process.stdout.write(`完成 ✓\n`);
+      // F2：只有全部子步骤成功才打印「完成 ✓」
+      process.stdout.write(`${summary}\n`);
     }
   }
-  result.ok = true;
-  return { ok: true, exitCode: 0, result };
+  result.ok = ok;
+  return { ok, exitCode: ok ? 0 : 1, result };
 }
 
 // 入口守卫：仅直接执行时运行 CLI，被 import 时不触发

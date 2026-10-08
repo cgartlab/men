@@ -50,7 +50,8 @@ const USAGE_TEXT = `用法: node scripts/verify.mjs <target> [--json] [--sid <si
 
 退出码:
   0   = 全部检查通过
-  非 0 = 有检查项失败
+  1   = 有检查项失败
+  2   = 用法错误（缺目标 / 角色不存在）
 `;
 
 // 排除的目录（不进入递归）
@@ -327,8 +328,11 @@ function checkGate(targetPath) {
     if (fs.existsSync(path.join(scan, "scripts", "install.mjs"))) { repoRoot = scan; break; }
     scan = path.dirname(scan);
   }
-  // 如果目标不在仓库内（scaffold 场景），gate 直接 SKIP
-  if (repoRoot && !path.resolve(pkgDir).startsWith(repoRoot)) {
+  // F11：目标不在 men 仓库内（scaffold 场景）→ gate 直接 SKIP。
+  // 旧条件 `repoRoot && !pkgDir.startsWith(repoRoot)` 恒假（repoRoot 由 pkgDir 向上扫描所得，
+  // 必为其祖先），该分支从未可达；scaffold 目标会带着 null repoRoot 继续向上收集候选
+  // package.json，可能误选目标外（甚至用户 HOME）的 package.json 并执行其脚本。
+  if (!repoRoot) {
     return { id: "gate-exit-code", status: "SKIP", evidence: "目标不在 men 仓库内，跳过 gate（scaffold 模式）", details: "" };
   }
   // 向上收集所有候选 package.json（从近到远；遇仓库根、文件系统根或深度上限即停）
@@ -348,12 +352,36 @@ function checkGate(targetPath) {
     return { id: "gate-exit-code", status: "SKIP", evidence: "未找到 package.json，跳过 gate", details: "" };
   }
   const want = ["typecheck", "test", "lint"];
-  // 优先选含 want 脚本的候选（从近到远第一个），否则回退最近候选
-  const chosen = candidates.find(p => {
-    const scripts = JSON.parse(fs.readFileSync(p, "utf-8")).scripts || {};
-    return want.some(k => typeof scripts[k] === "string");
-  }) || candidates[0];
-  const pkg = JSON.parse(fs.readFileSync(chosen, "utf-8"));
+  // F4：两处 JSON.parse 包裹——损坏的 package.json 此前一路冒到 main 的 catch 被记成
+  // SKIP（SKIP 不计入 failed → verify 仍 exit 0），typecheck/test/lint 根本没跑 = 假通过。
+  // 解析失败按 FAIL 处理（与 checkBinExportsTargets 一致）。
+  let chosen = null;
+  for (const p of candidates) {
+    let scripts;
+    try {
+      scripts = JSON.parse(fs.readFileSync(p, "utf-8")).scripts || {};
+    } catch (e) {
+      return {
+        id: "gate-exit-code",
+        status: "FAIL",
+        evidence: `package.json 解析失败：${p}（${e.message}）`,
+        details: "损坏的 package.json 使门禁无法执行——按 FAIL 处理，不吞成 SKIP",
+      };
+    }
+    if (want.some(k => typeof scripts[k] === "string")) { chosen = p; break; }
+  }
+  if (!chosen) chosen = candidates[0];
+  let pkg;
+  try {
+    pkg = JSON.parse(fs.readFileSync(chosen, "utf-8"));
+  } catch (e) {
+    return {
+      id: "gate-exit-code",
+      status: "FAIL",
+      evidence: `package.json 解析失败：${chosen}（${e.message}）`,
+      details: "损坏的 package.json 使门禁无法执行——按 FAIL 处理，不吞成 SKIP",
+    };
+  }
   const scripts = pkg.scripts || {};
   const available = want.filter(k => typeof scripts[k] === "string");
   if (available.length === 0) {
@@ -881,6 +909,10 @@ export function main(argv = process.argv) {
   }
   const cfg = parseArgs(argv);
   if (!cfg.target) {
+    // F12：--json 调用方需要可解析的错误输出——参数错误也出 JSON，exit 2 保持不变。
+    if (cfg.json) {
+      process.stdout.write(JSON.stringify({ ok: false, exitCode: 2, error: "缺少目标", usage: USAGE_TEXT }, null, 2) + "\n");
+    }
     eprintf("用法: node scripts/verify.mjs <目标路径或角色名> [--json] [--sid <sid>]");
     return { ok: false, exitCode: 2, error: "缺少目标" };
   }
@@ -890,6 +922,9 @@ export function main(argv = process.argv) {
   if (ROLE_MAP.includes(cfg.target)) {
     const roleMd = path.join(AGENT_DIR, `${cfg.target}.md`);
     if (!fs.existsSync(roleMd)) {
+      if (cfg.json) {
+        process.stdout.write(JSON.stringify({ ok: false, exitCode: 2, error: `角色 ${cfg.target} 定义不存在` }, null, 2) + "\n");
+      }
       eprintf(`角色 ${cfg.target} 的 agent 定义不存在：${roleMd}`);
       return { ok: false, exitCode: 2, error: `角色 ${cfg.target} 定义不存在` };
     }

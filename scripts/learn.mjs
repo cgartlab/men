@@ -57,7 +57,8 @@ function parseFrontmatter(content) {
 function readEvents(sid) {
   const file = `${EVENTS_DIR}/${sid}/events.jsonl`;
   if (!fs.existsSync(file)) return [];
-  const lines = fs.readFileSync(file, 'utf8').split('\n').filter(l => l.trim());
+  // F10：剥离 UTF-8 BOM（PowerShell 重存会加 BOM，首行 JSON.parse 必炸被静默丢弃）
+  const lines = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
   const events = [];
   for (const line of lines) {
     try { events.push(JSON.parse(line)); } catch { /* skip malformed */ }
@@ -195,7 +196,12 @@ export function main(argv) {
   if (args.includes('--help') || args.includes('-h')) return usage();
 
   const sidIdx = args.indexOf('--sid');
-  const sid = sidIdx >= 0 ? args[sidIdx + 1] : 'unknown';
+  const sidRaw = sidIdx >= 0 ? args[sidIdx + 1] : 'unknown';
+  // F16：--sid 在末位缺值时 args[sidIdx+1] 为 undefined，此前会向字面量
+  // `sessions/undefined/` 目录写事件（探针实证）——拒掉非字符串/flag 取值。
+  const sid = typeof sidRaw === 'string' && sidRaw.trim() && !sidRaw.startsWith('--')
+    ? sidRaw
+    : 'unknown';
   const dryRun = args.includes('--dry-run');
   const jsonOut = args.includes('--json');
 
@@ -205,7 +211,8 @@ export function main(argv) {
   // Step 2: 分类
   const result = classify(events);
 
-  // Step 3: 执行
+  // Step 3: 执行（F15：文件头与 usage 均承诺 best-effort——errors/、patterns/、
+  // queue、index 任何一处只读/权限异常都不得让 learn 整体未捕获崩溃）
   const actions = [];
   for (const action of result.actions) {
     if (dryRun) {
@@ -213,28 +220,33 @@ export function main(argv) {
       continue;
     }
     let outcome;
-    switch (action.type) {
-      case 'A': // skill description — 标记待处理（P1 实现 skill-evolve）
-        actions.push({ ...action, executed: true, note: 'deferred to skill-evolve (P1)' });
-        break;
-      case 'B':
-        outcome = writeError(action, sid);
-        actions.push({ ...action, executed: true, ...outcome });
-        break;
-      case 'C':
-        if (action.target === 'human-gate') {
-          outcome = queueGate(action, sid);
+    try {
+      switch (action.type) {
+        case 'A': // skill description — 标记待处理（P1 实现 skill-evolve）
+          actions.push({ ...action, executed: true, note: 'deferred to skill-evolve (P1)' });
+          break;
+        case 'B':
+          outcome = writeError(action, sid);
           actions.push({ ...action, executed: true, ...outcome });
-        } else {
-          outcome = writePattern(action, sid);
-          actions.push({ ...action, executed: true, ...outcome });
-        }
-        break;
-      case 'blocked':
-        actions.push({ ...action, executed: true, note: 'BLOCKED recorded' });
-        break;
-      default:
-        actions.push({ ...action, executed: false });
+          break;
+        case 'C':
+          if (action.target === 'human-gate') {
+            outcome = queueGate(action, sid);
+            actions.push({ ...action, executed: true, ...outcome });
+          } else {
+            outcome = writePattern(action, sid);
+            actions.push({ ...action, executed: true, ...outcome });
+          }
+          break;
+        case 'blocked':
+          actions.push({ ...action, executed: true, note: 'BLOCKED recorded' });
+          break;
+        default:
+          actions.push({ ...action, executed: false });
+      }
+    } catch (e) {
+      // best-effort：单个动作失败降级记录，不中断其余动作
+      actions.push({ ...action, executed: false, error: String(e && e.message ? e.message : e) });
     }
   }
 
@@ -261,5 +273,11 @@ export function main(argv) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  console.log(main(process.argv.slice(2)));
+  // F15：CLI 入口同样 best-effort——顶层异常转为结构化错误输出而非裸栈。
+  try {
+    console.log(main(process.argv.slice(2)));
+  } catch (e) {
+    process.stderr.write(`learn.mjs 异常（best-effort，不影响主流程）: ${e && e.message ? e.message : e}\n`);
+    process.exitCode = 1;
+  }
 }

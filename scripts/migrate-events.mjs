@@ -52,20 +52,17 @@ function usage() {
  */
 function processSession(file, dryRun) {
   const raw = fs.readFileSync(file, 'utf8');
-  const eol = raw.includes('\r\n') ? '\r\n' : '\n';
-  const lines = raw.split(/\r?\n/);
-  let sessionFixed = 0;
-  const fixedLines = lines.map(line => {
-    if (line.includes(LEGACY_TYPE)) {
-      sessionFixed++;
-      return line.replace(LEGACY_TYPE, TARGET_TYPE);
-    }
-    return line;
-  });
-  if (sessionFixed > 0 && !dryRun) {
-    fs.writeFileSync(file, fixedLines.join(eol), 'utf8');
+  // F22：替换子串不跨行——直接在原文上 replaceAll，行尾与末尾换行天然不动
+  // （此前 split/join 会按主导行尾重拼，混合行尾文件被归一化）。
+  const hits = raw.split(LEGACY_TYPE).length - 1;
+  if (hits > 0 && !dryRun) {
+    const out = raw.split(LEGACY_TYPE).join(TARGET_TYPE);
+    // tmp + rename 原子重写——迁移中被杀不再截断会话日志（F22）
+    const tmp = file + '.migrate.tmp';
+    fs.writeFileSync(tmp, out, 'utf8');
+    fs.renameSync(tmp, file);
   }
-  return sessionFixed;
+  return hits;
 }
 
 export function main(argv) {

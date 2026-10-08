@@ -12,7 +12,7 @@
  * 允许的 gate 关键字：typecheck / test / lint
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename, rm, stat } from "node:fs/promises";
 import { existsSync, appendFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -44,7 +44,8 @@ keyword 白名单: typecheck / test / lint
 退出码:
   0 = 通过 / 跳过 / 强化耗尽
   1 = 检查失败
-  2 = 关键字不在白名单
+  2 = 用法错误（缺关键字 / 关键字不在白名单）
+  3 = 未捕获异常
 `;
 
 // ─── 参数解析 ───────────────────────────────────────────────────
@@ -120,7 +121,12 @@ async function readState(keyword) {
   if (!existsSync(path)) return { reinforcementCount: 0, lastResult: null };
   try {
     const raw = await readFile(path, "utf-8");
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // F14：形状校验——合法但形状不符（如 {}）的状态不得让上限检查 fail-open。
+    if (parsed && typeof parsed === "object" && Number.isFinite(parsed.reinforcementCount)) {
+      return { reinforcementCount: parsed.reinforcementCount, lastResult: parsed.lastResult ?? null };
+    }
+    return { reinforcementCount: 0, lastResult: null };
   } catch {
     return { reinforcementCount: 0, lastResult: null };
   }
@@ -130,7 +136,59 @@ async function writeState(keyword, state) {
   const path = statePath(keyword);
   const dir = dirname(path);
   if (!existsSync(dir)) await mkdir(dir, { recursive: true });
-  await writeFile(path, JSON.stringify(state, null, 2));
+  // F14：tmp + rename 原子写，进程被杀不再留下截断/空状态文件。
+  const tmp = `${path}.${process.pid}.tmp`;
+  await writeFile(tmp, JSON.stringify(state, null, 2));
+  await rename(tmp, path);
+}
+
+// F6：强化计数的读-改-写临界区锁。
+// 此前 read（spawnSync 前300s）与 write（spawnSync 后）隔着整个执行窗口，
+// 并发 gate 进程互相覆盖计数 → 上限被系统性低估。
+// mkdir 在所有平台都是原子操作，用作互斥锁；带 stale 检测（持锁进程被杀）与超时降级。
+const LOCK_STALE_MS = 10_000;
+const LOCK_WAIT_MS = 3_000;
+
+async function withStateLock(keyword, fn) {
+  const lockDir = `${statePath(keyword)}.lock`;
+  const start = Date.now();
+  for (;;) {
+    try {
+      await mkdir(lockDir); // 非递归：已存在则抛 EEXIST
+      break;
+    } catch (e) {
+      if (e.code !== "EEXIST") break; // 其他错误：放弃锁竞争，继续（best-effort，不阻塞门禁）
+      try {
+        const st = await stat(lockDir);
+        if (Date.now() - st.mtimeMs > LOCK_STALE_MS) {
+          await rm(lockDir, { recursive: true, force: true });
+          continue; // stale 锁：抢占后重试
+        }
+      } catch {
+        continue;
+      }
+      if (Date.now() - start > LOCK_WAIT_MS) break; // 超时：无锁执行，宁可继续也不死锁
+      await new Promise((r) => setTimeout(r, 20 + Math.floor(Math.random() * 30)));
+    }
+  }
+  try {
+    return await fn();
+  } finally {
+    await rm(lockDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+/**
+ * 在锁内完成「重读 → 自增/重置 → 原子写」。
+ * 必须在 spawnSync 之后调用：以最新状态为基准，窗口从 300s 缩到毫秒级且互斥。
+ */
+async function updateReinforcement(keyword, mutate) {
+  return withStateLock(keyword, async () => {
+    const state = await readState(keyword);
+    mutate(state);
+    await writeState(keyword, state);
+    return state;
+  });
 }
 
 // ─── 主逻辑 ─────────────────────────────────────────────────────
@@ -150,7 +208,8 @@ async function main() {
   // ── 1. 白名单校验 ──
   if (!keyword) {
     console.error("用法：node scripts/gate.mjs <gate关键字> [--dir <dir>] [--sid <sid>] [--force]");
-    process.exit(1);
+    // F13：用法错误归 2（与「关键字不在白名单」同类），1 保留给「检查失败」。
+    process.exit(2);
   }
   if (!GATE_KEYWORDS.has(keyword)) {
     console.error(`GATE_REJECTED: ${keyword}（gate 关键字不在白名单）`);
@@ -238,9 +297,11 @@ async function main() {
   if (timedOut) {
     const timeoutSec = Math.round(timeoutMs / 1000);
     console.error(`GATE_FAILED: ${keyword} 超时（${timeoutSec} 秒），已 SIGKILL`);
-    state.reinforcementCount = state.reinforcementCount + 1;
-    state.lastResult = "failed-timeout";
-    await writeState(keyword, state);
+    // F6：锁内重读再自增，避免跨 spawnSync 窗口的并发丢计数。
+    await updateReinforcement(keyword, (s) => {
+      s.reinforcementCount = s.reinforcementCount + 1;
+      s.lastResult = "failed-timeout";
+    });
     await appendEvent(
       sessionId,
       "gate.failed",
@@ -257,9 +318,11 @@ async function main() {
     if (result.stdout) console.error(`[stdout]\n${result.stdout}`);
     if (result.stderr) console.error(`[stderr]\n${result.stderr}`);
 
-    state.reinforcementCount = state.reinforcementCount + 1;
-    state.lastResult = "failed";
-    await writeState(keyword, state);
+    // F6：锁内重读再自增。
+    await updateReinforcement(keyword, (s) => {
+      s.reinforcementCount = s.reinforcementCount + 1;
+      s.lastResult = "failed";
+    });
     await appendEvent(
       sessionId,
       "gate.failed",
@@ -272,9 +335,11 @@ async function main() {
 
   // ── 7. 通过 ──
   console.error(`GATE_PASSED: ${keyword} ✓`);
-  state.reinforcementCount = 0;
-  state.lastResult = "passed";
-  await writeState(keyword, state);
+  // F6：锁内重读再重置。
+  await updateReinforcement(keyword, (s) => {
+    s.reinforcementCount = 0;
+    s.lastResult = "passed";
+  });
   await appendEvent(
     sessionId,
     "gate.passed",

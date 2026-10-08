@@ -60,9 +60,51 @@ const REQUIRED_FIELDS = ['eventId', 'ts', 'sid', 'type'];
 
 /**
  * 获取某 sid 对应的 events.jsonl 文件路径
+ * F9：sid 必须是非空字符串——append/list/replay/validate 全部经此取路径，
+ * 此前缺 --sid 时 path.join(undefined) 直接抛 TypeError 裸栈。
+ * parseArgs 在 --sid 缺值时会置 true（boolean），一并拒掉。
  */
+function requireSid(sid, cmdName) {
+  if (typeof sid !== 'string' || !sid.trim()) {
+    console.error(`[错误] ${cmdName} 需要 --sid <session-id>（缺值或值非法）`);
+    usage();
+    process.exit(2);
+  }
+  return sid;
+}
+
 function eventsPath(sid) {
   return path.join(ROOT, '.agents', 'state', 'sessions', sid, 'events.jsonl');
+}
+
+/**
+ * 读取 events.jsonl 并逐行解析。
+ * F10：剥离 UTF-8 BOM（PowerShell Set-Content 默认写 BOM，JSON.parse 必炸）；
+ * F3/F5：缺必填字段的行计入 badReport 而非带进渲染（渲染处不再裸奔）。
+ * 返回 { lines: string[], events: object[], bad: number, badReport: [] }
+ */
+function readEventLines(fp) {
+  const content = fs.readFileSync(fp, 'utf-8').replace(/^\uFEFF/, '');
+  const lines = content.split('\n').filter((l) => l.trim().length > 0);
+  const events = [];
+  const badReport = [];
+  for (let i = 0; i < lines.length; i++) {
+    const lineNo = i + 1;
+    let obj;
+    try {
+      obj = JSON.parse(lines[i]);
+    } catch (e) {
+      badReport.push({ line: lineNo, reason: `JSON 解析失败: ${e.message}` });
+      continue;
+    }
+    const missing = REQUIRED_FIELDS.filter((f) => obj[f] === undefined || obj[f] === null || obj[f] === '');
+    if (missing.length > 0) {
+      badReport.push({ line: lineNo, reason: `缺少必填字段: ${missing.join(', ')}` });
+      continue;
+    }
+    events.push(obj);
+  }
+  return { events, bad: badReport.length, badReport };
 }
 
 /**
@@ -167,7 +209,7 @@ function formatLocalTs(ts) {
 
 function cmdAppend(args) {
   const kind = args.type;
-  const sid = args.sid;
+  const sid = requireSid(args.sid, 'append');
   const subject = args.subject || '';
   const detail = args.detail || '';
   const payloadRaw = args.payload;
@@ -222,7 +264,7 @@ function cmdAppend(args) {
 // ================= list =================
 
 function cmdList(args) {
-  const sid = args.sid;
+  const sid = requireSid(args.sid, 'list');
   const filterType = args.type || null;
   const since = args.since || null;
   const jsonOutput = args['json'] === true;
@@ -233,36 +275,17 @@ function cmdList(args) {
     process.exit(1);
   }
 
-  const content = fs.readFileSync(fp, 'utf-8');
-  const lines = content.split('\n').filter((l) => l.trim().length > 0);
-
-  let good = 0;
-  let bad = 0;
-  const results = [];
-  const badReport = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const lineNo = i + 1;
-    let obj;
-    try {
-      obj = JSON.parse(lines[i]);
-    } catch (e) {
-      bad++;
-      badReport.push({ line: lineNo, reason: `JSON 解析失败: ${e.message}` });
-      continue;
-    }
-    good++;
-
-    // 过滤 --type
-    if (filterType && obj.type !== filterType) continue;
-    // 过滤 --since
-    if (since && obj.ts < since) continue;
-
-    results.push(obj);
-  }
+  const { events, bad, badReport } = readEventLines(fp);
+  const results = events.filter((obj) => {
+    if (filterType && obj.type !== filterType) return false;
+    if (since && obj.ts < since) return false;
+    return true;
+  });
 
   if (jsonOutput) {
     console.log(JSON.stringify(results, null, 2));
+    // F5：JSON 契约——坏数据提示走 stderr，stdout 保持纯 JSON。
+    if (bad > 0) console.error(`(跳过 ${bad} 行坏数据)`);
   } else {
     console.log(`=== 会话 ${sid} 事件列表 (${results.length} 条) ===`);
     if (results.length === 0) {
@@ -274,10 +297,10 @@ function cmdList(args) {
         console.log(`  [${tsLocal}] ${ev.type.padEnd(22)} subject=${ev.subject}  detail=${detail}`);
       }
     }
-  }
-
-  if (bad > 0) {
-    console.log(`\n(跳过 ${bad} 行坏数据)`);
+    if (bad > 0) {
+      console.log(`\n(跳过 ${bad} 行坏数据)`);
+      for (const r of badReport) console.log(`  第 ${r.line} 行: ${r.reason}`);
+    }
   }
   process.exit(0);
 }
@@ -285,32 +308,16 @@ function cmdList(args) {
 // ================= replay =================
 
 function cmdReplay(args) {
-  const sid = args.sid;
+  const sid = requireSid(args.sid, 'replay');
   const fp = eventsPath(sid);
   if (!fs.existsSync(fp)) {
     console.error(`[错误] 事件文件不存在: ${fp}`);
     process.exit(1);
   }
 
-  const content = fs.readFileSync(fp, 'utf-8');
-  const lines = content.split('\n').filter((l) => l.trim().length > 0);
+  const { events, bad, badReport } = readEventLines(fp);
 
-  const events = [];
-  const badReport = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const lineNo = i + 1;
-    let obj;
-    try {
-      obj = JSON.parse(lines[i]);
-    } catch (e) {
-      badReport.push({ line: lineNo, reason: `JSON 解析失败: ${e.message}` });
-      continue;
-    }
-    events.push(obj);
-  }
-
-  // 按 (ts, eventId) 排序
+  // 按 (ts, eventId) 排序（事件行已过必填字段校验，ts 必为字符串）
   events.sort((a, b) => {
     const tc = a.ts.localeCompare(b.ts);
     if (tc !== 0) return tc;
@@ -325,8 +332,9 @@ function cmdReplay(args) {
     console.log(`  [${tsLocal}] ${ev.type.padEnd(22)} eventId=${ev.eventId} subject=${ev.subject}${detail} payload=${payload}`);
   }
 
-  if (badReport.length > 0) {
-    console.log(`\n(跳过 ${badReport.length} 行坏数据)`);
+  if (bad > 0) {
+    console.log(`\n(跳过 ${bad} 行坏数据)`);
+    for (const r of badReport) console.log(`  第 ${r.line} 行: ${r.reason}`);
   }
 
   // 统计：按 type 分组计数
@@ -346,14 +354,16 @@ function cmdReplay(args) {
 // ================= validate =================
 
 function cmdValidate(args) {
-  const sid = args.sid;
+  const sid = requireSid(args.sid, 'validate');
   const fp = eventsPath(sid);
   if (!fs.existsSync(fp)) {
     console.error(`[错误] 事件文件不存在: ${fp}`);
     process.exit(1);
   }
 
-  const content = fs.readFileSync(fp, 'utf-8');
+  // F10：readEventLines 已剥离 BOM；validate 需要区分「JSON 坏」与「字段缺」，
+  // 故自行逐行解析（字段校验逻辑与 readEventLines 一致，但分类报告）。
+  const content = fs.readFileSync(fp, 'utf-8').replace(/^\uFEFF/, '');
   const lines = content.split('\n').filter((l) => l.trim().length > 0);
 
   let good = 0;

@@ -318,3 +318,78 @@ test('release.md 不再要求 opencode.json 声明 MCP', () => {
   assert.ok(text.includes('CC Switch 统一管理'));
   assert.ok(!text.includes('MCP 服务器一律在 `opencode.json` 中声明'));
 });
+
+// ── hermes-bot-mode skill（Hermes Bot Mode 自动识别 + 群组有序执行） ──
+
+test('hermes-bot-mode skill frontmatter 合法且描述含触发词', () => {
+  const text = readRel('.opencode/skills/hermes-bot-mode/SKILL.md');
+  assert.ok(text.startsWith('---'), '缺少开头 ---');
+  assert.ok(text.indexOf('\n---', 3) !== -1, 'frontmatter 未闭合');
+  assert.ok(text.includes('name: hermes-bot-mode'));
+  assert.ok(text.includes('触发关键词'));
+  assert.ok(text.includes('群组'));
+});
+
+test('hermes-bot-mode 三层识别信号齐全（prompt/tool/probe）', () => {
+  const text = readRel('.opencode/skills/hermes-bot-mode/SKILL.md');
+  // L1 prompt 层：两种群组轮次前缀 + Bot Chat 协议段
+  assert.ok(text.includes('[Group chat:'), '缺 Group chat 前缀信号');
+  assert.ok(text.includes('[Discussion:'), '缺 Discussion 前缀信号');
+  assert.ok(text.includes('## Messaging other agents'), '缺 Bot Chat 协议段信号');
+  // L2 工具层
+  assert.ok(text.includes('message_agent'));
+  // L3 机械层：探针脚本与三种断言
+  assert.ok(text.includes('runtime-probe.mjs'), '缺机械探针');
+  assert.ok(text.includes('--expect hermes'));
+  assert.ok(text.includes('--expect bot-mode'));
+});
+
+test('hermes-bot-mode 群组机制事实与 Hermes 源码一致', () => {
+  const text = readRel('.opencode/skills/hermes-bot-mode/SKILL.md');
+  // Round 0 无 @ = 全员轮到（七嘴八舌根源）
+  assert.ok(text.includes('所有成员轮流'), '未说明 Round 0 全员机制');
+  // Round 1+ opt-in via @cite
+  assert.ok(text.includes('@cite'), '未说明后续轮 @cite 机制');
+  // 上限 3 轮 / 10 消息 / 6 成员
+  assert.ok(text.includes('3 轮'), '缺轮次上限');
+  assert.ok(text.includes('10 条消息'), '缺消息上限');
+  assert.ok(text.includes('6 成员'), '缺成员上限');
+  // (pass) 静默语义——锁定 Hermes 源码 is_pass_text 的实际正则，
+  // 而不是只查 '(pass)' 出现：旧断言对任何含该子串的文本恒真。
+  assert.ok(
+    text.includes('pass.'), // 'pass.' 仅出现在正则说明里，避免反斜杠转义脆弱
+    '未写明 pass 静默的整串正则（源码 is_pass_text）'
+  );
+  // Hermes 没有"被点名却 pass 就 nudge 你"的机制——静默就是静默。
+  // 断言正向表述（旧断言查 'nudge' || '强制'，会被"无强制应答"反向满足，等于恒真）。
+  assert.ok(
+    text.includes('无强制应答'),
+    '未声明 Hermes 无点名强制机制（静默即静默）'
+  );
+});
+
+test('hermes-bot-mode 有序执行纪律：men 默认接单 + 非对口角色 pass', () => {
+  const text = readRel('.opencode/skills/hermes-bot-mode/SKILL.md');
+  assert.ok(text.includes('men 是默认接单者'), '缺 men 默认接单纪律');
+  assert.ok(text.includes('其余 5 个角色首轮一律'), '缺非对口角色 pass 纪律');
+  assert.ok(text.includes('一次只有一个主发言人'), '缺单发言人纪律');
+  assert.ok(text.includes('pass 要干净'), '缺 pass 纯净度纪律');
+  assert.ok(text.includes('绝不重复'), '缺防重复纪律');
+  assert.ok(text.includes('不泄露私聊'), '缺私聊隔离纪律');
+});
+
+test('hermes-bot-mode 与 men 编排协议的关系明确（ultrawork 不变、路由表复用）', () => {
+  const text = readRel('.opencode/skills/hermes-bot-mode/SKILL.md');
+  assert.ok(text.includes('/ultrawork'), '未关联 ultrawork 协议');
+  assert.ok(text.includes('意图门'), '未说明意图门复用');
+  assert.ok(text.includes('路由判定表'), '未说明路由判定表复用');
+  assert.ok(text.includes('verify.mjs'), '未说明验证链路');
+});
+
+test('hermes-bot-mode 通道选择表覆盖 message_agent 与 delegate_task', () => {
+  const text = readRel('.opencode/skills/hermes-bot-mode/SKILL.md');
+  assert.ok(text.includes('delegate_task'), '缺 delegate_task 分工');
+  assert.ok(text.includes('message_agent'), '缺 message_agent 分工');
+  // 群组 / DM / 单内并行三通道都要出现
+  assert.ok(text.includes('群组内回复'));
+});

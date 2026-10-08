@@ -54,7 +54,9 @@ function parseOutcome(ev) {
     if (raw.includes('partial')) return 'PARTIAL';
     if (raw.includes('regressed')) return 'REGRESSED';
     if (raw.includes('blocked')) return 'BLOCKED';
-    if (raw.includes('fail')) return 'FAIL';
+    // F18：失败事件的 detail 实际形态——gate.mjs 写「退出码 1 / 超时」，
+    // verify.mjs 写「失败项: ...」。此前只匹配英文 fail，中文失败一律归 unknown。
+    if (raw.includes('fail') || raw.includes('失败') || raw.includes('退出码') || raw.includes('非零退出') || raw.includes('超时')) return 'FAIL';
     if (raw.includes('pass') || raw.includes('通过')) return 'PASS';
     return 'unknown';
   }
@@ -158,6 +160,9 @@ export function computeMetrics(events, opts = {}) {
       value: total > 0 ? Math.round(pass / total * 100) / 100 : 0,
       display: `${Math.round(pass / Math.max(total, 1) * 100)}%`,
       pass,
+      // F18：fail 此前算完即弃——纳入输出，供报告/路由消费；
+      // 配合 parseOutcome 的中文失败关键词，失败事件不再系统性归 unknown。
+      fail,
       total
     },
     'KPI-first-pass': {
@@ -230,7 +235,8 @@ function usage() {
 function readEvents(sid) {
   const file = path.join(EVENTS_DIR, sid, 'events.jsonl');
   if (!fs.existsSync(file)) return [];
-  const lines = fs.readFileSync(file, 'utf8').split('\n').filter(l => l.trim());
+  // F10：剥离 UTF-8 BOM（PowerShell 重存会加 BOM，首行 JSON.parse 必炸被静默丢弃 → KPI 少计）
+  const lines = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
   const events = [];
   for (const line of lines) {
     try { events.push(JSON.parse(line)); } catch { /* skip malformed */ }
@@ -243,7 +249,14 @@ export function main(argv) {
   if (args.includes('--help') || args.includes('-h')) return usage();
 
   const sidIdx = args.indexOf('--sid');
-  const sid = sidIdx >= 0 ? args[sidIdx + 1] : null;
+  const sidRaw = sidIdx >= 0 ? args[sidIdx + 1] : null;
+  // F17/F16 同因：--sid 在末位缺值时 parseArgs 会拿到下一个 flag 或 undefined，
+  // 此前静默退化为全 0 KPI（且 F1 曾让 kpi-latest 也不写）——显式拒掉非字符串取值。
+  const sid = typeof sidRaw === 'string' && sidRaw.trim() && !sidRaw.startsWith('--') ? sidRaw : null;
+  if (sidIdx >= 0 && !sid) {
+    // F17：缺 --sid 不再静默全 0——stderr 警告（stdout 仍出结构完整 JSON，保持向后兼容）。
+    process.stderr.write('[警告] --sid 缺值或非法：KPI 将基于空事件集计算（全部为 0），不代表真实表现\n');
+  }
   const window = parseInt(args[args.indexOf('--window') + 1] || '10', 10);
   const outputIdx = args.indexOf('--output');
   const outputFile = outputIdx >= 0 ? args[outputIdx + 1] : null;
@@ -255,7 +268,9 @@ export function main(argv) {
   const result = JSON.stringify(metrics, null, 2);
 
   // --output: 写入 KPI 文件（供 men 路由决策参考）
-  if (outputFile || (!outputIdx && sid)) {
+  // F1：`!outputIdx` 恒为 false（indexOf 未命中返回 -1，而 !(-1) === false），
+  // 此前自动落盘分支从未进过——`kpi-latest.json` 从未被写出（R4 功能整体失效）。
+  if (outputFile || (outputIdx === -1 && sid)) {
     const target = outputFile || path.join(KPI_OUTPUT_DIR, 'kpi-latest.json');
     try {
       ensureDir(path.dirname(target));

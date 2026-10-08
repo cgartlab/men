@@ -151,7 +151,8 @@ test('event blackbox: verify/gate 写出的事件通过 validate（eventId 契�
   // `npm run test` —— 那正是本测试自身所在的套件，形成嵌套。CI 上实测该子进程
   // 跑满 120s 被杀，本测试遂报「verify.mjs 未在超时内结束」（本地因 Windows 的
   // child-v8 短路而侥幸通过，属跨平台不一致）。指向仓库外的临时目标即可让
-  // checkGate 走 scaffold 分支直接 SKIP（verify.mjs:315），既不嵌套也不超时，
+  // checkGate 走 scaffold 分支直接 SKIP（修复 F11 后：从目标向上找不到
+  // scripts/install.mjs 即 repoRoot=null → scaffold SKIP），既不嵌套也不超时，
   // 而 emitEvent 与目标无关、照常写事件 —— 本测试要断言的正是它。
   const tmpTargetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-eid-'));
   const tmpTarget = path.join(tmpTargetDir, 'men.md');
@@ -212,5 +213,93 @@ test('event blackbox: 从子目录运行也写入仓库内，状态不随 cwd �
   } finally {
     fs.rmSync(elsewhere, { recursive: true, force: true });
     fs.rmSync(path.dirname(repoLog), { recursive: true, force: true });
+  }
+});
+
+// ── F9：缺 --sid 是用法错误（exit 2），不是 TypeError 裸栈（exit 1） ──
+test('event F9: append/list/replay/validate 缺 --sid → exit 2 且无裸栈', () => {
+  for (const cmd of ['append', 'list', 'replay', 'validate']) {
+    const r = runEvent([cmd]);
+    assert.strictEqual(r.status, 2, `${cmd} 缺 --sid 应 exit 2，实得 ${r.status}；stderr: ${r.stderr}`);
+    assert.doesNotMatch(r.stderr, /TypeError/, `${cmd} 不应出现 TypeError 裸栈`);
+    assert.match(r.stderr, /--sid/, `${cmd} 应提示需要 --sid`);
+  }
+});
+
+// ── F9：--sid 在末位（parseArgs 置 true）同样是缺值 ──
+test('event F9: --sid 在末位缺值 → exit 2', () => {
+  const r = runEvent(['list', '--sid']);
+  assert.strictEqual(r.status, 2, `stderr: ${r.stderr}`);
+  assert.doesNotMatch(r.stderr, /TypeError/);
+});
+
+// ── F3：合法 JSON 但缺必填字段的行不再让 list/replay 崩溃 ──
+test('event F3: 缺字段事件行 → list/replay 容错跳过而非 TypeError', () => {
+  const sid = `test-partial-${Date.now()}`;
+  const eventsPath = sidEventsPath(sid);
+  try {
+    // 先写一条合法事件
+    const a = runEvent(['append', '--type', 'verify', '--subject', 'ok', '--sid', sid]);
+    assert.strictEqual(a.status, 0);
+    // 混入 JSON 语法合法但缺 type/ts/eventId 的行
+    fs.appendFileSync(eventsPath, '{"foo":1}\n{"ts":"2026-01-01T00:00:00.000Z"}\n');
+
+    const l = runEvent(['list', '--sid', sid]);
+    assert.strictEqual(l.status, 0, `list 应容错 exit 0：${l.stderr}`);
+    assert.match(l.stdout, /跳过 2 行坏数据/);
+    assert.doesNotMatch(l.stderr, /TypeError/);
+
+    const lj = runEvent(['list', '--sid', sid, '--json']);
+    assert.strictEqual(lj.status, 0);
+    // F5：stdout 必须是纯 JSON（坏数据提示走 stderr）
+    const parsed = JSON.parse(lj.stdout);
+    assert.strictEqual(parsed.length, 1, '好行照常返回');
+    assert.match(lj.stderr, /跳过 2 行坏数据/, '坏数据提示应在 stderr');
+
+    const rp = runEvent(['replay', '--sid', sid]);
+    assert.strictEqual(rp.status, 0, `replay 应容错 exit 0：${rp.stderr}`);
+    assert.doesNotMatch(rp.stderr, /TypeError/, 'replay 不应 localeCompare 崩溃');
+    assert.match(rp.stdout, /跳过 2 行坏数据/);
+  } finally {
+    fs.rmSync(path.dirname(eventsPath), { recursive: true, force: true });
+  }
+});
+
+// ── F5：--json 模式 stdout 纯 JSON（坏数据提示在 stderr） ──
+test('event F5: list --json 的 stdout 可被 JSON.parse（坏数据提示不污染 stdout）', () => {
+  const sid = `test-jsonctx-${Date.now()}`;
+  const eventsPath = sidEventsPath(sid);
+  try {
+    const a = runEvent(['append', '--type', 'verify', '--subject', 'x', '--sid', sid]);
+    assert.strictEqual(a.status, 0);
+    fs.appendFileSync(eventsPath, 'not-json-at-all\n');
+    const l = runEvent(['list', '--sid', sid, '--json']);
+    assert.strictEqual(l.status, 0);
+    JSON.parse(l.stdout); // 有坏行时 stdout 仍必须是合法 JSON
+    assert.match(l.stderr, /跳过 1 行坏数据/);
+  } finally {
+    fs.rmSync(path.dirname(eventsPath), { recursive: true, force: true });
+  }
+});
+
+// ── F10：UTF-8 BOM 剥离 ──
+test('event F10: events.jsonl 带 BOM 时 list/validate 仍正常', () => {
+  const sid = `test-bom-${Date.now()}`;
+  const eventsPath = sidEventsPath(sid);
+  try {
+    const a = runEvent(['append', '--type', 'verify', '--subject', 'bom', '--sid', sid]);
+    assert.strictEqual(a.status, 0);
+    const raw = fs.readFileSync(eventsPath);
+    fs.writeFileSync(eventsPath, Buffer.concat([Buffer.from('\uFEFF', 'utf8'), raw]));
+
+    const v = runEvent(['validate', '--sid', sid]);
+    assert.strictEqual(v.status, 0, `validate 应容忍 BOM：${v.stdout}${v.stderr}`);
+    assert.match(v.stdout, /校验通过/);
+
+    const l = runEvent(['list', '--sid', sid, '--json']);
+    assert.strictEqual(l.status, 0);
+    assert.strictEqual(JSON.parse(l.stdout).length, 1, 'BOM 首行应被正常解析');
+  } finally {
+    fs.rmSync(path.dirname(eventsPath), { recursive: true, force: true });
   }
 });
