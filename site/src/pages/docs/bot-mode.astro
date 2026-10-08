@@ -1,0 +1,176 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WikiManual from '../../components/WikiManual.astro';
+import SrcRef from '../../components/SrcRef.astro';
+import content from '../../data/content.json';
+
+const pageTitle = 'Bot Mode 群组有序执行 — ' + content.hero.title;
+const pageDesc = 'men 在 Hermes Bot Mode 多 Bot 群组中的运行方式：三层自动识别（prompt / 工具 / 机械探针）、Hermes 群组调度事实（3 轮 / 10 条 / 6 成员）、职责判定三问与 (pass) 纪律，以及行为层验证结果。';
+const base = '/';
+
+const infobox = [
+  { k: '识别层', v: '<strong>3 层</strong>（L1 prompt / L2 工具 / L3 探针）' },
+  { k: '调度上限', v: '<strong>3 轮 / 10 条 / 6 成员</strong>' },
+  { k: '七嘴八舌根源', v: 'Round 0 无 @ = <strong>全员轮流各拿一个 turn</strong>' },
+  { k: '判定顺序', v: '先问<strong>是否被 @</strong> → men 是否在场 → 最后才看职责域' },
+  { k: '静默语义', v: '回复匹配 <code>\\(?pass?\\)?\\.?</code> 即静默，不产生群内消息' },
+  { k: '探针', v: '<code>node scripts/runtime-probe.mjs --expect hermes</code>' },
+  { k: '行为验证', v: '<strong>4/4 场景通过</strong>（2026-10-08 实测报告）' },
+];
+
+const toc = [
+  { id: 'why', label: '为什么需要' },
+  { id: 'detect', label: '三层自动识别' },
+  { id: 'sched', label: '群组调度机制' },
+  { id: 'protocol', label: '有序执行协议' },
+  { id: 'deploy', label: '部署与验证' },
+  { id: 'trouble', label: '故障排查' },
+];
+
+const seealso = [
+  { href: base + 'docs/protocols', label: '协议规范', desc: '10 步编排协议与机械验证' },
+  { href: base + 'docs/agents', label: '角色说明', desc: '六角色职责边界与路由判定' },
+  { href: base + 'docs/quickstart', label: '快速上手', desc: '含 Hermes 部署入口（第十节）' },
+];
+---
+
+<BaseLayout title={pageTitle} description={pageDesc}>
+  <WikiManual
+    crumb="Bot Mode 群组有序执行"
+    title="Bot Mode 群组有序执行"
+    lead={`men 的 6 个角色可作为 <strong>Hermes profile</strong> 部署为独立 Bot。多 Bot 同处一个群组时，Hermes 的 Round 0 调度会让<strong>每个成员都拿到一个 turn</strong>——没有纪律就会「七嘴八舌」。本页定义<strong>环境自动识别</strong>与<strong>有序执行协议</strong>，让群内任务像 OpenCode 里一样串行推进。`}
+    infoboxTitle="集成概要"
+    infobox={infobox}
+    toc={toc}
+    seealso={seealso}
+  >
+    <section id="why" class="doc-section">
+      <h2>为什么需要</h2>
+      <p>OpenCode 里 <code>/ultrawork</code> 由单主 agent 编排，不存在「谁该说话」的问题；Hermes 群组不同——确定性调度器在 <strong>Round 0</strong>（用户消息未 @ 任何人）会让<strong>每个成员轮流各拿一个 turn</strong>。若 6 个 Bot 都觉得「这题我会」，一条任务就会被刷屏 6 次。</p>
+      <p>本集成提供两层解法：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>层</th><th>载体</th><th>解决什么</th></tr></thead>
+          <tbody>
+            <tr><td><strong>自动识别</strong></td><td><code>scripts/runtime-probe.mjs</code>（机械）+ <code>hermes-bot-mode</code> skill（prompt）</td><td>自己在什么环境、当前轮是不是群组轮</td></tr>
+            <tr><td><strong>有序执行</strong></td><td>职责判定三问 + <code>(pass)</code> 纪律</td><td>轮到你时：说话（men 分诊 / 专家执行）还是静默</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <SrcRef files={['scripts/runtime-probe.mjs', '.opencode/skills/hermes-bot-mode/SKILL.md', 'docs/integrations/hermes-bot-mode.md']} />
+    </section>
+
+    <section id="detect" class="doc-section">
+      <h2>三层自动识别</h2>
+      <p>按可靠性从高到低依次判断，命中即停：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>层</th><th>信号</th><th>判定</th></tr></thead>
+          <tbody>
+            <tr><td><strong>L1 prompt</strong></td><td>本轮消息以 <code>[Group chat: "…"]</code> 或 <code>[Discussion: "…"]</code> 开头</td><td><strong>正处在群组发言轮</strong>（唯一能证明「这一轮我在群里」的信号）</td></tr>
+            <tr><td><strong>L1 prompt</strong></td><td>系统提示含 <code>## Messaging other agents</code> 段</td><td>canonical <strong>Bot Chat</strong>（1:1 私聊）</td></tr>
+            <tr><td><strong>L2 工具</strong></td><td>工具列表含 <code>message_agent</code></td><td>Bot Chat 已授权；<strong>群组轮没有它</strong>（协作靠 @ 点名）</td></tr>
+            <tr><td><strong>L3 机械</strong></td><td><code>runtime-probe.mjs</code></td><td>环境事实：runtime / profile / 托管状态 / 群组房间</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>node scripts/runtime-probe.mjs --json                # 完整环境事实
+node scripts/runtime-probe.mjs --expect hermes        # 断言在 Hermes 内（0=满足 / 3=不满足）
+node scripts/runtime-probe.mjs --expect bot-mode      # 断言被 Bot Mode 托管
+node scripts/runtime-probe.mjs --expect room:Men\ Team # 断言存在某群组房间</code></pre>
+      </div>
+      <div class="wiki-note">退出码：<code>0</code> 满足 / <code>1</code> 意外错误 / <code>2</code> 用法错误 / <code>3</code> 断言不满足。探针<strong>只读不写</strong>，任何环境不抛异常；它只回答环境事实，<strong>不能</strong>证明当前轮是群组轮（那要 L1）。</div>
+      <SrcRef files={['scripts/runtime-probe.mjs', 'test/runtime-probe.test.mjs']} />
+    </section>
+
+    <section id="sched" class="doc-section">
+      <h2>群组调度机制（Hermes 侧事实）</h2>
+      <p>依据 Hermes 源码 <code>gateway/hosted_room_discussion.py</code> 与 <code>apps/desktop/src/plugins/hermes-bots/group-round-prompt.ts</code>（访问日期 2026-10-08）：</p>
+      <ol>
+        <li><strong>Round 0</strong>：用户消息 @了谁就轮谁；<strong>无 @ = 全体成员轮流各拿一个 turn</strong>（七嘴八舌根源）。</li>
+        <li><strong>Round 1+</strong>：只有被上一位发言者 <strong>@cite 过</strong>且此后未发言的成员入场（opt-in）。</li>
+        <li><strong>上限</strong>：3 轮 / 10 条消息 / 6 成员，超限自动 settled。</li>
+        <li><strong>静默</strong>：回复为空、或整串匹配 <code>\(?pass?\)?\.?</code>（<code>pass</code> / <code>(pass)</code> / <code>pass.</code>，大小写不敏感）= 本轮静默，<strong>不产生群内消息</strong>。</li>
+        <li><strong>无强制应答</strong>：Hermes 没有「被点名却 pass 就 nudge 你」的机制——静默就是静默，被点名者必须自己确保产出。</li>
+      </ol>
+      <div class="wiki-note"><strong>推论</strong>：无 @ 时你必然会被轮到——秩序不取决于「会不会被轮到」，取决于<strong>轮到你时做什么</strong>。</div>
+    </section>
+
+    <section id="protocol" class="doc-section">
+      <h2>有序执行协议</h2>
+      <p><strong>判定顺序不可跳过、不可换序</strong>（实测：ji 曾因先判断「任务属于我的域」而抢接 men 在场的房间）：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>#</th><th>问</th><th>动作</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><strong>我被 @ 了吗？</strong></td><td>是 → <strong>必须回答</strong>（不得 pass），直接产出</td></tr>
+            <tr><td>2</td><td><strong>men 在房间成员列表吗？</strong></td><td>在，且你不是 men 也没被 @ → <strong>无条件 <code>(pass)</code></strong>，先于职责域判断；men 会轮到自己的 turn 做分诊，抢接就是抢麦</td></tr>
+            <tr><td>3</td><td>men <strong>真的不在</strong>房间？</td><td>看路由表：你是对口专家 → 接单执行（首次发言声明「我来」）；否则 <code>(pass)</code></td></tr>
+            <tr><td>4</td><td>men 已接单并 @了别人？</td><td>被 @者执行，其余 <code>(pass)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>核心纪律</strong>：men 是默认接单者（其余 5 个角色首轮一律 pass）；一次只有一个主发言人；接单靠 @ 不靠抢；pass 要干净（回复的全部内容就是 <code>(pass)</code>）；绝不重复他人结论；Bot Chat 私聊内容永不带进群。</p>
+      <p><strong>men 分诊模板</strong>：</p>
+      <div class="code-block">
+        <span class="code-block__lang">text</span>
+        <pre><code>【意图】&lt;一句话分类&gt;
+【路由】@&lt;执行者&gt; 请负责 &lt;具体子任务&gt;，验收标准 &lt;可机械验证的条件&gt;
+（其他成员无需响应，等 @）</code></pre>
+      </div>
+      <p><strong>通道选择</strong>：任务分诊 / 结果公示 → 群内回复 + @；私密高频协作 → <code>message_agent</code> DM（仅 Bot Chat 可用）；单 profile 内并行 → <code>delegate_task</code>。意图门、路由判定表、verify + chi judge 双层验证<strong>全部不变</strong>——群里只是把 Wave 并行换成 @ 点名串行。</p>
+      <SrcRef files={['.opencode/skills/hermes-bot-mode/SKILL.md']} />
+    </section>
+
+    <section id="deploy" class="doc-section">
+      <h2>部署与验证</h2>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code># 1) skill 同步到 default + 各成员 profile 的 skills/men/
+SRC=".opencode/skills/hermes-bot-mode/SKILL.md"
+mkdir -p "$HERMES_HOME/skills/men/hermes-bot-mode" && cp "$SRC" "$HERMES_HOME/skills/men/hermes-bot-mode/"
+for slug in men si ji chi yi xun; do
+  mkdir -p "$HERMES_HOME/profiles/$slug/skills/men/hermes-bot-mode"
+  cp "$SRC" "$HERMES_HOME/profiles/$slug/skills/men/hermes-bot-mode/"
+done
+
+# 2) 各 profile SOUL.md 加兜底行（重启 session 生效）
+#    群组轮次（本轮消息以 [Group chat: 或 [Discussion: 开头）：先 skill_view('hermes-bot-mode')，
+#    按职责判定表决定发言还是 (pass)。
+
+# 3) 验证
+node --test test/runtime-probe.test.mjs       # 27 项机械单测
+node scripts/runtime-probe.mjs --expect hermes  # 真机环境断言</code></pre>
+      </div>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>验证层</th><th>内容</th><th>结果（2026-10-08）</th></tr></thead>
+          <tbody>
+            <tr><td>机械层</td><td>runtime-probe 27 单测 + skill 契约 6 断言 + npm test</td><td><strong>269/269 绿</strong></td></tr>
+            <tr><td>行为层</td><td>4 个轮次场景：非对口 pass / 抢接回归 / men 分诊 @ / 被 @ 必答</td><td><strong>4/4 通过</strong>（含一次判定表强化）</td></tr>
+            <tr><td>真实群组</td><td>桌面端重建群组后发无 @ 任务观察全链路</td><td>待执行（当前 <code>rooms.active: []</code>，房间需重建）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>完整验证记录：<code>docs/reports/hermes-bot-mode-behavior-2026-10-08.md</code>；部署细节：<code>docs/integrations/hermes-bot-mode.md</code>。</p>
+    </section>
+
+    <section id="trouble" class="doc-section">
+      <h2>故障排查</h2>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>症状</th><th>检查</th></tr></thead>
+          <tbody>
+            <tr><td>群里仍多人抢答</td><td>各 profile 是否装了 skill（<code>skills/men/hermes-bot-mode/SKILL.md</code>）；SOUL.md 兜底行是否已加并重启 session</td></tr>
+            <tr><td>探针报 <code>runtime: unknown</code></td><td>探针读环境变量——交互 shell 里 <code>HERMES_HOME</code> 通常未设置，<strong>不是环境有问题</strong>；在 agent 进程内运行才有值</td></tr>
+            <tr><td><code>--expect room:X</code> 失败</td><td>房间可能已删除（<code>rooms.active: []</code> 且 <code>rooms.deleted</code> 有墓碑）→ 桌面端重建</td></tr>
+            <tr><td>群组轮里没有 message_agent</td><td><strong>预期行为</strong>——该工具只在 Bot Chat 注入，群组用 @ 点名</td></tr>
+            <tr><td>skill 不被加载</td><td>靠 SOUL.md 兜底行保证；<code>available_skills</code> 只是索引不会自动加载正文</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </WikiManual>
+</BaseLayout>

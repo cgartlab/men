@@ -347,3 +347,22 @@ node scripts/eval-metrics.mjs --sid verify-1787043854820 --json
 5. **破坏性操作先询问**（trash > rm）
 6. **需求模糊先问清楚**
 7. **输出格式**：粗体关键信息、emoji 标注、列表优先、单段 ≤6 行
+
+## 十、Hermes 部署（可选）：Bot Mode 群组有序执行
+
+men 的 6 个角色可作为 Hermes profile 部署为独立 Bot。多 Bot 同处一个群组时，Hermes 的
+Round 0 调度会让**每个成员都拿到一个 turn**（无 @ = 全员轮到）——没有纪律就会"七嘴八舌"。
+
+集成提供两层能力：
+
+- **自动识别**：`node scripts/runtime-probe.mjs --json`（机械探针，环境/profile/群组房间）+
+  `.opencode/skills/hermes-bot-mode` skill（prompt 层 L1 信号：`[Group chat:` / `[Discussion:` 前缀）
+- **有序执行**：职责判定三问（先问是否被 @ → men 是否在房间 → 最后才看职责域），
+  非对口角色首轮 `(pass)`，men 分诊后 @点名串行推进
+
+部署与验证：见 [docs/integrations/hermes-bot-mode.md](../integrations/hermes-bot-mode.md)；
+行为层验证报告（4 场景实测）：[docs/reports/hermes-bot-mode-behavior-2026-10-08.md](../reports/hermes-bot-mode-behavior-2026-10-08.md)。
+
+```bash
+node scripts/runtime-probe.mjs --expect hermes   # 环境自检（退出码 0=满足 / 3=不满足）
+```

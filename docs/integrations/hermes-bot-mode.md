@@ -172,7 +172,7 @@ HERMES_HOME="$BASE/profiles/ji" hermes chat --query-file /tmp/round.txt --onesho
   --skills hermes-bot-mode --format text    # 期望: (pass)（未被 @，等 men 分诊）
 ```
 
-**判定**：非对口角色输出恰为 `(pass)`（或 `pass` / `(pass).` 等 `is_pass_text` 变体）；men 输出含意图分类与 @点名；被 @ 的专家才产出。行为验证非 CI 硬门（模型输出有随机性），结果须记录到验证报告而非仅口头声明。
+**判定**：非对口角色输出恰为 `(pass)`（或 `pass` / `(pass).` 等 `is_pass_text` 变体）；men 输出含意图分类与 @点名；被 @ 的专家才产出。行为验证非 CI 硬门（模型输出有随机性），结果须记录到验证报告而非仅口头声明。 **本轮实测结果见 [behavior-2026-10-08 报告](../reports/hermes-bot-mode-behavior-2026-10-08.md)（4/4 通过，含一次判定表强化）。**
 
 ### 7.3 真实群组验证（可选，需桌面端）
 
@@ -198,3 +198,4 @@ HERMES_HOME="$BASE/profiles/ji" hermes chat --query-file /tmp/round.txt --onesho
 | `test/agent-consistency.test.mjs` | skill 契约断言 |
 | `docs/guide/quickstart.md` | 快速上手（含 Hermes 部署入口） |
 | `docs/reports/audit-verify-chain-2026-10-08.md` | 验证链路审计报告（本轮修复依据） |
+| `docs/reports/hermes-bot-mode-behavior-2026-10-08.md` | 行为层验证报告（4 场景实测 + ji 抢接缺陷修复） |
