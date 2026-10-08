@@ -4,7 +4,7 @@
 
 ## 项目状态
 
-v0.6.2（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/men` 一行安装）。GitHub 私有仓库 `cgartlab/men`，MIT 许可证。
+v0.6.3（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/men` 一行安装）。GitHub 私有仓库 `cgartlab/men`，MIT 许可证。
 
 # Argus Design Review 集成（Optional）
 

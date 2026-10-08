@@ -37,7 +37,7 @@ const DEFAULT_HOST = "https://api.skillhub.cn";
 const DEFAULT_CLI = "skillhub";
 const REQUIRED_FRONTMATTER = ["slug", "displayName", "version", "summary", "license"];
 const CHANGELOG_VERSION_RE = /^## \[v?(\d+\.\d+\.\d+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/m;
-export const CLI_VERSION = "0.6.2";
+export const CLI_VERSION = "0.6.3";
 
 export function printHelp() {
   process.stdout.write(`men（门）Agent 团队 — SkillHub 发布器
