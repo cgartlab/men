@@ -11,16 +11,21 @@
  *   --changelog <text>   发布说明；默认读取 CHANGELOG.md 最新正式版本标题
  *   --dry-run            只执行 CLI 本地预检，不真正发布
  *   --json               输出 JSON 摘要
- *   --host <url>         SkillHub API host（默认 https://api.skillhub.cn）
+ *   --host <url>         SkillHub API host；作为 --host 参数传给 CLI（默认 https://api.skillhub.cn）
  *   --token <skh_...>    API token；默认读取 SKILLHUB_TOKEN / SKILLHUB_API_KEY
  *   --cli <path>         skillhub CLI 路径；默认使用 PATH 中的 skillhub
  *
  * 流程：
  *   1. 校验 SKILL.md frontmatter 必需字段
- *   2. 通过环境变量 SKILLHUB_TOKEN / SKILLHUB_API_KEY 传递 API token（CLI 自动读取）
- *   3. 调用 skillhub publish <skill-dir> [--dry-run] --changelog ...
+ *   2. token 注入子进程环境变量 SKILLHUB_TOKEN（--token 或 SKILLHUB_TOKEN / SKILLHUB_API_KEY），
+ *      host 同时注入环境变量 SKILLHUB_HOST 与 argv --host（两者取值一致）
+ *   3. 调用 skillhub publish <skill-dir> --host <url> [--dry-run] --changelog ...
  *
- * 注意：CLI 不要求单独 login 步骤，token 通过 env 传递即生效。
+ * 依据：SkillHub 官方规范 https://skillhub.cn/ai/release.md ——
+ *   `skillhub login --key <token> --host <url>` / `skillhub publish --host <url> [--dry-run]`，
+ *   即 publish 支持 --host；token 走 SKILLHUB_TOKEN 环境变量是本仓库
+ *   .github/workflows/skillhub-publish.yml 的既定约定（CI 不做 login，凭 env 认证）。
+ * 注意：token 值只进子进程 env，绝不进 argv、不回显到 --json 摘要。
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -32,7 +37,7 @@ const DEFAULT_HOST = "https://api.skillhub.cn";
 const DEFAULT_CLI = "skillhub";
 const REQUIRED_FRONTMATTER = ["slug", "displayName", "version", "summary", "license"];
 const CHANGELOG_VERSION_RE = /^## \[v?(\d+\.\d+\.\d+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/m;
-export const CLI_VERSION = "0.6.1";
+export const CLI_VERSION = "0.6.2";
 
 export function printHelp() {
   process.stdout.write(`men（门）Agent 团队 — SkillHub 发布器
@@ -44,7 +49,7 @@ export function printHelp() {
   --changelog <text>   发布说明；默认读取 CHANGELOG.md 最新正式版本标题
   --dry-run            只执行 skillhub publish --dry-run，不真正发布
   --json               输出 JSON 摘要
-  --host <url>         SkillHub API host（默认 ${DEFAULT_HOST}）
+  --host <url>         SkillHub API host；作为 --host 参数传给 CLI（默认 ${DEFAULT_HOST}）
   --token <skh_...>    API token；默认读取 SKILLHUB_TOKEN / SKILLHUB_API_KEY
   --cli <path>         skillhub CLI 路径；默认使用 PATH 中的 skillhub
   --help, -h           显示本帮助
@@ -65,6 +70,12 @@ export function parseArgs(argv) {
     json: false,
     host: DEFAULT_HOST,
     token: process.env.SKILLHUB_TOKEN || process.env.SKILLHUB_API_KEY || "",
+    // token 来源（用于 result 标注；token 值本身绝不进摘要）
+    tokenSource: process.env.SKILLHUB_TOKEN
+      ? "env:SKILLHUB_TOKEN"
+      : process.env.SKILLHUB_API_KEY
+        ? "env:SKILLHUB_API_KEY"
+        : "",
     cli: DEFAULT_CLI,
     help: false,
     version: false,
@@ -79,7 +90,10 @@ export function parseArgs(argv) {
     else if (a === "--json") out.json = true;
     else if (a === "--changelog") out.changelog = args[++i] || null;
     else if (a === "--host") out.host = args[++i] || DEFAULT_HOST;
-    else if (a === "--token") out.token = args[++i] || "";
+    else if (a === "--token") {
+      out.token = args[++i] || "";
+      out.tokenSource = out.token ? "flag:--token" : "";
+    }
     else if (a === "--cli") out.cli = args[++i] || DEFAULT_CLI;
     else if (!out.skillDir) out.skillDir = a;
     else out.unknownArg = a;
@@ -118,16 +132,44 @@ export function readDefaultChangelog(version) {
   return m ? `SkillHub publish ${m[1]} - ${m[2]}` : `SkillHub publish ${version}`;
 }
 
-function runCli(cfg, args, timeoutMs = 120_000) {
-  return spawnSync(cfg.cli, args, {
+/**
+ * 构造子进程 env：token/host 显式注入（F4/F6）。
+ * token 值只进 env，不进 argv；host 与 --host 参数取值一致。
+ */
+export function buildChildEnv(cfg) {
+  const env = { ...process.env };
+  if (cfg.token) env.SKILLHUB_TOKEN = cfg.token;
+  env.SKILLHUB_HOST = cfg.host;
+  return env;
+}
+
+/**
+ * 实际 argv 形态（F5）：Windows 下 npm 全局安装的 skillhub 落地为 skillhub.cmd shim，
+ * shell:false 下 libuv 不解析 .cmd → 直接 spawn 返回 ENOENT；与 install.mjs runShim
+ * 同一范式：win32 走 `cmd /c <cli> ...`，POSIX 直接 spawn。
+ */
+function cliInvocation(cfg, args) {
+  const win = process.platform === "win32";
+  return { bin: win ? "cmd" : cfg.cli, argv: win ? ["/c", cfg.cli, ...args] : args };
+}
+
+/** argv → 可读命令行（仅用于摘要展示；含空格的参数加引号） */
+function formatCmd(bin, argv) {
+  return [bin, ...argv].map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(" ");
+}
+
+function runCli(cfg, args, env, timeoutMs = 120_000) {
+  const { bin, argv } = cliInvocation(cfg, args);
+  return spawnSync(bin, argv, {
     cwd: ROOT,
     encoding: "utf-8",
     shell: false,
     timeout: timeoutMs,
+    env,
   });
 }
 
-function stepResult(name, r) {
+function stepResult(name, r, extra = {}) {
   return {
     name,
     ok: r.status === 0,
@@ -135,6 +177,7 @@ function stepResult(name, r) {
     stdout: (r.stdout || "").trim(),
     stderr: (r.stderr || "").trim(),
     timedOut: Boolean(r.error && r.error.code === "ETIMEDOUT"),
+    ...extra,
   };
 }
 
@@ -194,13 +237,23 @@ export function main(argv = process.argv) {
   const publishArgs = [
     "publish",
     skillDir,
+    "--host",
+    cfg.host,
     "--changelog",
     changelog,
   ];
   if (cfg.dryRun) publishArgs.push("--dry-run");
 
-  const publish = runCli(cfg, publishArgs);
-  steps.push(stepResult("publish", publish));
+  const env = buildChildEnv(cfg);
+  const invocation = cliInvocation(cfg, publishArgs);
+  const publish = runCli(cfg, publishArgs, env);
+  // 摘要里展示真实命令行与注入的 env（token 只标 <set>，绝不回显值）
+  const envShown = { SKILLHUB_HOST: cfg.host };
+  if (cfg.token) envShown.SKILLHUB_TOKEN = "<set>";
+  steps.push(stepResult("publish", publish, {
+    command: formatCmd(invocation.bin, invocation.argv),
+    env: envShown,
+  }));
 
   const ok = steps.every((s) => s.ok);
   const result = {
@@ -215,6 +268,10 @@ export function main(argv = process.argv) {
     },
     changelog,
     host: cfg.host,
+    // token 来源标注（F4）：provided/source/via，不含 token 值
+    token: cfg.token
+      ? { provided: true, source: cfg.tokenSource || "unknown", via: "env:SKILLHUB_TOKEN" }
+      : { provided: false, source: null, via: null },
     steps,
   };
 
@@ -224,6 +281,8 @@ export function main(argv = process.argv) {
     process.stdout.write(`SkillHub publish${cfg.dryRun ? " dry-run" : ""}: ${frontmatter.values.slug}@${frontmatter.values.version}\n`);
     for (const step of steps) {
       process.stdout.write(`${step.ok ? "PASS" : "FAIL"} ${step.name} exit=${step.exitCode}\n`);
+      if (step.command) process.stdout.write(`  cmd: ${step.command}\n`);
+      if (step.env) process.stdout.write(`  env: ${JSON.stringify(step.env)}\n`);
       if (step.stdout) process.stdout.write(`  stdout: ${step.stdout}\n`);
       if (!step.ok && step.stderr) process.stdout.write(`  stderr: ${step.stderr}\n`);
     }

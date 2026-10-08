@@ -10,7 +10,7 @@ const pageDesc = '版本历史与路线图：当前版本亮点、全部正式�
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-10-07 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-10-08 发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -55,7 +55,12 @@ const seealso = [
         <table>
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
-                        <tr>
+                                    <tr>
+              <td><strong>v0.6.2</strong></td>
+              <td>2026-10-08</td>
+              <td>发布主题「v0.6.2」。</td>
+            </tr>
+<tr>
               <td><strong>v0.6.1</strong></td>
               <td>2026-10-07</td>
               <td>发布主题「OpenCode V2 兼容激进清理」。</td>
@@ -139,7 +144,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-10-04，共发布 <strong>15 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7、v0.4.0、v0.5.0、v0.6.0、v0.6.1）。
+        截至 2026-10-08，共发布 <strong>16 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7、v0.4.0、v0.5.0、v0.6.0、v0.6.1、v0.6.2）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -147,16 +152,11 @@ const seealso = [
 
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
-            <p>
-        当前版本 <code>v0.6.1</code> 于 2026-10-07 发布，主题为「OpenCode V2 兼容激进清理」。
+                  <p>
+        当前版本 <code>v0.6.2</code> 于 2026-10-08 发布，主题为「v0.6.2」。
       </p>
-      <h3>v0.6.1「OpenCode V2 兼容激进清理」</h3>
+      <h3>v0.6.2「v0.6.2」</h3>
       <ul>
-        <li>移除 tui.json（V2 靠自动发现）</li>
-        <li>permission 转 native V2（permissions 数组）</li>
-        <li>移除 V1 类型包 @opencode-ai/plugin</li>
-        <li>新增 v1-compat 分支 + V2 形态回归守护</li>
-        <li>修 site 编译错误 + seroval 安全漏洞</li>
       </ul>
       <p class="wiki-note">
         以下为 v0.4.0（历史）版本的发布亮点回顾。
