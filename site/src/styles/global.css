@@ -92,8 +92,17 @@ html {
   font-synthesis-weight: none;
 }
 
+/* 孤行治理（2026-10-10）——两个都是**继承属性**，写在 body 上即全站生效：
+   ① text-wrap: pretty —— 折行时主动避免「末行只剩一个词/一个字」；
+      标题已有的 text-wrap: balance 是显式声明，会覆盖这里，不受影响。
+   ② line-break: strict —— 中文禁则从严：禁止把 。，、；：）」』 等字符甩到行首
+      （默认 auto 在拉丁词 / 代码 token 之后仍会断，实测造成「末行只剩一个标点」）。
+   CSS 只能治「折行点选择」；末行最终剩几个字还受容器宽与文案长度约束，
+   故另有 scripts/widow-audit.mjs 逐字实测复核（判定：末行可见字符 ≥4）。 */
 body {
   min-height: 100vh;
+  text-wrap: pretty;
+  line-break: strict;
   line-height: var(--line-height-body);
   font-family: var(--font-sans);
   font-weight: var(--font-weight-regular);
