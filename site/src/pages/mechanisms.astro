@@ -274,18 +274,17 @@ const pipeline = [
     margin-bottom: var(--space-8);
   }
   .mech-title {
-    font-family: var(--font-serif);
-    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-size: var(--font-size-h1);
     font-weight: var(--font-weight-semi);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
+    line-height: var(--line-height-display);
+    letter-spacing: var(--letter-spacing-heading);
     color: var(--color-fg);
     margin-bottom: var(--space-3);
   }
   .mech-subtitle {
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-body-lg);
     color: var(--color-fg-secondary);
-    max-width: 700px;
+    max-width: var(--measure-prose);
     line-height: var(--line-height-body);
   }
 
@@ -296,10 +295,10 @@ const pipeline = [
   .mech-verify__title,
   .mech-events__title,
   .mech-learn__title {
-    font-family: var(--font-serif);
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-h2);
     font-weight: var(--font-weight-semi);
-    line-height: 1.2;
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
     color: var(--color-fg);
     margin-bottom: var(--space-4);
     padding-bottom: var(--space-2);
@@ -481,12 +480,14 @@ const pipeline = [
     font-size: var(--font-size-caption);
     color: var(--color-fg-secondary);
     line-height: var(--line-height-body);
-    margin-bottom: var(--space-1);
+    /* 段距 4px（0.29em）< 行距的一半 → 分不出段；抬到 12px */
+    margin-bottom: var(--space-3);
   }
   .step-card__why {
     font-size: var(--font-size-eyebrow);
     color: var(--color-fg-muted);
-    font-style: italic;
+    line-height: var(--line-height-ui);
+    /* 中文无真斜体字形（剪切变形会糊笔画）→ 取消斜体 */
     margin: 0;
   }
 
@@ -608,7 +609,8 @@ const pipeline = [
   .cmd-card__usage-label {
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-fg-muted);
+    /* 坐在暖底 #f0ebe2 上：fg-muted 仅 3.99:1 → fg-tertiary（6.1:1） */
+    color: var(--color-fg-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -620,7 +622,8 @@ const pipeline = [
   }
   .cmd-card__example {
     font-size: var(--font-size-eyebrow);
-    color: var(--color-fg-muted);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-ui);
     margin: 0;
   }
 

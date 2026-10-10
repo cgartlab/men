@@ -68,23 +68,22 @@ let counter = 0;
     margin-bottom: var(--space-8);
   }
   .docs-title {
-    font-family: var(--font-serif);
-    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-size: var(--font-size-h1);
     font-weight: var(--font-weight-semi);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
+    line-height: var(--line-height-display);
+    letter-spacing: var(--letter-spacing-heading);
     color: var(--color-fg);
     margin-bottom: var(--space-3);
   }
   .docs-subtitle {
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-body-lg);
     color: var(--color-fg-secondary);
-    max-width: 700px;
+    max-width: var(--measure-prose);
     line-height: var(--line-height-body);
   }
   .docs-subtitle code {
     font-family: var(--font-mono);
-    font-size: 0.9em;
+    font-size: 0.94em;
     background: var(--color-bg-warm);
     padding: 1px var(--space-1);
     border-radius: var(--radius-xs);
@@ -93,9 +92,12 @@ let counter = 0;
   .docs-category { margin-bottom: var(--space-10); }
   .docs-category__title {
     font-family: var(--font-mono);
-    font-size: var(--font-size-h5);
+    /* 原 h5(16px) < 卡片标题 h3(18px) → 层级倒挂（实测 h2:16 / h3:18）。
+       分类标题是章节级标题，用 h3 档 21px；字距从 0.12em 收到 0.06em
+       （21px 的中文不需要大字距）。 */
+    font-size: var(--font-size-h3);
     font-weight: var(--font-weight-semi);
-    letter-spacing: 0.12em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--color-accent-dark);
     margin-bottom: var(--space-4);

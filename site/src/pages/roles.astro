@@ -478,27 +478,26 @@ const routingRows = [
     margin-bottom: var(--space-12);
   }
   .roles-title {
-    font-family: var(--font-serif);
-    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-size: var(--font-size-h1);
     font-weight: var(--font-weight-semi);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
+    line-height: var(--line-height-display);
+    letter-spacing: var(--letter-spacing-heading);
     color: var(--color-fg);
     margin-bottom: var(--space-3);
   }
   .roles-subtitle {
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-body-lg);
     color: var(--color-fg-secondary);
-    max-width: 680px;
+    max-width: var(--measure-prose);
     line-height: var(--line-height-body);
   }
 
   /* ===== Section Headers ===== */
   .section-title {
-    font-family: var(--font-serif);
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-h2);
     font-weight: var(--font-weight-semi);
-    line-height: 1.2;
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
     color: var(--color-fg);
     margin-bottom: var(--space-3);
     display: flex;
@@ -519,6 +518,7 @@ const routingRows = [
     color: var(--color-fg-tertiary);
     margin-bottom: var(--space-8);
     line-height: var(--line-height-body);
+    max-width: var(--measure-prose);
   }
 
   /* ===== Flow Timeline ===== */
@@ -625,6 +625,7 @@ const routingRows = [
   .flow-step__label {
     font-size: var(--font-size-h4);
     font-weight: var(--font-weight-semi);
+    line-height: var(--line-height-subhead);
     color: var(--color-fg);
     margin: 0;
   }
@@ -658,6 +659,8 @@ const routingRows = [
     font-size: var(--font-size-caption);
     color: var(--color-fg-tertiary);
     line-height: var(--line-height-relaxed);
+    /* 实测 982px 宽时每行 70 个汉字 → 收到正文行宽上限 */
+    max-width: var(--measure-prose);
     margin: 0;
   }
 
@@ -806,7 +809,7 @@ const routingRows = [
     flex-wrap: wrap;
   }
   .agent-card__name {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: var(--font-size-h3);
     font-weight: var(--font-weight-semi);
     color: var(--color-fg);
@@ -867,6 +870,7 @@ const routingRows = [
     font-size: var(--font-size-caption);
     color: var(--color-fg-secondary);
     line-height: var(--line-height-relaxed);
+    max-width: var(--measure-prose);
     padding: var(--space-1) 0;
     padding-left: var(--space-3);
     position: relative;
@@ -915,6 +919,7 @@ const routingRows = [
     border-radius: var(--radius-sm);
     border-left: 3px solid var(--color-accent);
     margin-top: var(--space-3);
+    max-width: var(--measure-prose);
   }
   .agent-card__charter-label {
     font-weight: var(--font-weight-semi);

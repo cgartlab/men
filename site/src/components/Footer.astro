@@ -101,7 +101,8 @@ import GateLogo from './GateLogo.astro';
   .site-footer__stack {
     font-size: var(--font-size-caption);
     color: var(--color-fg-tertiary);
-    max-width: none;
+    /* 原 max-width:none → 实测 956px 宽时每行 68 个汉字，远超舒适区 */
+    max-width: var(--measure-prose);
     line-height: var(--line-height-relaxed);
   }
 
