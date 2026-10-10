@@ -1,5 +1,10 @@
 # AgentFlow — WebGL GPU 加速首页视觉特效设计文档
 
+> **状态（2026-10-10）：已下线。** 组件 `site/src/components/AgentFlow.astro`、
+> 容器 `HeroArt.astro` 与后续替代它的圆环粒子层 `ParticleGate.astro` 均已删除，
+> 首页首屏不再有动画背景（视觉只保留 `BackgroundCanvas` 的静态点阵底纹）。
+> 本文保留为设计记录与复用参考；代码可从 git 历史取回。
+
 > 版本：v0.1.0 · 2026-10-03
 > 状态：设计稿 + 原型代码（`site/src/components/AgentFlow.astro`）
 > 参考：Argus `DigitalWater.astro`（1325 行 WebGL instanced renderer）
