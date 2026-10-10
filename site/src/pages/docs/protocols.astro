@@ -43,7 +43,7 @@ const seealso = [
   >
     <section id="protocol" class="doc-section">
       <h2>10 步编排协议</h2>
-      <p>每次 <code>/ultrawork</code> 任务按以下步骤自动执行：</p>
+      <p>每次 <code>/ultrawork</code> 任务按以下步骤依次自动执行：</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>步</th><th>名称</th><th>说明</th><th>设计动机</th></tr></thead>
@@ -81,7 +81,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        <strong>severity 含义</strong>：<code>FAIL</code> = 立即终止并回到失败点重试；<code>WARN</code> = 仅警告不阻止流程。
+        <strong>severity 含义</strong>：<code>FAIL</code> = 立即终止并回到失败点重试；<code>WARN</code> = 仅警告不阻止主流程正常执行。
       </div>
       <SrcRef files={['scripts/verify.mjs']} />
     </section>

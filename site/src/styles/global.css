@@ -1264,6 +1264,12 @@ main {
   .wiki-top,
   .wiki-top:has(> .wiki-infobox):not(:has(> .wiki-toc)),
   .wiki-top:not(:has(> .wiki-infobox)):has(> .wiki-toc) { grid-template-columns: 1fr; }
+  /* 信息卡在窄屏改为「标签在上、值在下」的单列堆叠：
+     原来 76px + 1fr 两列，值列只有 ~190px，长一点的版本号/术语会被挤成
+     末行 1–3 个字的孤行（实测 /docs/releases 的「v0.6.1（2026-10-07 发布）」）。
+     堆叠后值列拿到整行宽度，短文案一行排完，结构性消除该处的孤行。 */
+  .wiki-infobox__row { grid-template-columns: 1fr; gap: 0; }
+  .wiki-infobox dt { padding-top: 0; }
   .wiki-toc ol { columns: 1; }
   .wiki-infobox__row { grid-template-columns: 76px 1fr; }
 }

@@ -54,7 +54,21 @@ const srv = http.createServer(async (req, res) => {
     res.end(await readFile(join(DIST, '404.html')).catch(() => '404'));
   }
 });
-await new Promise((r) => srv.listen(PORT, '127.0.0.1', r));
+// 端口自增重试：避免上一次异常退出留下的监听进程把脚本卡死（EADDRINUSE）
+let port = PORT;
+for (let attempt = 0; attempt < 12; attempt++) {
+  try {
+    await new Promise((resolve, reject) => {
+      const onErr = (e) => reject(e);
+      srv.once('error', onErr);
+      srv.listen(port, '127.0.0.1', () => { srv.off('error', onErr); resolve(); });
+    });
+    break;
+  } catch (e) {
+    if (e.code !== 'EADDRINUSE' || attempt === 11) throw e;
+    port += 1;
+  }
+}
 
 // ── 逐字测量折行（页面内执行）────────────────────────────────────────────────
 const COLLECT = `(() => {
@@ -101,6 +115,22 @@ const COLLECT = `(() => {
     return rows;
   }
 
+  // 稳定可复现的 CSS 路径（用于在 DOM 里重新定位同一块、以及回到源码）
+  const cssPath = (el) => {
+    const parts = [];
+    let n = el;
+    while (n && n.nodeType === 1 && n !== document.documentElement) {
+      let seg = n.tagName.toLowerCase();
+      const parent = n.parentElement;
+      if (parent) {
+        const sibs = [...parent.children].filter((c) => c.tagName === n.tagName);
+        if (sibs.length > 1) seg += ':nth-of-type(' + (sibs.indexOf(n) + 1) + ')';
+      }
+      parts.unshift(seg);
+      n = n.parentElement;
+    }
+    return parts.join(' > ');
+  };
   const out = [];
   const CANDIDATES = 'p, li, dd, dt, td, th, blockquote, figcaption, summary, .wiki-note, .hero-desc, .showcase__card-desc, .faq__a, .site-footer__stack, .about-lede, .doc-lead';
   for (const el of document.querySelectorAll(CANDIDATES)) {
@@ -117,6 +147,10 @@ const COLLECT = `(() => {
     if (rows.length < 2) continue;
     out.push({
       sel: sel(el),
+      cssPath: cssPath(el),
+      fullText: (el.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 200),
+      hasInline: [...el.children].some((c) => /^(CODE|STRONG|EM|A|SPAN|B|I)$/.test(c.tagName)),
+      inlineTags: [...new Set([...el.children].map((c) => c.tagName))].join(','),
       page: location.pathname,
       fontSize: +parseFloat(cs.fontSize).toFixed(1),
       boxWidth: Math.round(box.width),
@@ -144,7 +178,7 @@ try {
       const page = await ctx.newPage();
       try {
         if (FIXER) await page.addInitScript({ path: FIXER });
-        await page.goto(`http://127.0.0.1:${PORT}/${pg}`, { waitUntil: 'load', timeout: 20000 });
+        await page.goto(`http://127.0.0.1:${port}/${pg}`, { waitUntil: 'load', timeout: 20000 });
         await page.waitForTimeout(250);
         const r = await page.evaluate(COLLECT);
         for (const b of r) blocks.push({ vp: vp.label, page: pg, ...b });
@@ -188,7 +222,7 @@ for (const v of viol) {
 for (const [k, list] of [...byPage.entries()].sort()) {
   const v = list[0];
   const prev = v.lines[v.lines.length - 2];
-  console.log(`\n  ${k}   （块宽 ${v.boxWidth}px · ${v.fontSize}px · ${v.lines.length} 行）`);
+  console.log(`\n  ${k}   （块宽 ${v.boxWidth}px · ${v.fontSize}px · ${v.lines.length} 行${v.hasInline ? ' · 含行内标记 ' + v.inlineTags : ''}）`);
   console.log(`      末行: 「${v.lastLine.text}」 = ${v.lastLine.chars} 字符（宽 ${v.lastLine.width}px）`);
   if (prev) console.log(`      前行: 「${prev.text.slice(0, 32)}」 填充 ${prev.fill}`);
 }

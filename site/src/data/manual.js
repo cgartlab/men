@@ -13,7 +13,7 @@ export const MANUAL = {
     { slug: 'quickstart',   title: '快速上手', group: '入门', desc: '30 分钟跑通第一个任务' },
     { slug: 'agents',       title: '角色说明', group: '参考', desc: '六个角色的职责边界与路由判定' },
     { slug: 'protocols',    title: '协议规范', group: '参考', desc: '编排协议、机械验证与事件审计' },
-    { slug: 'bot-mode',     title: 'Bot Mode 群组', group: '参考', desc: 'Hermes 多 Bot 群组的自动识别与有序执行（防七嘴八舌）' },
+    { slug: 'bot-mode',     title: 'Bot Mode 群组', group: '参考', desc: 'Hermes 多 Bot 群组的自动识别与有序执行（以防七嘴八舌）' },
     { slug: 'architecture', title: '架构设计', group: '参考', desc: '协作拓扑、编排流程与设计决策' },
     { slug: 'governance',   title: '治理',     group: '管理', desc: '权限、决策机制与安全合规' },
     { slug: 'releases',     title: '路线图',   group: '管理', desc: '版本历史、里程碑与发布流程' },

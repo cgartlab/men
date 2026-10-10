@@ -52,11 +52,11 @@ const seealso = [
   >
     <section id="prereq" class="doc-section">
       <h2>前置要求</h2>
-      <p>安装器会检测以下三个命令是否存在，任一缺失即报错退出（提示先安装 <code>Node ≥ 18</code> 与 <code>git</code>）：</p>
+      <p>安装器会检测以下三个命令是否存在，任一缺失即报错退出（提示先安装 <code>Node ≥ 18</code> 与 <code>git</code> 等依赖）：</p>
       <ul>
-        <li><strong>Node.js ≥ 18</strong> — 运行 <code>scripts/install.mjs</code> 与机械验证脚本（<code>node --version</code> 检查）</li>
+        <li><strong>Node.js ≥ 18</strong> — 运行 <code>scripts/install.mjs</code> 以及机械验证脚本（<code>node --version</code> 一并检查）</li>
         <li><strong>npm</strong> — 安装 <code>.opencode/</code> 依赖</li>
-        <li><strong>git</strong> — 拉取 / 克隆仓库（一键安装时自动执行）</li>
+        <li><strong>git</strong> — 拉取 / 克隆仓库（一键安装时由脚本自动执行）</li>
       </ul>
       <div class="wiki-note">
         <code>install.mjs</code> 会在流程最前做 <strong>Node 版本检查</strong>，主版本低于 <code>18</code> 时直接报错并以非 0 退出码结束。
@@ -72,7 +72,7 @@ const seealso = [
         <pre><code>npx @cgartlab/men</code></pre>
       </div>
       <p>首次执行 <code>npx</code> 会询问 "Ok to proceed? (y)"——输入 <code>y</code> 回车即可；或直接 <code>npx -y @cgartlab/men</code> 跳过确认。</p>
-      <p>安装器自动完成：scaffold 运行时资产到当前目录（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。若当前目录已是 men 仓库根，则幂等跳过复制、直接就地安装；依赖安装失败仅告警不中止（插件为增强项，加载失败不阻止 OpenCode 启动；V2 下 <code>@opencode/plugin</code> 自带类型，无需 V1 <code>@opencode-ai/plugin</code>）。</p>
+      <p>安装器自动完成：scaffold 运行时资产到当前目录（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。若当前目录已是 men 仓库根，则幂等跳过复制、直接就地安装；依赖安装失败仅告警不中止（插件为增强项，加载失败不阻止 OpenCode 启动；V2 下 <code>@opencode/plugin</code> 自带类型，V1 的 <code>@opencode-ai/plugin</code> 不再需要）。</p>
       <p>完成后在<strong>当前目录</strong>运行 <code>opencode</code> 即可进入 TUI：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
@@ -88,7 +88,7 @@ const seealso = [
         <span class="code-block__lang">bash</span>
         <pre><code>bash <(curl -fsSL {rawBase}/install.sh)</code></pre>
       </div>
-      <p>可追加选项控制安装行为，例如指定安装目录：</p>
+      <p>可追加选项以控制安装行为，例如指定安装的目录：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>bash <(curl -fsSL {rawBase}/install.sh) --dir ~/men</code></pre>
@@ -102,7 +102,7 @@ const seealso = [
 
     <section id="windows" class="doc-section">
       <h2>一键安装（Windows）</h2>
-      <p>在 <strong>PowerShell 5.1+（推荐 7+）</strong> 中运行一键命令（使用 <code>irm</code> 拉取 <code>install.ps1</code> 并交给 <code>iex</code> 执行），脚本同样会检测依赖并 <code>git clone</code> 到默认目录 <code>men/</code>：</p>
+      <p>在 <strong>PowerShell 5.1+（推荐 7+）</strong> 中运行一键命令（使用 <code>irm</code> 拉取 <code>install.ps1</code> 并交给 <code>iex</code> 执行），脚本同样会检测依赖并 <code>git clone</code> 到默认目录 <code>men/</code>，请运行如下命令：</p>
       <div class="code-block">
         <span class="code-block__lang">powershell</span>
         <pre><code>irm {rawBase}/install.ps1 | iex</code></pre>
@@ -130,7 +130,7 @@ const seealso = [
         <span class="code-block__lang">powershell</span>
         <pre><code>./install.ps1 [-Dir &lt;path&gt;] [-SkipDeps] [-SkipVerify] [-Json] [-Help]</code></pre>
       </div>
-      <p>也可绕过平台引导，直接调用共享核心安装器：</p>
+      <p>也可以绕过平台引导，直接调用共享的核心安装器：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>node scripts/install.mjs [--dir &lt;path&gt;] [--skip-deps] [--skip-verify] [--json] [--help]</code></pre>
@@ -169,7 +169,7 @@ const seealso = [
 
     <section id="verify" class="doc-section">
       <h2>验证安装</h2>
-      <p>安装器默认会在末尾执行端到端验证 <code>scripts/verify.mjs men --json</code>，<strong>退出码为 0</strong> 才打印「安装成功」；验证失败则以非 0 退出码终止。如需手动复核环境，可运行：</p>
+      <p>安装器默认会在末尾执行端到端验证 <code>scripts/verify.mjs men --json</code>，<strong>退出码为 0</strong> 才打印「安装成功」；验证失败则以非 0 退出码终止。如需自行复核运行环境，可运行：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code># 1. 检查 Node 版本（要求 ≥ 18）

@@ -41,7 +41,7 @@ const showcaseAgents = [
     icon: 'lucide:door-open',
     desc: '唯一接收用户指令的角色。意图分诊、任务路由、多 Agent 编排、结果汇总。所有指令从这扇门进入。',
     skills: ['意图判定 (IntentGate)', '混合任务拆分', '多 Wave 调度', '结果汇总与去冲突', '事件审计写入'],
-    constraint: '本身不执行具体产出，不写代码、不写作、不设计',
+    constraint: '本身不执行具体产出，不写代码、不写作、不做设计',
   },
   {
     id: 'si',
@@ -50,7 +50,7 @@ const showcaseAgents = [
     icon: 'lucide:pen-tool',
     desc: '深度思考与多角度方案，产出 plan envelope（依赖图 + 并行波次 + 验收标准）。知识库管理与沉淀。',
     skills: ['Plan Envelope 产出', '需求访谈拆解', '知识库沉淀', '回评子 Agent 产物'],
-    constraint: '只规划不执行代码，方案与计划需经 chi 验证',
+    constraint: '只规划不执行代码，方案与计划需要经过 chi 验证',
   },
   {
     id: 'ji',
@@ -66,7 +66,7 @@ const showcaseAgents = [
     cn: '持',
     role: '数据/投资评审 / Judge',
     icon: 'lucide:scale',
-    desc: '双重身份：投资持仓分析 + 独立 Judge。作为 judge 时用 fresh context 机械验证，只信产物不信自述。',
+    desc: '双重身份：投资持仓分析 + 独立 Judge。作为 judge 时用 fresh context 机械验证，只信产物、不信其自述。',
     skills: ['持仓分析与收益计算', '独立 Judge (fresh-context)', '机械验证复核', '质量门禁判定', '投资数据分析'],
     constraint: 'judge spawn 时用全新 context，不复用被验证者的上下文',
   },
@@ -77,16 +77,16 @@ const showcaseAgents = [
     icon: 'lucide:palette',
     desc: '文生图提示词专家：思考中生成多方案提示词，经 SenseNova 出图。审美分析、设计决策、配色与版式。',
     skills: ['设计决策与 Token 定义', '生图 (SenseNova U1)', '配色与版式', '审美分析', 'Logo 概念'],
-    constraint: '生图能力仅 yi 挂载，设计产出需附设计决策说明',
+    constraint: '生图能力仅 yi 挂载，设计产出需附设计决策说明文件',
   },
   {
     id: 'xun',
     cn: '寻',
     role: '搜索与研究',
     icon: 'lucide:search',
-    desc: '网络搜索、RSS 聚合、知识库检索、事实核查。只读约束，不修改源数据。',
+    desc: '网络搜索、RSS 聚合、知识库检索、事实核查。只读约束，从不修改任何源数据。',
     skills: ['网页搜索 (Exa)', 'RSS 聚合扫描', '事实核查 (多源交叉)', '知识库检索', '来源验证与可信度评分'],
-    constraint: '只读约束，不修改源数据，搜索结果附来源链接',
+    constraint: '只读约束，不修改源数据，所有搜索结果附来源链接',
   },
 ];
 
@@ -196,7 +196,7 @@ const faq = install.faq || [];
       <!-- 可视标题即本区块的 h2（原为 sr-only h2 + 可视 h3：
            语义上标题层级错位，视觉上同页 h3 出现 18px 与 30px 两种字号）。 -->
       <h2 id="showcase-title" class="showcase__heading">六个角色，一个核心</h2>
-      <p class="showcase__sub">各司其职，机械验证优先，假完成必识破。</p>
+      <p class="showcase__sub">各司其职，机械验证优先，假完成必定会被识破。</p>
     </div>
     <div class="showcase__track">
       {showcaseAgents.map((a) => (

@@ -66,7 +66,7 @@ const seealso = [
         <li><strong>men 唯一 spawner</strong>：5 个 subagent 之间禁止互相 spawn（无嵌套）。</li>
         <li><strong>chi 双重角色</strong>：既是投资分析角色，又是所有 analyze / team 任务的独立 Judge。</li>
       </ul>
-      <p class="src-ref">来源：<code>docs/architecture.md</code> · 一、协作拓扑</p>
+      <p class="src-ref">来源：<code>docs/architecture.md</code> · 一、协作拓扑。</p>
     </section>
 
     <section id="orchestration" class="doc-section">
@@ -78,7 +78,7 @@ const seealso = [
           <tbody>
             <tr><td><code>01</code></td><td><strong>CERTAINTY</strong> 需求确认</td><td>任务模糊时先向用户追问，直到明确才开工</td></tr>
             <tr><td><code>02</code></td><td><strong>TRIAGE</strong> 意图分诊</td><td>四类意图判定：search / analyze / team / hyperplan</td></tr>
-            <tr><td><code>03</code></td><td><strong>PLAN</strong> si 规划</td><td>team 类 spawn si 产出 plan envelope；hyperplan 类先深度思考多角度方案再交 si</td></tr>
+            <tr><td><code>03</code></td><td><strong>PLAN</strong> si 规划</td><td>team 类 spawn si 产出 plan envelope；hyperplan 类先深度思考多角度方案再交 si 处理</td></tr>
             <tr><td><code>04</code></td><td><strong>DISPATCH</strong> Wave 调度</td><td>≤4 并行 / 依赖串行；search 类直接分发 xun，analyze 类单专家 + chi judge</td></tr>
             <tr><td><code>05</code></td><td><strong>COLLECT</strong> 收集产物</td><td>收集子 agent 返回结果与落盘产物</td></tr>
             <tr><td><code>06</code></td><td><strong>EVALUATE</strong> si 回评</td><td>产出回传 si 做质量评估，si 只评不改</td></tr>
@@ -117,26 +117,26 @@ const seealso = [
       <div class="wiki-note">
         <strong>失败回环</strong>：任一机械检查 FAIL 或 chi 判定 FAIL，均回到失败点重试（不从头），重试上限 <strong>5 次</strong>；
         chi 连续 <strong>3 次</strong>失败触发 <code>BLOCKED</code> → 写入 <code>blocker.raised</code> 事件并报卡住。
-        通过则写入 <code>gate.passed</code> 事件；全部事件落入 <code>events.jsonl</code> 审计留痕。
+        通过则写入 <code>gate.passed</code> 事件；全部事件落入 <code>events.jsonl</code> 审计留痕可追溯。
       </div>
       <h3>门禁与审计脚本</h3>
       <ul>
-        <li><strong>gate.mjs</strong>：stop-hook 门禁，白名单 typecheck / test / lint，60s 超时，强化次数上限 5。</li>
-        <li><strong>event.mjs</strong>：append-only events.jsonl，支持 append / list / replay / validate 四子命令。</li>
-        <li>全部纯 Node 零依赖，Windows pwsh 兼容。</li>
+        <li><strong>gate.mjs</strong>：stop-hook 门禁，白名单 typecheck / test / lint，60s 超时，强化次数上限为 5 次。</li>
+        <li><strong>event.mjs</strong>：append-only events.jsonl，支持 append / list / replay / validate 共四个子命令。</li>
+        <li>全部为纯 Node 零依赖，Windows pwsh 兼容。</li>
       </ul>
       <h3>学习回路（M7）</h3>
       <ul>
         <li>任务完成后由 men 或 chi 触发 LEARN，事件流进入 <code>learn.mjs</code>（L0 机械聚合 + L1 规则分类），经验写入 <code>knowledge/errors/</code>（错误模式）与 <code>knowledge/patterns/</code>（协作模式）。</li>
         <li>评估侧由 <code>eval-metrics.mjs</code> 从 events.jsonl 计算 8 项 KPI（最近 10 次任务窗口），输出通过率、回归率、平均耗时等指标。</li>
-        <li>两者均 best-effort：命令失败不阻塞主流程。</li>
+        <li>两者均为 best-effort：命令失败不阻塞主流程。</li>
       </ul>
       <p class="src-ref">来源：<code>docs/architecture.md</code> · 三、验证体系 · 学习回路（M7）</p>
     </section>
 
     <section id="directory" class="doc-section">
       <h2>关键目录结构</h2>
-      <p>仓库按职责分层组织，脚本全部纯 Node 零依赖：</p>
+      <p>仓库按职责分层组织，脚本全部为纯 Node 零依赖：</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>路径</th><th>内容</th></tr></thead>
@@ -154,12 +154,12 @@ const seealso = [
           </tbody>
         </table>
       </div>
-      <p class="src-ref">来源：<code>docs/architecture.md</code> · 四、目录结构</p>
+      <p class="src-ref">来源：<code>docs/architecture.md</code> · 四、目录结构。</p>
     </section>
 
     <section id="decisions" class="doc-section">
       <h2>设计决策</h2>
-      <p>摘自技术决策记录表（D1–D19），重大变更前必读 <code>docs/research/00-m0-synthesis.md</code>：</p>
+      <p>摘自技术决策记录表（D1–D19），重大变更前必读 <code>docs/research/00-m0-synthesis.md</code>，如下：</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>编号</th><th>决策</th><th>状态</th></tr></thead>

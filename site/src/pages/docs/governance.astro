@@ -14,7 +14,7 @@ const infobox = [
   { k: '决策状态', v: '<code>已采纳</code> / <code>已回滚</code> / <code>待验证</code>' },
   { k: '变更入口', v: '<strong>PR</strong> + <code>CODEOWNERS</code> 自动评审' },
   { k: '审查者', v: '<code>@cgartlab</code>（全局默认 owner）' },
-  { k: '全员红线', v: '<strong>7 条</strong>（各 agent 逐字一致）' },
+  { k: '全员红线', v: '<strong>共 7 条</strong>（各 agent 逐字均完全保持一致）' },
   { k: '许可证', v: '<code>MIT</code>' },
 ];
 
@@ -64,7 +64,7 @@ const seealso = [
             </tr>
             <tr>
               <td><strong>ji</strong></td><td>记</td><td>subagent</td>
-              <td>代码实现、前端开发、内容写作、本地 gate 验证</td>
+              <td>代码实现、前端开发、内容写作，以及本地 gate 验证</td>
               <td><code>scripts/*.mjs、.opencode/skills/*/、.opencode/command/*.md、docs/drafts/</code></td>
             </tr>
             <tr>
@@ -79,7 +79,7 @@ const seealso = [
             </tr>
             <tr>
               <td><strong>xun</strong></td><td>寻</td><td>subagent</td>
-              <td>搜索、事实核查、RSS 扫描</td>
+              <td>搜索、事实核查，以及 RSS 扫描</td>
               <td><code>docs/research/</code>、调研与事实核查报告</td>
             </tr>
           </tbody>
@@ -101,7 +101,7 @@ const seealso = [
         <table>
           <thead><tr><th>类型</th><th>示例</th><th>决策者</th><th>记录方式</th></tr></thead>
           <tbody>
-            <tr><td><strong>架构决策</strong></td><td>是否新增角色、是否迁移运行时</td><td>men + 核心成员讨论</td><td><code>docs/architecture.md</code> 决策记录表</td></tr>
+            <tr><td><strong>架构决策</strong></td><td>是否需要新增角色、是否需要迁移运行时环境</td><td>men + 核心成员共同讨论并决定方案</td><td><code>docs/architecture.md</code> 决策记录表</td></tr>
             <tr><td><strong>里程碑决策</strong></td><td>M5→M6 启动条件</td><td>men</td><td><code>docs/guide/milestones.md</code></td></tr>
             <tr><td><strong>日常决策</strong></td><td>某个 skill 的修改</td><td>对应 agent</td><td><code>scripts/event.mjs</code> 写入 events.jsonl</td></tr>
             <tr><td><strong>技术选型</strong></td><td>脚本语言、MCP 选择</td><td>men + ji</td><td><code>docs/research/00-m0-synthesis.md</code></td></tr>
@@ -111,7 +111,7 @@ const seealso = [
       <p>判断规则：</p>
       <ul>
         <li>涉及多角色影响面（新增/删除角色、改运行时、改流程）→ 架构决策级别。</li>
-        <li>仅影响单个 skill / 单个脚本的局部修改 → 对应 agent 自行决策，但必须留事件审计。</li>
+        <li>仅影响单个 skill / 单个脚本的局部修改 → 对应 agent 自行决策，但必须保留完整的事件审计留痕。</li>
         <li>低置信时先向用户确认，不猜。</li>
       </ul>
       <h3>决策记录</h3>
@@ -131,7 +131,7 @@ const seealso = [
       <p>回滚触发条件包括：</p>
       <ul>
         <li>chi judge 判定 REGRESSED 且人工确认无法修复。</li>
-        <li>机械验证退出码非 0，且 5 次强化后仍失败。</li>
+        <li>机械验证退出码非 0，且 5 次强化之后仍失败。</li>
         <li>用户明确要求放弃当前方案。</li>
       </ul>
       <SrcRef files={['docs/governance.md#二、决策流程']} />
@@ -160,13 +160,13 @@ const seealso = [
       <p>修改 <code>scripts/*.mjs</code> 后必须：</p>
       <ol>
         <li>运行 <code>node scripts/verify.mjs .</code> 验证自身</li>
-        <li>如果修改了 gate 规则，必须更新 <code>docs/architecture.md</code> 的验证体系描述</li>
+        <li>如果修改了 gate 规则，必须更新 <code>docs/architecture.md</code> 的验证体系描述文档</li>
         <li>如果修改了 event 结构，必须更新 PRD.md 和 milestones.md</li>
       </ol>
       <h3>配置变更</h3>
       <p>修改 <code>opencode.json</code> 后必须：</p>
       <ol>
-        <li>验证 JSON 格式（<code>node -e "JSON.parse(...)"</code>）</li>
+        <li>验证 JSON 格式（<code>node -e "JSON.parse(...)"</code>）确保无误</li>
         <li>同步更新 README.md 和 architecture.md 中对应的描述</li>
       </ol>
       <SrcRef files={['docs/governance.md#三、变更管理']} />
@@ -178,10 +178,10 @@ const seealso = [
       <p>从开发提交 PR 到合并的完整审查链：</p>
       <ol>
         <li><strong>提交 PR</strong> — 开发提交 PR，<code>CODEOWNERS</code> 自动请求评审</li>
-        <li><strong>自审清单确认</strong> — 提交人对照自审清单逐项确认</li>
+        <li><strong>自审清单确认</strong> — 提交人对照自审清单逐项确认。</li>
         <li><strong>机械检查</strong> — <code>verify.mjs</code> 执行机械检查</li>
         <li><strong>语义复核</strong> — chi judge 以 fresh-context 做语义复核</li>
-        <li><strong>裁决</strong> — PASS 则合并；FAIL / REGRESSED 则修复后重新提交；BLOCKED 则停止并汇报卡住</li>
+        <li><strong>裁决</strong> — PASS 则合并；FAIL / REGRESSED 则修复后重新提交；BLOCKED 则停止并汇报卡住。</li>
       </ol>
       <div class="wiki-note">
         <strong>审查裁决</strong>：<code>PASS</code> = 合并；<code>FAIL / REGRESSED</code> = 修复后重新提交；<code>BLOCKED</code> = 停止，汇报卡住。
@@ -248,7 +248,7 @@ const seealso = [
         <li><code>.env</code> 文件不得提交到版本控制</li>
         <li>API key / 个人信息不得出现在任何文档或代码中</li>
         <li>内网数据源（元搜索聚合）仅限 <code>局域网网段（不对外公开）</code> 内网访问</li>
-        <li>依赖安装限定在 <code>.opencode/node_modules/</code>，不污染根目录</li>
+        <li>依赖安装限定在 <code>.opencode/node_modules/</code>，不污染根目录。</li>
         <li>安全漏洞报告见 <code>SECURITY.md</code></li>
       </ul>
       <h3>漏洞报告</h3>
@@ -314,7 +314,7 @@ const seealso = [
           </tbody>
         </table>
       </div>
-      <p>更新原则：文档与代码同步提交，禁止「代码先合、文档后补」；所有文档遵循第 7 条红线（粗体关键信息、列表优先、单段 ≤6 行）；治理规则有冲突时，以文档版本号最新者为准，并在 <code>CHANGELOG.md</code> 记录变更。</p>
+      <p>更新原则：文档与代码同步提交，禁止「代码先合、文档后补」；所有文档遵循第 7 条红线（粗体关键信息、列表优先、单段 ≤6 行）；治理规则有冲突时，以文档版本号最新者为准，并在 <code>CHANGELOG.md</code> 记录下变更明细。</p>
       <SrcRef files={['docs/governance.md#七、社区参与','docs/governance.md#八、文档维护','CONTRIBUTING.md','CODE_OF_CONDUCT.md']} />
     </section>
   </WikiManual>

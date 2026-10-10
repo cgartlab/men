@@ -68,7 +68,7 @@
       "name": "si",
       "cn": "思",
       "mode": "subagent",
-      "desc": "思考与知识管理：深度思考、多角度方案、plan envelope、知识库沉淀",
+      "desc": "思考与知识管理：深度思考、多角度方案、plan envelope、知识库沉淀与检索",
       "source": "docs/PRD.md"
     },
     {
@@ -113,7 +113,7 @@
     },
     {
       "title": "Wave 并行调度",
-      "desc": "Wave 1 无依赖任务同时开工，Wave N 依赖 Wave N-1 产物；并行上限 ≤4；每个子任务 prompt 完整自洽，子 agent 无法追问",
+      "desc": "Wave 1 无依赖任务同时开工，Wave N 依赖 Wave N-1 产物；并行上限 ≤4；每个子任务 prompt 完整自洽，子 agent 无法继续追问。",
       "source": "docs/PRD.md"
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "title": "自主学习回路（M7）",
-      "desc": "learn.mjs 从事件流提取经验写入 knowledge/errors 与 knowledge/patterns；eval-metrics.mjs 计算 8 项 KPI（通过率/回归率/平均耗时等）",
+      "desc": "learn.mjs 从事件流提取经验写入 knowledge/errors 与 knowledge/patterns；eval-metrics.mjs 计算 8 项 KPI（通过率/回归率/平均耗时等）指标",
       "source": "docs/architecture.md"
     }
   ],
@@ -144,7 +144,7 @@
     {
       "name": "/verify",
       "usage": "/verify <角色或路径>",
-      "desc": "双层验证：机械检查（verify.mjs）+ 语义复核（chi），用于独立验收某个角色的产物",
+      "desc": "双层验证：机械检查（verify.mjs）+ 语义复核（chi），用于独立验收某个角色的全部产物文件",
       "agent": "chi（fresh-context Judge）",
       "source": "docs/guide/quickstart.md",
       "example": "例：/verify ji -- 验证 ji 的代码产物"
@@ -197,7 +197,7 @@
         "step": "02",
         "name": "TRIAGE",
         "cn": "意图分诊",
-        "desc": "四类意图判定：search / analyze / team / hyperplan。判定后把意图写入事件日志。",
+        "desc": "四类意图判定：search / analyze / team / hyperplan。判定后把意图写入事件日志中保存。",
         "why": "不同意图走不同执行策略，分类正确是后续一切的基础。"
       },
       {
@@ -233,7 +233,7 @@
         "name": "VERIFY",
         "cn": "双层验证",
         "desc": "机械门禁（verify.mjs 五项检查）全 PASS 后，chi 做 fresh-context 语义复核。两层都过才算完成。",
-        "why": "机械识破假文件，语义识破假内容。"
+        "why": "机械识破假文件，语义识破伪造的内容。"
       },
       {
         "step": "08",
@@ -246,14 +246,14 @@
         "step": "09",
         "name": "LOOP",
         "cn": "循环重试",
-        "desc": "验证失败回到失败点重试（不从头），上限 5 次。超限报卡住，交中间产物给用户。",
+        "desc": "验证失败回到失败点重试（不从头），上限 5 次。超限报卡住，交中间产物给用户参考处理。",
         "why": "不浪费已完成的中间产物，5 次是耐心与诚实的平衡。"
       },
       {
         "step": "10",
         "name": "LEARN",
         "cn": "自主学习",
-        "desc": "REPORT 后立即触发 learn.mjs，从事件流提取经验写入 knowledge/errors 与 knowledge/patterns。不阻塞流程。",
+        "desc": "REPORT 后立即触发 learn.mjs，从事件流提取经验写入 knowledge/errors 与 knowledge/patterns。不阻塞后续流程正常执行。",
         "why": "经验不会自然消失，写入知识库供下次任务读取。"
       }
     ]
@@ -514,7 +514,7 @@
         "name": "Argus",
         "type": "前端设计代码审查 Agent",
         "year": "2026/06",
-        "desc": "作为 GitHub App 运行，自动审查 PR 中的设计令牌违规、无障碍问题、暗色模式覆盖。"
+        "desc": "作为 GitHub App 运行，自动审查 PR 中的设计令牌违规、无障碍问题、暗色模式覆盖等。"
       },
       {
         "name": "Go To GitHub",
@@ -547,7 +547,7 @@
       "latest": "No.18",
       "desc": "一份公开的创作笔记，分享一周里的所思、所用、所见、所闻。已发布 18 期。"
     },
-    "openSource": "CG 艺术实验室的所有代码采用 MIT License 发布，文章与设计作品采用 CC BY-NC-SA 4.0 许可。men 项目基于相同理念，完全开源，欢迎 fork、贡献、批评。",
+    "openSource": "CG 艺术实验室的所有代码采用 MIT License 发布，文章与设计作品采用 CC BY-NC-SA 4.0 许可。men 项目基于相同理念，完全开源，欢迎 fork、贡献、批评与建议。",
     "links": [
       {
         "label": "个人网站",
@@ -698,11 +698,11 @@
     "faq": [
       {
         "q": "men 是什么？",
-        "a": "men（门）是一个 6+1 角色的 Agent 编排系统，围绕一人内容创作与工程协作设计。所有 agent 定义、脚本、知识库都托管在 GitHub 仓库中。"
+        "a": "men（门）是一个 6+1 角色的 Agent 编排系统，围绕一人内容创作与工程协作设计。所有 agent 定义、脚本、知识库都托管在 GitHub 仓库之中。"
       },
       {
         "q": "如何使用？",
-        "a": "运行 <code>npx @cgartlab/men</code> 即可在任意目录完成安装（脚手架+依赖+环境+验证），然后 <code>opencode</code> 启动 TUI；站点预览见 <a href=\"/docs/quickstart\">快速上手</a>。"
+        "a": "运行 <code>npx @cgartlab/men</code> 即可在任意目录完成安装（脚手架+依赖+环境+验证），然后 <code>opencode</code> 启动 TUI；站点预览见 <a href=\"/docs/quickstart\">快速上手文档页面</a>。"
       },
       {
         "q": "可以自定义角色吗？",
@@ -724,6 +724,6 @@
   },
   "footer": {
     "copyright": "© 2026 CG 艺术实验室 · cgartlab.com",
-    "stack": "OpenCode 原生 Agent · Node ≥ 18 · 纯 Node 零依赖脚本"
+    "stack": "OpenCode 原生 Agent · Node ≥ 18 · 纯 Node 零依赖的脚本。"
   }
 }

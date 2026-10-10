@@ -6,7 +6,7 @@ import { SITE } from '../data/site';
 const PROJECTS = [
   ...content.about.projects.filter((p) => ['EDIC','Argus'].includes(p.name)).map((p) => ({ ...p, href: p.name === 'EDIC' ? 'https://github.com/cgartlab/edic-design-system' : 'https://github.com/cgartlab/argus' })),
   { name: '作品集', type: '官方站点 · 全部作品', year: '持续更新', desc: '视觉、工程与 AI 实验的完整作品档案。', href: 'https://cgartlab.com' },
-  { name: '冥想系列', type: '创作企划', year: '策划中', desc: '以动态影像与声音为媒介的冥想视觉实验系列。', href: 'https://cgartlab.com' },
+  { name: '冥想系列', type: '创作企划', year: '策划中', desc: '以动态影像与声音作为媒介的冥想视觉实验系列。', href: 'https://cgartlab.com' },
 ];
 
 const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编排系统 —— 出品机构、品牌方法论、作品矩阵（EDIC / Argus 等）、开源许可与联系方式。';
@@ -56,7 +56,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     <section class="about-section" aria-labelledby="org-title">
       <h2 class="about-h2" id="org-title">01 · 出品机构 · {content.about.brand}</h2>
       <p class="about-lede">{content.about.intro}</p>
-      <p class="about-lede"><strong>使命</strong>：以设计思维驱动 AI 工程实践，让个人创作者拥有组织级的生产力。</p>
+      <p class="about-lede"><strong>使命</strong>：以设计思维驱动 AI 工程实践，让个人创作者得以拥有组织级的生产力。</p>
       <p class="about-p"><strong>品牌理念</strong>：{content.about.tagline}。</p><p class="about-p"><a href="https://cgartlab.com/weekly/" target="_blank" rel="noopener"><strong>{content.about.weekly.name}</strong></a>：{content.about.weekly.desc}</p>
     </section>
 
