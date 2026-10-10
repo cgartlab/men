@@ -189,7 +189,8 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
   .about-brand-meta {
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-fg-muted);
+    /* 版本 / 出品方属「该被读到」的元信息，原 fg-muted(4.54:1) 视觉过淡 → fg-tertiary */
+    color: var(--color-fg-tertiary);
     letter-spacing: 0.05em;
     text-transform: uppercase;
     margin-bottom: var(--space-2);
@@ -306,7 +307,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     display: inline-block;
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
     background: var(--color-accent-tint);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-xs);
@@ -392,7 +393,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     display: inline-block;
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
     background: var(--color-accent-tint);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-xs);
@@ -439,7 +440,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
   }
   .about-link:hover {
     border-color: var(--color-accent);
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
     text-decoration: none;
   }
   .about-link__arrow {
@@ -447,7 +448,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     transition: color var(--duration-normal) ease;
   }
   .about-link:hover .about-link__arrow {
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
   }
 
   .about-stack {

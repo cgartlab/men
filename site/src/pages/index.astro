@@ -526,12 +526,15 @@ const faq = install.faq || [];
   .hero-desc { font-size: var(--font-size-body-lg); color: var(--color-fg-secondary); max-width: 34em; line-height: var(--line-height-body); margin: 0 auto; }
   .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
-  .hero-cta--primary { background: var(--color-accent); color: var(--color-accent-on-accent); }
-  .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent) 85%, #fff); border-color: color-mix(in srgb, var(--color-accent) 85%, #fff); text-decoration: none; }
+  /* 实心橘按钮承载白字：填充用 accent-soft（白字 4.79:1）。
+     hover 不能往「更亮」的方向混白 —— 那样白字对比度会掉到 3:1 以下，
+     改为压暗 12% 保持 ≥4.5:1。 */
+  .hero-cta--primary { background: var(--color-accent-soft); border-color: var(--color-accent-soft); color: var(--color-accent-on-accent); }
+  .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent-soft) 88%, #000); border-color: color-mix(in srgb, var(--color-accent-soft) 88%, #000); text-decoration: none; }
   .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
   .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
-  .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-accent-on-accent); background: var(--color-accent); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
+  .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-accent-on-accent); background: var(--color-accent-soft); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Install / Terminal (Light Theme) ===== */
   .install { padding: var(--space-8) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
@@ -638,7 +641,7 @@ const faq = install.faq || [];
   .showcase__card-constraint {
     /* 中文没有真斜体字形（浏览器是剪切变形，糊笔画）→ 不用斜体；
        11.5px 的中文说明抬到小字档。 */
-    font-size: var(--font-size-small); line-height: var(--line-height-ui); color: var(--color-fg-muted);
+    font-size: var(--font-size-small); line-height: var(--line-height-ui); color: var(--color-fg-tertiary);
     display: flex; align-items: center; gap: var(--space-1); margin-top: auto;
     padding-top: var(--space-2); border-top: 1px solid var(--color-line-soft);
   }
@@ -714,7 +717,8 @@ const faq = install.faq || [];
   /* Nodes */
   .topo-node { rx: 10; ry: 10; }
   .topo-node--input { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--hub { fill: var(--color-accent); stroke: none; }
+  /* 中枢节点里是白字（men 门 / IntentGate / Wave…）→ 填充用 accent-soft，白字 4.79:1 */
+  .topo-node--hub { fill: var(--color-accent-soft); stroke: none; }
   .topo-node--agent { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
   .topo-node--judge { fill: #f6f8fa; stroke: var(--role-chi); stroke-width: 1.5; }
   .topo-node--output { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
@@ -767,7 +771,7 @@ const faq = install.faq || [];
   .topo-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
   .topo-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
   .topo-legend__dot--input { background: #8b949e; }
-  .topo-legend__dot--hub { background: var(--color-accent); }
+  .topo-legend__dot--hub { background: var(--color-accent-soft); }
   .topo-legend__dot--agent { background: #f6f8fa; border: 1px solid #d0d7de; }
   .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid var(--role-chi); }
   .topo-legend__dot--verify { background: #f6f8fa; border: 1.5px solid var(--role-ji); }

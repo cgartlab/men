@@ -29,17 +29,24 @@
         U+2700-27BF,U+E0A0-E0D7,U+FB00-FB06,U+FE00-FE0F,U+FFFD" \
           --output-file=site/public/fonts/hack-nerd-font-regular.woff2
    ------------------------------------------------------------------------ */
+/* 字重区间声明（本文件的核心机制之一，勿改成单值）：
+   官方只给 Regular / Medium 两个静态字面。若声明成 font-weight:400 / 500，
+   那么 600/700 的请求就落不到任何字面上 → 浏览器**合成加粗**（给字形描边加粗），
+   汉字字腔被填死，实测墨量 16.01% vs 真 Medium 11.65%（重 37%）——就是「黑黑的一坨」。
+   声明成区间后，600/700 直接命中 Medium 字面本身，天然不合成：
+     Regular → 300–400 · Medium → 500–700（实测 700 墨量 11.38% ≈ Medium 11.55%）
+   配合 html { font-synthesis-weight: none } 双保险（该属性实测同样有效：16.01% → 11.68%）。 */
 @font-face {
   font-family: "OPPO Sans";
   src: url("https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Regular.woff2") format("woff2");
-  font-weight: 400;
+  font-weight: 300 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "OPPO Sans";
   src: url("https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Medium.woff2") format("woff2");
-  font-weight: 500;
+  font-weight: 500 700;
   font-style: normal;
   font-display: swap;
 }
@@ -72,6 +79,17 @@ html {
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
   color-scheme: light;
+  /* 关闭「字重合成」（2026-10-10）
+     OPPO Sans 官方 CDN 只有 400/500 两档，600/700 原本由浏览器**合成加粗**：
+     合成是给字形描边加粗，汉字字腔（「门」「角」「色」「协」的内部空隙）会被填死，
+     实测 18px 起明显发糊、13px 起糊成一团（见 docs/reports/typography-2026-10-10.md）。
+     关闭后 600/700 回退到最接近的真字重 —— 对 OPPO Sans 是 Medium(500)，
+     对栈内 Hack Nerd Font（有真 700）仍是真粗体，等于「拉丁标签照样粗、汉字不再糊」。
+     实测（同串汉字 32px 的墨量）：400 = 9.18%、真 500 = 11.65%、
+     合成 700 = 16.01%（+37% → 糊）、关合成后的 700 = 11.68%（= 真 500）。
+     与上面 @font-face 的字重区间声明互为双保险。
+     层级改由「字号 + 颜色 + 间距」承担（正文 #404040 / 标题 #1a1a1a 即为一例）。 */
+  font-synthesis-weight: none;
 }
 
 body {
@@ -150,8 +168,12 @@ ol {
   /* 强调色（橘色 · 暖白纸感的核心） */
   --color-accent: #e85d04;                     /* 主强调 · 仅大文本 / 填充 / 边框 · 3.35:1 on #fafafa */
   --color-accent-dark: #a03c00;                /* 小字安全橘 · 6.41:1 on #fafafa */
-  --color-accent-soft: #c94700;                /* 中等强度橘 · 填充 / hover · 4.59:1 on #fafafa（实测已达正文 4.5 阈值） */
-  --color-accent-on-accent: #0a0a0a;           /* 橘底文字 · 5.66:1 on #e85d04（原注释 8.8:1 失准 +3.14，为全块最大失准项） */
+  /* 橘色填充（承载白字的实心按钮/徽标/选区一律用它）：
+     白字在 #c94700 上 4.79:1（达小字 AA）；在原来的主橘 #e85d04 上只有 3.50:1，
+     只够大文本（≥24px）。故「装饰性圆点/细线」用 --color-accent（亮橘），
+     「要写字在上面的填充」用 --color-accent-soft（压暗一档的橘）。 */
+  --color-accent-soft: #c94700;                /* 橘色填充 · 白字 4.79:1 · 4.59:1 on #fafafa */
+  --color-accent-on-accent: #ffffff;           /* 橘底文字 = 白 · 4.79:1 on #c94700（改于 2026-10-10） */
   --color-accent-tint: color-mix(in srgb, #e85d04 10%, #ffffff);  /* 橘色浅底 */
   --color-accent-tint-strong: color-mix(in srgb, #e85d04 20%, #ffffff);
 
@@ -205,7 +227,7 @@ ol {
 
   /* 状态色 */
   --color-done-bg: var(--color-accent-tint);
-  --color-done-fg: var(--color-accent-on-accent);
+  --color-done-fg: var(--color-accent-dark);   /* 底色是 accent-tint（浅橘）→ 文字用深橘；白字在浅橘上看不见 */
   --color-todo-bg: var(--color-surface-warm);
   --color-todo-fg: var(--color-fg-tertiary);
   --color-revert-bg: var(--color-surface);
@@ -367,6 +389,17 @@ ol {
   }
 }
 
+/* ---------- 内联强调（strong / b）----------
+   中文没有 600/700 真字面 → 强调不能只靠字重。这里用两层：
+   ① 真 Medium(500)（比正文 400 的墨量高约 26%，实测 9.18% → 11.65%）
+   ② 颜色加深到 --color-fg（正文在长文里是 --color-fg-secondary #404040）。
+   两层叠加才是「一眼能看出是重点」；只靠其中一层在中文里几乎看不出来。 */
+strong,
+b {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
 /* ---------- Typography ---------- */
 /* 标题：中文行高层级 + 正字距（原 -0.01em 对汉字是挤压）。 */
 h1,
@@ -457,7 +490,7 @@ pre .copy-btn.copied {
 }
 
 ::selection {
-  background: var(--color-accent);
+  background: var(--color-accent-soft);
   color: var(--color-accent-on-accent);
 }
 
@@ -516,7 +549,9 @@ main {
 
 .btn:hover {
   border-color: var(--color-accent);
-  color: var(--color-accent-on-accent);
+  /* 浅底上的文字用深橘；--color-accent-on-accent 现在是白（橘底专用），
+     用在这里会白字白底看不见。 */
+  color: var(--color-accent-dark);
   text-decoration: none;
   transform: translateX(2px); /* 推门语义 */
 }
@@ -529,7 +564,7 @@ main {
 
 .btn--primary:hover {
   border-color: var(--color-accent);
-  color: var(--color-accent-on-accent);
+  color: var(--color-accent-dark);
 }
 
 .btn--ghost {
@@ -540,7 +575,7 @@ main {
 
 .btn--ghost:hover {
   border-color: var(--color-accent);
-  color: var(--color-accent-on-accent);
+  color: var(--color-accent-dark);
   background: transparent;
 }
 

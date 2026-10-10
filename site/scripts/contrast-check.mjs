@@ -76,9 +76,10 @@ const colors = {
   surface:       '#ffffff',  // 卡片面板
   surfaceWarm:   '#f5f5f5',  // 暖调面板
   // 强调色
-  accent:        '#e85d04',  // 主强调（仅大文本/填充） · 3.4:1
-  accentDark:    '#a03c00',  // 小字安全橘 · 6.4:1
-  accentOnAccent:'#0a0a0a',  // 橘底文字 · 5.7:1
+  accent:        '#e85d04',  // 主强调（装饰性圆点/细线/大文本）· 3.4:1
+  accentDark:    '#a03c00',  // 小字安全橘（浅底上的文字）· 6.4:1
+  accentSoft:    '#c94700',  // 橘色填充（承载白字的按钮/徽标/选区）· 白字 4.79:1
+  accentOnAccent:'#ffffff',  // 橘底文字 = 白 · 4.79:1 on #c94700
   // 角色色（首页拓扑图 / showcase 卡片）
   roleMen:'#e85d04', roleSi:'#4a90d9', roleJi:'#2ea043',
   roleChi:'#bf8700', roleYi:'#a371f7', roleXun:'#8b5cf6',
@@ -158,9 +159,13 @@ const pairs = [
   // 小字安全橘（≥ 4.5:1 · AA）
   { fg: colors.accentDark,  bg: colors.bg,          label: '深橘小字(#a03c00) vs 背景',              min: 4.5 },
   { fg: colors.accentDark,  bg: colors.surface,     label: '深橘小字 vs 白底',                        min: 4.5 },
-  // 橘底文字（≥ 4.5:1 · AA）
-  { fg: colors.accentOnAccent, bg: colors.accent,   label: '黑色(#0a0a0a) vs 橘底(#e85d04)',          min: 4.5 },
-  { fg: colors.accentOnAccent, bg: colors.accent,   label: '黑色 vs 橘底[按钮文字]',                   min: 4.5 },
+  // 橘底白字规则（2026-10-10）：白字在 --color-accent(#e85d04) 上只有 3.50:1，
+  // 达不到小字 AA → 凡「要写字在上面的橘色填充」必须用 --color-accent-soft(#c94700)。
+  // 第一条把该规则钉住（填充改回 accent 就会 FAIL）；第二条如实记录主橘的可承载边界。
+  { fg: colors.accentOnAccent, bg: colors.accentSoft, label: '白字 vs 橘色填充(#c94700)[按钮/徽标/选区]', min: 4.5 },
+  { fg: colors.accentOnAccent, bg: colors.accent,     label: '白字 vs 主橘(#e85d04)[仅大文本/装饰]',     min: 3.0 },
+  // 浅橘 tint 底上的文字必须是深橘（白字在 tint 上不可见）
+  { fg: colors.accentDark, bg: '#fdeee5',             label: '深橘 vs 浅橘 tint 底(#fdeee5)',           min: 4.5 },
 ];
 
 // ---------- 执行检查 ----------
