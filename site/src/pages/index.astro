@@ -488,12 +488,14 @@ const faq = install.faq || [];
 
 <style>
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
-  :root { --page-max: 720px; }
+  /* 板块节奏：所有板块共用同一个上下留白 → 板块之间视觉间距恒定（48×2 = 96px；窄屏 32×2 = 64px）。
+     原来各板块各写各的（40/48/32 混用），板块间距实测 88/72/88/80/96px 参差不齐。 */
+  :root { --page-max: 720px; --section-pad: var(--space-12); }
 
   /* ===== Hero ===== */
   /* ===== Hero（第一板块）：左栏文字说明 + 右栏一行安装命令 ===== */
   /* 页头偏移由 main 承担 → hero 自身只留少量呼吸空间 */
-  .hero { padding: var(--space-4) 0 var(--space-10); position: relative; overflow: hidden; }
+  .hero { padding: var(--space-4) 0 var(--section-pad); position: relative; overflow: hidden; }
   .hero__grid {
     display: grid;
     /* 右栏 320px 起，左栏吃掉其余空间：桌面 1232px 内容宽下约为 733 / 459 */
@@ -596,8 +598,9 @@ const faq = install.faq || [];
   .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Showcase (scroll-driven agent cards) ===== */
-  .showcase { padding: var(--space-12) 0 var(--space-8); overflow: hidden; }
-  .showcase__header { text-align: center; padding: 0 var(--space-6); margin-bottom: var(--space-8); }
+  .showcase { padding: var(--section-pad) 0; overflow: hidden; }
+  /* 头部内容居中，不需要额外的 24px 水平内边距（去掉后盒子与其它板块同在 104px 上） */
+  .showcase__header { text-align: center; margin-bottom: var(--space-8); }
   .showcase__label {
  font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); text-transform: uppercase; color: var(--color-accent-dark); margin-bottom: var(--space-3);
  letter-spacing: var(--letter-spacing-label);
@@ -645,7 +648,7 @@ const faq = install.faq || [];
   /* 团队特性卡底色是暖底 #efe8db：accent 赤陶在此只有 2.61:1（大文本需 3:1）→ 用同色相压暗版 */
   .showcase__card-role--team { color: var(--role-men-text); }
   .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
-  .showcase__card-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .showcase__card-skills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
   .showcase__skill {
     font-family: var(--font-mono); color: var(--color-fg-tertiary);
     background: var(--color-bg-warm); padding: 2px 8px; border-radius: var(--radius-xs);
@@ -702,7 +705,9 @@ const faq = install.faq || [];
   :global(.showcase__dot--active)::before { width: 24px; border-radius: 4px; background: var(--color-accent); }
 
   /* ===== Topology ===== */
-  .topo { padding: var(--space-10) 0 var(--space-12); max-width: var(--container-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  /* 去掉这里原有的 padding-left/right: 24px —— 它让本板块标题落在 128px，
+     而 hero / 核心机制 / 常见问题都在 104px，肉眼可见地错开一档。 */
+  .topo { padding: var(--section-pad) 0; max-width: var(--container-max); margin: 0 auto; }
   .topo__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-3); }
   .topo__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
@@ -814,7 +819,7 @@ const faq = install.faq || [];
   .topo-legend__dot--fail { background: var(--role-chi); }
 
   /* ===== Mechanisms ===== */
-  .mechanisms { padding: var(--space-10) 0; }
+  .mechanisms { padding: var(--section-pad) 0; }
   .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
   .mechanisms__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
@@ -842,7 +847,7 @@ const faq = install.faq || [];
   .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); max-width: var(--measure-prose); }
 
   /* ===== FAQ ===== */
-  .faq { padding: var(--space-10) 0 var(--space-12); }
+  .faq { padding: var(--section-pad) 0; }
   .faq__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-5);
  font-size: var(--font-size-h2);
@@ -862,7 +867,7 @@ const faq = install.faq || [];
   .faq__a code { font-family: var(--font-mono); background: var(--color-bg-warm); padding: 1px var(--space-1); border-radius: var(--radius-xs); color: var(--color-fg); font-size: 0.85em; }
 
   /* ===== CTA ===== */
-  .cta { padding: var(--space-12) 0; }
+  .cta { padding: var(--section-pad) 0; }
   .cta__inner { text-align: center; padding: var(--space-10) 0; border-top: 1px solid var(--color-line-soft); }
   .cta__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-3);
@@ -879,6 +884,7 @@ const faq = install.faq || [];
   @media (max-width: 768px) {
     /* 窄屏：第一板块改单列并整体居中（两栏在 481–768px 会把卡片挤到 ~240px） */
     .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
+    :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
     .hero-content { align-items: center; text-align: center; }
     .hero-title, .hero-desc { margin-left: auto; margin-right: auto; }
     .hero-actions { justify-content: center; }

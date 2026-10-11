@@ -1045,8 +1045,8 @@ main {
   display: grid;
   grid-template-columns: 88px 1fr;
   gap: var(--space-2);
-  /* 行内留白 4px→7px：信息卡是 dt/dd 密集区，实测是页面上最挤的一块 */
-  padding: 7px 0;
+  /* 信息卡是 dt/dd 密集区，实测是页面上最挤的一块（原 4px 太紧）→ 用 8px 档，回到间距刻度 */
+  padding: var(--space-2) 0;
   border-bottom: 1px dotted var(--color-line-soft);
 }
 .wiki-infobox__row:last-child { border-bottom: none; }
@@ -1091,7 +1091,7 @@ main {
 .wiki-toc li {
   counter-increment: toc;
   break-inside: avoid;
-  padding: 5px 0;
+  padding: var(--space-1) 0;
   font-size: var(--font-size-caption);
   line-height: 1.6;
 }
