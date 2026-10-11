@@ -891,19 +891,21 @@ const faq = install.faq || [];
 </style>
 
 <script>
-  /* 平台切换（hero 安装卡） */
+  /* 平台切换（hero 安装卡）：默认按访问者系统自动选中对应标签页，其余收在标签里 */
   document.querySelectorAll('.hero-install__tabs').forEach(tablist => {
     const panels = tablist.parentElement ? tablist.parentElement.querySelector('.hero-install__panels') : null;
+    const select = (id) => {
+      tablist.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', String((t as HTMLElement).dataset.platform === id)));
+      if (!panels) return;
+      panels.querySelectorAll('[role="tabpanel"]').forEach(p => { (p as HTMLElement).hidden = p.id !== 'ipanel-' + id; });
+    };
+    // 自动检测：Windows → windows；macOS / Linux / 移动端 → bash；
+    // 识别不出来就保持服务端默认（面向 Agent，对新手最友好）
+    const ua = ((navigator as any).userAgentData && (navigator as any).userAgentData.platform) || navigator.platform || navigator.userAgent || '';
+    if (/win/i.test(ua)) select('windows');
+    else if (/mac|linux|android|iphone|ipad/i.test(ua)) select('bash');
     tablist.querySelectorAll('[role="tab"]').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const id = (tab as HTMLElement).dataset.platform;
-        tablist.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', 'false'));
-        tab.setAttribute('aria-selected', 'true');
-        if (!panels) return;
-        panels.querySelectorAll('[role="tabpanel"]').forEach(p => { (p as HTMLElement).hidden = true; });
-        const target = panels.querySelector('#ipanel-' + id);
-        if (target) (target as HTMLElement).hidden = false;
-      });
+      tab.addEventListener('click', () => select((tab as HTMLElement).dataset.platform as string));
     });
   });
 
