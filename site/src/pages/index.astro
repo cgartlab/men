@@ -599,7 +599,7 @@ const faq = install.faq || [];
   .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Install / Terminal (Light Theme) ===== */
-  .install { padding: var(--space-8) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .install { padding: var(--space-8) 0 var(--space-12); }
   .install__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-4); }
   .install__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
@@ -614,7 +614,8 @@ const faq = install.faq || [];
 }
   .install__guide:hover { color: var(--color-accent-dark); text-decoration: none; }
 
-  .terminal { background: var(--color-bg-paper); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-line); }
+  /* 区块已放宽到整栏（1232px），但终端窗口不必占满 —— 命令行短，拉满只会显得空 */
+  .terminal { max-width: 56em; background: var(--color-bg-paper); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-line); }
   .terminal__chrome { display: flex; align-items: center; gap: var(--space-4); padding: 10px var(--space-4); background: var(--color-bg-warm); border-bottom: 1px solid var(--color-line); }
   .terminal__dots { display: flex; gap: 8px; flex-shrink: 0; }
   .terminal__dot { width: 12px; height: 12px; border-radius: 50%; }
@@ -888,7 +889,7 @@ const faq = install.faq || [];
   .topo-legend__dot--fail { background: var(--role-chi); }
 
   /* ===== Mechanisms ===== */
-  .mechanisms { padding: var(--space-10) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .mechanisms { padding: var(--space-10) 0; }
   .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
   .mechanisms__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
@@ -913,10 +914,10 @@ const faq = install.faq || [];
  line-height: var(--line-height-subhead);
  letter-spacing: var(--letter-spacing-heading);
 }
-  .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); }
+  .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); max-width: var(--measure-prose); }
 
   /* ===== FAQ ===== */
-  .faq { padding: var(--space-10) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .faq { padding: var(--space-10) 0 var(--space-12); }
   .faq__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-5);
  font-size: var(--font-size-h2);
@@ -929,13 +930,14 @@ const faq = install.faq || [];
   .faq__q::after { content: '+'; font-family: var(--font-mono); font-size: var(--font-size-h4); color: var(--color-fg-muted); transition: transform 0.2s; }
   .faq__item[open] .faq__q::after { transform: rotate(45deg); }
   .faq__a {
+    max-width: var(--measure-prose);
  font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); padding-bottom: var(--space-3);
  max-width: var(--measure-prose);
 }
   .faq__a code { font-family: var(--font-mono); background: var(--color-bg-warm); padding: 1px var(--space-1); border-radius: var(--radius-xs); color: var(--color-fg); font-size: 0.85em; }
 
   /* ===== CTA ===== */
-  .cta { padding: var(--space-12) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .cta { padding: var(--space-12) 0; }
   .cta__inner { text-align: center; padding: var(--space-10) 0; border-top: 1px solid var(--color-line-soft); }
   .cta__title {
  font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-3);
@@ -944,6 +946,8 @@ const faq = install.faq || [];
  letter-spacing: var(--letter-spacing-heading);
 }
   .cta__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-5); }
+  /* CTA 是居中窄块：整栏宽下把内容收在 44em 内居中 */
+  .cta__inner { max-width: 44em; margin: 0 auto; text-align: center; }
   .cta__actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
 
   /* ===== Responsive ===== */
