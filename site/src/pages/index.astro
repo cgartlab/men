@@ -98,24 +98,40 @@ const faq = install.faq || [];
 <BaseLayout title={pageTitle}>
   <!-- ===== Hero ===== -->
   <header class="hero" aria-labelledby="hero-title">
-    <div class="hero-content">
-      <div class="hero-logo"><GateLogo size={56} /></div>
-      <p class="hero-eyebrow">{content.hero.brandLine}</p>
-      <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
-      <p class="hero-desc">{content.hero.subtitle}</p>
-      <div class="hero-actions">
-        <a href={base + 'docs'} class="hero-cta hero-cta--primary">
-          <Icon name="lucide:book-open" width="16" height="16" />阅读文档
-        </a>
-        <a href="https://github.com/cgartlab/men" class="hero-cta hero-cta--ghost" target="_blank" rel="noopener">
-          <Icon name="lucide:github" width="16" height="16" />GitHub
-          <Icon name="lucide:arrow-up-right" width="12" height="12" />
-        </a>
+    <div class="hero__grid">
+      <!-- 左栏：文字说明，统一左对齐 -->
+      <div class="hero-content">
+        <div class="hero-logo"><GateLogo size={52} /></div>
+        <p class="hero-eyebrow">{content.hero.brandLine}</p>
+        <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
+        <p class="hero-desc">{content.hero.subtitle}</p>
+        <div class="hero-actions">
+          <a href={base + 'docs'} class="hero-cta hero-cta--primary">
+            <Icon name="lucide:book-open" width="16" height="16" />阅读文档
+          </a>
+          <a href="https://github.com/cgartlab/men" class="hero-cta hero-cta--ghost" target="_blank" rel="noopener">
+            <Icon name="lucide:github" width="16" height="16" />GitHub
+            <Icon name="lucide:arrow-up-right" width="12" height="12" />
+          </a>
+        </div>
+        <div class="hero-version">
+          <span class="hero-version-badge">{SITE.version}</span>
+          <span>{content.hero.version.topic}</span>
+        </div>
       </div>
-      <div class="hero-version">
-        <span class="hero-version-badge">{SITE.version}</span>
-        <span>{content.hero.version.topic}</span>
-      </div>
+
+      <!-- 右栏：一行安装命令（极简：命令 + 复制 + 一行说明） -->
+      <aside class="hero-install" aria-label="安装命令">
+        <p class="hero-install__label">一行命令装好</p>
+        <div class="hero-install__cmd">
+          <span class="hero-install__prompt" aria-hidden="true">$</span>
+          <code class="hero-install__code">npx @cgartlab/men</code>
+          <button class="hero-install__copy" data-cmd="npx @cgartlab/men" aria-label="复制安装命令">
+            <Icon name="lucide:copy" width="14" height="14" />
+          </button>
+        </div>
+        <p class="hero-install__meta">Node ≥ 18 · 零依赖<br />不用克隆仓库，一行命令即可</p>
+      </aside>
     </div>
   </header>
 
@@ -514,21 +530,33 @@ const faq = install.faq || [];
   :root { --page-max: 720px; }
 
   /* ===== Hero ===== */
-  .hero { text-align: center; padding: var(--space-12) 0 var(--space-8); position: relative; overflow: hidden; }
-  .hero-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 0 var(--space-6); }
+  /* ===== Hero（第一板块）：左栏文字说明 + 右栏一行安装命令 ===== */
+  .hero { padding: var(--space-12) 0 var(--space-10); position: relative; overflow: hidden; }
+  .hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+    gap: var(--space-10);
+    align-items: center;
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+    position: relative;
+    z-index: 1;
+  }
+  .hero-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
   .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
   .hero-title {
- font-size: var(--font-size-display); font-weight: var(--font-weight-semi); color: var(--color-fg); text-wrap: balance; margin: 0 auto var(--space-3);
+ font-size: var(--font-size-display); font-weight: var(--font-weight-semi); color: var(--color-fg); text-wrap: balance; margin: 0 0 var(--space-4);
  line-height: var(--line-height-display);
  letter-spacing: var(--letter-spacing-heading);
- max-width: 16em;
+ max-width: 14em;
 }
   .hero-desc {
- font-size: var(--font-size-body-lg); color: var(--color-fg-secondary); line-height: var(--line-height-body); margin: 0 auto;
- max-width: 34em;
+ font-size: var(--font-size-body-lg); color: var(--color-fg-secondary); line-height: var(--line-height-body); margin: 0;
+ max-width: 32em;
 }
-  .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
+  .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: flex-start; margin-top: var(--space-6); }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
   /* 橘色按钮：白字（产品决定 2026-10-11）。填充用 accent-fill(#bc513a) 白字 4.80:1；
      hover 不能往更亮处混白（白字对比度会掉到 3:1 以下），改为压暗 12%。 */
@@ -536,7 +564,37 @@ const faq = install.faq || [];
   .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent-fill) 88%, #000); border-color: color-mix(in srgb, var(--color-accent-fill) 88%, #000); text-decoration: none; }
   .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
-  .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
+  .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
+
+  /* 右栏安装卡：只用「标签 + 命令 + 一行说明」，不放终端装饰 */
+  .hero-install {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    padding: var(--space-5);
+  }
+  .hero-install__label {
+    font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi);
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-fg-muted); margin: 0 0 var(--space-3);
+  }
+  .hero-install__cmd {
+    display: flex; align-items: center; gap: var(--space-2);
+    background: var(--color-bg-warm); border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-sm); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  }
+  .hero-install__prompt { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-accent-dark); flex-shrink: 0; }
+  .hero-install__code {
+    flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap;
+    font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg);
+    background: none; padding: 0;
+  }
+  .hero-install__copy {
+    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border: 1px solid var(--color-line); border-radius: 6px;
+    background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
+  }
+  .hero-install__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
+  .hero-install__meta { margin: var(--space-3) 0 0; font-size: var(--font-size-caption); color: var(--color-fg-tertiary); }
   .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Install / Terminal (Light Theme) ===== */
@@ -892,6 +950,7 @@ const faq = install.faq || [];
   }
   @media (max-width: 480px) {
     .hero-title { font-size: clamp(1.8rem, 8vw, 2.2rem); }
+    .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
     .hero-actions { flex-direction: column; align-items: stretch; }
     .hero-cta { justify-content: center; }
     .terminal__tab { padding: var(--space-2); }
@@ -921,7 +980,7 @@ const faq = install.faq || [];
   });
 
   /* Copy buttons */
-  document.querySelectorAll('.terminal__copy').forEach(btn => {
+  document.querySelectorAll('.terminal__copy, .hero-install__copy').forEach(btn => {
     const ICON_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
     const label = btn.getAttribute('aria-label') || '复制命令';
     btn.setAttribute('aria-live', 'polite');
