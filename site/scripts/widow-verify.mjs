@@ -63,20 +63,29 @@ const MEASURE = `(selector) => {
     return [...range.getClientRects()];
   };
   const all = rectsFrom(0);
-  const sorted = all.map((r) => r.top).sort((a, b) => a - b);
+  // 与 widow-audit.mjs 完全一致：按「垂直区间重叠」聚类成行（固定 px 容差会把含行内 code 的
+  // 一行切成两行，造出假孤行），再二分定位末行起点。
+  const lhPx = parseFloat(getComputedStyle(el).lineHeight) || parseFloat(getComputedStyle(el).fontSize) * 1.4;
+  const rectList = all.map((r) => ({ top: r.top, bottom: r.bottom })).sort((a, b) => a.top - b.top);
   const clusters = [];
-  for (const t of sorted) {
+  for (const r of rectList) {
     const c = clusters[clusters.length - 1];
-    if (c && t - c.max <= 3) c.max = Math.max(c.max, t); else clusters.push({ min: t, max: t });
+    if (c) {
+      const ov = Math.min(c.bottom, r.bottom) - Math.max(c.top, r.top);
+      const minH = Math.min(c.bottom - c.top, r.bottom - r.top);
+      if (ov > minH * 0.5) { c.top = Math.min(c.top, r.top); c.bottom = Math.max(c.bottom, r.bottom); continue; }
+    }
+    clusters.push({ top: r.top, bottom: r.bottom });
   }
   if (clusters.length <= 1) return { lineCount: 1, lastChars: chars.length, lastText: chars.map((c) => c.ch).join('').slice(-16) };
-  const lastTop = clusters[clusters.length - 1].min;
+  const lastTop = clusters[clusters.length - 1].top;
+  const slack = Math.max(2, lhPx * 0.35);
   let lo = 0, hi = chars.length - 1, start = chars.length - 1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
     const rs = rectsFrom(mid);
     const minTop = rs.length ? Math.min(...rs.map((r) => r.top)) : Infinity;
-    if (minTop >= lastTop - 1) { start = mid; hi = mid - 1; } else lo = mid + 1;
+    if (minTop >= lastTop - slack) { start = mid; hi = mid - 1; } else lo = mid + 1;
   }
   const tail = chars.slice(start);
   return { lineCount: clusters.length, lastChars: tail.length, lastText: tail.map((c) => c.ch).join('').slice(-16) };

@@ -13,7 +13,7 @@ const infobox = [
   { k: '名称', v: '<strong>men（门）</strong>' },
   { k: '类型', v: 'OpenCode 原生 Agent 团队协作配置方案' },
   { k: '版本', v: `<code>${SITE.version}</code>` },
-  { k: '角色数', v: '6（men 编排 + 5 个 AI 帮手）' },
+  { k: '角色数', v: '6（men 编排 + 5 个 AI 帮手）组成团队' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '仓库', v: `<a href="${SITE.repo}" target="_blank" rel="noopener">cgartlab/men</a>` },
   { k: '出品', v: SITE.brand },
@@ -40,7 +40,7 @@ const seealso = [
   <WikiManual
     crumb="概览"
     title="概览"
-    lead={`如果你一个人既写代码又写文章、又要做设计、还要查资料——<strong>men（门）</strong>就是为你设计的。它把 6 个各司其职的 AI 帮手组成一支团队，你只需要说一句话，剩下的交给门来分配。`}
+    lead={`如果你一个人既写代码又写文章、又要做设计、还要查资料——<strong>men（门）</strong>就是为你设计的。它把 6 个各司其职的 AI 帮手组成一支团队，你只需要说一句话，剩下的全部都交给门来分配。`}
     infoboxTitle="基本信息"
     infobox={infobox}
     toc={toc}
@@ -118,8 +118,8 @@ const seealso = [
         <table>
           <thead><tr><th>#</th><th>原则</th><th>具体含义</th></tr></thead>
           <tbody>
-            <tr><td>01</td><td><strong>先检查再算完</strong></td><td>做完了不等于说完了。门会用脚本检查文件是否存在、格式是否正确，才算真正完成。</td></tr>
-            <tr><td>02</td><td><strong>东西放在你自己电脑上</strong></td><td>不依赖云服务，不上传你的数据。所有文件都在你的本地运行。</td></tr>
+            <tr><td>01</td><td><strong>先检查再算完</strong></td><td>做完了不等于说完了。门会用脚本检查文件是否存在、格式是否正确，才算真正完成一件工作。</td></tr>
+            <tr><td>02</td><td><strong>东西放你自己电脑</strong></td><td>不依赖云服务，不上传你的数据。所有文件都在你的本地运行。</td></tr>
             <tr><td>03</td><td><strong>拿不准就问</strong></td><td>如果你说的话不够清楚，门会先问你再动手。不猜、不脑补。</td></tr>
             <tr><td>04</td><td><strong>全程留痕</strong></td><td>每一步操作都记录下来。事后可回答："当时为什么这么分配？"</td></tr>
             <tr><td>05</td><td><strong>越用越聪明</strong></td><td>每次任务完成后自动总结经验，下次不会再犯同样的错。</td></tr>

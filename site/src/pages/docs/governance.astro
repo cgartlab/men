@@ -9,7 +9,7 @@ const pageDesc = '团队怎么做决策、变更怎么审查、版本怎么发�
 const base = '/';
 
 const infobox = [
-  { k: '团队构成', v: '<strong>6 个角色</strong>（1 个老大 + 5 个帮手）' },
+  { k: '团队构成', v: '<strong>6 个角色</strong>（1 个老大 + 5 个帮手）。' },
   { k: '决策方式', v: '四类分级：架构 / 里程碑 / 日常 / 技术选型' },
   { k: '许可证', v: '<code>MIT</code>' },
 ];
@@ -79,7 +79,7 @@ const seealso = [
       </div>
       <p>重要决策会记录下来，包含：决策编号、内容、依据、状态。</p>
       <div class="wiki-note">
-        <strong>回滚机制</strong>：如果某次改动导致问题，可以回退到上一版本。回滚原因会被记录下来。
+        <strong>回滚机制</strong>：如果某次改动导致问题，可以回退到上一版本。回滚原因被记录下来。
       </div>
       <SrcRef files={['docs/governance.md']} />
     </section>
@@ -134,7 +134,7 @@ const seealso = [
       <h3>安全底线</h3>
       <ul>
         <li>密钥文件不能提交到版本控制</li>
-        <li>密码、API key 不能出现在任何文档或代码中</li>
+        <li>密码、API key 不能出现在任何文档或任何代码中</li>
         <li>安全漏洞报告：72 小时内响应</li>
       </ul>
       <h3>漏洞报告方式</h3>

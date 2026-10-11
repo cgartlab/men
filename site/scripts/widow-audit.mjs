@@ -99,7 +99,7 @@ const COLLECT = `(() => {
     return s.replace(/\\s+/g, ' ').trim();
   };
   const SKIP = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'KBD', 'SAMP', 'SVG', 'PATH', 'TEXTAREA', 'SELECT', 'OPTION'];
-  function measureLastLine(el) {
+  function measureLastLine(el, lhPx) {
     const chars = [];
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     let n;
@@ -116,26 +116,32 @@ const COLLECT = `(() => {
       return [...range.getClientRects()];
     };
     const all = rectsFrom(0);
-    // 行判定：按 3px 容差把 rect 的 top 聚类成「行」——行内元素（如 inline code 字号更小）
-    // 的 rect top 会偏移 1–2px，直接用去重后的 top 会虚增行数。
-    const topsSorted = all.map((r) => r.top).sort((x, y) => x - y);
+    // 行判定：用「垂直区间重叠」把 rect 聚成行，而不是固定 px 容差。
+    // 行内 <code>/<strong> 字号不同，rect top 可能偏移 >3px（实测有 5px 的），
+    // 固定容差会把一行切成两行 → 造出**假孤行**。两条 rect 垂直重叠超过较矮者一半即同一行。
+    const rectList = all.map((r) => ({ top: r.top, bottom: r.bottom })).sort((a, b) => a.top - b.top);
     const clusters = [];
-    for (const t of topsSorted) {
+    for (const r of rectList) {
       const c = clusters[clusters.length - 1];
-      if (c && t - c.max <= 3) c.max = Math.max(c.max, t);
-      else clusters.push({ min: t, max: t });
+      if (c) {
+        const ov = Math.min(c.bottom, r.bottom) - Math.max(c.top, r.top);
+        const minH = Math.min(c.bottom - c.top, r.bottom - r.top);
+        if (ov > minH * 0.5) { c.top = Math.min(c.top, r.top); c.bottom = Math.max(c.bottom, r.bottom); continue; }
+      }
+      clusters.push({ top: r.top, bottom: r.bottom });
     }
     if (clusters.length <= 1) return null;
-    const lastTop = clusters[clusters.length - 1].min;
+    const lastTop = clusters[clusters.length - 1].top;
+    const slack = Math.max(2, lhPx * 0.35);   // 末行内行内盒的 top 抖动上限
     let lo = 0, hi = chars.length - 1, start = chars.length - 1;
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
-      // 关键：区间从 mid 到末尾若**整段都落在末行**，则其 rect 的 top 最小值就等于末行 top。
+      // 区间从 mid 到末尾若**整段都落在末行**，其 rect 的 top 最小值就贴近末行 top。
       // （早期写成「存在一个 rect 的 top ≥ 末行 top」是错的：从首行任意位置到末尾的区间
       //   必然包含末行的 rect，条件恒真 → 二分收敛到 0 → 把整段误当末行，虚报字符数。）
       const rs = rectsFrom(mid);
-      const minTop = rs.length ? Math.min(...rs.map((r) => Math.round(r.top))) : Infinity;
-      if (minTop >= lastTop - 1) { start = mid; hi = mid - 1; }
+      const minTop = rs.length ? Math.min(...rs.map((r) => r.top)) : Infinity;
+      if (minTop >= lastTop - slack) { start = mid; hi = mid - 1; }
       else lo = mid + 1;
     }
     const tail = chars.slice(start);
@@ -161,7 +167,7 @@ const COLLECT = `(() => {
     const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
     if (box.height < lh * 1.4) continue;                     // 没折行
     if (directText(el).length < 4) continue;                 // 太短不算
-    const m = measureLastLine(el);
+    const m = measureLastLine(el, lh);
     if (!m) continue;
     out.push({
       sel: sel(el),

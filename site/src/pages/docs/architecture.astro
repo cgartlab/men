@@ -57,12 +57,12 @@ const seealso = [
         <li><strong>门是唯一分配者</strong>：5 个帮手之间不能互相分配任务——只有门能派活。</li>
         <li><strong>持是特殊的</strong>：它既做分析，又负责检查其他人的产出，用全新视角审核。</li>
       </ul>
-      <p class="src-ref">来源：<code>docs/architecture.md</code> · 一、协作拓扑</p>
+      <p class="src-ref">参考来源：<code>docs/architecture.md</code> · 一、协作拓扑</p>
     </section>
 
     <section id="orchestration" class="doc-section">
       <h2>任务怎么流转</h2>
-      <p>每次任务自动走完 10 步。详细流程见 <a href={base + 'docs/protocols'}>协议规范</a>，这里只说关键节点：</p>
+      <p>每次任务自动走完 10 步。详细流程见 <a href={base + 'docs/protocols'}>协议规范文档</a>，这里只说关键节点：</p>
       <ul>
         <li><strong>先问再动手</strong> —— 如果你说的话不清楚，门会先问你。</li>
         <li><strong>判断该派谁</strong> —— 查资料派寻，写代码派记，写方案派思，画图派艺。</li>
@@ -71,7 +71,7 @@ const seealso = [
         <li><strong>检查没过就重试</strong> —— 回到失败点重试，最多 5 次。</li>
         <li><strong>最后交报告</strong> —— 结论、关键信息、来源、待定问题。</li>
       </ul>
-      <p class="src-ref">来源：<code>docs/architecture.md</code> · 二、编排流程</p>
+      <p class="src-ref">参考来源：<code>docs/architecture.md</code> · 二、编排流程</p>
     </section>
 
     <section id="verification" class="doc-section">
@@ -89,7 +89,7 @@ const seealso = [
             <tr>
               <td><strong>第二层</strong></td>
               <td>持用全新视角审核：只看实际文件，不听「我做完了」的口头汇报</td>
-              <td>内容不符或质量不达标就判失败</td>
+              <td>内容不符或质量不达标就判定失败</td>
             </tr>
           </tbody>
         </table>
@@ -97,7 +97,7 @@ const seealso = [
       <div class="wiki-note">
         <strong>失败怎么办</strong>：任一检查没过，就回到失败点重试（不从头），最多 5 次。持连续 3 次检查不通过就停止并汇报卡住。
       </div>
-      <p class="src-ref">来源：<code>docs/architecture.md</code> · 三、验证体系</p>
+      <p class="src-ref">参考来源：<code>docs/architecture.md</code> · 三、验证体系</p>
     </section>
 
     <section id="directory" class="doc-section">
@@ -116,7 +116,7 @@ const seealso = [
           </tbody>
         </table>
       </div>
-      <p class="src-ref">来源：<code>docs/architecture.md</code> · 四、目录结构</p>
+      <p class="src-ref">参考来源：<code>docs/architecture.md</code> · 四、目录结构</p>
     </section>
   </WikiManual>
 </BaseLayout>

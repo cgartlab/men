@@ -10,7 +10,7 @@ const base = '/';
 const rawBase = 'https://raw.githubusercontent.com/cgartlab/men/main';
 
 const infobox = [
-  { k: '分发方式', v: '<strong>npm 包</strong>（<code>@cgartlab/men</code>）+ <strong>Git 仓库</strong>双通道' },
+  { k: '分发方式', v: '<strong>npm 包</strong>（<code>@cgartlab/men</code>）+ <strong>Git 代码仓库</strong>双通道' },
   { k: '前置依赖', v: '<code>Node ≥ 18</code> / <code>npm</code> / <code>git</code>' },
   { k: '推荐方式', v: '<code>npx @cgartlab/men</code>' },
 ];
@@ -47,7 +47,7 @@ const seealso = [
       <h2>前置要求</h2>
       <p>安装器会检查以下三个工具是否就绪，缺一个就报错：</p>
       <ul>
-        <li><strong>Node.js 18 或更高</strong> —— 运行安装脚本所需</li>
+        <li><strong>Node.js 18 或更高</strong> —— 运行安装脚本所需的环境</li>
         <li><strong>npm</strong> —— 安装依赖</li>
         <li><strong>git</strong> —— 拉取仓库代码</li>
       </ul>
@@ -56,17 +56,17 @@ const seealso = [
 
     <section id="check-versions" class="doc-section">
       <h2>检查版本</h2>
-      <p>花 30 秒确认环境就绪。打开终端，依次运行：</p>
+      <p>花 30 秒确认环境就绪。打开终端，然后依次运行：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>node --version    # 应显示 v18.x 或更高
 npm --version     # 应显示版本号
 git --version     # 应显示版本号</code></pre>
       </div>
-      <p>如果任何一条报错，先安装对应的工具再继续：</p>
+      <p>如果任何一条报错，先安装对应的工具再继续即可：</p>
       <ul>
-        <li>Node.js —— 从 <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a> 下载 LTS 版本</li>
-        <li>npm —— 随 Node.js 一起安装，不用单独装</li>
+        <li>Node.js —— 从 <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a> 下载安装 LTS 版本</li>
+        <li>npm —— 随 Node.js 一起安装，不用再单独安装</li>
         <li>git —— 从 <a href="https://git-scm.com" target="_blank" rel="noopener">git-scm.com</a> 下载，Windows 上也可以用 <code>winget install Git</code></li>
       </ul>
       <p>三条命令都能正常输出版本号后，就可以开始安装了。</p>
@@ -87,7 +87,7 @@ git --version     # 应显示版本号</code></pre>
         <li><strong>生成配置文件</strong></li>
         <li><strong>自动验证</strong>安装是否正确</li>
       </ol>
-      <p>完成后，在当前目录运行 <code>opencode</code> 就能使用：</p>
+      <p>完成后，在当前目录运行 <code>opencode</code> 就能正常使用：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>opencode</code></pre>
@@ -102,7 +102,7 @@ git --version     # 应显示版本号</code></pre>
         <span class="code-block__lang">bash</span>
         <pre><code>bash &lt;(curl -fsSL {rawBase}/install.sh)</code></pre>
       </div>
-      <p>脚本会自动检测依赖、克隆代码到默认目录 <code>men/</code>，然后完成安装。如需指定安装目录：</p>
+      <p>脚本会自动检测依赖、克隆代码到默认目录 <code>men/</code>，然后完成安装。如需指定安装目录，可这样：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>bash &lt;(curl -fsSL {rawBase}/install.sh) --dir ~/men</code></pre>
@@ -160,8 +160,8 @@ git --version     # 应显示版本号</code></pre>
           <thead><tr><th>选项</th><th>PowerShell</th><th>说明</th></tr></thead>
           <tbody>
             <tr><td><code>--dir &lt;path&gt;</code></td><td><code>-Dir &lt;path&gt;</code></td><td>安装到指定目录。默认当前目录。</td></tr>
-            <tr><td><code>--global</code></td><td>—（仅 npm 通道）</td><td>全局安装：任意目录都能用。用法：<code>npx @cgartlab/men --global</code>。</td></tr>
-            <tr><td><code>--global-remove</code></td><td>—（仅 npm 通道）</td><td>卸载全局安装。用法：<code>npx @cgartlab/men --global-remove</code>。</td></tr>
+            <tr><td><code>--global</code></td><td class="nowrap">—（仅npm 通道）</td><td>全局安装：任意目录都能用。用法：<code>npx @cgartlab/men --global</code>。</td></tr>
+            <tr><td><code>--global-remove</code></td><td class="nowrap">—（仅npm 通道）</td><td>卸载全局安装。用法：<code>npx @cgartlab/men --global-remove</code>。</td></tr>
             <tr><td><code>--skip-deps</code></td><td><code>-SkipDeps</code></td><td>跳过依赖安装。</td></tr>
             <tr><td><code>--skip-verify</code></td><td><code>-SkipVerify</code></td><td>跳过安装后的自动验证。</td></tr>
             <tr><td><code>--json</code></td><td><code>-Json</code></td><td>以 JSON 格式输出安装结果。</td></tr>
@@ -186,7 +186,7 @@ node --version
 # 2. 运行自动验证
 node scripts/verify.mjs men --json</code></pre>
       </div>
-      <p>如果验证全部通过且退出码为 0，说明安装正确。然后在项目目录运行 <code>opencode</code> 就能使用了。</p>
+      <p>如果验证全部通过且退出码为 0，说明安装正确。然后在项目目录运行 <code>opencode</code> 就能正常使用了。</p>
       <SrcRef files={['scripts/install.mjs']} />
       <div class="wiki-note"><strong>线上地址</strong>：站点正式环境部署于 <a href="https://men.cgartlab.com" target="_blank" rel="noopener">men.cgartlab.com</a>；本地预览仅用于开发验证，内容与线上一致。</div>
     </section>

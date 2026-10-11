@@ -20,7 +20,7 @@ const roleDetails: Record<string, {
   men: {
     responsibilities: [
       '接到你的指令，判断该谁做',
-      '派活给合适的人，能同时派的就同时派',
+      '把活派给合适的人，能同时派的就同时派出去',
       '收齐结果，整理成报告交给你',
       '干完自动记经验，下次更聪明',
     ],
@@ -39,8 +39,8 @@ const roleDetails: Record<string, {
     ],
     skills: ['si-plan-compose（方案拆解）', 'si-knowledge（知识管理）'],
     input: '门分派的子任务描述和上下文',
-    output: '任务拆解方案 / 知识沉淀文档 / 回评报告',
-    redlines: ['只评不改——看别人产出时只标注不改写', '不直接写代码或生图'],
+    output: '任务拆解方案 / 知识沉淀文档 / 回评报告等文档',
+    redlines: ['只评不改——看别人产出时只做标注、不改写', '不直接写代码或生图'],
     charter: '想清楚再动手',
   },
   ji: {
@@ -48,9 +48,9 @@ const roleDetails: Record<string, {
       '写代码（前端优先）',
       '管 GitHub——PR、Review、Issue',
       '写文章、文档、周报',
-      '代码写完跑 typecheck/lint/test，过了才交',
+      '代码写完跑 typecheck/lint/test，通过了才交付',
     ],
-    skills: ['ji-frontend-design（前端实现）', 'ji-github（GitHub 操作）', 'ji-content-write（内容写作）', 'ji-l1-verify（机械验证）'],
+    skills: ['ji-frontend-design(前端实现)', 'ji-github（GitHub 操作）', 'ji-content-write（内容写作）', 'ji-l1-verify（机械验证）'],
     input: '拆解方案里分到的子任务和代码规范',
     output: '代码文件 / PR / Markdown 文档',
     redlines: ['先验证再交——typecheck/lint/test 全过才行', '不编"我做完了"——必须有实际文件'],
@@ -58,20 +58,20 @@ const roleDetails: Record<string, {
   },
   chi: {
     responsibilities: [
-      '做投资分析——持仓、收益、市场数据',
-      '当质检员——用全新视角审核别人的产出',
+      '做投资分析——持仓、收益、市场数据统计表',
+      '当质检员——用全新视角审核别人的产出成果',
       '只看实际文件，不听口头汇报',
       '脚本查完它再查一遍',
     ],
     skills: ['chi-invest（投资分析）', 'chi-judge（独立评审）'],
     input: '别人交上来的文件路径和验收标准',
-    output: '评审结论（通过/不通过 + 具体问题清单）',
-    redlines: ['只信实物——"我完成了"不算完成证据', '独立判断——不继承被审核者的上下文'],
+    output: '评审结论（通过/不通过 + 详细的逐条问题清单）',
+    redlines: ['只信实物——"我完成了"不算完成证据', '独立判断——不继承被审核者已有的上下文信息'],
     charter: '按验收标准机械判定',
   },
   yi: {
     responsibilities: [
-      '做设计决策——配色、字体、间距、布局',
+      '做设计决策——包括配色、字体、间距、布局',
       '生成配图和插画',
       '维护设计令牌体系',
       '查无障碍对比度',
@@ -79,7 +79,7 @@ const roleDetails: Record<string, {
     skills: ['yi-design（设计决策）', 'yi-imagegen（图像生成）'],
     input: '设计需求和品牌约束',
     output: '设计稿 / 生图文件 / 配色方案',
-    redlines: ['生图能力只有艺有——别人没法直接出图', '对比度要达标——小字 4.5:1，大字 3:1'],
+    redlines: ['生图能力只有艺有——别人没法直接生成图片', '对比度要达标——小字 4.5:1，大字 3:1'],
     charter: '设计需求追问到清楚——风格、调性、用途',
   },
   xun: {
@@ -91,7 +91,7 @@ const roleDetails: Record<string, {
     ],
     skills: ['xun-search（网页搜索）', 'xun-rss-scan（RSS 扫描）', 'xun-factcheck（事实核查）'],
     input: '搜索关键词或事实核查请求',
-    output: '事实清单 / 调研报告（每条带来源链接）',
+    output: '事实清单 / 调研报告（每条都需要带来源链接）',
     redlines: ['只查不改——不修改源数据', '无来源 = 无效', '搜不到就老实说搜不到'],
     charter: '搜索范围可以自己扩，关键事实要交叉验证',
   },
@@ -139,14 +139,14 @@ const flowSteps = [
     icon: 'lucide:play',
     label: '各干各的',
     example: '寻搜数据 / 艺出图 / 思写正文',
-    detail: '每个人只干自己擅长的。寻查资料，艺做图，思写内容。互不干扰。',
+    detail: '每个人只干自己擅长的事。寻查资料，艺来做图，思写内容。互不干扰。',
   },
   {
     id: 'verify',
     icon: 'lucide:shield-check',
     label: '查收成果',
     example: '脚本检查 → 持独立审核',
-    detail: '先跑脚本查文件在不在、内容全不全。过了这关，持再看一遍——只看实际文件，不听口头汇报。',
+    detail: '先跑脚本查文件在不在、内容全不全。过了这一关，持再仔细看一遍——只看实际文件，不听口头汇报。',
   },
   {
     id: 'report',
@@ -256,7 +256,7 @@ const routingRows = [
         <span class="section-num">03</span>
         6 个 Agent 详解
       </h2>
-      <p class="section-desc">滚动查看每个角色的职责、技能、输入输出与约束</p>
+      <p class="section-desc">滚动查看每个角色的职责、技能、输入输出以及约束条件</p>
 
       <div class="agents-stage">
         {roles.map((role, i) => {
@@ -353,19 +353,19 @@ const routingRows = [
         <div class="intent-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.5rem 0;">
           <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
             <strong>查信息</strong>
-            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"最近有什么新闻" → 派寻去搜</p>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"最近有什么新闻" → 派寻去搜索</p>
           </div>
           <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
             <strong>做分析</strong>
-            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"这份投资合理吗" → 派持去分析和审核</p>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"这份投资合理吗" → 派持去分析并审核一遍</p>
           </div>
           <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
             <strong>多角色配合</strong>
-            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"写一篇行业报告" → 派多个人同时干</p>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"写一篇行业报告" → 派多个人同时一起来做</p>
           </div>
           <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
             <strong>从零规划</strong>
-            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"帮我启动新项目" → 派思想清楚再拆解</p>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"帮我启动新项目" → 派思想清楚之后再拆解</p>
           </div>
         </div>
         <p class="intent-link">
@@ -1049,6 +1049,10 @@ const routingRows = [
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
+    /* 路由表 5 列在窄屏被压到 65px/列，中文只剩 2 字一行 —— 改为「不折行 + 横向滚动」，
+       与全站 .wiki-table 的窄屏处理一致。 */
+    .routing-table { min-width: 680px; }
+    .routing-table td { white-space: nowrap; }
     .roles-page {
       padding: var(--space-4) var(--space-6) var(--space-8);
     }

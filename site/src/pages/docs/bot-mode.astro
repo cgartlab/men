@@ -11,7 +11,7 @@ const base = '/';
 const infobox = [
   { k: '识别层', v: '<strong>3 层</strong>（L1 prompt / L2 工具 / L3 机械探针）' },
   { k: '调度上限', v: '<strong>3 轮 / 10 条 / 6 成员</strong>' },
-  { k: '七嘴八舌根源', v: 'Round 0 无 @ = <strong>全员轮流各拿一个 turn</strong>' },
+  { k: '七嘴八舌的根源之所在', v: 'Round 0 无 @ = <strong>全员轮流各拿一个 turn</strong>' },
   { k: '判定顺序', v: '先问<strong>是否被 @</strong> → men 是否在场 → 最后才看职责域' },
   { k: '静默语义', v: '回复匹配 <code>\\(?pass?\\)?\\.?</code> 即静默，不产生任何群内消息' },
   { k: '探针', v: '<code>node scripts/runtime-probe.mjs --expect hermes</code>' },
@@ -90,12 +90,12 @@ node scripts/runtime-probe.mjs --expect room:Men\ Team # 断言存在某群组�
       <p>依据 Hermes 源码 <code>gateway/hosted_room_discussion.py</code> 与 <code>apps/desktop/src/plugins/hermes-bots/group-round-prompt.ts</code>（访问日期 2026-10-08）：</p>
       <ol>
         <li><strong>Round 0</strong>：用户消息 @了谁就轮谁；<strong>无 @ = 全体成员轮流各拿一个 turn</strong>（七嘴八舌根源）。</li>
-        <li><strong>Round 1+</strong>：只有被上一位发言者 <strong>@cite 过</strong>且此后未发言的成员入场（opt-in）。</li>
+        <li><strong>Round 1+</strong>：只有被上一位发言者 <strong>@cite 引用过</strong>且此后未发言的成员入场（opt-in）。</li>
         <li><strong>上限</strong>：3 轮 / 10 条消息 / 6 成员，超限自动 settled。</li>
         <li><strong>静默</strong>：回复为空、或整串匹配 <code>\(?pass?\)?\.?</code>（<code>pass</code> / <code>(pass)</code> / <code>pass.</code>，大小写不敏感）= 本轮静默，<strong>不产生群内消息</strong>。</li>
         <li><strong>无强制应答</strong>：Hermes 没有「被点名却 pass 就 nudge 你」的机制——静默就是静默，被点名者必须自己确保产出。</li>
       </ol>
-      <div class="wiki-note"><strong>推论</strong>：无 @ 时你必然会被轮到——秩序不取决于「会不会被轮到」，取决于<strong>轮到你时做什么</strong>。</div>
+      <div class="wiki-note"><strong>推论</strong>：无 @ 时你必然会被轮到——秩序不取决于「会不会被轮到」，取决于<strong>轮到你时该做什么</strong>。</div>
     </section>
 
     <section id="protocol" class="doc-section">
@@ -106,7 +106,7 @@ node scripts/runtime-probe.mjs --expect room:Men\ Team # 断言存在某群组�
           <thead><tr><th>#</th><th>问</th><th>动作</th></tr></thead>
           <tbody>
             <tr><td>1</td><td><strong>我被 @ 了吗？</strong></td><td>是 → <strong>必须回答</strong>（不得 pass），直接产出</td></tr>
-            <tr><td>2</td><td><strong>men 在房间成员列表吗？</strong></td><td>在，且你不是 men 也没被 @ → <strong>无条件 <code>(pass)</code></strong>，先于职责域判断；men 会轮到自己的 turn 做分诊，抢接就是抢麦</td></tr>
+            <tr><td>2</td><td><strong>men 在不在房间成员列表里？</strong></td><td>在，且你不是 men 也没被 @ → <strong>无条件 <code>(pass)</code></strong>，先于职责域判断；men 会轮到自己的 turn 做分诊，抢接就是抢麦</td></tr>
             <tr><td>3</td><td>men <strong>真的不在</strong>房间？</td><td>看路由表：你是对口专家 → 接单执行（首次发言声明「我来」）；否则 <code>(pass)</code></td></tr>
             <tr><td>4</td><td>men 已经接单并 @了别人？</td><td>被 @者执行，其余 <code>(pass)</code></td></tr>
           </tbody>
@@ -150,7 +150,7 @@ node scripts/runtime-probe.mjs --expect hermes  # 真机环境断言</code></pre
           <tbody>
             <tr><td>机械层</td><td>runtime-probe 27 单测 + skill 契约 6 断言 + npm test</td><td><strong>269/269 绿</strong></td></tr>
             <tr><td>行为层</td><td>4 个轮次场景：非对口 pass / 抢接回归 / men 分诊 @ / 被 @ 必答</td><td><strong>4/4 通过</strong>（含一次判定表强化）</td></tr>
-            <tr><td>真实群组</td><td>桌面端重建群组后发无 @ 任务观察全链路</td><td>待执行（当前 <code>rooms.active: []</code>，房间需要重建）</td></tr>
+            <tr><td>真实群组端到端全链路验证</td><td>桌面端重建群组后发无 @ 任务观察全链路</td><td>待执行（当前 <code>rooms.active: []</code>，房间需要重建）</td></tr>
           </tbody>
         </table>
       </div>

@@ -56,7 +56,7 @@ model: <model-id>
   <WikiManual
     crumb="配置"
     title="配置"
-    lead={`men 的配置分两层：<strong>opencode.json</strong> 管『谁用什么模型』，<code>.opencode/agent/*.md</code> 管『每个角色怎么干活』。如果你只是安装后正常使用，安装器已经帮你配好了——这一页主要给想自定义角色或切换模型的人看。`}
+    lead={`men 的配置分两层：<strong>opencode.json</strong> 管『谁用什么模型』，<code>.opencode/agent/*.md</code> 管『每个角色怎么干活』。如果你只是安装后正常使用，安装器已经帮你配好了——这一页主要是给想自定义角色或切换模型的人看。`}
     infoboxTitle="配置概要"
     infobox={infobox}
     toc={toc}
@@ -82,7 +82,7 @@ model: <model-id>
             <tr><td><code>instructions</code></td><td><code>AGENTS.md</code></td><td>全局说明文件</td></tr>
             <tr><td><code>agent</code></td><td>6 个角色模型映射</td><td>每个角色用哪个模型（见下节）</td></tr>
             <tr><td><code>agent.men.permissions</code></td><td>权限数组</td><td>门的权限设置（允许提问等）</td></tr>
-            <tr><td>插件发现</td><td>自动加载</td><td><code>.opencode/plugins/</code> 下的插件自动发现</td></tr>
+            <tr><td>插件发现</td><td>自动加载</td><td><code>.opencode/plugins/</code> 下的插件会自动发现</td></tr>
             <tr><td><code>skills.paths</code></td><td><code>.opencode/skills</code></td><td>技能包搜索路径</td></tr>
           </tbody>
         </table>
@@ -92,7 +92,7 @@ model: <model-id>
 
     <section id="models" class="doc-section">
       <h2>模型分配</h2>
-      <p>六个角色各自使用不同模型，在 <code>opencode.json</code> 的 <code>agent</code> 字段配置。想换模型，直接改对应字段的值即可。模型密钥由你的本地环境管理，不需要写在代码里。</p>
+      <p>六个角色各自使用不同模型，在 <code>opencode.json</code> 的 <code>agent</code> 字段配置。想换模型，直接改对应字段的值即可。模型密钥由你的本地环境管理，无需写在代码里。</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>角色</th><th>中文名</th><th>类型</th><th>模型</th></tr></thead>
@@ -123,7 +123,7 @@ model: <model-id>
               <td>记 4 个、思 2 个、寻 3 个、持 2 个、艺 2 个、门 2 个</td>
             </tr>
             <tr>
-              <td>自定义命令</td>
+              <td>自定义命令（CLI）</td>
               <td><code>.opencode/command/</code></td>
               <td>3</td>
               <td><code>/ultrawork</code>（日常任务）· <code>/verify</code>（检查产出）· <code>/hyperplan</code>（规划项目）</td>
@@ -140,11 +140,11 @@ model: <model-id>
         <code>.opencode/agent/*.md</code> 是每个角色行为的唯一源代码。修改时必须遵守以下规则：
       </p>
       <ol>
-        <li><strong>先读后改</strong> —— 每次编辑前必须先读取文件</li>
+        <li><strong>先读后改</strong> —— 每次编辑前必须先读取文件的全部内容</li>
         <li><strong>保留必要字段</strong> —— <code>description</code> / <code>mode</code> / <code>model</code> 三个字段不能删</li>
         <li><strong>行为准则完整</strong> —— 每个角色必须有：遇到模糊需求怎么做、擅长什么、不该做什么、什么算做完</li>
         <li><strong>底线逐字一致</strong> —— 6 个角色的 7 条底线必须完全一样（复制粘贴，不修改）</li>
-        <li><strong>模型以配置为准</strong> —— 角色文件里的 model 字段只是声明，运行时以 <code>opencode.json</code> 为准</li>
+        <li><strong>模型以配置为准</strong> —— 角色文件里的 model 字段只是声明，运行时以 <code>opencode.json</code> 的配置为准</li>
       </ol>
       <p>标准模板结构：</p>
       <div class="code-block">

@@ -455,7 +455,7 @@ code {
   font-family: var(--font-mono);
   /* 行内代码 0.9em 在 14px 上下文里只剩 12.6px，中文注释过小 → 0.94em：
      16px 正文 → 15px，14px 表格 → 13.2px，均高于中文下限。 */
-  font-size: 0.94em;
+  font-size: max(13px, 0.94em);
   letter-spacing: 0;
   color: var(--color-code);
   background: var(--color-code-bg);
@@ -1054,7 +1054,7 @@ main {
 .wiki-infobox dd strong { color: var(--color-fg); }
 .wiki-infobox code {
   font-family: var(--font-mono);
-  font-size: 0.94em;
+  font-size: max(13px, 0.94em);
   background: var(--color-bg-warm);
   padding: 0 var(--space-1);
   border-radius: var(--radius-xs);
@@ -1101,7 +1101,9 @@ main {
 /* ---- 正文章节 ---- */
 .doc-section { margin-bottom: var(--space-10); scroll-margin-top: 90px; }
 .doc-section > h2 {
-  font-size: var(--font-size-h3);
+  /* 原用 h3 令牌（21px）→ 与 h1 44px 之间跨度过大、与 h3 18px 之间步长只有 1.17 倍。
+     回到 h2 令牌（24→30px）：h1 44 → h2 30 → h3 21 → h4 18，层级比例恢复。 */
+  font-size: var(--font-size-h2);
   font-weight: var(--font-weight-semi);
   line-height: var(--line-height-heading);
   letter-spacing: var(--letter-spacing-heading);
@@ -1111,9 +1113,9 @@ main {
   border-bottom: 1px solid var(--color-line-soft);
   text-wrap: balance;
 }
-/* 原为 16px = 与正文同号 → h2(21) → h3(16) 层级断裂；抬到 h4 档 18px */
+/* 与 h2 一起回归标准令牌：h3 用 h3 档（21px），不再借用 h4 档 */
 .doc-section h3 {
-  font-size: var(--font-size-h4);
+  font-size: var(--font-size-h3);
   font-weight: var(--font-weight-semi);
   line-height: var(--line-height-subhead);
   color: var(--color-fg);
@@ -1138,7 +1140,7 @@ main {
   border-radius: var(--radius-xs);
   color: var(--color-fg);
   /* 0.9em 在 14px 上下文里只剩 12.6px（低于中文字号下限）→ 0.94em */
-  font-size: 0.94em;
+  font-size: max(13px, 0.94em);
 }
 .doc-section ul, .doc-section ol { margin: 0 0 var(--space-4) 0; padding-left: 1.5em; max-width: var(--measure-prose); }
 .doc-section ul { list-style: disc; }
@@ -1208,9 +1210,14 @@ main {
   line-height: 1.65;
 }
 .wiki-table td strong { color: var(--color-fg); }
+/* 文档表格单元格里的 <strong> 一律是短标签（版本号 / 角色名 / 步骤名 / 检查项），
+   窄列会把 5 字标签断成「3 字 + 2 字」留下孤字 —— 标签不折行，列宽自动撑到内容宽度。 */
+.wiki-table td strong { white-space: nowrap; }
+/* 通用工具类：短标签单元格不折行（用于不带 <strong> 的标签格） */
+.nowrap { white-space: nowrap; }
 .wiki-table td code {
   font-family: var(--font-mono);
-  font-size: 0.94em;
+  font-size: max(13px, 0.94em);
   background: var(--color-bg-warm);
   padding: 1px var(--space-1);
   border-radius: var(--radius-xs);
@@ -1300,7 +1307,7 @@ main {
 .src-ref code { background: none; padding: 0; color: var(--color-accent-dark); }
 
 /* ---- 参见 ---- */
-.wiki-seealso h2 {
+.wiki-seealso h3 {
   font-size: var(--font-size-h3);
   font-weight: var(--font-weight-semi);
   color: var(--color-fg);

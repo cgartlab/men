@@ -10,7 +10,7 @@ const pageDesc = '从零基础到跑通第一个任务的完整指南。包括�
 const base = '/';
 
 const infobox = [
-  { k: '你需要懂什么', v: '<strong>5 个概念</strong>（下面会讲）+ 会用终端打字' },
+  { k: '你要懂什么', v: '<strong>5 个概念</strong>（下面会讲）+ 会用终端打字。' },
   { k: '预计耗时', v: '约 <strong>30 分钟</strong>跑通第一个任务' },
   { k: '核心命令', v: '<code>/ultrawork</code>（日常用）· <code>/verify</code>（检查）· <code>/hyperplan</code>（规划）' },
   { k: '怎么验证', v: '先跑脚本查文件，再由持用全新视角审一遍' },
@@ -145,7 +145,7 @@ opencode</code></pre>
       <ul>
         <li><strong>方式 A：npm 一步安装（推荐）</strong> —— 在任意目录运行 <code>npx @cgartlab/men</code>，自动完成：生成运行时文件 -> 安装依赖 -> 生成配置文件 -> 端到端验证。当前目录若已是 men 仓库根则跳过复制，就地安装。</li>
         <li><strong>方式 B：Git 仓库（备选）</strong> —— 克隆仓库后进入目录，直接运行 <code>opencode</code>。首次或修改配置后需重启 OpenCode（<code>/quit</code> 后重开）。</li>
-        <li><strong>任意目录生效</strong> —— 加 <code>--global</code> 部署到全局目录，合并全局配置仅设置 <code>default_agent: men</code>（不触碰模型与密钥配置）。<code>--global-remove</code> 可还原。</li>
+        <li><strong>任意目录生效</strong> —— 加 <code>--global</code> 部署到全局目录，合并全局配置仅设置 <code>default_agent: men</code>（不触碰模型与密钥配置）。<code>--global-remove</code> 可还原到初始状态。</li>
         <li><strong>配置文件说明</strong> —— 安装器生成的配置文件内全是占位符，仅用于知识检索与内网数据源，<strong>基础对话不需要填写</strong>。</li>
       </ul>
       <SrcRef files={['scripts/install.mjs','docs/guide/quickstart.md']} />
@@ -160,7 +160,7 @@ opencode</code></pre>
       </div>
       <p>输入这行命令后，men 会自动走完整个流程。你可能会看到它在做这些事：</p>
       <ul>
-        <li><strong>查资料类</strong> —— 例：查最新开源模型 -> 门判断为"查信息"，派寻去搜索并整理报告。</li>
+        <li><strong>查资料类</strong> —— 例：查最新开源模型 -> 门判断为"查信息"，派寻去搜索并整理出一份完整报告。</li>
         <li><strong>做分析类</strong> —— 例：评估某模型定价对行业的影响 -> 派寻搜集资料 -> 再派持用全新视角审核 -> 输出报告。</li>
         <li><strong>多角色配合类</strong> —— 例：写周报需查新闻和配图 -> 派思规划 -> 第一批：寻查新闻 + 艺出配图（同时做）-> 第二批：记写正文 -> 持独立审核。</li>
         <li><strong>三个命令速查</strong> —— <code>/ultrawork &lt;任务&gt;</code> 一键编排（门是唯一派活的）· <code>/verify &lt;角色或路径&gt;</code> 检查产物（持用全新视角审核）· <code>/hyperplan &lt;项目&gt;</code> 规划项目（门 -> 思，只规划不执行）。</li>
@@ -173,7 +173,7 @@ opencode</code></pre>
       <p>下面三个例子覆盖了日常最常用的场景。每个都写清楚：你输入什么、AI 在做什么、你会收到什么。</p>
 
       <h3>案例 1：查资料（最简单，30 秒出结果）</h3>
-      <p>场景：你想了解最近 AI 领域有什么新动态。</p>
+      <p>场景：你想了解最近 AI 领域有什么值得关注的新动态。</p>
       <p><strong>你在终端输入：</strong></p>
       <div class="code-block">
         <span class="code-block__lang">text</span>
@@ -206,7 +206,7 @@ opencode</code></pre>
       <p>收到结果后，如果满意，这个任务就完成了。如果想深入了解某个模型，直接再说一句"详细说说 Llama 4"就行。</p>
 
       <h3>案例 2：写文章（需要多个角色配合）</h3>
-      <p>场景：你想写一篇关于 AI Agent 的行业分析。</p>
+      <p>场景：你想写一篇关于 AI Agent 的行业分析文章。</p>
       <p><strong>你在终端输入：</strong></p>
       <div class="code-block">
         <span class="code-block__lang">text</span>
@@ -303,9 +303,9 @@ opencode</code></pre>
       </div>
       <ul>
         <li><strong>第 1 层 脚本查</strong> —— 自动检查：文件是否存在、有没有泄露密钥、有没有遗留 TODO、结构是否完整、退出码是否正常。任一不通过就判失败。</li>
-        <li><strong>第 2 层 持审</strong> —— 脚本检查全过后，持用全新视角再审一遍：内容是否匹配、来源是否真实、逻辑是否完整、代码质量如何。判定结果：通过 / 未通过 / 卡住了。</li>
-        <li><strong>报告保存</strong> —— 审核报告自动保存到本地文件。</li>
-        <li><strong>自动学习</strong> —— 检查完后自动总结经验，记录通过率、耗时等数据，下次做得更好。</li>
+        <li><strong>第 2 层 持审</strong> —— 脚本检查全过后，持用全新视角再审一遍：内容是否匹配、来源是否真实、逻辑是否完整、代码质量如何。判定结果分三种：通过 / 未通过 / 卡住了。</li>
+        <li><strong>报告保存</strong> —— 审核报告会自动保存到本地文件。</li>
+        <li><strong>自动学习</strong> —— 检查完成后自动总结经验，记录通过率、耗时等数据，下次做得更好。</li>
       </ul>
       <SrcRef files={['.opencode/command/verify.md','scripts/verify.mjs','scripts/eval-metrics.mjs']} />
     </section>
@@ -319,7 +319,7 @@ opencode</code></pre>
       </div>
       <ul>
         <li><strong>六项确认</strong> —— 逐项确认：目标是什么、范围多大、分几个阶段、涉及哪些角色、有什么约束、怎么算完成。六项都清楚后才开始规划。</li>
-        <li><strong>产出执行计划</strong> —— 包含：项目目标、范围、阶段划分、任务先后顺序、谁做什么、验收标准。每条标准都能用脚本检查。</li>
+        <li><strong>产出执行计划</strong> —— 包含：项目目标、范围、阶段划分、任务先后顺序、谁做什么、验收标准。每条标准都能用脚本自动检查。</li>
         <li><strong>只规划不执行</strong> —— 你看一下计划，觉得没问题再让它执行。</li>
       </ul>
       <p class="src-ref">来源：<code>.opencode/command/hyperplan.md</code> · <code>site/src/data/content.json</code>（commands）</p>
@@ -335,7 +335,7 @@ opencode</code></pre>
             <tr><td><code>npx</code> 提示 "command not found"</td><td>Node.js 没装好。运行 <code>node --version</code> 确认；如果也没反应，去 <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a> 下载安装 Node 18+。</td></tr>
             <tr><td><code>opencode</code> 提示 "command not found"</td><td>OpenCode 没装。按准备工作中的安装命令安装，安装完重启终端再试。</td></tr>
             <tr><td>安装后运行 <code>opencode</code> 但看不到 men</td><td>确认当前目录是运行 <code>npx @cgartlab/men</code> 的那个目录。如果是全局安装的（加了 <code>--global</code>），任意目录都能用。</td></tr>
-            <tr><td>/ultrawork 报错说模型不可用</td><td>运行 <code>node scripts/setup.mjs</code> 交互式配置模型密钥。确认你的 OpenCode 已配置正确的模型服务。</td></tr>
+            <tr><td>/ultrawork 报错提示模型不可用。</td><td>运行 <code>node scripts/setup.mjs</code> 交互式配置模型密钥。确认你的 OpenCode 已配置正确的模型服务。</td></tr>
             <tr><td>任务一直重试不停</td><td>正常情况最多重试 5 次。如果看到"卡住了"，说明重试 5 次都没通过。AI 会把已完成的部分和失败原因交给你。可能是任务太复杂，试着拆小一点。</td></tr>
             <tr><td>想取消正在执行的任务</td><td>在 OpenCode 里按 <code>Esc</code> 取消当前操作。如果无响应，<code>Ctrl+C</code> 中断进程。</td></tr>
           </tbody>

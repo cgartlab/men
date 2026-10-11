@@ -3,7 +3,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import content from '../data/content.json';
 import { SITE } from '../data/site';
 import GateLogo from '../components/GateLogo.astro';
-import HeroArt from '../components/HeroArt.astro';
 import { Icon } from 'astro-icon/components';
 
 const base = '/';
@@ -40,7 +39,7 @@ const showcaseAgents = [
     cn: '门',
     role: '团队经理',
     icon: 'lucide:door-open',
-    desc: '你说一句话，门判断该谁做、派活、收结果、交报告。所有事从这扇门进。',
+    desc: '你说一句话，门判断该谁做、派活、收结果、交报告。所有事都从这扇门中进来。',
     skills: ['判断该谁做', '拆任务', '同时派活', '收齐整理', '全程留痕'],
     constraint: '只管分工不干活——不写代码、不写文章、不做设计',
   },
@@ -67,9 +66,9 @@ const showcaseAgents = [
     cn: '持',
     role: '质检员 + 投资分析',
     icon: 'lucide:scale',
-    desc: '做投资分析，也当质检员——用全新视角审核别人的产出，只看实际文件。',
+    desc: '做投资分析，也当质检员——用全新视角审核别人的产出，只看实际的文件本身。',
     skills: ['分析持仓', '独立审核', '脚本复查', '查质量', '查数据'],
-    constraint: '审核时全新视角，不继承被审者的上下文',
+    constraint: '审核时用全新的视角，完全不继承被审者原有的上下文',
   },
   {
     id: 'yi',
@@ -99,7 +98,6 @@ const faq = install.faq || [];
 <BaseLayout title={pageTitle}>
   <!-- ===== Hero ===== -->
   <header class="hero" aria-labelledby="hero-title">
-    <HeroArt />
     <div class="hero-content">
       <div class="hero-logo"><GateLogo size={56} /></div>
       <p class="hero-eyebrow">{content.hero.brandLine}</p>
@@ -194,7 +192,7 @@ const faq = install.faq || [];
     <h2 id="showcase-title" class="sr-only">Agent 团队</h2>
     <div class="showcase__header">
       <p class="showcase__label">THE TEAM</p>
-      <h3 class="showcase__heading">六个角色，一个核心</h3>
+      <h2 class="showcase__heading">六个角色，一个核心</h2>
       <p class="showcase__sub">你说一句话，团队自动分工、干活、检查、交报告。</p>
     </div>
     <div class="showcase__track">
@@ -231,21 +229,21 @@ const faq = install.faq || [];
             <Icon name="lucide:git-branch" width="16" height="16" />
             <div>
               <strong>同时开工</strong>
-              <span>没有依赖关系的任务同时做，有先后关系的排队等</span>
+              <span>没有依赖关系的任务同时做，有先后关系的就得排队等着</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:shield-check" width="16" height="16" />
             <div>
               <strong>两层检查</strong>
-              <span>先跑脚本查文件，再由持用全新视角审一遍</span>
+              <span>先跑脚本查文件，再由持用全新的视角再审一遍</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:activity" width="16" height="16" />
             <div>
               <strong>全程留痕</strong>
-              <span>每一步都记下来，事后可以回看整个过程</span>
+              <span>每一步都记下来，事后可以回看整个过程和细节</span>
             </div>
           </div>
           <div class="showcase__trait">
@@ -287,7 +285,7 @@ const faq = install.faq || [];
       <h2 id="topo-title" class="topo__title">团队怎么协作</h2>
       <a href={base + 'roles'} class="topo__all">看全部角色 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
     </div>
-    <p class="topo__desc">你说一句话 → 门判断该谁做 → 同时派活 → 两层检查 → 交报告给你；不行就重试，最多 5 次</p>
+    <p class="topo__desc">你说一句话 → 门判断该谁做 → 同时派活 → 两层检查 → 交报告给你；不行就重试，最多 5 次就停下来</p>
 
     <div class="topo-diagram">
       <svg viewBox="0 0 1200 560" class="topo-svg" aria-hidden="true">

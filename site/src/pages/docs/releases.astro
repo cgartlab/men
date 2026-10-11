@@ -10,7 +10,7 @@ const pageDesc = '版本历史与路线图：当前版本亮点、全部正式�
 const base = '/';
 
 const infobox = [
-  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-10-07 发布）` },
+  { k: '当前版本', v: `<code>${SITE.version}</code>（2026-10-07 正式对外发布）` },
   { k: '里程碑', v: '<strong>M0–M7</strong> 全部完成' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '版本规范', v: 'SemVer 2.0.0（<code>X.Y.Z</code>）' },
@@ -38,7 +38,7 @@ const seealso = [
   <WikiManual
     crumb="路线图"
     title="路线图"
-    lead={`这里记录 men 的版本历史和未来规划。如果你想了解"men 从哪来、走到哪了"，这一页就是索引。如果你是使用者，只需关注当前版本号和亮点；如果你是开发者，发布流程部分会告诉你版本号怎么管理。`}
+    lead={`这里记录 men 的版本历史和未来规划。如果你想了解"men 从哪来、走到哪了"，这一页就是索引。如果你是使用者，只需关注当前版本号和亮点；如果你是开发者，发布流程部分会告诉你版本号是怎么管理的。`}
     infoboxTitle="版本概要"
     infobox={infobox}
     toc={toc}
@@ -155,9 +155,9 @@ const seealso = [
       <h3>v0.6.1「OpenCode V2 兼容激进清理」</h3>
       <ul>
         <li>移除 界面配置文件（V2 靠自动发现）</li>
-        <li>permission 转 native V2（permissions 数组）</li>
+        <li>permission 转 native V2（permissions 数组）。</li>
         <li>移除 V1 类型包 @opencode-ai/plugin</li>
-        <li>新增 v1-compat 分支 + V2 形态回归守护</li>
+        <li>新增 v1-compat 分支+V2 形态回归守护</li>
         <li>修 site 编译错误 + seroval 安全漏洞</li>
       </ul>
       <p class="wiki-note">
@@ -166,14 +166,14 @@ const seealso = [
       <h3>v0.4.0「半自动化 GitHub 开发工作流 + 工程加固」</h3>
       <ul>
         <li><strong>半自动化 GitHub 开发工作流</strong>：新增 <code>/gh-issue</code> 命令、<code>gh-flow/</code> 远程工作区与 <code>.github/workflows/agent-run.yml</code>，实现「本地意图 → 云端执行 → 人工 merge」</li>
-        <li><strong>新用户默认 OpenCode Zen 免费模型 + 自动引导</strong>：零成本开箱即用，降低启动门槛</li>
-        <li><strong>Agent 提示词与行为规范优化</strong>：全 6 角色 system prompt、行为准则与 OpenCode 集成重构</li>
+        <li><strong>新用户默认 OpenCode Zen 免费模型 + 自动引导</strong>：零成本开箱即用，降低启动门槛，上手更快。</li>
+        <li><strong>Agent 提示词与行为规范优化</strong>：全 6 角色 system prompt、行为准则与 OpenCode 集成与重构</li>
         <li><strong>安装 / 验证 / 工作流加固</strong>：BOM 兼容、卸载 界面配置文件 清理、verify 路径解析修正、agent-run 三处缺陷修复</li>
       </ul>
       <h3>v0.3.2「侧边栏全局化」</h3>
       <ul>
         <li><strong>install.mjs --global</strong>：把 <code>@cgartlab/men</code> 注册进 OpenCode 全局 <code>界面配置文件</code>，任意目录打开 OpenCode 即显示 Men 侧边栏</li>
-        <li><strong>仅改 界面配置文件</strong>：不触碰 模型切换工具 管理的 opencode.json，模型与密钥托管不受影响</li>
+        <li><strong>仅改 界面配置文件</strong>：不触碰 模型切换工具 管理的 opencode.json，模型与密钥托管不受影响。</li>
         <li><strong>补 exports 与 @opentui 依赖</strong>：根 package.json 补 <code>exports["./server"]</code>/<code>exports["./tui"]</code>，OpenCode 启动自动安装 npm 包后加载侧边栏</li>
       </ul>
       <p class="wiki-note">
@@ -184,7 +184,7 @@ const seealso = [
         <li><strong>npm 包发布与 npx 一行安装</strong>：任意目录执行 <code>npx @cgartlab/men</code>，自动完成 初始化 + 依赖 + <code>.env</code> + 端到端验证</li>
         <li><strong>安装指令准确性修复</strong>：一键脚本 URL 硬编码、install.astro 标签修复、<code>.opencode/package.json</code> 纳入版本控制、4 个 工具扩展 服务器补齐 transport 全部可加载</li>
         <li><strong>文档与站点全面同步</strong>：事件 14 种、技能 15 个、工具扩展×7、版本引用 v0.3.0</li>
-        <li><strong>定位澄清</strong>：Men 是 OpenCode 插件，模型与密钥由 模型切换工具 本地托管，安装无需密钥</li>
+        <li><strong>定位澄清</strong>：Men 是 OpenCode 插件，模型与密钥由 模型切换工具 本地托管，安装无需任何密钥</li>
       </ul>
       <p class="wiki-note">
         以下内容为 <strong>v0.2.0（历史）</strong>版本的发布亮点回顾。
@@ -197,9 +197,9 @@ const seealso = [
       <h3>M6 GitHub 开源基础设施</h3>
       <ul>
         <li><strong>标准文档全套</strong>：<code>LICENSE</code>（MIT）、<code>CONTRIBUTING.md</code>、<code>SECURITY.md</code>（承诺 72 小时响应）、<code>行为准则.md</code></li>
-        <li><strong>PR / Issue 模板</strong>、<code>代码归属人配置</code> 自动分派、<code>赞助配置</code>、Dependabot 依赖自动更新</li>
+        <li><strong>PR / Issue 模板</strong>、<code>代码归属人配置</code> 自动分派、<code>赞助配置</code>、Dependabot 依赖自动更新到最新。</li>
         <li><strong>CI 工作流</strong>：每次 push / PR 自动执行脚本语法检查 + verify + release dry-run + installer smoke</li>
-        <li><strong>团队治理文档</strong>：<code>docs/governance.md</code> 定义角色权限、决策流程、变更管理与发布策略</li>
+        <li><strong>团队治理文档</strong>：<code>docs/governance.md</code> 定义角色权限、决策流程、变更管理与发布策略等内容。</li>
       </ul>
       <h3>M7 自主学习回路</h3>
       <ul>
@@ -275,12 +275,12 @@ npm run release:minor      # 0.2.1 → 0.3.0
 npm run release:major      # 0.1.0 → 1.0.0
 npm run release:all        # 全部 = --push + --gh-release + --npm</code></pre>
       </div>
-      <p><code>scripts/release.mjs</code> 自动完成以下步骤：</p>
+      <p>运行 <code>scripts/release.mjs</code> 即可自动完成以下步骤：</p>
       <ol>
         <li>读取 <code>package.json</code> 的 version 并校验 SemVer（非法退出码 2）</li>
         <li>bump 版本号并写回 <code>package.json</code></li>
         <li>在 <code>CHANGELOG.md</code> 的 <code>[Unreleased]</code> 下插入新版本节，迁移已整理条目</li>
-        <li>同步版本号到 JSON/文本文件（<code>opencode.json</code>、<code>configure.astro</code>、<code>AGENTS.md</code> 等 8 处）</li>
+        <li>同步版本号到 JSON/文本文件（<code>opencode.json</code>、<code>configure.astro</code>、<code>AGENTS.md</code> 等 8 处）。</li>
         <li>若已 <code>git init</code>：<code>git add</code> + <code>git commit -m "chore(release): vX.Y.Z"</code> + <code>git tag vX.Y.Z</code></li>
         <li>用 <code>scripts/release-notes.mjs</code> 提取只含当前版本的 release notes</li>
       </ol>
@@ -319,12 +319,12 @@ gh release create vX.Y.Z --title "vX.Y.Z — 主题" --notes-file /tmp/release-n
       <h2>未来规划</h2>
       <p>
         men 还在持续演进。以下是目前规划的方向，但尚未确定具体版本号和发布日期。
-        最终以 <code>CHANGELOG.md</code> 和 GitHub Releases 为准：
+        最终请以 <code>CHANGELOG.md</code> 和 GitHub Releases 为准：
       </p>
       <ul>
         <li><strong>跨运行时 adapter</strong>：当前仅适配 OpenCode，规划适配 Codex / OpenClaw 等运行时</li>
         <li><strong>插件化封装</strong>：将 agent / skill / command 体系封装为可复用插件</li>
-        <li><strong>Agent 团队扩展</strong>：扩展更多角色与协作模式</li>
+        <li><strong>Agent 团队扩展</strong>：扩展更多角色与协作的模式。</li>
       </ul>
       <div class="wiki-note">
         以上为规划方向，具体排期与版本对应以后续发布的 <code>CHANGELOG.md</code> 与 GitHub Releases 为准。
