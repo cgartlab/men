@@ -195,6 +195,13 @@ ol {
   --color-accent-on-accent: #2b2a27;           /* accent 底上的文字 · 4.52:1 on #d77656 · 纸底 13.62:1 */
   --color-accent-tint: color-mix(in srgb, #d77656 10%, #faf9f5);  /* 赤陶浅底 */
   --color-accent-tint-strong: color-mix(in srgb, #d77656 20%, #faf9f5);
+  /* 实心强调填充 + 其上文字（2026-10-11 产品决定：**橘色按钮一律用白字**）
+     brand 的亮赤陶 #d77656 配白字只有 3.17:1（不达小字 AA）→ 凡是「承载文字的实心填充」
+     统一用 accent-soft(#bc513a)：白字 4.80:1 达标，色相仍是同一支赤陶。
+     亮赤陶 #d77656 继续用于图形 / 描边 / 大字号标题（深墨字在其上 4.52:1）。
+     这两个令牌是唯一的真值来源：改这里，按钮 / 徽标 / 拓扑中枢 / 选中态一起变。 */
+  --color-accent-fill: var(--color-accent-soft);
+  --color-on-accent-fill: #ffffff;
 
   /* Agent 角色色（6 个 · 单一真相源）
      用途一：首页滚动展示卡的强调色（index.astro showcase）
@@ -509,10 +516,9 @@ pre .copy-btn.copied {
 }
 
 ::selection {
-  /* 品牌规范 v1 是「亮赤陶底 + 深墨字」：accent(#d77656) + on-accent(#2b2a27) = 4.52:1。
-     深字放在 accent-soft(#bc513a) 上只有 2.99:1，不达标（contrast-check 有断言守卫）。 */
-  background: var(--color-accent);
-  color: var(--color-accent-on-accent);
+  /* 白字 + 实心填充令牌（4.80:1）；亮赤陶配白字只有 3.17:1，不达标 */
+  background: var(--color-accent-fill);
+  color: var(--color-on-accent-fill);
 }
 
 /* ---------- 页面淡入（克制） ---------- */
@@ -1210,24 +1216,36 @@ main {
   border-radius: var(--radius-xs);
 }
 
-/* ---- 代码块 ---- */
+/* ---- 代码块 ----
+   结构（构建期 scripts/highlight-code.mjs 注入高亮与复制按钮）：
+     <div class="code-block">
+       <span class="code-block__lang">bash</span>   ← 头部条左侧
+       <pre class="shiki">…高亮后的 <span class="line">…</span></pre>
+       <button class="copy-btn">                      ← 头部条右侧
+   高亮主题 = 品牌自定义主题 men-brand（色值全部取自下方令牌，见 highlight-code.mjs）：
+     关键字 accent-dark · 字符串 role-ji-text · 数字 role-chi-text · 函数 role-si-text
+     类型 role-yi-text · 注释 fg-muted · 标点 fg-tertiary
+   每个 token 色对代码底 #f5f0e8 都 ≥4.5:1，并由 contrast-check.mjs 断言守卫。 */
 .code-block {
   position: relative;
-  background: var(--color-bg-warm);
+  background: var(--color-code-bg);
   border: 1px solid var(--color-line-soft);
   border-radius: var(--radius-md);
   overflow: hidden;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
+/* 语言标签做成「头部条」：左侧语言名、右侧复制按钮，互不遮挡 */
 .code-block__lang {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-3);
+  display: block;
   font-family: var(--font-mono);
   font-size: var(--font-size-eyebrow);
+  line-height: 1.6;
   color: var(--color-fg-tertiary);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  padding: var(--space-2) var(--space-4);
+  background: color-mix(in srgb, var(--color-code-bg) 70%, var(--color-surface));
+  border-bottom: 1px solid var(--color-line-soft);
 }
 .code-block pre {
   padding: var(--space-4) var(--space-5);
@@ -1235,10 +1253,40 @@ main {
   font-family: var(--font-mono);
   font-size: var(--font-size-caption);
   line-height: var(--line-height-body);
-  color: var(--color-fg);
+  color: var(--color-code);
   overflow-x: auto;
+  tab-size: 2;
+  background: transparent;
 }
-.code-block code { font-family: inherit; }
+.code-block pre code { font-family: inherit; background: none; padding: 0; }
+/* Shiki 的每一行是 <span class="line">：保持整行盒高一致，避免高亮片段撑开行距 */
+.code-block pre code .line { display: inline-block; width: 100%; }
+/* 代码块右上角复制按钮（构建期注入；悬浮或聚焦时可见） */
+.code-block > .copy-btn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 26px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+.code-block:hover > .copy-btn,
+.code-block > .copy-btn:focus-visible { opacity: 1; }
+.code-block > .copy-btn:hover { color: var(--color-accent-dark); border-color: var(--color-line); background: var(--color-surface); }
+.code-block > .copy-btn.copied { opacity: 1; color: var(--color-role-ji-text, #3a7a3f); }
+@media (max-width: 720px) {
+  .code-block pre { padding: var(--space-3) var(--space-4); font-size: var(--font-size-small); }
+  .code-block > .copy-btn { opacity: 1; }
+}
 
 /* ---- 来源引用 ---- */
 .src-ref {

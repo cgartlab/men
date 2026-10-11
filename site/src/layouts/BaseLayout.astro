@@ -60,6 +60,30 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
     <Footer />
 
     <script>
+      // 代码块复制按钮（.code-block 的 pre .copy-btn 由构建期 scripts/highlight-code.mjs 注入）
+      document.querySelectorAll('pre .copy-btn').forEach((btn) => {
+        const label = btn.getAttribute('aria-label') || '复制代码';
+        const ICON = btn.innerHTML;
+        btn.addEventListener('click', async () => {
+          const pre = btn.closest('pre');
+          const code = pre ? pre.textContent.replace(/\n$/, '') : '';
+          if (!code) return;
+          try {
+            await navigator.clipboard.writeText(code);
+            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
+            btn.classList.add('copied');
+            btn.setAttribute('aria-label', '已复制');
+            setTimeout(() => { btn.innerHTML = ICON; btn.classList.remove('copied'); btn.setAttribute('aria-label', label); }, 1500);
+          } catch {
+            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+            btn.setAttribute('aria-label', '复制失败：请手动选中并复制');
+            setTimeout(() => { btn.innerHTML = ICON; btn.setAttribute('aria-label', label); }, 1800);
+          }
+        });
+      });
+    </script>
+
+    <script>
       // 导航滚动隐藏
       const header = document.querySelector('.site-header');
       if (header) {
@@ -91,9 +115,9 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
     position: absolute;
     top: -40px;
     left: var(--space-4);
-    /* 品牌规范 v1：亮赤陶底 + 深墨字（4.52:1） */
-    background: var(--color-accent);
-    color: var(--color-accent-on-accent);
+    /* 实心填充 + 白字令牌（4.80:1） */
+    background: var(--color-accent-fill);
+    color: var(--color-on-accent-fill);
     padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-caption);

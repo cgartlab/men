@@ -51,6 +51,8 @@ const PALETTE_TOKEN_MAP = {
   accentDark: '--color-accent-dark',
   accentOnAccent: '--color-accent-on-accent',
   accentSoft: '--color-accent-soft',
+  accentFill: '--color-accent-fill',
+  onAccentFill: '--color-on-accent-fill',
   roleMen: '--role-men', roleSi: '--role-si', roleJi: '--role-ji',
   roleChi: '--role-chi', roleYi: '--role-yi', roleXun: '--role-xun',
   roleMenText: '--role-men-text', roleSiText: '--role-si-text', roleJiText: '--role-ji-text',
@@ -81,6 +83,8 @@ const colors = {
   accentDark:    '#8f3d28',  // 小字安全强调 · 7.0:1
   accentSoft:    '#bc513a',  // 中等强度（文字/边框/hover 加深）· 4.6:1
   accentOnAccent:'#2b2a27',  // accent 底上的文字（保持「亮底+深字」架构）· 4.5:1
+  accentFill:   '#bc513a',  // 实心填充（承载白字的按钮/徽标/拓扑中枢）· 白字 4.80:1
+  onAccentFill: '#ffffff',  // 实心填充上的文字 = 白（2026-10-11 产品决定）
   // 角色色（首页拓扑图 / showcase 卡片 · 莫兰迪暖调）
   roleMen:'#d77656', roleSi:'#6f90a7', roleJi:'#5e9963',
   roleChi:'#a4874d', roleYi:'#a47faa', roleXun:'#9086ab',
@@ -153,15 +157,23 @@ const pairs = [
   // 弱化文本（≥ 4.5:1 · 本版校准到双底达标）
   { fg: colors.fgMuted,     bg: colors.bg,          label: '弱化文本(#6b6a64) vs 背景',             min: 4.5 },
   { fg: colors.fgMuted,     bg: colors.surfaceWarm, label: '弱化文本 vs 暖底',                      min: 4.5 },
+  // 代码高亮 token（构建期主题 men-brand，见 scripts/highlight-code.mjs）
+  // 主题里每个 token 色都取自设计令牌；改主题或改令牌时，这里的断言会把不达标挡下来。
+  { fg: '#2b2a27', bg: '#f5f0e8', label: '代码正文 vs 代码底(#f5f0e8)',      min: 4.5 },
+  { fg: '#6b6a64', bg: '#f5f0e8', label: '代码注释 vs 代码底',                min: 4.5 },
+  { fg: '#8f3d28', bg: '#f5f0e8', label: '代码关键字 vs 代码底',              min: 4.5 },
+  { fg: '#3a7a3f', bg: '#f5f0e8', label: '代码字符串 vs 代码底',              min: 4.5 },
+  { fg: '#85682f', bg: '#f5f0e8', label: '代码数字/常量 vs 代码底',           min: 4.5 },
+  { fg: '#447191', bg: '#f5f0e8', label: '代码函数 vs 代码底',                min: 4.5 },
+  { fg: '#9753a1', bg: '#f5f0e8', label: '代码类型 vs 代码底',                min: 4.5 },
+  { fg: '#5e5d59', bg: '#f5f0e8', label: '代码标点/变量 vs 代码底',           min: 4.5 },
   // 装饰文本（≥ 3:1 · WCAG 非强制但建议）
   { fg: colors.fgDecorative, bg: colors.bg,         label: '装饰文本(#8a877e) vs 背景[装饰]',        min: 3.0 },
-  // 强调色「填充承载文字」规则（2026-10-11 合并自排版线）：
-  // 凡是把文字放在强调色填充上的地方（按钮 / 徽标 / 拓扑中枢 / 选中态），
-  // 都必须在这里有断言 —— 填充或文字色改动后若不再达标，这里会 FAIL。
-  { fg: colors.accentOnAccent, bg: colors.accent, label: 'accent 填充上的文字（按钮/徽标/拓扑中枢）', min: 4.5 },
-  // accent-soft 的正确用法是「浅底上的文字/hover 加深」，不是填充：
-  // 深墨字放在 accent-soft(#bc513a) 上只有 2.99:1 —— 故它不得承载文字，只作文字色/边框。
-  { fg: colors.accentSoft, bg: colors.bg, label: 'accent-soft 作文字色 vs 纸底（不得作填充承载文字）', min: 4.5 },
+  // 实心强调填充承载文字（2026-10-11 产品决定：橘色按钮一律白字）
+  // 这组断言把「填充 + 文字」钉住：谁把填充改回亮赤陶 #d77656，白字就掉到 3.17:1，这里会 FAIL。
+  { fg: colors.onAccentFill, bg: colors.accentFill, label: '橘色按钮/徽标/拓扑中枢：白字 vs 实心填充', min: 4.5 },
+  { fg: colors.onAccentFill, bg: colors.accent,     label: '白字 vs 亮赤陶 #d77656（仅大文本/图形，禁作按钮填充）', min: 3.0 },
+  { fg: colors.accentSoft,   bg: colors.bg,         label: 'accent-soft 作文字色 vs 纸底', min: 4.5 },
   // 浅强调底（accent-tint = 10% 赤陶混纸底 ≈ #f7ece5）上的深强调文字
   { fg: colors.accentDark, bg: '#f7ece5', label: '深强调 vs 浅强调底(#f7ece5)', min: 4.5 },
   // 大文本 accent（≥ 3:1 · 18pt+/14pt bold+）

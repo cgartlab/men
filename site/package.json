@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node scripts/highlight-code.mjs",
     "preview": "astro preview",
     "check-site": "node scripts/check-site.mjs",
     "check-contrast": "node scripts/contrast-check.mjs",

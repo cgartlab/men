@@ -532,12 +532,14 @@ const faq = install.faq || [];
 }
   .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
-  .hero-cta--primary { background: var(--color-accent); color: var(--color-accent-on-accent); }
-  .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent) 85%, #fff); border-color: color-mix(in srgb, var(--color-accent) 85%, #fff); text-decoration: none; }
+  /* 橘色按钮：白字（产品决定 2026-10-11）。填充用 accent-fill(#bc513a) 白字 4.80:1；
+     hover 不能往更亮处混白（白字对比度会掉到 3:1 以下），改为压暗 12%。 */
+  .hero-cta--primary { background: var(--color-accent-fill); border-color: var(--color-accent-fill); color: var(--color-on-accent-fill); }
+  .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent-fill) 88%, #000); border-color: color-mix(in srgb, var(--color-accent-fill) 88%, #000); text-decoration: none; }
   .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
   .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-8); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
-  .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-accent-on-accent); background: var(--color-accent); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
+  .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Install / Terminal (Light Theme) ===== */
   .install { padding: var(--space-8) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
@@ -760,7 +762,8 @@ const faq = install.faq || [];
   .topo-node { rx: 10; ry: 10; }
   .topo-node--input { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
   /* hub 用赤陶填充 + 深字（4.52:1）；配合 --color-accent-on-accent(深) 使用 */
-  .topo-node--hub { fill: var(--color-accent); stroke: none; }
+  /* 中枢节点里是白字 → 填充用 accent-fill；亮赤陶配白字只有 3.17:1 */
+  .topo-node--hub { fill: var(--color-accent-fill); stroke: none; }
   .topo-node--agent { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
   .topo-node--judge { fill: var(--color-bg-paper); stroke: var(--role-chi); stroke-width: 1.5; }
   .topo-node--output { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
@@ -774,15 +777,15 @@ const faq = install.faq || [];
   .topo-label--sub { fill: var(--color-fg-tertiary); font-size: 13.5px; font-weight: 400; }
   /* hub 上的文字：赤陶底 #d77656 → 深字 4.52:1
      注意不要用半透明来弱化副标题 —— alpha 会把对比度拉到 4.5 以下，改用字号/字重区分 */
-  .topo-label--hub-cn { fill: var(--color-accent-on-accent); font-size: 20px; font-weight: 700; }
-  .topo-label--hub-sub { fill: var(--color-accent-on-accent); font-size: 13.5px; font-weight: 500; }
+  .topo-label--hub-cn { fill: var(--color-on-accent-fill); font-size: 20px; font-weight: 700; }
+  .topo-label--hub-sub { fill: var(--color-on-accent-fill); font-size: 13.5px; font-weight: 500; }
   .topo-label--agent-cn { fill: var(--color-fg); font-size: 16px; font-weight: 700; }
   .topo-label--agent-id { fill: var(--color-fg-tertiary); font-size: 13.5px; }
   .topo-label--judge-cn { fill: var(--color-fg); font-size: 15px; font-weight: 600; }
   .topo-label--judge-sub { fill: var(--color-fg-tertiary); font-size: 13.5px; }
   .topo-label--judge-tag { fill: var(--role-chi-text); font-size: 13.5px; font-weight: 600; }
   .topo-label--badge { fill: var(--role-chi-text); font-size: 13.5px; font-weight: 600; }
-  .topo-label--hub-sub2 { fill: var(--color-accent-on-accent); font-size: 13.5px; }
+  .topo-label--hub-sub2 { fill: var(--color-on-accent-fill); font-size: 13.5px; }
   .topo-label--node-title { fill: var(--color-fg); font-size: 15px; font-weight: 600; }
   .topo-label--node-sub { fill: var(--color-fg-tertiary); font-size: 13.5px; }
   .topo-label--node-micro { fill: var(--color-fg-muted); font-size: 13.5px; }
@@ -815,7 +818,7 @@ const faq = install.faq || [];
   .topo-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
   .topo-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
   .topo-legend__dot--input { background: var(--color-fg-muted); }
-  .topo-legend__dot--hub { background: var(--color-accent); }
+  .topo-legend__dot--hub { background: var(--color-accent-fill); }
   .topo-legend__dot--agent { background: var(--color-bg-paper); border: 1px solid var(--color-line); }
   .topo-legend__dot--judge { background: var(--color-bg-paper); border: 1.5px solid var(--role-chi); }
   .topo-legend__dot--verify { background: var(--color-bg-paper); border: 1.5px solid var(--role-ji); }
