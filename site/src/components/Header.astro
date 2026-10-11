@@ -22,11 +22,11 @@ function isActive(href: string): boolean {
 
 <header class="site-header">
   <div class="site-header__inner">
-    <a href={base} class="site-header__brand" aria-label="men（门）首页">
+    <a href={base} class="site-header__brand" aria-label="Men（门）首页">
       <span class="site-header__logo" style="color: var(--color-fg)">
         <GateLogo size={22} />
       </span>
-      <span class="site-header__title">men <span class="site-header__cn">（门）</span></span>
+      <span class="site-header__title">Men <span class="site-header__cn">（门）</span></span>
     </a>
     <nav class="site-header__nav" aria-label="主导航">
       <ul>
@@ -65,11 +65,28 @@ function isActive(href: string): boolean {
     left: 0;
     right: 0;
     z-index: 10;
-    background: color-mix(in oklab, var(--color-bg) 80%, transparent);
-    backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    /* 磨砂玻璃：底色 80% 不透明时 backdrop-filter 几乎看不出来（等于一块实色板），
+       降到 62% 才能透出下层内容，模糊才真正起作用。
+
+       注意 backdrop-filter 只能写标准属性：把 -webkit- 版本紧挨着写在同一条规则里，
+       CSS 压缩器会当成重复声明只保留后者，实测产物里只剩 -webkit-backdrop-filter，
+       而现代 Chromium 已不再把它当别名（computed 仍是 none）→ 模糊静默失效。
+       带前缀的版本挪到 @supports 里，压缩器就无法去重了。 */
+    background: color-mix(in oklab, var(--color-bg) 62%, transparent);
+    backdrop-filter: saturate(180%) blur(14px);
+    /* 玻璃质感：一条极淡的内高光 + 下方投影，把页头从内容里「抬」起来 */
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, #ffffff 55%, transparent),
+      0 1px 2px color-mix(in oklab, var(--color-fg) 6%, transparent);
     border-bottom: var(--border-width) solid var(--color-line-soft);
     transition: transform var(--duration-slow) var(--ease-nav);
+  }
+
+  /* Safari 18 之前只认带前缀的写法（放在独立规则里，避免被压缩器去重） */
+  @supports not (backdrop-filter: blur(1px)) {
+    .site-header {
+      -webkit-backdrop-filter: saturate(180%) blur(14px);
+    }
   }
 
   .site-header.is-hidden {

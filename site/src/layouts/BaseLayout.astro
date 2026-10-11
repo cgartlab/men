@@ -11,7 +11,7 @@ interface Props {
   description?: string;
 }
 
-const { title, description = 'men（门）Agent 团队 — 围绕一人内容创作与工程协作的 6+1 Agent 团队系统' } = Astro.props;
+const { title, description = 'Men（门）Agent 团队 — 围绕一人内容创作与工程协作的 6+1 Agent 团队系统' } = Astro.props;
 ---
 
 <!doctype html>
@@ -45,7 +45,7 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
 
     <!-- 左侧栏竖排小字 -->
     <div class="side-rail side-rail--left" aria-hidden="true">
-      <span class="side-rail__text">men · {SITE.version} · cgartlab</span>
+      <span class="side-rail__text">Men · {SITE.version} · cgartlab</span>
     </div>
 
     <!-- 右侧栏竖排小字 -->
@@ -125,7 +125,11 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
 <style>
   .skip-link {
     position: absolute;
-    top: -40px;
+    /* 原来用 top: -40px 隐藏，而它本身高 42px → 底边 2px 会探进视口，
+       在左上角露出一条橘色横线（accent-fill）。改用 transform 按自身高度移出，
+       不论高度怎么变都不会露边。 */
+    top: var(--space-4);
+    transform: translateY(-300%);
     left: var(--space-4);
     /* 实心填充 + 白字令牌（4.80:1） */
     background: var(--color-accent-fill);
@@ -134,11 +138,11 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
     border-radius: var(--radius-sm);
     font-size: var(--font-size-caption);
     z-index: 100;
-    transition: top var(--duration-normal) ease;
+    transition: transform var(--duration-normal) ease;
   }
 
   .skip-link:focus {
-    top: var(--space-4);
+    transform: translateY(0);
     outline: none;
     text-decoration: none;
   }

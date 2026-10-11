@@ -11,6 +11,15 @@ const mechanisms = content.mechanisms;
 const commands = content.commands;
 const checks = content.checks;
 
+/* 全程留痕：按生命周期分组。原来这里是一张扁平的 17 张卡网格 ——
+   其中 dispatch / handoff / judge 三条在 markup 里被硬编码重复了一遍
+   （content.events 已有同样三条），渲染出 17 张卡而实际只有 14 类事件。
+   现在改成按 group 字段分组，顺序即展示顺序。 */
+const EVENT_GROUP_ORDER = ['任务流转', '验证与门禁', '评审与学习', '阻塞处理'];
+const eventGroups = EVENT_GROUP_ORDER
+  .map((title) => ({ title, items: content.events.filter((e) => e.group === title) }))
+  .filter((g) => g.items.length > 0);
+
 const pipeline = [
   { n: '01', en: 'CERTAINTY', cn: '确认意图', icon: 'lucide:circle-check' },
   { n: '02', en: 'TRIAGE', cn: '判断派谁', icon: 'lucide:git-branch' },
@@ -194,25 +203,24 @@ const pipeline = [
         全程留痕
       </h2>
       <p class="mech-events__desc">每一步都记下来，事后可以回看整个过程</p>
-      <div class="events-grid">
-        {content.events.map((ev) => (
-          <div class="event-item">
-            <code>{ev.kind}</code>
-            <span>{ev.when}</span>
+      <div class="events-groups">
+        {eventGroups.map((g) => (
+          <div class="event-group">
+            <h3 class="event-group__title">
+              {g.title}
+              <span class="event-group__count">{g.items.length} 类</span>
+            </h3>
+            <ul class="event-group__list">
+              {g.items.map((ev) => (
+                <li class="event-row">
+                  <code class="event-row__kind">{ev.kind}</code>
+                  <span class="event-row__when">{ev.when}</span>
+                  <span class="event-row__who">{ev.who}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
-        <div class="event-item">
-          <code>dispatch</code>
-          <span>分发子任务</span>
-        </div>
-        <div class="event-item">
-          <code>handoff</code>
-          <span>任务完成交接</span>
-        </div>
-        <div class="event-item">
-          <code>judge</code>
-          <span>chi 独立评审</span>
-        </div>
       </div>
     </section>
 
@@ -699,27 +707,68 @@ const pipeline = [
   }
   .verify-arrow span:first-child { font-size: 1.2rem; }
 
-  /* ===== Events Grid ===== */
-  .events-grid {
+  /* ===== Events（全程留痕：按生命周期分组的日志目录） ===== */
+  /* 旧版是 17 张 4px 间距的扁平小卡（含 3 张重复），既没结构也看不出覆盖范围。
+     新版按「任务流转 / 验证与门禁 / 评审与学习 / 阻塞处理」分成 4 张卡，
+     每行是一条事件：事件名（mono）· 说明 · 记录者。 */
+  .events-groups {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-1);
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: var(--space-4);
   }
-  .event-item {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;          /* 事件名（code）较长时，说明文字换行拿满宽度 */
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
+  .event-group {
     background: var(--color-surface);
     border: 1px solid var(--color-line-soft);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
   }
-  .event-item code {
+  .event-group__title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-h5);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    margin: 0 0 var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-line-soft);
+  }
+  .event-group__count {
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+  }
+  .event-group__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .event-row {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+    align-items: baseline;
+  }
+  .event-row__kind {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
     color: var(--color-accent-dark);
-    flex-shrink: 0;
+    overflow-wrap: anywhere;
+  }
+  .event-row__when {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-relaxed);
+  }
+  .event-row__who {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-eyebrow);
+    color: var(--color-fg-muted);
+    white-space: nowrap;
   }
   .event-item span {
     font-size: var(--font-size-caption);
@@ -833,7 +882,9 @@ const pipeline = [
     .pipeline-nodes { grid-template-columns: repeat(3, 1fr); }   /* 5 列时每格仅 51px，中文标签被压成 2 字一行 */
     .steps-grid { grid-template-columns: 1fr; }
     .commands-grid { grid-template-columns: 1fr; }
-    .events-grid { grid-template-columns: 1fr; }
+    .events-groups { grid-template-columns: 1fr; }
+    .event-row { grid-template-columns: minmax(0, 1fr); }
+    .event-row__who { grid-column: 1; }
     .verify-flow { flex-direction: column; }
     .learn-loop { flex-direction: column; }
     .learn-arrow { width: 2px; height: 16px; }

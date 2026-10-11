@@ -5,14 +5,14 @@ import SrcRef from '../../components/SrcRef.astro';
 import content from '../../data/content.json';
 
 const pageTitle = 'Bot Mode 群组有序执行 — ' + content.hero.title;
-const pageDesc = 'men 在 Hermes Bot Mode 多 Bot 群组中的运行方式：三层自动识别（prompt / 工具 / 机械探针）、Hermes 群组调度事实（3 轮 / 10 条 / 6 成员）、职责判定三问与 (pass) 纪律，以及行为层验证结果。';
+const pageDesc = 'Men 在 Hermes Bot Mode 多 Bot 群组中的运行方式：三层自动识别（prompt / 工具 / 机械探针）、Hermes 群组调度事实（3 轮 / 10 条 / 6 成员）、职责判定三问与 (pass) 纪律，以及行为层验证结果。';
 const base = '/';
 
 const infobox = [
   { k: '识别层', v: '<strong>3 层</strong>（L1 prompt / L2 工具 / L3 机械探针）' },
   { k: '调度上限', v: '<strong>3 轮 / 10 条 / 6 成员</strong>' },
   { k: '七嘴八舌的根源之所在', v: 'Round 0 无 @ = <strong>全员轮流各拿一个 turn</strong>' },
-  { k: '判定顺序', v: '先问<strong>是否被 @</strong> → men 是否在场 → 最后才看职责域' },
+  { k: '判定顺序', v: '先问<strong>是否被 @</strong> → Men 是否在场 → 最后才看职责域' },
   { k: '静默语义', v: '回复匹配 <code>\\(?pass?\\)?\\.?</code> 即静默，不产生任何群内消息' },
   { k: '探针', v: '<code>node scripts/runtime-probe.mjs --expect hermes</code>' },
   { k: '行为验证', v: '<strong>4/4 场景通过</strong>（2026-10-08 的实测报告）' },
@@ -38,7 +38,7 @@ const seealso = [
   <WikiManual
     crumb="Bot Mode 群组有序执行"
     title="Bot Mode 群组有序执行"
-    lead={`men 的 6 个角色可作为 <strong>Hermes profile</strong> 部署为独立 Bot。多 Bot 同处一个群组时，Hermes 的 Round 0 调度会让<strong>每个成员都拿到一个 turn</strong>——没有纪律就会「七嘴八舌」。本页定义<strong>环境自动识别</strong>与<strong>有序执行协议</strong>，让群内任务像 OpenCode 里一样串行推进。`}
+    lead={`Men 的 6 个角色可作为 <strong>Hermes profile</strong> 部署为独立 Bot。多 Bot 同处一个群组时，Hermes 的 Round 0 调度会让<strong>每个成员都拿到一个 turn</strong>——没有纪律就会「七嘴八舌」。本页定义<strong>环境自动识别</strong>与<strong>有序执行协议</strong>，让群内任务像 OpenCode 里一样串行推进。`}
     infoboxTitle="集成概要"
     infobox={infobox}
     toc={toc}
@@ -53,7 +53,7 @@ const seealso = [
           <thead><tr><th>层</th><th>载体</th><th>解决什么</th></tr></thead>
           <tbody>
             <tr><td><strong>自动识别</strong></td><td><code>scripts/runtime-probe.mjs</code>（机械）+ <code>hermes-bot-mode</code> skill（prompt）</td><td>自己处在什么环境里，以及当前轮是不是群组轮</td></tr>
-            <tr><td><strong>有序执行</strong></td><td>职责判定三问 + <code>(pass)</code> 纪律</td><td>轮到你时：说话（men 分诊 / 专家执行）还是静默</td></tr>
+            <tr><td><strong>有序执行</strong></td><td>职责判定三问 + <code>(pass)</code> 纪律</td><td>轮到你时：说话（Men 分诊 / 专家执行）还是静默</td></tr>
           </tbody>
         </table>
       </div>
@@ -100,20 +100,20 @@ node scripts/runtime-probe.mjs --expect room:Men\ Team # 断言存在某群组�
 
     <section id="protocol" class="doc-section">
       <h2>有序执行协议</h2>
-      <p><strong>判定顺序不可跳过、不可换序</strong>（实测：ji 曾因先判断「任务属于我的域」而抢接 men 在场的房间）：</p>
+      <p><strong>判定顺序不可跳过、不可换序</strong>（实测：ji 曾因先判断「任务属于我的域」而抢接 Men 在场的房间）：</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>#</th><th>问</th><th>动作</th></tr></thead>
           <tbody>
             <tr><td>1</td><td><strong>我被 @ 了吗？</strong></td><td>是 → <strong>必须回答</strong>（不得 pass），直接产出</td></tr>
-            <tr><td>2</td><td><strong>men 在不在房间成员列表里？</strong></td><td>在，且你不是 men 也没被 @ → <strong>无条件 <code>(pass)</code></strong>，先于职责域判断；men 会轮到自己的 turn 做分诊，抢接就是抢麦</td></tr>
-            <tr><td>3</td><td>men <strong>真的不在</strong>房间？</td><td>看路由表：你是对口专家 → 接单执行（首次发言声明「我来」）；否则 <code>(pass)</code></td></tr>
-            <tr><td>4</td><td>men 已经接单并 @了别人？</td><td>被 @者执行，其余 <code>(pass)</code></td></tr>
+            <tr><td>2</td><td><strong>Men 在不在房间成员列表里？</strong></td><td>在，且你不是 Men 也没被 @ → <strong>无条件 <code>(pass)</code></strong>，先于职责域判断；Men 会轮到自己的 turn 做分诊，抢接就是抢麦</td></tr>
+            <tr><td>3</td><td>Men <strong>真的不在</strong>房间？</td><td>看路由表：你是对口专家 → 接单执行（首次发言声明「我来」）；否则 <code>(pass)</code></td></tr>
+            <tr><td>4</td><td>Men 已经接单并 @了别人？</td><td>被 @者执行，其余 <code>(pass)</code></td></tr>
           </tbody>
         </table>
       </div>
-      <p><strong>核心纪律</strong>：men 是默认接单者（其余 5 个角色首轮一律 pass）；一次只有一个主发言人；接单靠 @ 不靠抢；pass 要干净（回复的全部内容就是 <code>(pass)</code>）；绝不重复他人结论；Bot Chat 私聊内容永不带进群。</p>
-      <p><strong>men 分诊模板</strong>：</p>
+      <p><strong>核心纪律</strong>：Men 是默认接单者（其余 5 个角色首轮一律 pass）；一次只有一个主发言人；接单靠 @ 不靠抢；pass 要干净（回复的全部内容就是 <code>(pass)</code>）；绝不重复他人结论；Bot Chat 私聊内容永不带进群。</p>
+      <p><strong>Men 分诊模板</strong>：</p>
       <div class="code-block">
         <span class="code-block__lang">text</span>
         <pre><code>【意图】&lt;一句话分类&gt;
@@ -149,7 +149,7 @@ node scripts/runtime-probe.mjs --expect hermes  # 真机环境断言</code></pre
           <thead><tr><th>验证层</th><th>内容</th><th>结果（2026-10-08）</th></tr></thead>
           <tbody>
             <tr><td>机械层</td><td>runtime-probe 27 单测 + skill 契约 6 断言 + npm test</td><td><strong>269/269 绿</strong></td></tr>
-            <tr><td>行为层</td><td>4 个轮次场景：非对口 pass / 抢接回归 / men 分诊 @ / 被 @ 必答</td><td><strong>4/4 通过</strong>（含一次判定表强化）</td></tr>
+            <tr><td>行为层</td><td>4 个轮次场景：非对口 pass / 抢接回归 / Men 分诊 @ / 被 @ 必答</td><td><strong>4/4 通过</strong>（含一次判定表强化）</td></tr>
             <tr><td>真实群组端到端全链路验证</td><td>桌面端重建群组后发无 @ 任务观察全链路</td><td>待执行（当前 <code>rooms.active: []</code>，房间需要重建）</td></tr>
           </tbody>
         </table>

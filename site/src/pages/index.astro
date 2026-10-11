@@ -10,7 +10,7 @@ const install = content.install || {};
 
 /* ---------- 安装：三种方式（信息完整，样式从简）---------- */
 const agentPrompt =
-  '帮我安装并启动 men：npx @cgartlab/men && opencode';
+  '帮我安装并启动 Men：npx @cgartlab/men && opencode';
 
 const platformTabs = [
   { id: 'agent', label: '面向 Agent' },
@@ -349,10 +349,10 @@ const faq = install.faq || [];
           <text x="120" y="298" text-anchor="middle" class="topo-label topo-label--sub">自然语言指令</text>
         </g>
 
-        <!-- men hub -->
+        <!-- Men hub -->
         <g>
           <rect x="280" y="232" width="220" height="100" rx="16" class="topo-node topo-node--hub" />
-          <text x="390" y="268" text-anchor="middle" class="topo-label topo-label--hub-cn">men 门</text>
+          <text x="390" y="268" text-anchor="middle" class="topo-label topo-label--hub-cn">Men 门</text>
           <text x="390" y="292" text-anchor="middle" class="topo-label topo-label--hub-sub">判断该谁做 · 派活</text>
           <text x="390" y="312" text-anchor="middle" class="topo-label topo-label--hub-sub2">最多4个同时跑</text>
           <rect x="280" y="232" width="220" height="100" rx="16" class="topo-pulse" />
@@ -455,7 +455,7 @@ const faq = install.faq || [];
     <h2 id="faq-title" class="faq__title">常见问题</h2>
     <div class="faq__list">
       {(faq.length > 0 ? faq : [
-        { q: 'men 是什么？', a: '你说一句话，AI 团队自动分工、干活、检查、交报告。6 个角色各干各的，你不用指定谁做什么。' },
+        { q: 'Men 是什么？', a: '你说一句话，AI 团队自动分工、干活、检查、交报告。6 个角色各干各的，你不用指定谁做什么。' },
 
         { q: '怎么开始用？', a: '在终端运行 <code>npx @cgartlab/men</code>，装完就能用。然后在 OpenCode 里输入 <code>/ultrawork 你的任务</code>。' },
 
@@ -836,7 +836,9 @@ const faq = install.faq || [];
   .topo-legend__dot--fail { background: var(--role-chi); }
 
   /* ===== Mechanisms ===== */
-  .mechanisms { padding: var(--section-pad) 0; max-width: var(--section-measure); }
+  /* 板块居中（margin auto），但内部文字保持左对齐 —— 收窄后靠左会留下 592px 空白，
+     居中后左右对称；文字本身没有加 text-align:center，仍从左边排起。 */
+  .mechanisms { padding: var(--section-pad) 0; max-width: var(--section-measure); margin: 0 auto; }
   .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
   .mechanisms__title {
     font-family: var(--font-sans);
@@ -868,7 +870,7 @@ const faq = install.faq || [];
   .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); }
 
   /* ===== FAQ ===== */
-  .faq { padding: var(--section-pad) 0; max-width: var(--section-measure); }
+  .faq { padding: var(--section-pad) 0; max-width: var(--section-measure); margin: 0 auto; }
   .faq__title {
     font-family: var(--font-sans);
     font-weight: var(--font-weight-semi);
