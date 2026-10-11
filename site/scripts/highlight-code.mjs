@@ -87,6 +87,27 @@ for (const f of files) {
     blocks++; touched = true;
     return head + out + btn;
   });
+  // hero 安装卡里的命令（<code class="hero-install__code" data-lang="bash">…</code>）：
+  // 同一套品牌主题，让命令行与文档代码块配色一致。复制按钮读的是 data-cmd 属性，
+  // 所以插入 token span 不会影响复制内容。
+  // 注意：Astro 会给元素自动加 data-astro-cid-*，属性顺序不定 → 用 [^>]* 吞掉其余属性
+  const reInline = /<code class="hero-install__code" data-lang="([a-zA-Z]+)"([^>]*)>([\s\S]*?)<\/code>/g;
+  html = html.replace(reInline, (m, langRaw, attrs, codeHtml) => {
+    const lang = langAlias[langRaw] || langRaw;
+    if (!LANGS.includes(lang)) return m;
+    let out;
+    try {
+      out = highlighter.codeToHtml(decode(codeHtml), { lang, theme: 'men-brand' });
+    } catch {
+      return m;
+    }
+    const inner = out
+      .replace(/^[\s\S]*?<code[^>]*>/, '')
+      .replace(/<\/code>[\s\S]*$/, '')
+      .replace(/\n$/, '');
+    blocks++; touched = true;
+    return `<code class="hero-install__code" data-lang="${langRaw}"${attrs}>${inner}</code>`;
+  });
   if (touched) { await writeFile(f, html, 'utf8'); filesTouched++; }
 }
 

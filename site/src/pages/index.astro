@@ -133,7 +133,7 @@ const faq = install.faq || [];
           <div class="hero-install__panel" id="ipanel-agent" role="tabpanel" aria-labelledby="itab-agent">
             <p class="hero-install__hint">把这句话复制给 AI 助手（OpenCode / Claude / Cursor），让它自动帮你装好：</p>
             <div class="hero-install__row">
-              <code class="hero-install__code">{agentPrompt}</code>
+              <code class="hero-install__code" data-lang="text">{agentPrompt}</code>
               <button class="hero-install__copy" data-cmd={agentPrompt} aria-label="复制提示词">
                 <Icon name="lucide:copy" width="14" height="14" />
               </button>
@@ -145,9 +145,9 @@ const faq = install.faq || [];
               <ul class="hero-install__cmds">
                 {manualCmds[t.id].map((c) => (
                   <li class="hero-install__cmd">
-                    <span class="hero-install__cmd-label">{c.label}</span>
                     <div class="hero-install__row">
-                      <code class="hero-install__code">{c.cmd}</code>
+                      <span class="hero-install__cmd-label">{c.label}</span>
+                      <code class="hero-install__code" data-lang={t.id === 'windows' ? 'powershell' : 'bash'}>{c.cmd}</code>
                       <button class="hero-install__copy" data-cmd={c.cmd} aria-label={`复制 ${c.label}`}>
                         <Icon name="lucide:copy" width="14" height="14" />
                       </button>
@@ -497,16 +497,19 @@ const faq = install.faq || [];
   .hero__grid {
     display: grid;
     /* 右栏 320px 起，左栏吃掉其余空间：桌面 1232px 内容宽下约为 733 / 459 */
-    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+    /* 安装卡需要更宽才能完整显示命令 → 左文 0.95fr / 右卡 1.05fr（1440 下约 565 / 627） */
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    /* 两列等高：卡片与左侧信息块上下边界对齐（原来这里是 align-items: center，
+       卡片比文字高时就会上下各突出一截） */
+    align-items: stretch;
     gap: var(--space-10);
-    align-items: center;
     position: relative;
     z-index: 1;
     /* 宽度对齐下方「角色卡片」区块（.showcase）：两者都用 <main> 的内容宽度
        （max-width 1360 + padding 0 64px → 桌面 1232px / 手机 342px），
        不再自己收窄到 --page-max(720px)。 */
   }
-  .hero-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; }
+  .hero-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; min-width: 0; }
   .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
   .hero-title {
@@ -531,10 +534,11 @@ const faq = install.faq || [];
 
   /* 右栏安装卡：可切换平台，样式从简（不用终端窗口装饰，只留标签页 + 命令行） */
   .hero-install {
+    display: flex; flex-direction: column; justify-content: space-between;   /* 高度跟随左侧文字列，meta 落到卡片底部 */
     border: 1px solid var(--color-line);
     border-radius: var(--radius-md);
     background: var(--color-surface);
-    padding: var(--space-4) var(--space-5) var(--space-5);
+    padding: var(--space-4) var(--space-5);
     /* 关键：网格项默认 min-width:auto，安装命令里的长 URL（nowrap）会把整列撑到 ~787px，
        再被 .hero 的 overflow:hidden 裁掉 —— 必须允许收缩，让 .hero-install__code 自己横向滚动。 */
     min-width: 0;
@@ -547,12 +551,12 @@ const faq = install.faq || [];
   /* 平台切换：文字标签 + 选中下划线（不用胶囊/描边，保持轻） */
   .hero-install__tabs {
     display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4);
-    border-bottom: 1px solid var(--color-line-soft); margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-line-soft); margin-bottom: var(--space-3);
   }
   .hero-install__tab {
     font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi);
     color: var(--color-fg-tertiary); background: none; border: none; cursor: pointer;
-    padding: var(--space-2) 0; min-height: 36px; margin-bottom: -1px;
+    padding: var(--space-1) 0; min-height: 32px; margin-bottom: -1px;
     border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s;
   }
   .hero-install__tab:hover { color: var(--color-fg); }
@@ -564,16 +568,22 @@ const faq = install.faq || [];
   .hero-install__panel { grid-area: 1 / 1; }
   .hero-install__panel[hidden] { display: block; visibility: hidden; }
   .hero-install__hint { font-size: var(--font-size-small); color: var(--color-fg-tertiary); line-height: 1.6; margin: 0 0 var(--space-2); }
-  .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-  .hero-install__cmd-label { display: block; font-size: var(--font-size-small); color: var(--color-fg-tertiary); margin-bottom: var(--space-1); }
+  .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
   .hero-install__row {
     display: flex; align-items: center; gap: var(--space-2);
-    background: var(--color-bg-warm); border: 1px solid var(--color-line-soft);
-    border-radius: var(--radius-sm); padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+    /* 行底色用「代码底」而不是暖面板底：高亮 token 的对比度是按 --color-code-bg 断言过的 */
+    background: var(--color-code-bg); border: 1px solid var(--color-line-soft);
+    border-radius: var(--radius-sm); padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
+  }
+  .hero-install__cmd-label {
+    flex: 0 0 auto; font-size: var(--font-size-small); color: var(--color-fg-tertiary);
+    white-space: nowrap; padding-right: var(--space-1);
   }
   .hero-install__code {
-    flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap;
-    font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg);
+    flex: 1; min-width: 0;
+    /* 命令完整显示：超宽就换行（长 URL 也允许断），不再横向滚动/截断 */
+    white-space: pre-wrap; overflow-wrap: anywhere;
+    font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-code);
     background: none; padding: 0; line-height: 1.5;
   }
   .hero-install__copy {
@@ -582,7 +592,7 @@ const faq = install.faq || [];
     background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
   }
   .hero-install__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
-  .hero-install__meta { margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-line-soft); font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
+  .hero-install__meta { margin: var(--space-3) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--color-line-soft); font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
   .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Showcase (scroll-driven agent cards) ===== */
