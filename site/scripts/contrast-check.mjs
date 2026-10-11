@@ -50,6 +50,7 @@ const PALETTE_TOKEN_MAP = {
   accent: '--color-accent',
   accentDark: '--color-accent-dark',
   accentOnAccent: '--color-accent-on-accent',
+  accentSoft: '--color-accent-soft',
   roleMen: '--role-men', roleSi: '--role-si', roleJi: '--role-ji',
   roleChi: '--role-chi', roleYi: '--role-yi', roleXun: '--role-xun',
   roleMenText: '--role-men-text', roleSiText: '--role-si-text', roleJiText: '--role-ji-text',
@@ -154,6 +155,15 @@ const pairs = [
   { fg: colors.fgMuted,     bg: colors.surfaceWarm, label: '弱化文本 vs 暖底',                      min: 4.5 },
   // 装饰文本（≥ 3:1 · WCAG 非强制但建议）
   { fg: colors.fgDecorative, bg: colors.bg,         label: '装饰文本(#8a877e) vs 背景[装饰]',        min: 3.0 },
+  // 强调色「填充承载文字」规则（2026-10-11 合并自排版线）：
+  // 凡是把文字放在强调色填充上的地方（按钮 / 徽标 / 拓扑中枢 / 选中态），
+  // 都必须在这里有断言 —— 填充或文字色改动后若不再达标，这里会 FAIL。
+  { fg: colors.accentOnAccent, bg: colors.accent, label: 'accent 填充上的文字（按钮/徽标/拓扑中枢）', min: 4.5 },
+  // accent-soft 的正确用法是「浅底上的文字/hover 加深」，不是填充：
+  // 深墨字放在 accent-soft(#bc513a) 上只有 2.99:1 —— 故它不得承载文字，只作文字色/边框。
+  { fg: colors.accentSoft, bg: colors.bg, label: 'accent-soft 作文字色 vs 纸底（不得作填充承载文字）', min: 4.5 },
+  // 浅强调底（accent-tint = 10% 赤陶混纸底 ≈ #f7ece5）上的深强调文字
+  { fg: colors.accentDark, bg: '#f7ece5', label: '深强调 vs 浅强调底(#f7ece5)', min: 4.5 },
   // 大文本 accent（≥ 3:1 · 18pt+/14pt bold+）
   { fg: colors.accent,      bg: colors.bg,          label: '赤陶强调(#d77656) vs 背景[大文本]',      min: 3.0 },
   { fg: colors.accent,      bg: colors.surface,     label: '赤陶强调 vs 白底[大文本]',                min: 3.0 },

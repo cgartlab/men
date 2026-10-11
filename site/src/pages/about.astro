@@ -6,7 +6,7 @@ import { SITE } from '../data/site';
 const PROJECTS = [
   ...content.about.projects.filter((p) => ['EDIC','Argus'].includes(p.name)).map((p) => ({ ...p, href: p.name === 'EDIC' ? 'https://github.com/cgartlab/edic-design-system' : 'https://github.com/cgartlab/argus' })),
   { name: '作品集', type: '官方站点 · 全部作品', year: '持续更新', desc: '视觉、工程与 AI 实验的完整作品档案。', href: 'https://cgartlab.com' },
-  { name: '冥想系列', type: '创作企划', year: '策划中', desc: '以动态影像与声音为媒介的冥想视觉实验系列。', href: 'https://cgartlab.com' },
+  { name: '冥想系列', type: '创作企划', year: '策划中', desc: '以动态影像与声音作为媒介的冥想视觉实验系列。', href: 'https://cgartlab.com' },
 ];
 
 const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具 —— 出品机构、品牌方法论、作品矩阵（EDIC / Argus 等）、开源许可与联系方式。';
@@ -55,7 +55,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
     <section class="about-section" aria-labelledby="org-title">
       <h2 class="about-h2" id="org-title">01 · 出品机构 · {content.about.brand}</h2>
       <p class="about-lede">{content.about.intro}</p>
-      <p class="about-lede"><strong>使命</strong>：以设计思维驱动 AI 工程实践，让个人创作者拥有组织级的生产力。</p>
+      <p class="about-lede"><strong>使命</strong>：以设计思维驱动 AI 工程实践，让个人创作者得以拥有组织级的生产力。</p>
       <p class="about-p"><strong>品牌理念</strong>：{content.about.tagline}。</p><p class="about-p"><a href="https://cgartlab.com/weekly/" target="_blank" rel="noopener"><strong>{content.about.weekly.name}</strong></a>：{content.about.weekly.desc}</p>
     </section>
 
@@ -187,7 +187,8 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
   .about-brand-meta {
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-fg-muted);
+    /* 版本 / 出品方属「该被读到」的元信息，原 fg-muted(4.54:1) 视觉过淡 → fg-tertiary */
+    color: var(--color-fg-tertiary);
     letter-spacing: 0.05em;
     text-transform: uppercase;
     margin-bottom: var(--space-2);
@@ -205,10 +206,12 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
   }
 
   .about-brand-name {
-    font-size: clamp(1.8rem, 4vw, 2.6rem);
-    font-weight: var(--font-weight-bold);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+    /* 原为 h2 档（30px）＝ 与章节标题同号 → 页标题与章节标题层级相同，
+       实测 h1:30 / h2:30 并列。抬回 h1 档。 */
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-semi);
+    letter-spacing: var(--letter-spacing-heading);
+    line-height: var(--line-height-display);
     color: var(--color-fg);
     margin-bottom: var(--space-2);
   }
@@ -241,9 +244,10 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
     font-size: var(--font-size-h4);
     font-weight: var(--font-weight-semi);
-    font-style: italic;
+    /* 中文引文不用合成斜体；行宽收到正文上限 */
     color: var(--color-fg);
     line-height: var(--line-height-relaxed);
+    max-width: var(--measure-prose);
   }
   .about-quote__attr {
     display: block;
@@ -262,11 +266,11 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
 
   .about-h2 {
     font-size: var(--font-size-h2);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
+    font-weight: var(--font-weight-semi);
+    line-height: var(--line-height-heading);
     color: var(--color-fg);
     margin-bottom: var(--space-4);
-    letter-spacing: -0.01em;
+    letter-spacing: var(--letter-spacing-heading);
   }
 
   .about-lede {
@@ -301,7 +305,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
     display: inline-block;
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
     background: var(--color-accent-tint);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-xs);
@@ -311,7 +315,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
   }
   .about-phil-title {
     font-size: var(--font-size-h4);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semi);
     color: var(--color-fg);
     margin-bottom: var(--space-2);
     line-height: var(--line-height-tight);
@@ -347,7 +351,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
   }
   .about-project__name {
     font-size: var(--font-size-h4);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semi);
     color: var(--color-fg);
   }
   .about-project__year {
@@ -367,6 +371,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
     font-size: var(--font-size-caption);
     color: var(--color-fg-tertiary);
     line-height: var(--line-height-relaxed);
+    max-width: var(--measure-prose);
   }
 
   /* 许可 */
@@ -386,7 +391,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
     display: inline-block;
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
     background: var(--color-accent-tint);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-xs);
@@ -433,7 +438,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
   }
   .about-link:hover {
     border-color: var(--color-accent);
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
     text-decoration: none;
   }
   .about-link__arrow {
@@ -441,7 +446,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
     transition: color var(--duration-normal) ease;
   }
   .about-link:hover .about-link__arrow {
-    color: var(--color-accent-on-accent);
+    color: var(--color-accent-dark);
   }
 
   .about-stack {
@@ -449,7 +454,9 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
     font-size: var(--font-size-eyebrow);
     color: var(--color-fg-muted);
     margin-top: var(--space-5);
-    letter-spacing: 0.03em;
+    letter-spacing: var(--letter-spacing-small);
+    line-height: var(--line-height-body);
+    max-width: var(--measure-prose);
   }
 
   /* 团队 */
@@ -475,7 +482,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具
   }
   .about-member__name {
     font-size: var(--font-size-h4);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semi);
     color: var(--color-fg);
     margin-bottom: var(--space-1);
   }

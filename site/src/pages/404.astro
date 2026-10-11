@@ -18,7 +18,7 @@ import { SITE } from '../data/site';
     </p>
 
     <p class="notfound__hint">
-      <strong>可以试试：</strong>检查地址拼写，或从下方入口重新进入。
+      <strong>可以试试：</strong>检查地址拼写，或从下方入口直接重新进入。
     </p>
 
     <nav class="notfound__nav" aria-label="站点导航">
@@ -68,21 +68,21 @@ import { SITE } from '../data/site';
   .notfound__code {
     font-family: var(--font-mono);
     font-size: clamp(4rem, 16vw, 7rem);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semi);
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: var(--letter-spacing-heading);
     color: var(--color-accent);
   }
 
   .notfound__heading {
     font-size: var(--font-size-h2);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semi);
     color: var(--color-fg);
   }
 
   .notfound__msg {
     font-size: var(--font-size-body);
-    line-height: 1.6;
+    line-height: var(--line-height-body);
     color: var(--color-fg-secondary);
     margin: 0 0 var(--space-3);
   }

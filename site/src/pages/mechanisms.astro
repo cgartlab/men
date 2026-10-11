@@ -273,20 +273,20 @@ const pipeline = [
     margin-bottom: var(--space-8);
   }
   .mech-title {
-    font-family: var(--font-serif);
-    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-family: var(--font-sans);
     font-weight: var(--font-weight-semi);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
     color: var(--color-fg);
     margin-bottom: var(--space-3);
-  }
+    font-size: var(--font-size-h1);
+    line-height: var(--line-height-display);
+    letter-spacing: var(--letter-spacing-heading);
+}
   .mech-subtitle {
-    font-size: var(--font-size-body);
     color: var(--color-fg-secondary);
-    max-width: 700px;
     line-height: var(--line-height-body);
-  }
+    font-size: var(--font-size-body-lg);
+    max-width: var(--measure-prose);
+}
 
   .mech-pipeline__title,
   .mech-steps__title,
@@ -295,10 +295,8 @@ const pipeline = [
   .mech-verify__title,
   .mech-events__title,
   .mech-learn__title {
-    font-family: var(--font-serif);
-    font-size: var(--font-size-h3);
+    font-family: var(--font-sans);
     font-weight: var(--font-weight-semi);
-    line-height: 1.2;
     color: var(--color-fg);
     margin-bottom: var(--space-4);
     padding-bottom: var(--space-2);
@@ -306,7 +304,10 @@ const pipeline = [
     display: flex;
     align-items: center;
     gap: var(--space-3);
-  }
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
+}
   .mech-pipeline__num,
   .mech-steps__num,
   .mech-wave__num,
@@ -480,14 +481,15 @@ const pipeline = [
     font-size: var(--font-size-caption);
     color: var(--color-fg-secondary);
     line-height: var(--line-height-body);
-    margin-bottom: var(--space-1);
-  }
+    margin-bottom: var(--space-3);
+}
   .step-card__why {
     font-size: var(--font-size-eyebrow);
     color: var(--color-fg-muted);
     font-style: italic;
     margin: 0;
-  }
+    line-height: var(--line-height-ui);
+}
 
   /* ===== Wave Diagram ===== */
   .wave-diagram {
@@ -607,10 +609,10 @@ const pipeline = [
   .cmd-card__usage-label {
     font-family: var(--font-mono);
     font-size: var(--font-size-eyebrow);
-    color: var(--color-fg-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-  }
+    color: var(--color-fg-tertiary);
+}
   .cmd-card__usage code {
     font-family: var(--font-mono);
     font-size: var(--font-size-caption);
@@ -619,9 +621,10 @@ const pipeline = [
   }
   .cmd-card__example {
     font-size: var(--font-size-eyebrow);
-    color: var(--color-fg-muted);
     margin: 0;
-  }
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-ui);
+}
 
   /* ===== Verify Flow ===== */
   .verify-flow {

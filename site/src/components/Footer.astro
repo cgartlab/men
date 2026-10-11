@@ -32,7 +32,7 @@ import GateLogo from './GateLogo.astro';
       <summary>法律许可与隐私声明</summary>
       <div class="site-footer__legal-body">
         <p><strong>许可</strong>：代码（Agent 定义、脚本、站点）以 MIT License 提供；文章、设计与图像等内容采用 CC BY-NC-SA 4.0，引用请注明出处。</p>
-        <p><strong>隐私</strong>：本站为纯静态页面，不收集、不存储任何个人数据，不使用跟踪 Cookie 或第三方统计脚本。</p>
+        <p><strong>隐私</strong>：本站为纯静态页面，不收集、不存储任何个人数据，也不使用跟踪 Cookie 或任何第三方统计脚本。</p>
       </div>
     </details>
   </div>
@@ -101,7 +101,8 @@ import GateLogo from './GateLogo.astro';
   .site-footer__stack {
     font-size: var(--font-size-caption);
     color: var(--color-fg-tertiary);
-    max-width: none;
+    /* 原 max-width:none → 实测 956px 宽时每行 68 个汉字，远超舒适区 */
+    max-width: var(--measure-prose);
     line-height: var(--line-height-relaxed);
   }
 

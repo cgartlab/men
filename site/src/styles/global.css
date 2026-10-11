@@ -4,19 +4,64 @@
    基准：open-design.ai · 暖白纸质 + 荧光绿 + 纸纹噪点 + 侧栏竖排
    ============================================================ */
 
-/* ---------- 字体 ---------- */
-/* OPPO Sans（免费商用 · 官方 CDN woff2，覆盖约 5000 常用字，生僻字自动降级系统字体） */
+/* ---------- 字体 ----------
+   全站只用两族字：
+     ① 正文/标题 = OPPO Sans（开源黑体，OPPO 官方 CDN 直链）
+     ② 代码/标签 = Hack Nerd Font（自托管子集，见下）
+
+   ① OPPO Sans 说明：
+      · 官方 CDN 只提供 Regular(400) / Medium(500) 两档 woff2（744KB/字重，
+        各覆盖约 5000 常用字，生僻字自动降级栈内系统黑体）。
+      · 因此字重 600/700 来自浏览器合成加粗（Bold 字重官方未提供 webfont）。
+        排版层级因此以「字号 + 颜色 + 字重 500」为主，重字重只用于强调。
+      · 授权条款（OPPO 官方）：免费商用，但禁止改编/二次开发、禁止转供下载
+        渠道 —— 所以只能引用官方 CDN，**不得自托管、不得子集化**。
+      · 任何衬线字体（Georgia / serif / 宋体）一律不再出现在字体栈中。
+   ② Hack Nerd Font 说明：
+      · MIT 授权，可自托管。此处为**子集**（拉丁 + 标点/箭头/制表符/电力线，
+        1125 字形，75KB/字重），中文由栈内 OPPO Sans 兜底。
+      · 重新生成（含完整 Nerd 图标集时把 --unicodes 换成：「拉丁范围,U+E000-F8FF」
+        体积会从 75KB 涨到约 640KB/字重，按需取舍）：
+        python -m fontTools.subset HackNerdFont-Regular.ttf --flavor=woff2 \
+          --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+0180-024F,U+2000-206F,\
+        U+2070-209F,U+20A0-20BF,U+2100-214F,U+2150-218F,U+2190-21FF,U+2200-22FF,\
+        U+2300-23FF,U+2460-24FF,U+2500-257F,U+2580-259F,U+25A0-25FF,U+2600-26FF,\
+        U+2700-27BF,U+E0A0-E0D7,U+FB00-FB06,U+FE00-FE0F,U+FFFD" \
+          --output-file=site/public/fonts/hack-nerd-font-regular.woff2
+   ------------------------------------------------------------------------ */
+/* 字重区间声明（本文件的核心机制之一，勿改成单值）：
+   官方只给 Regular / Medium 两个静态字面。若声明成 font-weight:400 / 500，
+   那么 600/700 的请求就落不到任何字面上 → 浏览器**合成加粗**（给字形描边加粗），
+   汉字字腔被填死，实测墨量 16.01% vs 真 Medium 11.65%（重 37%）——就是「黑黑的一坨」。
+   声明成区间后，600/700 直接命中 Medium 字面本身，天然不合成：
+     Regular → 300–400 · Medium → 500–700（实测 700 墨量 11.38% ≈ Medium 11.55%）
+   配合 html { font-synthesis-weight: none } 双保险（该属性实测同样有效：16.01% → 11.68%）。 */
 @font-face {
   font-family: "OPPO Sans";
   src: url("https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Regular.woff2") format("woff2");
-  font-weight: 400;
+  font-weight: 300 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "OPPO Sans";
   src: url("https://code.oppo.com/content/dam/oppo/common/fonts/font2/new-font/OPPOSansOS2-5000-Medium.woff2") format("woff2");
-  font-weight: 500;
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+/* Hack Nerd Font：拉丁 400/700（500/600 由最近字重或合成承担） */
+@font-face {
+  font-family: "Hack Nerd Font";
+  src: url("/fonts/hack-nerd-font-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Hack Nerd Font";
+  src: url("/fonts/hack-nerd-font-bold.woff2") format("woff2");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -35,8 +80,26 @@ html {
   text-rendering: optimizeLegibility;
   color-scheme: light;
   hanging-punctuation: first last;
+  /* 关闭「字重合成」（2026-10-10）
+     OPPO Sans 官方 CDN 只有 400/500 两档，600/700 原本由浏览器**合成加粗**：
+     合成是给字形描边加粗，汉字字腔（「门」「角」「色」「协」的内部空隙）会被填死，
+     实测 18px 起明显发糊、13px 起糊成一团（见 docs/reports/typography-2026-10-10.md）。
+     关闭后 600/700 回退到最接近的真字重 —— 对 OPPO Sans 是 Medium(500)，
+     对栈内 Hack Nerd Font（有真 700）仍是真粗体，等于「拉丁标签照样粗、汉字不再糊」。
+     实测（同串汉字 32px 的墨量）：400 = 9.18%、真 500 = 11.65%、
+     合成 700 = 16.01%（+37% → 糊）、关合成后的 700 = 11.68%（= 真 500）。
+     与上面 @font-face 的字重区间声明互为双保险。
+     层级改由「字号 + 颜色 + 间距」承担（正文 #404040 / 标题 #1a1a1a 即为一例）。 */
+  font-synthesis-weight: none;
 }
 
+/* 孤行治理（2026-10-10）——两个都是**继承属性**，写在 body 上即全站生效：
+   ① text-wrap: pretty —— 折行时主动避免「末行只剩一个词/一个字」；
+      标题已有的 text-wrap: balance 是显式声明，会覆盖这里，不受影响。
+   ② line-break: strict —— 中文禁则从严：禁止把 。，、；：）」』 等字符甩到行首
+      （默认 auto 在拉丁词 / 代码 token 之后仍会断，实测造成「末行只剩一个标点」）。
+   CSS 只能治「折行点选择」；末行最终剩几个字还受容器宽与文案长度约束，
+   故另有 scripts/widow-audit.mjs 逐字实测复核（判定：末行可见字符 ≥4）。 */
 /* ---- Apple-style scrollbar ---- */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -46,6 +109,8 @@ html {
 
 body {
   min-height: 100vh;
+  text-wrap: pretty;
+  line-break: strict;
   line-height: var(--line-height-body);
   font-family: var(--font-sans);
   font-weight: var(--font-weight-regular);
@@ -94,22 +159,11 @@ ol {
 }
 
 /* ---------- 纸感纹理叠加 ---------- */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  background:
-    /* 层 1：SVG feTurbulence 噪点 */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E") repeat,
-    /* 层 2：左上光晕 */
-    radial-gradient(circle at 20% 15%, #e8e6dc 0%, transparent 45%),
-    /* 层 3：右下光晕 */
-    radial-gradient(circle at 80% 85%, #f5f0e8 0%, transparent 72%);
-  mix-blend-mode: var(--paper-blend);
-  opacity: var(--paper-overlay-opacity);
-}
+/* 已删除（2026-10-09）：feTurbulence 噪点 + 左右下两个径向光晕在 --color-bg
+   (#fafafa) 平底上有效色差 <5/255，属死代码；且 z-index:3 使该伪元素
+   成为 fixed containing block 的顶层遮罩，实测 elementFromPoint 在其范围内
+   全部返回 body::before（视觉/交互都是纯负担）。见
+   docs/reports/design-review-home-2026-10-08.md §5 P0-3。 */
 
 /* ---------- Design Tokens (R8.5 · WCAG 2.2 AA 合规 · 语义命名) ---------- */
 :root {
@@ -198,44 +252,73 @@ body::before {
   --color-revert-bg: var(--color-surface);
   --color-revert-fg: var(--color-fg-muted);
 
-  /* === 字体 === */
+  /* === 字体 ===
+     单一无衬线族：OPPO Sans（正文/标题）+ Hack Nerd Font（代码/标签）。
+     --font-serif 已删除（2026-10-10）：全站不再有衬线字体；
+     字体栈里 OPPO Sans 之后只保留系统黑体，杜绝 serif 回退。
+     mono 栈第 2 位放 OPPO Sans：Hack 无中文字形，代码块里的中文注释
+     因此落在同一族字体上，而不是各平台随机系统字体。 */
   --font-sans:
-    "OPPO Sans", "PingFang SC", "Microsoft YaHei",
+    "OPPO Sans", "PingFang SC", "Microsoft YaHei", "Noto Sans SC",
     system-ui, -apple-system, sans-serif;
   --font-mono:
-    "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
-  --font-serif: "OPPO Sans", Georgia, "PingFang SC", serif;
+    "Hack Nerd Font", "OPPO Sans", ui-monospace, "SF Mono", "Consolas",
+    monospace;
 
-  /* === 字号 (Fluid Scale · 1.25 比例 · clamp 320px→1280px) === */
-  --font-size-display: clamp(2.4rem, 5.2vw, 3.4rem);
-  --font-size-h1: 1.875rem;
-  --font-size-h2: 1.5rem;
-  --font-size-h3: 1.25rem;
-  --font-size-h4: 1.0625rem;
-  --font-size-h5: 1rem;            /* 最小标题级 · 同 body 但以字重区分（4 处引用原未定义 → h3/标题退化至继承值） */
-  --font-size-body: 1rem;
-  --font-size-caption: 0.875rem;
-  --font-size-eyebrow: 0.75rem;
-  --font-size-eyebrow-nav: 0.65625rem;
+  /* === 字号（中文优先的模数级数 · 比例 ≈1.25 · 顶部两级 fluid） ===
+     中文排版的下限比西文高：正文 16px 起，小字 13px 起，标签最小 12px。
+     各级实测比例（desktop）：56/44=1.27 · 44/30=1.47 · 30/21=1.43 ·
+     21/18=1.17 · 18/16=1.13 —— 单调递减，同页不会出现后级大于前级。 */
+  --font-size-display: clamp(2.5rem, 1.6rem + 3.2vw, 3.5rem);   /* 40 → 56px 首屏主标题 */
+  --font-size-h1: clamp(2rem, 1.4rem + 2.2vw, 2.75rem);          /* 32 → 44px 页标题 */
+  --font-size-h2: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);       /* 24 → 30px 区块标题 */
+  --font-size-h3: 1.3125rem;                                     /* 21px 卡片/条目标题 */
+  --font-size-h4: 1.125rem;                                      /* 18px 子标题 */
+  --font-size-h5: 1rem;                                          /* 16px 最小标题级（以字重/颜色区分） */
+  --font-size-body: 1rem;                                        /* 16px 正文 */
+  --font-size-body-lg: 1.0625rem;                                /* 17px 长文正文（关于页导语等） */
+  --font-size-caption: 0.875rem;                                 /* 14px 次要文本 */
+  --font-size-small: 0.8125rem;                                  /* 13px 小字 / 元数据（中文下限） */
+  /* 眉标与导航标签同属「小字档」：汉字在小字档的下限是 13px。
+     原 eyebrow=12px、nav=10.5px —— 导航是中文（首页/角色/机制…），
+     10.5px 的汉字属于「看不清」级别，实测正是全站出现最多的小字问题（62 处）。
+     两个旧令牌保留为别名，避免改 40 余处引用。 */
+  --font-size-eyebrow: var(--font-size-small);
+  --font-size-eyebrow-nav: var(--font-size-small);
 
-  /* 行宽容器 */
-  --content-width: 68ch;
+  /* 行宽容器
+     --content-width 以 em 而非 ch：ch 按西文「0」宽度算，中文正文里
+     1 汉字 ≈ 1em，用 em 才能保证「每行 40 汉字左右」这个舒适区。
+     --measure-prose 用于正文块（p/li/note）的独立上限：容器宽时
+     正文不跟着变宽（代码块与表格仍可用满宽）。 */
+  --content-width: 42em;
   --content-width-wide: 880px;
+  --measure-prose: 40em;
 
-  /* 字重 */
+  /* 字重（OPPO Sans 只有 400/500 真字重，600/700 由浏览器合成） */
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semi: 600;
   --font-weight-bold: 700;
 
-  /* 行高 */
-  --line-height-tight: 1.25;
-  --line-height-body: 1.7;
-  --line-height-relaxed: 1.85;
+  /* 行高 —— 中文版比西文高一档：汉字字身框占满，行距不足会「糊成一块」。
+     大标题 1.2（多行时仍不挤）· 区块标题 1.32 · 小标题 1.4 ·
+     正文 1.75 · 长文 1.9 · 控件单行 1.5。 */
+  --line-height-display: 1.3;      /* 中文大标题：1.2 在换行时会「贴」，1.3 舒适 */
+  --line-height-heading: 1.35;
+  --line-height-subhead: 1.4;
+  --line-height-tight: 1.45;       /* 兼容旧引用：原 1.25 对中文过紧，统一抬到 1.45 */
+  --line-height-ui: 1.5;
+  --line-height-body: 1.75;
+  --line-height-relaxed: 1.9;
 
-  /* 字距 */
-  --letter-spacing-nav: 0.18em;
-  --letter-spacing-eyebrow: 0.42em;
+  /* 字距 —— 中文禁负字距：汉字占满字身框，负值会让笔画粘连。
+     中文标题 +0.01em（呼吸感）· 小字 +0.02em（密集文本拉开）·
+     全大写西文标签才用大字距。 */
+  --letter-spacing-heading: 0.01em;
+  --letter-spacing-small: 0.02em;
+  --letter-spacing-nav: 0.1em;
+  --letter-spacing-label: 0.12em;
   --letter-spacing-body: 0;
 
   /* === 布局 === */
@@ -278,10 +361,13 @@ body::before {
   --paper-overlay-opacity: 0.62;
 
   /* === 侧栏竖排 === */
-  --rail-text-size: 10px;
+  --rail-text-size: 11px;
   --rail-text-weight: 600;
-  --rail-text-spacing: 0.18em;
+  --rail-text-spacing: 0.16em;
   --rail-text-transform: uppercase;
+  /* 原为 fg-decorative（#8a8a8a on #fafafa = 3.31:1，低于小字 4.5:1）。
+     竖排小字虽为装饰层（aria-hidden），但它是页面上常驻可见的字，
+     按可读标准给到 4.54:1。 */
   --rail-text-color: var(--color-fg-muted);
   --rail-border: 1px solid var(--color-line-faint);
   --rail-padding: var(--space-4);
@@ -322,23 +408,35 @@ body::before {
   }
 }
 
+/* ---------- 内联强调（strong / b）----------
+   中文没有 600/700 真字面 → 强调不能只靠字重。这里用两层：
+   ① 真 Medium(500)（比正文 400 的墨量高约 26%，实测 9.18% → 11.65%）
+   ② 颜色加深到 --color-fg（正文在长文里是 --color-fg-secondary #404040）。
+   两层叠加才是「一眼能看出是重点」；只靠其中一层在中文里几乎看不出来。 */
+strong,
+b {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
 /* ---------- Typography ---------- */
+/* 标题：中文行高层级 + 正字距（原 -0.01em 对汉字是挤压）。 */
 h1,
 h2,
 h3,
 h4 {
-  line-height: var(--line-height-tight);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.01em;
+  line-height: var(--line-height-heading);
+  font-weight: var(--font-weight-semi);
+  letter-spacing: var(--letter-spacing-heading);
   color: var(--color-fg);
   text-wrap: balance;
   max-width: var(--content-width);
 }
 
-h1 { font-size: var(--font-size-h1); }
+h1 { font-size: var(--font-size-h1); line-height: var(--line-height-display); }
 h2 { font-size: var(--font-size-h2); }
 h3 { font-size: var(--font-size-h3); }
-h4 { font-size: var(--font-size-h4); }
+h4 { font-size: var(--font-size-h4); line-height: var(--line-height-subhead); }
 
 p {
   font-size: var(--font-size-body);
@@ -348,7 +446,10 @@ p {
 
 code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
+  /* 行内代码 0.9em 在 14px 上下文里只剩 12.6px，中文注释过小 → 0.94em：
+     16px 正文 → 15px，14px 表格 → 13.2px，均高于中文下限。 */
+  font-size: 0.94em;
+  letter-spacing: 0;
   color: var(--color-code);
   background: var(--color-code-bg);
   padding: 2px var(--space-2);
@@ -408,20 +509,21 @@ pre .copy-btn.copied {
 }
 
 ::selection {
+  /* 品牌规范 v1 是「亮赤陶底 + 深墨字」：accent(#d77656) + on-accent(#2b2a27) = 4.52:1。
+     深字放在 accent-soft(#bc513a) 上只有 2.99:1，不达标（contrast-check 有断言守卫）。 */
   background: var(--color-accent);
   color: var(--color-accent-on-accent);
 }
 
 /* ---------- 页面淡入（克制） ---------- */
+/* 关键：只动 opacity，不能带 transform。CSS 规范规定任何非 none 的 transform
+   （含 translateY(0) 折叠出的单位矩阵 matrix(1,0,0,1,0,0)）都会使该元素成为
+   fixed 定位后代祖先的 containing block —— 曾导致首屏 fixed 背景层按 main
+   的 padding 偏移 40px。animation-fill-mode: both 会让 to 帧的 transform
+   永久保留，因此 keyframe 里不写 transform。 */
 @keyframes page-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 main {
@@ -468,7 +570,9 @@ main {
 
 .btn:hover {
   border-color: var(--color-accent);
-  color: var(--color-accent-on-accent);
+  /* 浅底上的文字用深橘；--color-accent-on-accent 现在是白（橘底专用），
+     用在这里会白字白底看不见。 */
+  color: var(--color-accent-dark);
   text-decoration: none;
   transform: translateX(2px); /* 推门语义 */
 }
@@ -481,7 +585,7 @@ main {
 
 .btn--primary:hover {
   border-color: var(--color-accent);
-  color: var(--color-accent-on-accent);
+  color: var(--color-accent-dark);
 }
 
 .btn--ghost {
@@ -492,7 +596,7 @@ main {
 
 .btn--ghost:hover {
   border-color: var(--color-accent);
-  color: var(--color-accent-on-accent);
+  color: var(--color-accent-dark);
   background: transparent;
 }
 
@@ -537,8 +641,9 @@ main {
 
 /* ---------- 侧栏竖排装饰 ---------- */
 .side-rail {
+  /* 顶部留出 header 高度：原为 top:0，与 header 实测重叠 36×52px */
+  top: var(--space-20);
   position: fixed;
-  top: 0;
   bottom: 0;
   width: var(--side-rail-width);
   display: flex;
@@ -635,9 +740,9 @@ main {
 
 .pull-quote__text {
   font-size: var(--font-size-h2);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  letter-spacing: -0.01em;
+  font-weight: var(--font-weight-semi);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-heading);
   color: var(--color-fg);
   margin-bottom: var(--space-4);
 }
@@ -734,7 +839,7 @@ main {
 /* ---------- Section header（等宽大写强调色 · 小字用深橘保证对比度） ---------- */
 .oc-section-title {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: var(--font-size-eyebrow);
   font-weight: var(--font-weight-semi);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -879,19 +984,18 @@ main {
 .doc-breadcrumb a { color: var(--color-accent-dark); text-decoration: none; }
 .doc-breadcrumb a:hover { text-decoration: underline; }
 .doc-title {
-  font-family: var(--font-serif);
-  font-size: clamp(2.2rem, 4.5vw, 3rem);
+  font-size: var(--font-size-h1);
   font-weight: var(--font-weight-semi);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: var(--line-height-display);
+  letter-spacing: var(--letter-spacing-heading);
   color: var(--color-fg);
   margin-bottom: var(--space-3);
 }
 .doc-lead {
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-body-lg);
   color: var(--color-fg-secondary);
   line-height: var(--line-height-relaxed);
-  max-width: 680px;
+  max-width: var(--measure-prose);
 }
 .doc-lead strong { color: var(--color-fg); }
 
@@ -915,7 +1019,7 @@ main {
   font-size: var(--font-size-caption);
 }
 .wiki-infobox__title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--font-size-h5);
   font-weight: var(--font-weight-semi);
   color: var(--color-fg);
@@ -929,7 +1033,8 @@ main {
   display: grid;
   grid-template-columns: 88px 1fr;
   gap: var(--space-2);
-  padding: var(--space-1) 0;
+  /* 行内留白 4px→7px：信息卡是 dt/dd 密集区，实测是页面上最挤的一块 */
+  padding: 7px 0;
   border-bottom: 1px dotted var(--color-line-soft);
 }
 .wiki-infobox__row:last-child { border-bottom: none; }
@@ -939,11 +1044,11 @@ main {
   color: var(--color-fg-muted);
   padding-top: 2px;
 }
-.wiki-infobox dd { margin: 0; color: var(--color-fg-secondary); line-height: 1.5; }
+.wiki-infobox dd { margin: 0; color: var(--color-fg-secondary); line-height: 1.65; }
 .wiki-infobox dd strong { color: var(--color-fg); }
 .wiki-infobox code {
   font-family: var(--font-mono);
-  font-size: 0.85em;
+  font-size: 0.94em;
   background: var(--color-bg-warm);
   padding: 0 var(--space-1);
   border-radius: var(--radius-xs);
@@ -961,7 +1066,8 @@ main {
   font-weight: var(--font-weight-semi);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-fg-muted);
+  /* 目录标题在暖底 #f0ebe2 上：fg-muted 只有 3.99:1（小字不达标）→ fg-tertiary */
+  color: var(--color-fg-tertiary);
   margin-bottom: var(--space-2);
 }
 .wiki-toc ol {
@@ -973,8 +1079,9 @@ main {
 .wiki-toc li {
   counter-increment: toc;
   break-inside: avoid;
-  padding: var(--space-1) 0;
+  padding: 5px 0;
   font-size: var(--font-size-caption);
+  line-height: 1.6;
 }
 .wiki-toc li::before {
   content: counter(toc, decimal-leading-zero) " ";
@@ -988,30 +1095,34 @@ main {
 /* ---- 正文章节 ---- */
 .doc-section { margin-bottom: var(--space-10); scroll-margin-top: 90px; }
 .doc-section > h2 {
-  font-family: var(--font-serif);
   font-size: var(--font-size-h3);
   font-weight: var(--font-weight-semi);
-  line-height: 1.2;
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-heading);
   color: var(--color-fg);
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-line-soft);
   text-wrap: balance;
 }
+/* 原为 16px = 与正文同号 → h2(21) → h3(16) 层级断裂；抬到 h4 档 18px */
 .doc-section h3 {
-  font-size: var(--font-size-h5);
+  font-size: var(--font-size-h4);
   font-weight: var(--font-weight-semi);
+  line-height: var(--line-height-subhead);
   color: var(--color-fg);
-  margin: var(--space-5) 0 var(--space-2);
+  margin: var(--space-6) 0 var(--space-3);
   text-wrap: balance;
 }
 .doc-section p {
   font-size: var(--font-size-body);
   color: var(--color-fg-secondary);
   line-height: var(--line-height-relaxed);
-  margin-bottom: var(--space-3);
+  /* 段落间距 12px→16px（=1em）：中文行距 1.9 时，段落间要明显大于行距，
+     否则整页糊成一块（原来段距 0.75em < 行距 1.9 的 1/2，读起来分不出段）。 */
+  margin-bottom: var(--space-4);
+  max-width: var(--measure-prose);
   text-wrap: pretty;
-  max-width: var(--content-width);
 }
 .doc-section p strong, .doc-section li strong { color: var(--color-fg); }
 .doc-section code {
@@ -1020,16 +1131,17 @@ main {
   padding: 1px var(--space-1);
   border-radius: var(--radius-xs);
   color: var(--color-fg);
-  font-size: 0.9em;
+  /* 0.9em 在 14px 上下文里只剩 12.6px（低于中文字号下限）→ 0.94em */
+  font-size: 0.94em;
 }
-.doc-section ul, .doc-section ol { margin: 0 0 var(--space-3) 0; padding-left: 1.4em; }
+.doc-section ul, .doc-section ol { margin: 0 0 var(--space-4) 0; padding-left: 1.5em; max-width: var(--measure-prose); }
 .doc-section ul { list-style: disc; }
 .doc-section ol { list-style: decimal; }
 .doc-section li {
   font-size: var(--font-size-body);
   color: var(--color-fg-secondary);
   line-height: var(--line-height-relaxed);
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
 }
 .doc-section li::marker { color: var(--color-accent-dark); }
 
@@ -1044,6 +1156,7 @@ main {
   font-size: var(--font-size-caption);
   color: var(--color-fg-secondary);
   line-height: var(--line-height-relaxed);
+  max-width: var(--measure-prose);
 }
 
 /* ---- 提示框 ---- */
@@ -1051,11 +1164,13 @@ main {
   border-left: 3px solid var(--color-accent);
   background: var(--color-bg-warm);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-5);
   font-size: var(--font-size-caption);
   color: var(--color-fg-secondary);
   line-height: var(--line-height-relaxed);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  /* 实测 1104px 宽时每行 79 个汉字，远超舒适区 → 与正文同一行宽上限 */
+  max-width: var(--measure-prose);
 }
 .wiki-note strong { color: var(--color-fg); }
 
@@ -1083,12 +1198,13 @@ main {
   border-bottom: 1px solid var(--color-line-soft);
   color: var(--color-fg-secondary);
   vertical-align: top;
-  line-height: 1.55;
+  /* 1.55 对中文表格偏紧（多行单元格会糊）→ 1.65 */
+  line-height: 1.65;
 }
 .wiki-table td strong { color: var(--color-fg); }
 .wiki-table td code {
   font-family: var(--font-mono);
-  font-size: 0.85em;
+  font-size: 0.94em;
   background: var(--color-bg-warm);
   padding: 1px var(--space-1);
   border-radius: var(--radius-xs);
@@ -1127,15 +1243,16 @@ main {
 /* ---- 来源引用 ---- */
 .src-ref {
   font-family: var(--font-mono);
-  font-size: var(--font-size-eyebrow);
-  color: var(--color-fg-muted);
+  font-size: var(--font-size-small);
+  line-height: 1.6;
+  /* 来源行是正文级的引用信息，fg-muted（4.54:1）太淡 → fg-tertiary（6.41:1） */
+  color: var(--color-fg-tertiary);
   margin-top: var(--space-2);
 }
 .src-ref code { background: none; padding: 0; color: var(--color-accent-dark); }
 
 /* ---- 参见 ---- */
 .wiki-seealso h2 {
-  font-family: var(--font-serif);
   font-size: var(--font-size-h3);
   font-weight: var(--font-weight-semi);
   color: var(--color-fg);
@@ -1149,6 +1266,7 @@ main {
   font-size: var(--font-size-body);
   color: var(--color-fg-secondary);
   line-height: var(--line-height-relaxed);
+  max-width: var(--measure-prose);
 }
 .wiki-seealso li::before { content: "→ "; color: var(--color-accent-dark); }
 .wiki-seealso a { color: var(--color-accent-dark); }
@@ -1161,6 +1279,12 @@ main {
   .wiki-top,
   .wiki-top:has(> .wiki-infobox):not(:has(> .wiki-toc)),
   .wiki-top:not(:has(> .wiki-infobox)):has(> .wiki-toc) { grid-template-columns: 1fr; }
+  /* 信息卡在窄屏改为「标签在上、值在下」的单列堆叠：
+     原来 76px + 1fr 两列，值列只有 ~190px，长一点的版本号/术语会被挤成
+     末行 1–3 个字的孤行（实测 /docs/releases 的「v0.6.1（2026-10-07 发布）」）。
+     堆叠后值列拿到整行宽度，短文案一行排完，结构性消除该处的孤行。 */
+  .wiki-infobox__row { grid-template-columns: 1fr; gap: 0; }
+  .wiki-infobox dt { padding-top: 0; }
   .wiki-toc ol { columns: 1; }
   .wiki-infobox__row { grid-template-columns: 76px 1fr; }
 }

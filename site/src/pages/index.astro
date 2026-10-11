@@ -415,7 +415,7 @@ const faq = install.faq || [];
           <text x="668" y="366" text-anchor="middle" class="topo-label topo-label--agent-cn">持</text>
           <text x="668" y="384" text-anchor="middle" class="topo-label topo-label--agent-id">chi · 投资/审核</text>
           <circle cx="740" cy="350" r="4" class="topo-status topo-status--verify" />
-          <rect x="700" y="330" width="62" height="18" rx="9" class="topo-badge" />
+          <rect x="694" y="327" width="74" height="21" rx="10.5" class="topo-badge" />
           <text x="731" y="343" text-anchor="middle" class="topo-label topo-label--badge">兼 Judge</text>
         </g>
 
@@ -520,8 +520,16 @@ const faq = install.faq || [];
   .hero-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 0 var(--space-6); }
   .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
-  .hero-title { font-size: var(--font-size-display); font-weight: var(--font-weight-semi); line-height: 1.1; letter-spacing: -0.03em; color: var(--color-fg); text-wrap: balance; max-width: 18ch; margin: 0 auto var(--space-3); }
-  .hero-desc { font-size: var(--font-size-body); color: var(--color-fg-secondary); max-width: 520px; line-height: var(--line-height-body); margin: 0 auto; }
+  .hero-title {
+ font-size: var(--font-size-display); font-weight: var(--font-weight-semi); color: var(--color-fg); text-wrap: balance; margin: 0 auto var(--space-3);
+ line-height: var(--line-height-display);
+ letter-spacing: var(--letter-spacing-heading);
+ max-width: 16em;
+}
+  .hero-desc {
+ font-size: var(--font-size-body-lg); color: var(--color-fg-secondary); line-height: var(--line-height-body); margin: 0 auto;
+ max-width: 34em;
+}
   .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
   .hero-cta--primary { background: var(--color-accent); color: var(--color-accent-on-accent); }
@@ -534,8 +542,16 @@ const faq = install.faq || [];
   /* ===== Install / Terminal (Light Theme) ===== */
   .install { padding: var(--space-8) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
   .install__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-4); }
-  .install__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
-  .install__guide { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
+  .install__title {
+ font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
+ font-size: var(--font-size-h2);
+ line-height: var(--line-height-heading);
+ letter-spacing: var(--letter-spacing-heading);
+}
+  .install__guide {
+ font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
+ font-size: var(--font-size-small);
+}
   .install__guide:hover { color: var(--color-accent-dark); text-decoration: none; }
 
   .terminal { background: var(--color-bg-paper); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-line); }
@@ -556,13 +572,24 @@ const faq = install.faq || [];
   .terminal__tab:hover { color: var(--color-fg); }
 
   .terminal__body { padding: var(--space-5) var(--space-6); min-height: 120px; }
-  .terminal__intro { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-tertiary); margin-bottom: var(--space-4); line-height: 1.6; }
-  .terminal__hint { font-family: var(--font-mono); font-size: 0.68rem; color: var(--color-fg-muted); margin-top: var(--space-3); line-height: 1.5; }
+  .terminal__intro {
+ font-family: var(--font-mono); color: var(--color-fg-tertiary); margin-bottom: var(--space-4);
+ font-size: var(--font-size-small);
+ line-height: var(--line-height-body);
+ max-width: var(--measure-prose);
+}
+  .terminal__hint {
+ font-family: var(--font-mono); color: var(--color-fg-muted); margin-top: var(--space-3); line-height: 1.5;
+ font-size: var(--font-size-small);
+}
   .terminal__cmd { margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-line); }
   .terminal__cmd:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
   .terminal__cmd-meta { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: 6px; flex-wrap: wrap; }
   .terminal__cmd-label { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); }
-  .terminal__cmd-desc { font-family: var(--font-mono); font-size: 0.68rem; color: var(--color-fg-muted); }
+  .terminal__cmd-desc {
+ font-family: var(--font-mono); color: var(--color-fg-muted);
+ font-size: var(--font-size-small);
+}
   .terminal__cmd-line {
     display: flex; align-items: flex-start; gap: var(--space-2);
     background: var(--color-bg); border: 1px solid var(--color-line); border-radius: 6px; padding: 10px var(--space-3);
@@ -585,8 +612,16 @@ const faq = install.faq || [];
   /* ===== Showcase (scroll-driven agent cards) ===== */
   .showcase { padding: var(--space-12) 0 var(--space-8); overflow: hidden; }
   .showcase__header { text-align: center; padding: 0 var(--space-6); margin-bottom: var(--space-8); }
-  .showcase__label { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-accent-dark); margin-bottom: var(--space-3); }
-  .showcase__heading { font-family: var(--font-serif); font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: var(--font-weight-semi); color: var(--color-fg); line-height: 1.15; margin-bottom: var(--space-3); }
+  .showcase__label {
+ font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); text-transform: uppercase; color: var(--color-accent-dark); margin-bottom: var(--space-3);
+ letter-spacing: var(--letter-spacing-label);
+}
+  .showcase__heading {
+ font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-3);
+ font-size: var(--font-size-h2);
+ line-height: var(--line-height-heading);
+ letter-spacing: var(--letter-spacing-heading);
+}
   .showcase__sub { font-size: var(--font-size-body); color: var(--color-fg-tertiary); }
 
   .showcase__track {
@@ -617,22 +652,29 @@ const faq = install.faq || [];
 
   .showcase__card-icon { color: var(--card-accent); }
   .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); }
-  .showcase__card-cn { font-family: var(--font-serif); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .showcase__card-cn { font-family: var(--font-sans); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
   .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
   /* P2-11: ≥18.66px + weight 700 → 大文本资格 → 3:1 阈值（六角色色 3.14–4.23:1 全过） */
   .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-h3); font-weight: var(--font-weight-bold); color: var(--card-accent); }
+  /* 团队特性卡底色是暖底 #efe8db：accent 赤陶在此只有 2.61:1（大文本需 3:1）→ 用同色相压暗版 */
+  .showcase__card-role--team { color: var(--role-men-text); }
   .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
   .showcase__card-skills { display: flex; flex-wrap: wrap; gap: 6px; }
   .showcase__skill {
-    font-family: var(--font-mono); font-size: 0.68rem; color: var(--color-fg-tertiary);
+    font-family: var(--font-mono); color: var(--color-fg-tertiary);
     background: var(--color-bg-warm); padding: 2px 8px; border-radius: var(--radius-xs);
     border: 1px solid var(--color-line-soft);
-  }
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-ui);
+}
   .showcase__card-constraint {
-    font-size: 0.72rem; color: var(--color-fg-muted); font-style: italic;
+    font-style: italic;
     display: flex; align-items: center; gap: var(--space-1); margin-top: auto;
     padding-top: var(--space-2); border-top: 1px solid var(--color-line-soft);
-  }
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-ui);
+    color: var(--color-fg-tertiary);
+}
 
   /* Team traits card */
   .showcase__card--team { flex: 0 0 360px; background: var(--color-bg-warm); }
@@ -640,7 +682,11 @@ const faq = install.faq || [];
   .showcase__trait { display: flex; gap: var(--space-3); align-items: flex-start; }
   .showcase__trait svg { color: var(--color-accent); flex-shrink: 0; margin-top: 2px; }
   .showcase__trait strong { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 1px; }
-  .showcase__trait span { font-size: 0.72rem; color: var(--color-fg-tertiary); line-height: 1.4; }
+  .showcase__trait span {
+ color: var(--color-fg-tertiary);
+ font-size: var(--font-size-small);
+ line-height: var(--line-height-ui);
+}
 
   /* Showcase nav */
   .showcase__nav { display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-top: var(--space-5); }
@@ -667,14 +713,27 @@ const faq = install.faq || [];
   :global(.showcase__dot--active) { background: var(--color-accent); width: 24px; border-radius: 4px; }
 
   /* ===== Topology ===== */
-  .topo { padding: var(--space-10) 0 var(--space-12); max-width: 1000px; margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .topo { padding: var(--space-10) 0 var(--space-12); max-width: var(--container-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
   .topo__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-3); }
-  .topo__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
-  .topo__all { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
+  .topo__title {
+ font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
+ font-size: var(--font-size-h2);
+ line-height: var(--line-height-heading);
+ letter-spacing: var(--letter-spacing-heading);
+}
+  .topo__all {
+ font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
+ font-size: var(--font-size-small);
+}
   .topo__all:hover { color: var(--color-accent-dark); text-decoration: none; }
-  .topo__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-6); }
+  .topo__desc {
+ font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-6);
+ max-width: var(--measure-prose);
+}
   .topo-diagram { overflow-x: auto; }
-  .topo-svg { width: 100%; height: auto; min-width: 860px; }
+  /* SVG 内 font-size 是用户单位，实际字号 = font-size × (渲染宽 / 1200)。
+     容器放宽 + min-width 1080px 后桌面约 0.9×；小标签字号一并抬到 13.5px（实际 ≥12px）。 */
+  .topo-svg { width: 100%; height: auto; min-width: 1080px; }
 
   /* Bézier lines */
   .topo-bezier { fill: none; stroke-width: 1.5; }
@@ -712,22 +771,22 @@ const faq = install.faq || [];
   /* Labels */
   .topo-label { font-family: var(--font-mono); }
   .topo-label--input { fill: var(--color-fg); font-size: 16px; font-weight: 600; }
-  .topo-label--sub { fill: var(--color-fg-tertiary); font-size: 11px; font-weight: 400; }
+  .topo-label--sub { fill: var(--color-fg-tertiary); font-size: 13.5px; font-weight: 400; }
   /* hub 上的文字：赤陶底 #d77656 → 深字 4.52:1
      注意不要用半透明来弱化副标题 —— alpha 会把对比度拉到 4.5 以下，改用字号/字重区分 */
   .topo-label--hub-cn { fill: var(--color-accent-on-accent); font-size: 20px; font-weight: 700; }
-  .topo-label--hub-sub { fill: var(--color-accent-on-accent); font-size: 12px; font-weight: 500; }
+  .topo-label--hub-sub { fill: var(--color-accent-on-accent); font-size: 13.5px; font-weight: 500; }
   .topo-label--agent-cn { fill: var(--color-fg); font-size: 16px; font-weight: 700; }
-  .topo-label--agent-id { fill: var(--color-fg-tertiary); font-size: 11px; }
+  .topo-label--agent-id { fill: var(--color-fg-tertiary); font-size: 13.5px; }
   .topo-label--judge-cn { fill: var(--color-fg); font-size: 15px; font-weight: 600; }
-  .topo-label--judge-sub { fill: var(--color-fg-tertiary); font-size: 11px; }
-  .topo-label--judge-tag { fill: var(--role-chi-text); font-size: 11px; font-weight: 600; font-style: italic; }
-  .topo-label--badge { fill: var(--role-chi-text); font-size: 9px; font-weight: 600; }
-  .topo-label--hub-sub2 { fill: var(--color-accent-on-accent); font-size: 10px; }
-  .topo-label--node-title { fill: var(--color-fg); font-size: 13px; font-weight: 600; }
-  .topo-label--node-sub { fill: var(--color-fg-tertiary); font-size: 10px; }
-  .topo-label--node-micro { fill: var(--color-fg-muted); font-size: 8.5px; }
-  .topo-elabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .topo-label--judge-sub { fill: var(--color-fg-tertiary); font-size: 13.5px; }
+  .topo-label--judge-tag { fill: var(--role-chi-text); font-size: 13.5px; font-weight: 600; }
+  .topo-label--badge { fill: var(--role-chi-text); font-size: 13.5px; font-weight: 600; }
+  .topo-label--hub-sub2 { fill: var(--color-accent-on-accent); font-size: 13.5px; }
+  .topo-label--node-title { fill: var(--color-fg); font-size: 15px; font-weight: 600; }
+  .topo-label--node-sub { fill: var(--color-fg-tertiary); font-size: 13.5px; }
+  .topo-label--node-micro { fill: var(--color-fg-muted); font-size: 13.5px; }
+  .topo-elabel { font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; }
   .topo-elabel--pass { fill: var(--role-ji-text); }
   .topo-elabel--fail { fill: var(--role-chi-text); }
   .topo-elabel--report { fill: var(--role-ji-text); }
@@ -766,39 +825,65 @@ const faq = install.faq || [];
   /* ===== Mechanisms ===== */
   .mechanisms { padding: var(--space-10) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
   .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
-  .mechanisms__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
-  .mechanisms__all { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
+  .mechanisms__title {
+ font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
+ font-size: var(--font-size-h2);
+ line-height: var(--line-height-heading);
+ letter-spacing: var(--letter-spacing-heading);
+}
+  .mechanisms__all {
+ font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
+ font-size: var(--font-size-small);
+}
   .mechanisms__all:hover { color: var(--color-accent-dark); text-decoration: none; }
   .mechanisms__list { display: flex; flex-direction: column; }
   .mechanisms__item { display: flex; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-line-soft); transition: background 0.2s; }
   .mechanisms__item:last-child { border-bottom: none; }
   .mechanisms__idx { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); flex-shrink: 0; padding-top: 2px; letter-spacing: 0.05em; }
   .mechanisms__item-body { flex: 1; }
-  .mechanisms__item-title { font-size: var(--font-size-body); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 2px; }
+  .mechanisms__item-title {
+ font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 2px;
+ font-size: var(--font-size-h4);
+ line-height: var(--line-height-subhead);
+ letter-spacing: var(--letter-spacing-heading);
+}
   .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); }
 
   /* ===== FAQ ===== */
   .faq { padding: var(--space-10) 0 var(--space-12); max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
-  .faq__title { font-family: var(--font-serif); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-5); }
+  .faq__title {
+ font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-5);
+ font-size: var(--font-size-h2);
+ line-height: var(--line-height-heading);
+ letter-spacing: var(--letter-spacing-heading);
+}
   .faq__item { border-bottom: 1px solid var(--color-line-soft); }
   .faq__q { font-size: var(--font-size-body); font-weight: var(--font-weight-semi); color: var(--color-fg); padding: var(--space-3) 0; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
   .faq__q::-webkit-details-marker { display: none; }
   .faq__q::after { content: '+'; font-family: var(--font-mono); font-size: var(--font-size-h4); color: var(--color-fg-muted); transition: transform 0.2s; }
   .faq__item[open] .faq__q::after { transform: rotate(45deg); }
-  .faq__a { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); padding-bottom: var(--space-3); }
+  .faq__a {
+ font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); padding-bottom: var(--space-3);
+ max-width: var(--measure-prose);
+}
   .faq__a code { font-family: var(--font-mono); background: var(--color-bg-warm); padding: 1px var(--space-1); border-radius: var(--radius-xs); color: var(--color-fg); font-size: 0.85em; }
 
   /* ===== CTA ===== */
   .cta { padding: var(--space-12) 0; max-width: var(--page-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
   .cta__inner { text-align: center; padding: var(--space-10) 0; border-top: 1px solid var(--color-line-soft); }
-  .cta__title { font-family: var(--font-serif); font-size: clamp(1.6rem, 3.5vw, 2.2rem); font-weight: var(--font-weight-semi); line-height: 1.12; letter-spacing: -0.025em; color: var(--color-fg); margin-bottom: var(--space-3); }
+  .cta__title {
+ font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-3);
+ font-size: var(--font-size-h2);
+ line-height: var(--line-height-heading);
+ letter-spacing: var(--letter-spacing-heading);
+}
   .cta__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-5); }
   .cta__actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
     .terminal__tabs { gap: 0; }
-    .terminal__tab { padding: var(--space-2) var(--space-2); font-size: 0.65rem; }
+    .terminal__tab { padding: var(--space-2) var(--space-2); font-size: var(--font-size-small); }
     .terminal__body { padding: var(--space-4); }
     .topo__header { flex-direction: column; gap: var(--space-2); }
     .showcase__card { flex: 0 0 280px; }
@@ -809,7 +894,10 @@ const faq = install.faq || [];
     .hero-actions { flex-direction: column; align-items: stretch; }
     .hero-cta { justify-content: center; }
     .terminal__tab { padding: var(--space-2); }
-    .topo-svg { min-width: 600px; }
+    /* 0.5 倍缩放下小字只剩 5–7px → 抬到 1000px（横向可滚动），并隐藏最密两行小字 */
+    .topo-svg { min-width: 1000px; }
+    .topo-label--node-micro,
+    .topo-label--hub-sub2 { display: none; }
   }
 </style>
 
