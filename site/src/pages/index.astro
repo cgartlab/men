@@ -2,7 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import content from '../data/content.json';
 import { SITE } from '../data/site';
-import GateLogo from '../components/GateLogo.astro';
 import { Icon } from 'astro-icon/components';
 
 const base = '/';
@@ -100,7 +99,6 @@ const faq = install.faq || [];
     <div class="hero__grid">
       <!-- 左栏：文字说明，统一左对齐 -->
       <div class="hero-content">
-        <div class="hero-logo"><GateLogo size={52} /></div>
         <p class="hero-eyebrow">{content.hero.brandLine}</p>
         <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
         <p class="hero-desc">{content.hero.subtitle}</p>
@@ -490,12 +488,17 @@ const faq = install.faq || [];
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   /* 板块节奏：所有板块共用同一个上下留白 → 板块之间视觉间距恒定（48×2 = 96px；窄屏 32×2 = 64px）。
      原来各板块各写各的（40/48/32 混用），板块间距实测 88/72/88/80/96px 参差不齐。 */
-  :root { --page-max: 720px; --section-pad: var(--space-12); }
+  /* --page-max 已无引用（hero 改用 <main> 内容宽度），移除以免误导 */
+  /* --section-measure：列表型板块（核心机制 / 常见问题）的列宽。
+     原来板块占满 1232px，而正文按 --measure-prose 只到 560px →
+     每条的 border-bottom 比正文宽 672px，「没收窄」的观感就来自这里。 */
+  :root { --section-pad: var(--space-12); --section-measure: 640px; }
 
   /* ===== Hero ===== */
   /* ===== Hero（第一板块）：左栏文字说明 + 右栏一行安装命令 ===== */
   /* 页头偏移由 main 承担 → hero 自身只留少量呼吸空间 */
-  .hero { padding: var(--space-4) 0 var(--section-pad); position: relative; overflow: hidden; }
+  /* 顶部留白原来只有 --space-4(16px)，与下方各板块的 --section-pad(48px) 不一致 → 统一 */
+  .hero { padding: var(--section-pad) 0; position: relative; overflow: hidden; }
   .hero__grid {
     display: grid;
     /* 右栏 320px 起，左栏吃掉其余空间：桌面 1232px 内容宽下约为 733 / 459 */
@@ -512,7 +515,6 @@ const faq = install.faq || [];
        不再自己收窄到 --page-max(720px)。 */
   }
   .hero-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; min-width: 0; }
-  .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
   /* hero-title：原属性顶格，统一为 2 空格缩进 */
   .hero-title {
@@ -832,7 +834,7 @@ const faq = install.faq || [];
   .topo-legend__dot--fail { background: var(--role-chi); }
 
   /* ===== Mechanisms ===== */
-  .mechanisms { padding: var(--section-pad) 0; }
+  .mechanisms { padding: var(--section-pad) 0; max-width: var(--section-measure); }
   .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
   .mechanisms__title {
     font-family: var(--font-sans);
@@ -860,10 +862,11 @@ const faq = install.faq || [];
  line-height: var(--line-height-subhead);
  letter-spacing: var(--letter-spacing-heading);
 }
-  .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); max-width: var(--measure-prose); }
+  /* 列宽由板块的 --section-measure 决定，正文填满整列 → 与 border-bottom 右端对齐 */
+  .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); }
 
   /* ===== FAQ ===== */
-  .faq { padding: var(--section-pad) 0; }
+  .faq { padding: var(--section-pad) 0; max-width: var(--section-measure); }
   .faq__title {
     font-family: var(--font-sans);
     font-weight: var(--font-weight-semi);
@@ -880,9 +883,11 @@ const faq = install.faq || [];
   .faq__q::after { content: '+'; font-family: var(--font-mono); font-size: var(--font-size-h4); color: var(--color-fg-muted); transition: transform 0.2s; }
   .faq__item[open] .faq__q::after { transform: rotate(45deg); }
   .faq__a {
-    max-width: var(--measure-prose);
- font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); padding-bottom: var(--space-3);
- max-width: var(--measure-prose);
+    /* 原来 max-width: var(--measure-prose) 重复声明两次，且与板块宽度冲突 → 交给板块 */
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-relaxed);
+    padding-bottom: var(--space-3);
 }
   .faq__a code { font-family: var(--font-mono); background: var(--color-bg-warm); padding: 1px var(--space-1); border-radius: var(--radius-xs); color: var(--color-fg); font-size: 0.85em; }
 
