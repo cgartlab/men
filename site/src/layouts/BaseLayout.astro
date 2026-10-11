@@ -84,8 +84,20 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
     </script>
 
     <script>
+      // 固定页头高度 → CSS 变量 --header-h（正文用它下移，避免被页头压住）
+      const headerEl = document.querySelector('.site-header');
+      const syncHeaderH = () => {
+        if (!headerEl) return;
+        const h = Math.round(headerEl.getBoundingClientRect().height);
+        if (h > 0) document.documentElement.style.setProperty('--header-h', h + 'px');
+      };
+      syncHeaderH();
+      window.addEventListener('resize', syncHeaderH, { passive: true });
+      window.addEventListener('orientationchange', syncHeaderH, { passive: true });
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeaderH);
+
       // 导航滚动隐藏
-      const header = document.querySelector('.site-header');
+      const header = headerEl;
       if (header) {
         let lastY = window.scrollY;
         let ticking = false;
@@ -134,14 +146,16 @@ const { title, description = 'men（门）Agent 团队 — 围绕一人内容创
   main {
     max-width: var(--container-max);
     margin: 0 auto;
-    padding: var(--space-12) var(--container-padding-x);
+    /* 页头是 position: fixed → 正文顶部必须按它的**实测**高度下移（--header-h 由脚本写入），
+       否则窄屏两行页头（≈89px）会把页面标题压在下面。原来写死 48/32px 正是这个 bug 的来源。 */
+    padding: var(--header-h, 84px) var(--container-padding-x) var(--space-16);
     position: relative;
     z-index: 1;
   }
 
   @media (max-width: 768px) {
     main {
-      padding: var(--space-8) var(--space-6);
+      padding: var(--header-h, 84px) var(--space-6) var(--space-12);
     }
   }
 </style>

@@ -185,7 +185,7 @@ function isActive(href: string): boolean {
       padding: var(--space-2) var(--space-4);
       gap: 0 var(--space-3);
     }
-    .site-header__brand { flex: 1; min-width: 0; }
+    .site-header__brand { flex: 1; min-width: 0; min-height: 36px; }
     .site-header__title { font-size: 0.95rem; }
     .site-header__nav { width: 100%; }
     .site-header__nav ul {
@@ -196,7 +196,9 @@ function isActive(href: string): boolean {
       -webkit-overflow-scrolling: touch;
     }
     .site-header__nav ul::-webkit-scrollbar { display: none; }
-    .site-header__link { display: inline-block; padding: 10px 2px; }
-    .site-header__gh { padding: 5px 9px; white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; }
+    /* 页头在窄屏是两行（品牌行 + 导航行）→ 原 105px 占了 12% 屏高。
+       导航行压到 32px 高（触控仍 ≥24px），整头 ≈ 76px。 */
+    .site-header__link { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 2px; }
+    .site-header__gh { padding: 5px 9px; white-space: nowrap; min-height: 36px; display: inline-flex; align-items: center; }
   }
 </style>

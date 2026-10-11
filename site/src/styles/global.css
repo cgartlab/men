@@ -80,6 +80,8 @@ html {
   text-rendering: optimizeLegibility;
   color-scheme: light;
   hanging-punctuation: first last;
+  /* 锚点跳转时不要把目标顶到固定页头下面（页头高度由脚本写入 --header-h） */
+  scroll-padding-top: calc(var(--header-h, 84px) + var(--space-3));
   /* 关闭「字重合成」（2026-10-10）
      OPPO Sans 官方 CDN 只有 400/500 两档，600/700 原本由浏览器**合成加粗**：
      合成是给字形描边加粗，汉字字腔（「门」「角」「色」「协」的内部空隙）会被填死，
@@ -505,6 +507,10 @@ pre .copy-btn {
 }
 pre:hover .copy-btn {
   opacity: 1;
+}
+/* 触屏设备没有 hover → 复制按钮常显，否则手机上永远点不到 */
+@media (hover: none) {
+  pre .copy-btn { opacity: 1; }
 }
 pre .copy-btn:hover {
   color: var(--color-accent-dark);
@@ -1099,7 +1105,8 @@ main {
 .wiki-toc a:hover { color: var(--color-accent-dark); text-decoration: underline; }
 
 /* ---- 正文章节 ---- */
-.doc-section { margin-bottom: var(--space-10); scroll-margin-top: 90px; }
+/* 锚点定位统一由 html { scroll-padding-top } 负责，这里不再叠加固定值 */
+.doc-section { margin-bottom: var(--space-10); }
 .doc-section > h2 {
   /* 原用 h3 令牌（21px）→ 与 h1 44px 之间跨度过大、与 h3 18px 之间步长只有 1.17 倍。
      回到 h2 令牌（24→30px）：h1 44 → h2 30 → h3 21 → h4 18，层级比例恢复。 */
@@ -1244,6 +1251,7 @@ main {
 /* 语言标签做成「头部条」：左侧语言名、右侧复制按钮，互不遮挡 */
 .code-block__lang {
   display: block;
+  padding-right: 40px;      /* 给右上角复制按钮留位，标签文字不会钻到按钮下面 */
   font-family: var(--font-mono);
   font-size: var(--font-size-eyebrow);
   line-height: 1.6;
@@ -1358,7 +1366,8 @@ main {
   z-index: 1;
   align-items: start;
 }
-.manual__sidebar { position: sticky; top: 84px; }
+/* sticky top 按实测页头高度算（写死 84px 时，窄屏页头 89px 会把侧栏顶到页头下面） */
+.manual__sidebar { position: sticky; top: calc(var(--header-h, 84px) + var(--space-3)); }
 .manual__nav {
   background: var(--color-surface);
   border: 1px solid var(--color-line);

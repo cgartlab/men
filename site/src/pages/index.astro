@@ -9,29 +9,6 @@ const base = '/';
 const pageTitle = content.hero.title + ' — ' + content.hero.subtitle;
 const install = content.install || {};
 
-/* ---------- Agent tab：一条完整可复制指令 ---------- */
-const agentPrompt =
-  '帮我安装并启动 men：npx @cgartlab/men && opencode';
-
-/* ---------- 手动安装（仓库一键安装脚本）---------- */
-const platformTabs = [
-  { id: 'agent', label: '面向 Agent' },
-  { id: 'bash', label: 'macOS / Linux' },
-  { id: 'windows', label: 'Windows' },
-];
-const manualCmds: Record<string, { label: string; cmd: string }[]> = {
-  bash: [
-    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
-    { label: '一键安装（管道）', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)' },
-    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
-  ],
-  windows: [
-    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
-    { label: '一键安装（管道）', cmd: 'irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex' },
-    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
-  ],
-};
-
 /* ---------- 滚动展示：Agent 数据 ---------- */
 const showcaseAgents = [
   {
@@ -122,7 +99,7 @@ const faq = install.faq || [];
 
       <!-- 右栏：一行安装命令（极简：命令 + 复制 + 一行说明） -->
       <aside class="hero-install" aria-label="安装命令">
-        <p class="hero-install__label">一行命令装好</p>
+        <p class="hero-install__label">安装</p>
         <div class="hero-install__cmd">
           <span class="hero-install__prompt" aria-hidden="true">$</span>
           <code class="hero-install__code">npx @cgartlab/men</code>
@@ -130,78 +107,10 @@ const faq = install.faq || [];
             <Icon name="lucide:copy" width="14" height="14" />
           </button>
         </div>
-        <p class="hero-install__meta">Node ≥ 18 · 零依赖<br />不用克隆仓库，一行命令即可</p>
+        <p class="hero-install__meta">Node ≥ 18 · 零依赖 · 不用克隆仓库</p>
       </aside>
     </div>
   </header>
-
-  <!-- ===== 快速开始 ===== -->
-  <section class="install" aria-labelledby="install-title">
-    <div class="install__header">
-      <h2 id="install-title" class="install__title">快速开始</h2>
-      <a href={base + 'docs/install'} class="install__guide">安装指南 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
-    </div>
-
-    <div class="terminal">
-      <div class="terminal__chrome">
-        <div class="terminal__dots">
-          <span class="terminal__dot terminal__dot--red"></span>
-          <span class="terminal__dot terminal__dot--yellow"></span>
-          <span class="terminal__dot terminal__dot--green"></span>
-        </div>
-        <div class="terminal__tabs" role="tablist" aria-label="平台选择">
-          {platformTabs.map((p, i) => (
-            <button class="terminal__tab" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-platform={p.id}>{p.label}</button>
-          ))}
-        </div>
-      </div>
-      <div class="terminal__body">
-        <!-- Agent tab -->
-        <div class="terminal__panel" id="term-panel-agent" role="tabpanel">
-          <p class="terminal__intro">把这句话复制给 AI 助手（OpenCode / Claude / Cursor），让它帮你装好：</p>
-          <div class="terminal__cmd">
-            <div class="terminal__cmd-line">
-              <span class="terminal__ps1 terminal__ps1--agent">{'>'}</span>
-              <code>{agentPrompt}</code>
-              <button class="terminal__copy" aria-label="复制完整提示词" data-cmd={agentPrompt}>
-                <Icon name="lucide:copy" width="14" height="14" />
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- macOS / Linux -->
-        <div class="terminal__panel" id="term-panel-bash" role="tabpanel" hidden>
-          {(manualCmds.bash || []).map((c) => (
-            <div class="terminal__cmd">
-              <span class="terminal__cmd-label">{c.label}</span>
-              <div class="terminal__cmd-line">
-                <span class="terminal__ps1">$</span>
-                <code>{c.cmd}</code>
-                <button class="terminal__copy" aria-label={'复制 ' + c.label} data-cmd={c.cmd}>
-                  <Icon name="lucide:copy" width="14" height="14" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <!-- Windows -->
-        <div class="terminal__panel" id="term-panel-windows" role="tabpanel" hidden>
-          {(manualCmds.windows || []).map((c) => (
-            <div class="terminal__cmd">
-              <span class="terminal__cmd-label">{c.label}</span>
-              <div class="terminal__cmd-line">
-                <span class="terminal__ps1">$</span>
-                <code>{c.cmd}</code>
-                <button class="terminal__copy" aria-label={'复制 ' + c.label} data-cmd={c.cmd}>
-                  <Icon name="lucide:copy" width="14" height="14" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- ===== Agent 滚动展示 ===== -->
   <section class="showcase" aria-labelledby="showcase-title">
@@ -531,7 +440,8 @@ const faq = install.faq || [];
 
   /* ===== Hero ===== */
   /* ===== Hero（第一板块）：左栏文字说明 + 右栏一行安装命令 ===== */
-  .hero { padding: var(--space-12) 0 var(--space-10); position: relative; overflow: hidden; }
+  /* 页头偏移由 main 承担 → hero 自身只留少量呼吸空间 */
+  .hero { padding: var(--space-4) 0 var(--space-10); position: relative; overflow: hidden; }
   .hero__grid {
     display: grid;
     /* 右栏 320px 起，左栏吃掉其余空间：桌面 1232px 内容宽下约为 733 / 459 */
@@ -597,78 +507,6 @@ const faq = install.faq || [];
   .hero-install__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
   .hero-install__meta { margin: var(--space-3) 0 0; font-size: var(--font-size-caption); color: var(--color-fg-tertiary); }
   .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
-
-  /* ===== Install / Terminal (Light Theme) ===== */
-  .install { padding: var(--space-8) 0 var(--space-12); }
-  .install__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-4); }
-  .install__title {
- font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
- font-size: var(--font-size-h2);
- line-height: var(--line-height-heading);
- letter-spacing: var(--letter-spacing-heading);
-}
-  .install__guide {
- font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
- font-size: var(--font-size-small);
- min-height: 44px;        /* 触控目标：原来只有 24px 高 */
-}
-  .install__guide:hover { color: var(--color-accent-dark); text-decoration: none; }
-
-  /* 区块已放宽到整栏（1232px），但终端窗口不必占满 —— 命令行短，拉满只会显得空 */
-  .terminal { max-width: 56em; background: var(--color-bg-paper); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-line); }
-  .terminal__chrome { display: flex; align-items: center; gap: var(--space-4); padding: 10px var(--space-4); background: var(--color-bg-warm); border-bottom: 1px solid var(--color-line); }
-  .terminal__dots { display: flex; gap: 8px; flex-shrink: 0; }
-  .terminal__dot { width: 12px; height: 12px; border-radius: 50%; }
-  /* macOS 窗口三色：图标性符号，不随品牌配色变动 */
-  .terminal__dot--red { background: #ff5f57; }
-  .terminal__dot--yellow { background: #febc2e; }
-  .terminal__dot--green { background: #28c840; }
-  .terminal__tabs { display: flex; gap: 0; flex: 1; overflow-x: auto; }
-  .terminal__tab {
-    font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi);
-    color: var(--color-fg-tertiary); background: none; border: none; border-bottom: 2px solid transparent;
-    padding: 6px var(--space-4); min-height: 44px; cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
-  }
-  .terminal__tab[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-accent); }
-  .terminal__tab:hover { color: var(--color-fg); }
-
-  .terminal__body { padding: var(--space-5) var(--space-6); min-height: 120px; }
-  .terminal__intro {
- font-family: var(--font-mono); color: var(--color-fg-tertiary); margin-bottom: var(--space-4);
- font-size: var(--font-size-small);
- line-height: var(--line-height-body);
- max-width: var(--measure-prose);
-}
-  .terminal__hint {
- font-family: var(--font-mono); color: var(--color-fg-muted); margin-top: var(--space-3); line-height: 1.5;
- font-size: var(--font-size-small);
-}
-  .terminal__cmd { margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-line); }
-  .terminal__cmd:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
-  .terminal__cmd-meta { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: 6px; flex-wrap: wrap; }
-  .terminal__cmd-label { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); }
-  .terminal__cmd-desc {
- font-family: var(--font-mono); color: var(--color-fg-muted);
- font-size: var(--font-size-small);
-}
-  .terminal__cmd-line {
-    display: flex; align-items: flex-start; gap: var(--space-2);
-    background: var(--color-bg); border: 1px solid var(--color-line); border-radius: 6px; padding: 10px var(--space-3);
-  }
-  .terminal__ps1 { font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-accent-dark); flex-shrink: 0; font-weight: var(--font-weight-bold); line-height: 1.5; }
-  .terminal__ps1--agent { color: var(--role-si-text); }
-  .terminal__cmd-line code {
-    font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-fg);
-    flex: 1; min-width: 0; word-break: break-word; line-height: 1.5; white-space: pre-wrap;
-  }
-  .terminal__copy {
-    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border: 1px solid var(--color-line); border-radius: 6px;
-    background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
-  }
-  .terminal__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
-  .terminal__panel { display: block; }
-  .terminal__panel[hidden] { display: none; }
 
   /* ===== Showcase (scroll-driven agent cards) ===== */
   .showcase { padding: var(--space-12) 0 var(--space-8); overflow: hidden; }
@@ -952,9 +790,6 @@ const faq = install.faq || [];
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
-    .terminal__tabs { gap: 0; }
-    .terminal__tab { padding: var(--space-2) var(--space-2); font-size: var(--font-size-small); }
-    .terminal__body { padding: var(--space-4); }
     .topo__header { flex-direction: column; gap: var(--space-2); }
     .showcase__card { flex: 0 0 280px; }
     .showcase__card--team { flex: 0 0 300px; }
@@ -969,7 +804,6 @@ const faq = install.faq || [];
     }
     .hero-actions { flex-direction: column; align-items: stretch; }
     .hero-cta { justify-content: center; }
-    .terminal__tab { padding: var(--space-2); }
     /* 0.5 倍缩放下小字只剩 5–7px → 抬到 1000px（横向可滚动），并隐藏最密两行小字 */
     .topo-svg { min-width: 1000px; }
     .topo-label--node-micro,
@@ -978,25 +812,8 @@ const faq = install.faq || [];
 </style>
 
 <script>
-  /* Tab switching */
-  document.querySelectorAll('[role="tablist"]').forEach(tablist => {
-    tablist.querySelectorAll('[role="tab"]').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const platform = (tab as HTMLElement).dataset.platform;
-        tablist.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', 'false'));
-        tab.setAttribute('aria-selected', 'true');
-        const panelContainer = tablist.closest('.terminal')?.querySelector('.terminal__body');
-        if (panelContainer) {
-          panelContainer.querySelectorAll('[role="tabpanel"]').forEach(p => (p as HTMLElement).hidden = true);
-          const target = panelContainer.querySelector('#term-panel-' + platform);
-          if (target) (target as HTMLElement).hidden = false;
-        }
-      });
-    });
-  });
-
   /* Copy buttons */
-  document.querySelectorAll('.terminal__copy, .hero-install__copy').forEach(btn => {
+  document.querySelectorAll('.hero-install__copy').forEach(btn => {
     const ICON_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
     const label = btn.getAttribute('aria-label') || '复制命令';
     btn.setAttribute('aria-live', 'polite');
