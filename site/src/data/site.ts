@@ -5,7 +5,7 @@
 import pkg from '../../package.json';
 
 export const SITE = {
-  name: 'Men（门）Agent 团队',
+  name: 'Men Agent 团队',
   version: `v${pkg.version}`,
   repo: 'https://github.com/cgartlab/men',
   repoLabel: 'cgartlab/men',

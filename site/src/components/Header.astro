@@ -22,11 +22,11 @@ function isActive(href: string): boolean {
 
 <header class="site-header">
   <div class="site-header__inner">
-    <a href={base} class="site-header__brand" aria-label="Men（门）首页">
+    <a href={base} class="site-header__brand" aria-label="Men 首页">
       <span class="site-header__logo" style="color: var(--color-fg)">
         <GateLogo size={22} />
       </span>
-      <span class="site-header__title">Men <span class="site-header__cn">（门）</span></span>
+      <span class="site-header__title">Men</span>
     </a>
     <nav class="site-header__nav" aria-label="主导航">
       <ul>
@@ -124,11 +124,6 @@ function isActive(href: string): boolean {
   .site-header__logo {
     display: inline-flex;
     align-items: center;
-  }
-
-  .site-header__cn {
-    color: var(--color-fg-muted);
-    font-weight: var(--font-weight-regular);
   }
 
   .site-header__nav ul {

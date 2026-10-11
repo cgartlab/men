@@ -5,7 +5,7 @@ import { Icon } from 'astro-icon/components';
 
 const base = '/';
 const pageTitle = '团队角色 — ' + content.hero.title;
-const pageDesc = 'Men（门）六个 Agent 角色详解：各自的定位、职责边界与交付物，以及一个请求如何在 Men 编排下被路由到合适的子角色。';
+const pageDesc = 'Men 六个 Agent 角色详解：各自的定位、职责边界与交付物，以及一个请求如何在 Men 编排下被路由到合适的子角色。';
 const roles = content.roles;
 
 // Enhanced role details for agent cards
@@ -54,7 +54,7 @@ const roleDetails: Record<string, {
     input: '拆解方案里分到的子任务和代码规范',
     output: '代码文件 / PR / Markdown 文档',
     redlines: ['先验证再交——typecheck/lint/test 全过才行', '不编"我做完了"——必须有实际文件'],
-    charter: '实现阶段可自主决策，遇到歧义回头问门',
+    charter: '实现阶段可自主决策，遇到歧义回头问 Men',
   },
   chi: {
     responsibilities: [
@@ -118,7 +118,7 @@ const flowSteps = [
     icon: 'lucide:git-branch',
     label: '判断该派谁',
     example: '判定：需要多角色配合',
-    detail: '门翻一遍过去的经验，判断这个活儿需要哪几个人配合。拿不准就先问你。',
+    detail: 'Men 翻一遍过去的经验，判断这个活儿需要哪几个人配合。拿不准就先问你。',
   },
   {
     id: 'plan',
@@ -348,7 +348,7 @@ const routingRows = [
       </h2>
       <div class="intent-text">
         <p>
-          门接到你的话后，会归到下面四类里的一类。拿不准归哪类时，门会先问你：
+          Men 接到你的话后，会归到下面四类里的一类。拿不准归哪类时，Men 会先问你：
         </p>
         <div class="intent-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.5rem 0;">
           <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
