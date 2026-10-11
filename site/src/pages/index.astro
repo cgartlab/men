@@ -514,14 +514,23 @@ const faq = install.faq || [];
   .hero-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; min-width: 0; }
   .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
+  /* hero-title：原属性顶格，统一为 2 空格缩进 */
   .hero-title {
- font-size: var(--font-size-display); font-weight: var(--font-weight-semi); color: var(--color-fg); text-wrap: balance; margin: 0 0 var(--space-4);
- line-height: var(--line-height-display);
- letter-spacing: var(--letter-spacing-heading);
- max-width: 14em;
-}
+    font-size: var(--font-size-display);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    text-wrap: balance;
+    line-height: var(--line-height-display);
+    letter-spacing: var(--letter-spacing-heading);
+    max-width: 14em;
+    /* eyebrow→h1 视觉间距 12→20px（跨板块 eyebrow→h2 是 24–25px，向之靠拢） */
+    margin: var(--space-2) 0 var(--space-4);
+  }
   .hero-desc {
- font-size: var(--font-size-body-lg); color: var(--color-fg-secondary); line-height: var(--line-height-body); margin: 0;
+    font-size: var(--font-size-body-lg);
+    color: var(--color-fg-secondary);
+    line-height: var(--line-height-body);
+    margin: 0;
  max-width: 32em;
 }
   .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: flex-start; margin-top: var(--space-6); }
@@ -658,7 +667,9 @@ const faq = install.faq || [];
 }
   .showcase__card-constraint {
     font-style: italic;
-    display: flex; align-items: center; gap: var(--space-1); margin-top: auto;
+    display: flex; align-items: center; gap: var(--space-1);
+    /* 原 margin-top: auto 把此行推到卡片底部，同卡片内实测视觉间距 20 / 185px
+       （差 9 倍）。去掉后卡片高度由内容自然决定，所有兄弟视觉间距一致 20px。 */
     padding-top: var(--space-2); border-top: 1px solid var(--color-line-soft);
     font-size: var(--font-size-small);
     line-height: var(--line-height-ui);
@@ -722,7 +733,9 @@ const faq = install.faq || [];
 }
   .topo__all:hover { color: var(--color-accent-dark); text-decoration: none; }
   .topo__desc {
- font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-6);
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    margin-bottom: 29px;  /* 描述→内容 视觉 33→29px，与 CTA 描述→按钮的 29px 一致 */
  max-width: var(--measure-prose);
 }
   .topo-diagram { overflow-x: auto; }
@@ -807,7 +820,7 @@ const faq = install.faq || [];
     50% { opacity: 0.3; }
   }
 
-  .topo-legend { display: flex; gap: var(--space-5); justify-content: center; padding-top: var(--space-5); flex-wrap: wrap; }
+  .topo-legend { display: flex; gap: var(--space-5); justify-content: center; padding-top: 30px; flex-wrap: wrap; }
   .topo-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
   .topo-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
   .topo-legend__dot--input { background: var(--color-fg-muted); }
@@ -822,7 +835,10 @@ const faq = install.faq || [];
   .mechanisms { padding: var(--section-pad) 0; }
   .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
   .mechanisms__title {
- font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    margin-top: 1px;  /* eyebrow→h2 视觉 24→25px，对齐团队总览 */
  font-size: var(--font-size-h2);
  line-height: var(--line-height-heading);
  letter-spacing: var(--letter-spacing-heading);
@@ -849,7 +865,11 @@ const faq = install.faq || [];
   /* ===== FAQ ===== */
   .faq { padding: var(--section-pad) 0; }
   .faq__title {
- font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-5);
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    margin: 1px 0 0 0;  /* eyebrow→h2 视觉 24→25px，对齐团队总览 */
+    margin-bottom: var(--space-5);
  font-size: var(--font-size-h2);
  line-height: var(--line-height-heading);
  letter-spacing: var(--letter-spacing-heading);

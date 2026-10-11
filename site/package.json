@@ -17,7 +17,8 @@
     "verify-widow-fix": "node scripts/widow-verify.mjs",
     "check:source": "npm run check-contrast && npm run check-tokens && npm run check-text-contrast && npm run check-dynamic-el",
     "check-overlap": "node scripts/overlap-audit.mjs",
-    "check-spacing": "node scripts/spacing-audit.mjs"
+    "check-spacing": "node scripts/spacing-audit.mjs",
+    "check-vspace": "node scripts/visual-spacing-audit.mjs"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.138",
