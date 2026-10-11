@@ -89,6 +89,7 @@ function isActive(href: string): boolean {
   .site-header__brand {
     display: flex;
     align-items: center;
+    min-height: 44px;        /* 触控目标：窄屏下 27px 的链接高度太小 */
     gap: var(--space-2);
     font-weight: var(--font-weight-semi);
     font-size: var(--font-size-body);
@@ -196,6 +197,6 @@ function isActive(href: string): boolean {
     }
     .site-header__nav ul::-webkit-scrollbar { display: none; }
     .site-header__link { display: inline-block; padding: 10px 2px; }
-    .site-header__gh { padding: 5px 9px; white-space: nowrap; }
+    .site-header__gh { padding: 5px 9px; white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; }
   }
 </style>

@@ -1468,6 +1468,12 @@ main {
   .wiki-table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
   svg.topo-svg{min-width:840px;height:auto}
   section:has(svg.topo-svg),div:has(svg.topo-svg){overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* 窄屏下的可横滑区域（宽表格 / 拓扑图）右侧渐隐，提示「还能往右划」——
+     没有这个提示时，用户往往以为内容被截断了。 */
+  .wiki-table, section:has(svg.topo-svg), div:has(svg.topo-svg){
+    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
+    mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
+  }
   pre{overflow-x:auto;-webkit-overflow-scrolling:touch}
   pre code{white-space:pre}
   code{word-break:break-word}

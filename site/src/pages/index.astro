@@ -534,14 +534,15 @@ const faq = install.faq || [];
   .hero { padding: var(--space-12) 0 var(--space-10); position: relative; overflow: hidden; }
   .hero__grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+    /* 右栏 320px 起，左栏吃掉其余空间：桌面 1232px 内容宽下约为 733 / 459 */
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
     gap: var(--space-10);
     align-items: center;
-    max-width: var(--page-max);
-    margin: 0 auto;
-    padding: 0 var(--space-6);
     position: relative;
     z-index: 1;
+    /* 宽度对齐下方「角色卡片」区块（.showcase）：两者都用 <main> 的内容宽度
+       （max-width 1360 + padding 0 64px → 桌面 1232px / 手机 342px），
+       不再自己收窄到 --page-max(720px)。 */
   }
   .hero-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
   .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
@@ -590,7 +591,7 @@ const faq = install.faq || [];
   }
   .hero-install__copy {
     flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border: 1px solid var(--color-line); border-radius: 6px;
+    width: 40px; height: 40px; border: 1px solid var(--color-line); border-radius: 6px;
     background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
   }
   .hero-install__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
@@ -609,6 +610,7 @@ const faq = install.faq || [];
   .install__guide {
  font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
  font-size: var(--font-size-small);
+ min-height: 44px;        /* 触控目标：原来只有 24px 高 */
 }
   .install__guide:hover { color: var(--color-accent-dark); text-decoration: none; }
 
@@ -624,7 +626,7 @@ const faq = install.faq || [];
   .terminal__tab {
     font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi);
     color: var(--color-fg-tertiary); background: none; border: none; border-bottom: 2px solid transparent;
-    padding: 6px var(--space-4); cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
+    padding: 6px var(--space-4); min-height: 44px; cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
   }
   .terminal__tab[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-accent); }
   .terminal__tab:hover { color: var(--color-fg); }
@@ -660,7 +662,7 @@ const faq = install.faq || [];
   }
   .terminal__copy {
     flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border: 1px solid var(--color-line); border-radius: 6px;
+    width: 40px; height: 40px; border: 1px solid var(--color-line); border-radius: 6px;
     background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
   }
   .terminal__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
@@ -760,15 +762,18 @@ const faq = install.faq || [];
   /* 分页点由 JS 的 document.createElement 动态创建，不会带上 Astro scoped 样式的
      data-astro-cid-* 属性，故这些规则必须用 :global()，否则永不匹配 ——
      实测曾导致分页点渲染为 0×0、完全不可见不可点。 */
-  :global(.showcase__dots) { display: flex; gap: 8px; align-items: center; }
+  :global(.showcase__dots) { display: flex; gap: 0; align-items: center; }
+  /* 分页点：可见圆点仍是 8px，但按钮触控区放大到 24×44（WCAG 2.2 §2.5.8 ≥24px）；
+     点间距与改版前一致（原 8px 点 + 8px 间隙 = 16px 节距）。 */
   :global(.showcase__dot) {
-    width: 8px; height: 8px; border-radius: 50%;
-    /* 分页点是「除填充外无任何可见内容」的控件（裸 button，无文字/图标），
-       故其边界必须满足 WCAG 2.2 §1.4.11 的 3:1；--color-line 仅 1.35:1。 */
-    background: var(--color-line-ui); border: none; padding: 0; cursor: pointer;
-    transition: all 0.25s;
+    position: relative; width: 24px; height: 44px; padding: 0; background: none; border: none; cursor: pointer;
   }
-  :global(.showcase__dot--active) { background: var(--color-accent); width: 24px; border-radius: 4px; }
+  :global(.showcase__dot)::before {
+    content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    /* 裸控件边界须满足 WCAG 2.2 §1.4.11 的 3:1；--color-line 仅 1.35:1 */
+    width: 8px; height: 8px; border-radius: 50%; background: var(--color-line-ui); transition: all 0.25s;
+  }
+  :global(.showcase__dot--active)::before { width: 24px; border-radius: 4px; background: var(--color-accent); }
 
   /* ===== Topology ===== */
   .topo { padding: var(--space-10) 0 var(--space-12); max-width: var(--container-max); margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
@@ -780,6 +785,7 @@ const faq = install.faq || [];
  letter-spacing: var(--letter-spacing-heading);
 }
   .topo__all {
+ min-height: 44px;
  font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
  font-size: var(--font-size-small);
 }
@@ -891,6 +897,7 @@ const faq = install.faq || [];
  letter-spacing: var(--letter-spacing-heading);
 }
   .mechanisms__all {
+ min-height: 44px;        /* 触控目标：原来只有 24px 高 */
  font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
  font-size: var(--font-size-small);
 }
@@ -951,6 +958,11 @@ const faq = install.faq || [];
   @media (max-width: 480px) {
     .hero-title { font-size: clamp(1.8rem, 8vw, 2.2rem); }
     .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
+    /* 窄屏下拓扑图是「固定宽度 + 横向滚动」，右侧渐隐提示还有内容 */
+    .topo-diagram {
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+      mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    }
     .hero-actions { flex-direction: column; align-items: stretch; }
     .hero-cta { justify-content: center; }
     .terminal__tab { padding: var(--space-2); }

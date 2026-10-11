@@ -115,6 +115,8 @@ import GateLogo from './GateLogo.astro';
     color: var(--color-fg);
     margin-bottom: var(--space-2);
   }
+  /* 页脚链接在窄屏是触控目标：把行高撑到 44px（原来只有 20px） */
+  .site-footer__copy a, .site-footer__license a { display: inline-flex; align-items: center; min-height: 44px; }
 
   .site-footer__license {
     font-size: var(--font-size-caption);
