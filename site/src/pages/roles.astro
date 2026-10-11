@@ -19,85 +19,81 @@ const roleDetails: Record<string, {
 }> = {
   men: {
     responsibilities: [
-      '意图分诊：接收用户自然语言指令，按 IntentGate 判定表分类为 search / analyze / team / hyperplan',
-      '任务路由：根据意图类型选择目标 agent 或并行组合，低置信时向用户确认绝不猜',
-      'Wave 编排：按 plan 的波次执行，并行上限 ≤4，每个子任务 prompt 必须完整自洽',
-      '结果汇总：收集所有子 agent 产物，去冲突、质量检查，按四段模板输出结构化报告',
-      '事件审计：关键决策写入 events.jsonl（session.created / decision.made / gate.passed 等 14 种事件）',
-      '学习触发：任务完成后自动运行 learn.mjs 提取经验写入 knowledge/ 知识库',
+      '接到你的指令，判断该谁做',
+      '派活给合适的人，能同时派的就同时派',
+      '收齐结果，整理成报告交给你',
+      '干完自动记经验，下次更聪明',
     ],
     skills: ['si-plan-compose（规划拆解）', 'chi-judge（独立评审）'],
-    input: '用户自然语言指令（一句话到一段话）',
-    output: '四段汇总报告：结论 → 关键信息 → 来源/证据 → 未决问题',
-    redlines: ['不执行具体产出（不写代码、不写作、不设计）', '不做低置信度猜路由', '不绕过机械门禁直接合并', '重试上限 5 次，超限诚实报卡住'],
-    charter: 'Clarification level: HIGH — 需求模糊必须追问，不脑补',
+    input: '你的一句话指令',
+    output: '一份报告：做了什么、要点、来源、需要你定的问题',
+    redlines: ['不写代码、不写文章、不做设计', '拿不准就先问你，不猜', '最多重试 5 次，不行就老实说卡住了'],
+    charter: '追问到清楚为止，不猜',
   },
   si: {
     responsibilities: [
-      '深度思考与多角度方案：接收 men 分派的 team / hyperplan 任务，从多角度提出解决方案，思考细致全面',
-      'Plan Envelope：依赖图 + 并行波次 + 每项验收标准表，是后续所有 agent 执行的蓝图',
-      '知识管理：PKM 复盘、知识沉淀、决策归档（skill: knowledge）',
-      '回评：把 ji/yi 等产出角色的结果回传做质量评估，只评不改，标注达标/不达标',
+      '把大任务拆成小任务，标好依赖关系',
+      '给每个小任务写"做成什么样算完"',
+      '管理知识库，记下踩过的坑',
+      '评估别人的产出，只评不改',
     ],
     skills: ['si-plan-compose（方案拆解）', 'si-knowledge（知识管理）'],
-    input: 'men 分派的子任务描述 + 上下文约束',
-    output: 'plan envelope / Markdown 文章 / 知识沉淀文档 / 回评报告',
-    redlines: ['只评不改——评估其他 agent 产物时只标注不修改', '规划先行——team/hyperplan 类必须先产出 plan 再执行', '不直接执行代码或生图'],
-    charter: 'Clarification level: HIGH — 深度思考阶段必须追问清楚，不假设',
+    input: '门分派的子任务描述和上下文',
+    output: '任务拆解方案 / 知识沉淀文档 / 回评报告',
+    redlines: ['只评不改——看别人产出时只标注不改写', '不直接写代码或生图'],
+    charter: '想清楚再动手',
   },
   ji: {
     responsibilities: [
-      '代码实现：按 plan 实现前端/后端代码，前端开发优先（skill: frontend-design）',
-      'GitHub 操作：创建 PR、Review 代码、管理 Issue、分支管理（skill: github）',
-      '内容写作：技术博客、文档、周报等结构化内容（skill: ji-content-write）',
-      'L1 机械验证：代码完成后跑 typecheck / lint / test，通过后自我审查再交付（skill: l1-verify）',
-      '目录结构审计：确保文件组织符合项目规范',
+      '写代码（前端优先）',
+      '管 GitHub——PR、Review、Issue',
+      '写文章、文档、周报',
+      '代码写完跑 typecheck/lint/test，过了才交',
     ],
     skills: ['ji-frontend-design（前端实现）', 'ji-github（GitHub 操作）', 'ji-content-write（内容写作）', 'ji-l1-verify（机械验证）'],
-    input: 'plan envelope 中分配的子任务 + 代码/文档规范',
-    output: '代码文件 / PR / Issue / Markdown 文档',
-    redlines: ['先 gate 验证再交付——typecheck/lint/test 必须全 PASS', '不伪造输出——声称完成前必须有机械证据', '不泄露密钥——扫描硬编码 password/secret/api_key'],
-    charter: 'Clarification level: MEDIUM — 代码实现阶段可自主决策，歧义时回传 men',
+    input: '拆解方案里分到的子任务和代码规范',
+    output: '代码文件 / PR / Markdown 文档',
+    redlines: ['先验证再交——typecheck/lint/test 全过才行', '不编"我做完了"——必须有实际文件'],
+    charter: '实现阶段可自主决策，遇到歧义回头问门',
   },
   chi: {
     responsibilities: [
-      '投资分析：AU9999 / 纳斯达克 / 港股通 / 中证红利持仓分析与收益追踪（skill: invest）',
-      '独立 Judge：以 fresh-context 对其他 agent 产物做语义复核，只信产物不信自述（skill: judge）',
-      '机械验证复核：verify.mjs 五项检查全 PASS 后，再做语义层验证',
-      '质量门禁：声称完成但文件不存在 = 识破假完成，只核对实际产物文件',
+      '做投资分析——持仓、收益、市场数据',
+      '当质检员——用全新视角审核别人的产出',
+      '只看实际文件，不听口头汇报',
+      '脚本查完它再查一遍',
     ],
     skills: ['chi-invest（投资分析）', 'chi-judge（独立评审）'],
-    input: '子 agent 产物文件路径 + 验收标准表',
-    output: '持仓分析报告 / 评审结论（PASS/FAIL + 具体问题清单）',
-    redlines: ['只信产物不信任自述——不接受「我完成了」作为完成证据', 'fresh-context——不继承被评审 agent 的上下文，独立判断', '机械证据优先——退出码/文件存在性/JSON 可解析性为准'],
-    charter: 'Clarification level: LOW — Judge 阶段按验收标准机械判定，不追问',
+    input: '别人交上来的文件路径和验收标准',
+    output: '评审结论（通过/不通过 + 具体问题清单）',
+    redlines: ['只信实物——"我完成了"不算完成证据', '独立判断——不继承被审核者的上下文'],
+    charter: '按验收标准机械判定',
   },
   yi: {
     responsibilities: [
-      '设计决策：配色方案、字体选型、间距体系、布局结构（skill: design）',
-      '图像生成：通过 SenseNova U1 Fast 生成概念图/插画/视觉素材（skill: imagegen）',
-      'Token 定义：设计令牌（Design Token）体系构建与维护',
-      '审美分析：视觉风格评估、品牌一致性检查',
-      'WCAG 无障碍：确保设计满足 WCAG 2.2 AA 对比度标准',
+      '做设计决策——配色、字体、间距、布局',
+      '生成配图和插画',
+      '维护设计令牌体系',
+      '查无障碍对比度',
     ],
     skills: ['yi-design（设计决策）', 'yi-imagegen（图像生成）'],
-    input: '设计需求描述 + 品牌约束 + 技术规范',
-    output: '设计稿 / 生图文件 / Token 定义 / 配色方案',
-    redlines: ['SenseNova 仅 yi 挂载——其他 agent 无法直接生图', 'WCAG 对比度必须达标——小文字 ≥ 4.5:1，大文字 ≥ 3:1', '不伪造输出——生图文件必须实际存在'],
-    charter: 'Clarification level: HIGH — 设计需求必须追问风格/调性/用途，不脑补审美',
+    input: '设计需求和品牌约束',
+    output: '设计稿 / 生图文件 / 配色方案',
+    redlines: ['生图能力只有艺有——别人没法直接出图', '对比度要达标——小字 4.5:1，大字 3:1'],
+    charter: '设计需求追问到清楚——风格、调性、用途',
   },
   xun: {
     responsibilities: [
-      '网页搜索：通过 Exa / Context7 / grep_app 等 MCP 工具搜索最新信息（skill: search）',
-      'RSS 扫描：聚合多源 RSS 订阅，批量收集新闻/素材（skill: rss-scan）',
-      '事实核查：交叉验证多来源，确认信息真实性（skill: factcheck）',
-      '来源验证：标注所有信息的一手来源，拒绝无来源信息',
+      '搜网页、查资料',
+      '扫 RSS 订阅源',
+      '交叉核实信息真假',
+      '每条信息都标来源',
     ],
     skills: ['xun-search（网页搜索）', 'xun-rss-scan（RSS 扫描）', 'xun-factcheck（事实核查）'],
-    input: '搜索关键词 / 事实核查请求 / RSS 源列表',
-    output: '事实清单 / 调研报告 / 核查结论（含来源链接）',
-    redlines: ['只读约束——不修改源数据，不写入外部系统', '来源必须标注——无来源信息 = 无效产出', '不伪造搜索结果——搜索无结果时诚实报告'],
-    charter: 'Clarification level: MEDIUM — 搜索范围可自主扩展，关键事实需交叉验证',
+    input: '搜索关键词或事实核查请求',
+    output: '事实清单 / 调研报告（每条带来源链接）',
+    redlines: ['只查不改——不修改源数据', '无来源 = 无效', '搜不到就老实说搜不到'],
+    charter: '搜索范围可以自己扩，关键事实要交叉验证',
   },
 };
 
@@ -106,71 +102,71 @@ const flowSteps = [
   {
     id: 'input',
     icon: 'lucide:message-square',
-    label: '用户下达指令',
-    example: '「写一份 2026 年 AI Agent 行业研究报告」',
-    detail: '用户以自然语言输入任务。men 是唯一接收指令的角色，所有用户输入先经 men 分诊。',
+    label: '你说一句话',
+    example: '"写一份 2026 年 AI Agent 行业研究报告"',
+    detail: '你用大白话说出想做什么。不用指定谁来做。',
   },
   {
     id: 'receive',
     icon: 'lucide:door-open',
-    label: 'men 接收并记录',
-    example: 'session.created → events.jsonl',
-    detail: 'men 接收指令后，立即在 events.jsonl 写入 session.created 事件，记录任务起点。这是全量事件审计的第一步。',
+    label: '门接住，记下编号',
+    example: '生成任务档案',
+    detail: '门把你的话记下来，给任务编个号。后面每一步都查得到。',
   },
   {
     id: 'triage',
     icon: 'lucide:git-branch',
-    label: 'IntentGate 意图分诊',
-    example: '判定为 team 类（跨领域综合任务）',
-    detail: 'men 读取 knowledge/patterns/index.md 获取历史经验，然后按意图门判定表分类：search / analyze / team / hyperplan。置信度低时向用户确认，绝不猜。',
+    label: '判断该派谁',
+    example: '判定：需要多角色配合',
+    detail: '门翻一遍过去的经验，判断这个活儿需要哪几个人配合。拿不准就先问你。',
   },
   {
     id: 'plan',
     icon: 'lucide:file-text',
-    label: 'si 深度思考',
-    example: '产出 plan envelope：依赖图 + Wave + 验收标准',
-    detail: 'team / hyperplan 类任务必须 spawn si 做深度思考与方案拆解，产出 plan envelope：子任务依赖关系、并行波次、每项验收标准。方案先行，避免无序执行。',
+    label: '思拆任务',
+    example: '拆成 5 个小任务，标好先后',
+    detail: '思把大活儿拆成小活儿，标清哪些能同时做、哪些有先后，每个小活儿都写好"做成什么样算完"。',
   },
   {
     id: 'dispatch',
     icon: 'lucide:zap',
-    label: 'Wave 并行调度',
-    example: 'Wave 1: xun 查数据 + yi 设计配图（并行）',
-    detail: '按 plan 波次执行。Wave 1 同时 spawn 所有无依赖子任务（并行上限 ≤4）。每个子任务 prompt 必须完整自洽——上下文、skill、产出路径、验收标准缺一不可。',
+    label: '同时开工',
+    example: '寻查数据，艺做配图，同时跑',
+    detail: '没有依赖关系的小活儿同时开工，最多 4 个一起跑。',
   },
   {
     id: 'execute',
     icon: 'lucide:play',
-    label: '子 Agent 执行',
-    example: 'xun 搜索行业数据 / yi 生成配图 / si 撰写正文',
-    detail: '各子 agent 独立执行，互不干扰。xun 负责信息收集，yi 负责文生图提示词与出图，si 负责方案思考，ji 负责写作与代码。每个 agent 只做自己擅长的事。',
+    label: '各干各的',
+    example: '寻搜数据 / 艺出图 / 思写正文',
+    detail: '每个人只干自己擅长的。寻查资料，艺做图，思写内容。互不干扰。',
   },
   {
     id: 'verify',
     icon: 'lucide:shield-check',
-    label: '双层验证',
-    example: 'verify.mjs 5 项 PASS → chi Judge 语义复核',
-    detail: '所有产物收集完毕后，先跑 verify.mjs 五项机械检查（退出码/文件存在/secrets/TODO/结构），全 PASS 后再由 chi 以 fresh-context 做独立语义复核。两层都过才算完成。',
+    label: '查收成果',
+    example: '脚本检查 → 持独立审核',
+    detail: '先跑脚本查文件在不在、内容全不全。过了这关，持再看一遍——只看实际文件，不听口头汇报。',
   },
   {
     id: 'report',
     icon: 'lucide:bar-chart-3',
-    label: '汇总汇报',
-    example: '四段模板：结论 → 关键信息 → 来源 → 未决问题',
-    detail: '四段结构化报告：结论（一句话）→ 关键信息（要点列表）→ 来源/证据（链接）→ 未决问题（需用户决策）。每个子任务标注完成/部分/失败。learn.mjs 自动触发学习回路。',
+    label: '交报告给你',
+    example: '结论 → 要点 → 来源 → 待定问题',
+    detail: '门把结果整理成一份报告：做了什么、要点、信息来源、还需要你拍板的问题。',
   },
 ];
 
 // Routing table data
 const routingRows = [
-  { keyword: '信息收集 / 查信息 / 新闻 / 资料 / 事实核查 / 调研', intent: 'search', target: 'xun（寻）', path: 'xun 单路研究', verify: '来源交叉验证 + factcheck skill', output: '事实清单 / 调研报告' },
-  { keyword: '代码 / GitHub / 工程 / 前端', intent: 'code → team', target: 'ji（记）', path: 'ji 实现 + gate 验证', verify: 'typecheck / lint / test + verify.mjs', output: '代码文件 / PR / Issue' },
-  { keyword: '写作 / 博客 / 文档 / 周报 / 内容', intent: 'content → team', target: 'ji（记）', path: 'ji 内容写作（skill: ji-content-write）', verify: '结构检查 + 字数统计', output: 'Markdown 文章 / 文档' },
-  { keyword: '方案思考 / 知识管理 / 深度研究 / 规划 / 需求', intent: 'team / hyperplan', target: 'si（思）', path: 'si 深度思考 + 产出 plan envelope', verify: 'chi judge 验收标准表', output: 'plan envelope / 知识沉淀' },
-  { keyword: '投资 / 财务 / 市场分析 / 数据统计 / 持仓 / 收益', intent: 'analyze', target: 'chi（持）', path: 'chi 投资分析', verify: '数据来源交叉验证', output: '持仓分析 / 投资建议' },
-  { keyword: '审美 / 文生图提示词 / 生图 / 配色 / 视觉', intent: 'team', target: 'yi（艺）', path: 'yi 多方案提示词工程 + SenseNova 生图', verify: 'WCAG 对比度检查', output: '设计稿 / 生图 / Token 定义' },
-  { keyword: '分析 / 评估 / 诊断 / 评审 / 判断', intent: 'analyze', target: 'chi（持）', path: '相关专家产出 + chi judge 复核', verify: 'chi fresh-context 语义复核', output: '评审报告 / 诊断结论' },
-  { keyword: '混合 / 模糊 / 跨领域 / 综合', intent: 'team', target: 'men → 多路并行', path: 'men 按混合任务拆分规则编排', verify: '每个子任务独立验证 + 汇总', output: '结构化汇总报告' },
+  { keyword: '查信息、查新闻、做调研', target: 'xun（寻）', path: '寻搜一遍，交叉核实', verify: '查来源、交叉核实', output: '一份调研报告（带来源链接）' },
+  { keyword: '写代码、改 bug、管 GitHub', target: 'ji（记）', path: '记写代码 + 跑验证', verify: 'typecheck / lint / test', output: '代码文件 / PR / Issue' },
+  { keyword: '写文章、写文档、写周报', target: 'ji（记）', path: '记写内容', verify: '查结构、查字数', output: 'Markdown 文章 / 文档' },
+  { keyword: '做规划、理思路、管知识', target: 'si（思）', path: '思想清楚 + 拆解', verify: '持按验收标准查', output: '任务拆解方案 / 知识文档' },
+  { keyword: '查持仓、算收益、做投资分析', target: 'chi（持）', path: '持做投资分析', verify: '数据来源交叉核实', output: '持仓分析 / 投资建议' },
+  { keyword: '做配图、配色、生图', target: 'yi（艺）', path: '艺出图 + 查对比度', verify: '对比度检查', output: '设计稿 / 生图 / 配色方案' },
+  { keyword: '做评估、做诊断、做评审', target: 'chi（持）', path: '专家做 + 持审核', verify: '持独立审核', output: '评审报告 / 诊断结论' },
+  { keyword: '多件事混在一起、说不清该归谁', target: 'men → 多路并行', path: '门拆分后同时派', verify: '每个子任务各查各的', output: '汇总报告' },
 ];
 ---
 
@@ -182,7 +178,7 @@ const routingRows = [
         团队角色
       </h1>
       <p class="roles-subtitle">
-        6 个 agent 各司其职，men 统一编排。向下滚动，跟随一个示例任务走完全流程。
+        你只管说一句话——分工、干活、检查、交报告，团队全自动。下面用一个真实例子带你走一遍。
       </p>
     </header>
 
@@ -232,19 +228,17 @@ const routingRows = [
         <table class="routing-table">
           <thead>
             <tr>
-              <th>触发关键词</th>
-              <th>意图类型</th>
-              <th>目标 Agent</th>
-              <th>执行路径</th>
-              <th>验证方式</th>
-              <th>产出格式</th>
+              <th>你说了什么</th>
+              <th>谁来做</th>
+              <th>怎么做</th>
+              <th>怎么查</th>
+              <th>你会收到什么</th>
             </tr>
           </thead>
           <tbody>
             {routingRows.map((row) => (
               <tr>
                 <td class="routing-table__keyword">{row.keyword}</td>
-                <td><span class="routing-table__tag">{row.intent}</span></td>
                 <td class="routing-table__target">{row.target}</td>
                 <td>{row.path}</td>
                 <td class="routing-table__verify">{row.verify}</td>
@@ -328,8 +322,8 @@ const routingRows = [
                         </div>
                       </div>
 
-                      <div class="agent-card__charter">
-                        <span class="agent-card__charter-label">CHARTER_CHECK</span>
+                      <div class="agent-card__charter" style="display:none;">
+                        <span class="agent-card__charter-label">角色性格</span>
                         {detail.charter}
                       </div>
                     </div>
@@ -350,20 +344,32 @@ const routingRows = [
     <section class="intent-section" aria-labelledby="intent-title">
       <h2 id="intent-title" class="section-title">
         <span class="section-num">04</span>
-        意图门（IntentGate）
+        四种任务类型
       </h2>
       <div class="intent-text">
         <p>
-          men 通过 <strong>IntentGate</strong> 将用户指令分为四类意图：<strong>search</strong>（查信息，路由到 xun）、
-          <strong>analyze</strong>（分析评审，路由到 chi + 专家）、<strong>team</strong>（多领域协作，men 编排多路并行）、
-          <strong>hyperplan</strong>（复杂项目启动，路由到 si 深度思考与方案拆解）。
+          门接到你的话后，会归到下面四类里的一类。拿不准归哪类时，门会先问你：
         </p>
-        <p>
-          分类依据是关键词判定表 + 历史经验（knowledge/patterns/index.md）。当置信度低于阈值时，
-          men <strong>必须向用户确认</strong>，绝不猜测——这是避免返工的第一道防线。
-        </p>
+        <div class="intent-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.5rem 0;">
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>查信息</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"最近有什么新闻" → 派寻去搜</p>
+          </div>
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>做分析</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"这份投资合理吗" → 派持去分析和审核</p>
+          </div>
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>多角色配合</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"写一篇行业报告" → 派多个人同时干</p>
+          </div>
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>从零规划</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">你说"帮我启动新项目" → 派思想清楚再拆解</p>
+          </div>
+        </div>
         <p class="intent-link">
-          完整意图门判定表与路由规则 → <a href={base + 'docs/agents'}>角色说明文档</a>
+          想看完整的路由规则？→ <a href={base + 'docs/agents'}>角色说明文档</a>
         </p>
       </div>
     </section>
@@ -372,26 +378,29 @@ const routingRows = [
     <section class="principles-section" aria-labelledby="principles-title">
       <h2 id="principles-title" class="section-title">
         <span class="section-num">05</span>
-        核心原则
+        四条底线
       </h2>
       <div class="principles-text">
-        <p>
-          <strong>机械优先</strong>——验证判定以退出码、文件存在性、JSON 可解析性等机械证据为准，拒绝 LLM 自评。
-          脚本说 PASS 才是 PASS。
-        </p>
-        <p>
-          <strong>不信自述</strong>——chi judge 只核对实际产物文件，不接受任何「我完成了」作为完成证据。
-          声称完成但文件不存在 = 识破假完成。
-        </p>
-        <p>
-          <strong>事件可回溯</strong>——所有关键决策写入 events.jsonl，可用 <code>node scripts/event.mjs replay</code> 回放。
-          事后可以回答：当时为什么这么分发？
-        </p>
-        <p>
-          <strong>超限诚实</strong>——重试上限 5 次，超限立即报卡住，把已完成中间产物和失败原因交给用户，不假装继续。
-        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.5rem 0;">
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>机器说了算</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">脚本说通过才算通过——像考试用答题卡判分，不看你自己写的"我觉得对了"。</p>
+          </div>
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>只看实物</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">持只看实际文件——像老师只看卷面答案，不看你说的"我会了"。</p>
+          </div>
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>全程留痕</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">每一步都记在案——像快递追踪，随时查到包裹到哪了。</p>
+          </div>
+          <div style="padding:1rem 1.25rem;border:1px solid var(--color-border);border-radius:0.5rem;">
+            <strong>不会就停</strong>
+            <p style="margin:0.5rem 0 0;font-size:0.9rem;">试 5 次不行就老实说卡住了——不假装能继续，把做完的部分交给你。</p>
+          </div>
+        </div>
         <p class="principles-link">
-          完整 6 条原则与全员红线 → <a href={base + 'docs/governance'}>治理文档</a>
+          完整红线 → <a href={base + 'docs/governance'}>治理文档</a>
         </p>
       </div>
     </section>

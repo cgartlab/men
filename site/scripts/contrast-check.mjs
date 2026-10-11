@@ -63,30 +63,31 @@ function normalizeHex(hex) {
   return '#' + h.slice(0, 6);
 }
 
-// ---------- 颜色定义（R8.5 Token · 由 global.css 真值逐项校验） ----------
+// ---------- 颜色定义（品牌规范 v1 · 由 global.css 真值逐项校验） ----------
 const colors = {
-  // 前景文字（5 级梯度）
-  fg:            '#1a1a1a',  // 正文 · 16.7:1
-  fgSecondary:   '#404040',  // 次文本 · 9.9:1
-  fgTertiary:    '#5c5c5c',  // 三文本 · 6.4:1
-  fgMuted:       '#737373',  // 弱化文本 · 4.5:1 (AA 边界)
-  fgDecorative:  '#8a8a8a',  // 仅装饰 · 3.3:1 (非强制)
+  // 前景文字（5 级梯度 · 纸底/暖底双达标）
+  fg:            '#2b2a27',  // 正文 · 13.6:1 纸 / 12.7:1 暖
+  fgSecondary:   '#4a4741',  // 次文本 · 8.8:1
+  fgTertiary:    '#5e5d59',  // 三文本 · 6.3:1
+  fgMuted:       '#6b6a64',  // 弱化文本 · 5.2:1 (双底达标)
+  fgDecorative:  '#8a877e',  // 仅装饰 · 3.4:1 (非强制)
   // 背景
-  bg:            '#fafafa',  // 页面底色
+  bg:            '#faf9f5',  // 页面底色（暖纸）
   surface:       '#ffffff',  // 卡片面板
-  surfaceWarm:   '#f5f5f5',  // 暖调面板
-  // 强调色
-  accent:        '#e85d04',  // 主强调（仅大文本/填充） · 3.4:1
-  accentDark:    '#a03c00',  // 小字安全橘 · 6.4:1
-  accentOnAccent:'#0a0a0a',  // 橘底文字 · 5.7:1
-  // 角色色（首页拓扑图 / showcase 卡片）
-  roleMen:'#e85d04', roleSi:'#4a90d9', roleJi:'#2ea043',
-  roleChi:'#bf8700', roleYi:'#a371f7', roleXun:'#8b5cf6',
-  // 角色色文本变体（小字 AA ≥4.5:1）
-  roleMenText:'#be4c03', roleSiText:'#3b73ae', roleJiText:'#258036',
-  roleChiText:'#936800', roleYiText:'#825ac6', roleXunText:'#7e54e0',
+  surfaceWarm:   '#f5f0e8',  // 暖调面板
+  // 强调色（赤陶）
+  accent:        '#d77656',  // 主强调（仅大文本/填充/图形） · 3.0:1
+  accentDark:    '#8f3d28',  // 小字安全强调 · 7.0:1
+  accentSoft:    '#bc513a',  // 中等强度（文字/边框/hover 加深）· 4.6:1
+  accentOnAccent:'#2b2a27',  // accent 底上的文字（保持「亮底+深字」架构）· 4.5:1
+  // 角色色（首页拓扑图 / showcase 卡片 · 莫兰迪暖调）
+  roleMen:'#d77656', roleSi:'#6f90a7', roleJi:'#5e9963',
+  roleChi:'#a4874d', roleYi:'#a47faa', roleXun:'#9086ab',
+  // 角色色文本变体（小字 AA ≥4.5:1 · 纸底/暖底双达标）
+  roleMenText:'#8f3d28', roleSiText:'#447191', roleJiText:'#3a7a3f',
+  roleChiText:'#85682f', roleYiText:'#9753a1', roleXunText:'#7361aa',
   // 交互控件边界（非文本，§1.4.11）
-  lineUi:'#848484',
+  lineUi:'#847a6d',
 };
 
 // ---------- 对比度计算 ----------
@@ -120,13 +121,13 @@ function contrastRatio(color1, color2) {
 
 // ---------- 测试对（WCAG 2.2 AA） ----------
 const pairs = [
-  // 角色色 · 文本专用深色变体（AA 小文本 ≥4.5:1 @ #f6f8fa 拓扑图节点底）
-  { fg: colors.roleMenText,  bg: '#f6f8fa', label: 'role-men-text  小字标签 @ 拓扑节点', min: 4.5 },
-  { fg: colors.roleSiText,   bg: '#f6f8fa', label: 'role-si-text   小字标签 @ 拓扑节点', min: 4.5 },
-  { fg: colors.roleJiText,   bg: '#f6f8fa', label: 'role-ji-text   小字标签 @ 拓扑节点', min: 4.5 },
-  { fg: colors.roleChiText,  bg: '#f6f8fa', label: 'role-chi-text  小字标签 @ 拓扑节点', min: 4.5 },
-  { fg: colors.roleYiText,   bg: '#f6f8fa', label: 'role-yi-text   小字标签 @ 拓扑节点', min: 4.5 },
-  { fg: colors.roleXunText,  bg: '#f6f8fa', label: 'role-xun-text  小字标签 @ 拓扑节点', min: 4.5 },
+  // 角色色 · 文本专用深色变体（AA 小文本 ≥4.5:1 @ #f5f0e8 拓扑图节点底）
+  { fg: colors.roleMenText,  bg: '#f5f0e8', label: 'role-men-text  小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleSiText,   bg: '#f5f0e8', label: 'role-si-text   小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleJiText,   bg: '#f5f0e8', label: 'role-ji-text   小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleChiText,  bg: '#f5f0e8', label: 'role-chi-text  小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleYiText,   bg: '#f5f0e8', label: 'role-yi-text   小字标签 @ 拓扑节点', min: 4.5 },
+  { fg: colors.roleXunText,  bg: '#f5f0e8', label: 'role-xun-text  小字标签 @ 拓扑节点', min: 4.5 },
   // 角色色 · 亮色版：大文本场景（≥3:1，首页 showcase 卡片 20px 粗体 / 白底）
   { fg: colors.roleMen, bg: colors.surface, label: 'role-men  大文本/描边 @ 卡片', min: 3.0 },
   { fg: colors.roleSi,  bg: colors.surface, label: 'role-si   大文本/描边 @ 卡片', min: 3.0 },
@@ -136,31 +137,32 @@ const pairs = [
   { fg: colors.roleXun, bg: colors.surface, label: 'role-xun  大文本/描边 @ 卡片', min: 3.0 },
   // 非文本对比度（WCAG 2.2 §1.4.11 · UI 控件边界 ≥3:1）
   // 只针对「除填充外无其他可见内容」的控件；其余控件按 Boundaries 条款
-  // 由文字/图标承担识别，不在此列（此前全站无任何非文本对比度守卫）。
+  // 由文字/图标承担识别，不在此列。
   { fg: colors.lineUi, bg: colors.bg,          label: 'line-ui  控件边界 vs 页面底',   min: 3.0 },
   { fg: colors.lineUi, bg: colors.surface,     label: 'line-ui  控件边界 vs 卡片白底', min: 3.0 },
-  { fg: colors.lineUi, bg: '#f0ebe2',          label: 'line-ui  控件边界 vs 暖底',     min: 3.0 },
-  { fg: colors.lineUi, bg: '#eaeef2',          label: 'line-ui  控件边界 vs 终端 chrome', min: 3.0 },
-  // 正文文本（≥ 4.5:1）
-  { fg: colors.fg,        bg: colors.bg,           label: '正文(#1a1a1a) vs 背景(#fafafa)',          min: 4.5 },
-  { fg: colors.fg,        bg: colors.surface,      label: '正文 vs 白底(#ffffff)',                    min: 4.5 },
-  { fg: colors.fg,        bg: colors.surfaceWarm,  label: '正文 vs 暖底(#f5f5f5)',                    min: 4.5 },
-  { fg: colors.fgSecondary, bg: colors.bg,          label: '次文本(#404040) vs 背景',                  min: 4.5 },
-  { fg: colors.fgTertiary,  bg: colors.bg,          label: '三文本(#5c5c5c) vs 背景',                  min: 4.5 },
-  { fg: colors.fgTertiary,  bg: colors.surfaceWarm, label: '三文本 vs 暖底',                           min: 4.5 },
-  // 弱化文本（≥ 4.5:1 · AA 边界）
-  { fg: colors.fgMuted,     bg: colors.bg,          label: '弱化文本(#737373) vs 背景',              min: 4.5 },
+  { fg: colors.lineUi, bg: '#efe8db',          label: 'line-ui  控件边界 vs 暖底',     min: 3.0 },
+  { fg: colors.lineUi, bg: '#efe8db',          label: 'line-ui  控件边界 vs 终端 chrome', min: 3.0 },
+  // 正文文本（≥ 4.5:1 · 纸底 + 暖底双面）
+  { fg: colors.fg,        bg: colors.bg,           label: '正文(#2b2a27) vs 背景(#faf9f5)',         min: 4.5 },
+  { fg: colors.fg,        bg: colors.surface,      label: '正文 vs 白底(#ffffff)',                   min: 4.5 },
+  { fg: colors.fg,        bg: colors.surfaceWarm,  label: '正文 vs 暖底(#f5f0e8)',                   min: 4.5 },
+  { fg: colors.fgSecondary, bg: colors.bg,          label: '次文本(#4a4741) vs 背景',                 min: 4.5 },
+  { fg: colors.fgTertiary,  bg: colors.bg,          label: '三文本(#5e5d59) vs 背景',                 min: 4.5 },
+  { fg: colors.fgTertiary,  bg: colors.surfaceWarm, label: '三文本 vs 暖底',                          min: 4.5 },
+  // 弱化文本（≥ 4.5:1 · 本版校准到双底达标）
+  { fg: colors.fgMuted,     bg: colors.bg,          label: '弱化文本(#6b6a64) vs 背景',             min: 4.5 },
+  { fg: colors.fgMuted,     bg: colors.surfaceWarm, label: '弱化文本 vs 暖底',                      min: 4.5 },
   // 装饰文本（≥ 3:1 · WCAG 非强制但建议）
-  { fg: colors.fgDecorative, bg: colors.bg,         label: '装饰文本(#8a8a8a) vs 背景[装饰]',        min: 3.0 },
+  { fg: colors.fgDecorative, bg: colors.bg,         label: '装饰文本(#8a877e) vs 背景[装饰]',        min: 3.0 },
   // 大文本 accent（≥ 3:1 · 18pt+/14pt bold+）
-  { fg: colors.accent,      bg: colors.bg,          label: '橘色强调(#e85d04) vs 背景[大文本]',      min: 3.0 },
-  { fg: colors.accent,      bg: colors.surface,     label: '橘色强调 vs 白底[大文本]',                min: 3.0 },
-  // 小字安全橘（≥ 4.5:1 · AA）
-  { fg: colors.accentDark,  bg: colors.bg,          label: '深橘小字(#a03c00) vs 背景',              min: 4.5 },
-  { fg: colors.accentDark,  bg: colors.surface,     label: '深橘小字 vs 白底',                        min: 4.5 },
-  // 橘底文字（≥ 4.5:1 · AA）
-  { fg: colors.accentOnAccent, bg: colors.accent,   label: '黑色(#0a0a0a) vs 橘底(#e85d04)',          min: 4.5 },
-  { fg: colors.accentOnAccent, bg: colors.accent,   label: '黑色 vs 橘底[按钮文字]',                   min: 4.5 },
+  { fg: colors.accent,      bg: colors.bg,          label: '赤陶强调(#d77656) vs 背景[大文本]',      min: 3.0 },
+  { fg: colors.accent,      bg: colors.surface,     label: '赤陶强调 vs 白底[大文本]',                min: 3.0 },
+  // 小字安全强调（≥ 4.5:1 · AA）
+  { fg: colors.accentDark,  bg: colors.bg,          label: '深赭小字(#8f3d28) vs 背景',              min: 4.5 },
+  { fg: colors.accentDark,  bg: colors.surface,     label: '深赭小字 vs 白底',                        min: 4.5 },
+  // accent 底上的文字（≥ 4.5:1 · AA · 保持「亮底 + 深字」架构）
+  { fg: colors.accentOnAccent, bg: colors.accent, label: 'accent 底上的文字(#2b2a27) vs 赤陶(#d77656)', min: 4.5 },
+  { fg: colors.accentOnAccent, bg: colors.bg,     label: 'accent 底文字色 · 无背景时 vs 纸底',           min: 4.5 },
 ];
 
 // ---------- 执行检查 ----------

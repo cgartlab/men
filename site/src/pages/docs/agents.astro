@@ -4,43 +4,28 @@ import WikiManual from '../../components/WikiManual.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '角色说明 — ' + content.hero.title;
-const pageDesc = 'men、si、ji、chi、yi、xun 六个 Agent 的职责与边界：路由判定表、意图门（IntentGate）如何拦截，以及全员必须遵守的 7 条红线。';
+const pageDesc = '6 个 AI 帮手各自做什么、怎么配合，以及它们共同遵守的 7 条底线。';
 const base = '/';
 
-/* 每个角色的准确标签（来源：AGENTS.md / .opencode/agent/*.md） */
-const roleTags: Record<string, string[]> = {
-  men: ['primary', 'router', 'auditor'],
-  si: ['subagent', 'thinker', 'knowledge'],
-  ji: ['subagent', 'engineer', 'l1-verify'],
-  chi: ['subagent', 'data', 'investor', 'judge'],
-  yi: ['subagent', 'aesthetic', 'prompt-engine'],
-  xun: ['subagent', 'researcher', 'verify-first'],
-};
-
 const infobox = [
-  { k: '角色数', v: '<strong>6</strong>（1 primary + 5 subagent）' },
-  { k: '唯一入口', v: 'men（门）' },
-  { k: '唯一 spawner', v: 'men（子 Agent 禁止互相 spawn）' },
-  { k: '独立 Judge', v: 'chi（fresh-context spawn）' },
-  { k: '共享约定', v: '全员红线 7 条 + <code>CHARTER_CHECK</code>' },
+  { k: '角色数', v: '<strong>6</strong>（1 个老大 + 5 个帮手）' },
+  { k: '唯一入口', v: '门（men）——你只跟它对话' },
+  { k: '独立审核', v: '持（chi）——用全新视角检查别人的产出' },
 ];
 
 const toc = [
-  { id: 'agent-men', label: 'men（门）' },
-  { id: 'agent-si', label: 'si（思）' },
-  { id: 'agent-ji', label: 'ji（记）' },
-  { id: 'agent-chi', label: 'chi（持）' },
-  { id: 'agent-yi', label: 'yi（艺）' },
-  { id: 'agent-xun', label: 'xun（寻）' },
-  { id: 'routing', label: '路由判定表' },
-  { id: 'intentgate', label: '意图门 IntentGate' },
-  { id: 'redlines', label: '全员红线' },
+  { id: 'agent-men', label: '门（men）' },
+  { id: 'agent-si', label: '思（si）' },
+  { id: 'agent-j', label: '记（ji）' },
+  { id: 'agent-chi', label: '持（chi）' },
+  { id: 'agent-yi', label: '艺（yi）' },
+  { id: 'agent-xun', label: '寻（xun）' },
+  { id: 'redlines', label: '7 条底线' },
 ];
 
 const seealso = [
-  { href: base + 'docs/protocols', label: '协议规范', desc: '10 步协议与验证审计' },
-  { href: base + 'docs/architecture', label: '架构设计', desc: '协作拓扑与编排流程' },
-  { href: base + 'docs/configure', label: '配置指南', desc: '修改 agent 定义与模型' },
+  { href: base + 'docs/architecture', label: '架构设计', desc: '团队拓扑与编排流程' },
+  { href: base + 'docs/configure', label: '配置指南', desc: '修改角色定义与模型' },
 ];
 ---
 
@@ -48,90 +33,61 @@ const seealso = [
   <WikiManual
     crumb="角色说明"
     title="角色说明"
-    lead="6 个 agent 各司其职，由 <strong>men（门）</strong>统一编排。每个角色都有明确的职责边界、路由规则和验收标准——绝不越界，绝不猜需求。"
+    lead="6 个 AI 帮手各司其职。你不需要记住它们的名字——只需要对门说你要做什么，它会自动派给最合适的角色。下面供你想深入了解团队分工时查阅。"
     infoboxTitle="团队概要"
     infobox={infobox}
     toc={toc}
     seealso={seealso}
   >
-    {content.roles.map((role, i) => (
-      <section id={'agent-' + role.name} class="doc-section">
-        <h2>{String(i + 1).padStart(2, '0')} · {role.cn}（<code>{role.name}</code>）</h2>
-        <p>
-          <strong>{role.desc}</strong>
-        </p>
-        <p class="src-ref">mode：<code>{role.mode}</code></p>
-        <div class="wiki-note">
-          {roleTags[role.name]?.map((t) => <span class="wiki-tag">{t}</span>)}
-        </div>
-      </section>
-    ))}
-
-    <section id="routing" class="doc-section">
-      <h2>路由判定表</h2>
-      <p>用户指令到达 men 后，按以下规则路由到目标 agent：</p>
-      <div class="wiki-table">
-        <table>
-          <thead><tr><th>任务类型</th><th>目标 Agent</th><th>意图类别</th></tr></thead>
-          <tbody>
-            <tr><td>代码 / GitHub / 工程</td><td><strong>ji</strong>（记）</td><td><code>team</code></td></tr>
-            <tr><td>写作 / 内容 / 博客 / 周报</td><td><strong>ji</strong>（记）</td><td><code>team</code></td></tr>
-            <tr><td>方案思考 / 知识管理 / 深度研究 / 规划</td><td><strong>si</strong>（思）</td><td><code>team</code></td></tr>
-            <tr><td>信息收集 / 搜索 / 新闻 / 事实核查</td><td><strong>xun</strong>（寻）</td><td><code>search</code></td></tr>
-            <tr><td>投资 / 财务 / 市场分析 / 数据统计</td><td><strong>chi</strong>（持）</td><td><code>team</code></td></tr>
-            <tr><td>审美 / 文生图提示词 / 生图</td><td><strong>yi</strong>（艺）</td><td><code>team</code></td></tr>
-            <tr><td>混合 / 模糊</td><td><strong>men</strong> → 多路并行 + 汇总</td><td><code>team / hyperplan</code></td></tr>
-            <tr><td>分析 / 验证 / 评审</td><td><strong>相关专家 + chi</strong>（judge）</td><td><code>analyze</code></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="src-ref">来源：<code>.opencode/agent/men.md</code> 路由判定表</p>
+    <section id="agent-men" class="doc-section">
+      <h2>门（men）</h2>
+      <p><strong>团队老大，唯一和你对话的人。</strong></p>
+      <p>你说一句话，门来判断该谁来做、然后分出去。所有指令先到门这里，做完再由门汇总给你。它本身不写代码、不写文章、不画图——只负责分工和检查。</p>
     </section>
 
-    <section id="intentgate" class="doc-section">
-      <h2>意图门（IntentGate）</h2>
-      <p>men 在分诊阶段将用户指令分为四类意图，低置信时向用户确认、不猜：</p>
-      <div class="wiki-table">
-        <table>
-          <thead><tr><th>意图</th><th>触发关键词</th><th>执行路径</th><th>涉及 Agent</th></tr></thead>
-          <tbody>
-            <tr><td><code>search</code></td><td>查信息 / 新闻 / 资料 / 核查</td><td>xun 单路研究</td><td>xun</td></tr>
-            <tr><td><code>analyze</code></td><td>分析 / 评估 / 诊断 / 评审</td><td>专家产出 + judge 复核</td><td>si/ji/chi + chi（judge）</td></tr>
-            <tr><td><code>team</code></td><td>多领域 / 跨领域综合</td><td>多路并行 + si 规划（必要时）</td><td>任意组合</td></tr>
-            <tr><td><code>hyperplan</code></td><td>复杂项目启动 / 从零规划</td><td>深度思考多角度方案 → 拆解 → 执行</td><td>si + 后续各角色</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <section id="agent-si" class="doc-section">
+      <h2>思（si）</h2>
+      <p><strong>想事情的。</strong></p>
+      <p>遇到复杂任务时，思会先拆解成小步骤、写出方案。比如"写一篇关于 AI 的博客"，思会先想清楚结构再交给你。它也负责评估其他角色的产出质量——但只评不改。</p>
+    </section>
+
+    <section id="agent-j" class="doc-section">
+      <h2>记（ji）</h2>
+      <p><strong>写代码、写文章的。</strong></p>
+      <p>记是干实际活的角色：写代码、写文章、修 bug、做前端页面。它做完后会先跑一遍语法检查，确认没问题才交出去。</p>
+    </section>
+
+    <section id="agent-chi" class="doc-section">
+      <h2>持（chi）</h2>
+      <p><strong>看质量的，用全新视角审核。</strong></p>
+      <p>持有两个身份：一是做投资分析和财务数据；二是检查其他人的产出。检查的时候它会用一个全新的上下文——不看别人说了什么，只看到底做了什么。这样做能避免"自己查自己"的盲区。</p>
+    </section>
+
+    <section id="agent-yi" class="doc-section">
+      <h2>艺（yi）</h2>
+      <p><strong>画图的。</strong></p>
+      <p>艺负责生成配图。你给它一个想法，它会先写出详细的描述提示词，然后生成图片。也负责整体视觉风格和配色方案。</p>
+    </section>
+
+    <section id="agent-xun" class="doc-section">
+      <h2>寻（xun）</h2>
+      <p><strong>查资料的。</strong></p>
+      <p>寻负责搜网页、查新闻、核实事实。它会交叉验证信息来源，确保给你的信息是准确的。比如"查一下本周 AI 领域最新发布的大模型"——就是寻的活。</p>
     </section>
 
     <section id="redlines" class="doc-section">
-      <h2>全员红线（7 条）</h2>
-      <p>6 个 agent 必须逐字遵守：</p>
+      <h2>7 条底线</h2>
+      <p>所有 6 个角色都必须遵守这 7 条底线。无论哪个角色，都不能违反：</p>
       <ol>
-        <li><strong>不伪造输出</strong>：完成 = 验证过的完成。声称完成前必须有机械证据（退出码 0 / 产物文件存在）</li>
-        <li><strong>不跳过验证</strong>：执行后必须确认结果，不接受"应该没问题"</li>
-        <li><strong>不泄露用户隐私</strong>：用户数据、API key、个人信息不外传</li>
-        <li><strong>外部操作先确认</strong>：发邮件、公开发布、对外提交前必须征得用户同意</li>
-        <li><strong>破坏性操作先询问</strong>：trash &gt; rm，不确定时问用户</li>
-        <li><strong>需求模糊先问清楚</strong>：不脑补需求，澄清优先于行动</li>
-        <li><strong>输出格式</strong>：粗体关键信息、列表优先于段落、单段 ≤6 行</li>
+        <li><strong>不伪造输出</strong>：做完了才算完成，不能嘴上说说就算完事。必须有文件证据。</li>
+        <li><strong>不跳过检查</strong>：做完后必须验证结果，不接受"应该没问题"。</li>
+        <li><strong>不泄露隐私</strong>：你的数据、密码、个人信息不会传出去。</li>
+        <li><strong>外部操作先问你</strong>：发邮件、公开发布、对外提交前，一定会先问你。</li>
+        <li><strong>破坏性操作先确认</strong>：删除文件、覆盖数据等操作，不确定时会先问你。</li>
+        <li><strong>需求模糊先问清楚</strong>：不脑补需求，先问清楚再动手。</li>
+        <li><strong>输出格式清晰</strong>：关键信息加粗、用列表不用长段落、每段不超过 6 行。</li>
       </ol>
       <p class="src-ref">来源：<code>AGENTS.md</code> 全员红线条目</p>
     </section>
   </WikiManual>
 </BaseLayout>
-
-<style is:global>
-  .wiki-tag {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: var(--font-size-eyebrow);
-    color: var(--color-accent-dark);
-    background: var(--color-accent-tint);
-    padding: 1px var(--space-2);
-    border-radius: var(--radius-xs);
-    letter-spacing: 0.05em;
-    margin-right: var(--space-1);
-  }
-  .wiki-note .wiki-tag { background: var(--color-surface); border: 1px solid var(--color-line); }
-</style>

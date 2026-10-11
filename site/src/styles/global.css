@@ -34,7 +34,15 @@ html {
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
   color-scheme: light;
+  hanging-punctuation: first last;
 }
+
+/* ---- Apple-style scrollbar ---- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--color-fg) 20%, transparent); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--color-fg) 35%, transparent); }
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--color-fg) 20%, transparent) transparent; }
 
 body {
   min-height: 100vh;
@@ -96,9 +104,9 @@ body::before {
     /* 层 1：SVG feTurbulence 噪点 */
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E") repeat,
     /* 层 2：左上光晕 */
-    radial-gradient(circle at 20% 15%, #d9d9d9 0%, transparent 45%),
+    radial-gradient(circle at 20% 15%, #e8e6dc 0%, transparent 45%),
     /* 层 3：右下光晕 */
-    radial-gradient(circle at 80% 85%, #f0f0f0 0%, transparent 72%);
+    radial-gradient(circle at 80% 85%, #f5f0e8 0%, transparent 72%);
   mix-blend-mode: var(--paper-blend);
   opacity: var(--paper-overlay-opacity);
 }
@@ -106,75 +114,81 @@ body::before {
 /* ---------- Design Tokens (R8.5 · WCAG 2.2 AA 合规 · 语义命名) ---------- */
 :root {
   /* === 色相 / 亮度 === */
-  /* 背景（纸感） */
-  --color-bg: #fafafa;                         /* 页面底色 */
-  --color-bg-paper: #f5f5f5;                   /* 纸感底色（次级面板） */
-  --color-bg-warm: #f0ebe2;                    /* 暖调面板（hero 区域） */
+  /* 品牌规范：暖纸底 + 暖墨褐 + 赤陶（men 标识 v1 · docs/brand）
+     纸底 #faf9f5 与暖底 #f5f0e8 是本表所有对比度的两个基准面。 */
+  --color-bg: #faf9f5;                         /* 页面底色 · 暖纸 */
+  --color-bg-paper: #f5f0e8;                   /* 纸感底色（次级面板） */
+  --color-bg-warm: #efe8db;                    /* 暖调面板（hero 区域） */
 
   /* 前景文字（5 级梯度）
-     注：原称「每级都满足 WCAG 2.2 AA 4.5:1 on #fafafa」—— 实测仅前 4 级达标，
-     --color-fg-decorative 为 3.31:1，只可用于装饰性大写小字，不可用于正文。 */
-  --color-fg: #1a1a1a;                         /* 正文 / 标题 · 16.67:1 on #fafafa */
-  --color-fg-secondary: #404040;               /* 次文本 · 9.93:1 on #fafafa */
-  --color-fg-tertiary: #5c5c5c;                /* 三文本 · 6.41:1 on #fafafa */
-  --color-fg-muted: #737373;                   /* 弱化文本 · 4.54:1 on #fafafa（仅勉强达标，勿用于浅底面板上的小字） */
-  --color-fg-decorative: #8a8a8a;              /* 仅装饰 / 大写小字 · 3.31:1（<4.5，禁用于正文） */
+     注：前 4 级在「纸底」与「暖底」两个基准面上都实测 ≥4.5:1；
+     --color-fg-decorative 为 3.17–3.41:1，只可用于装饰性大写小字，不可用于正文。
+     （旧版 --color-fg-muted #737373 在暖底 #f0ebe2 上只有 3.99:1，是历史缺陷，
+       本版把五级梯度整体校准到双底达标。） */
+  --color-fg: #2b2a27;                         /* 正文 / 标题 · 13.62:1 纸 · 12.65:1 暖 */
+  --color-fg-secondary: #4a4741;               /* 次文本 · 8.79:1 纸 · 8.16:1 暖 */
+  --color-fg-tertiary: #5e5d59;                /* 三文本 · 6.26:1 纸 · 5.81:1 暖 */
+  --color-fg-muted: #6b6a64;                   /* 弱化文本 · 5.15:1 纸 · 4.78:1 暖 */
+  --color-fg-decorative: #8a877e;              /* 仅装饰 / 大写小字 · 3.41:1（<4.5，禁用于正文） */
 
-  /* 强调色（橘色 · 暖白纸感的核心） */
-  --color-accent: #e85d04;                     /* 主强调 · 仅大文本 / 填充 / 边框 · 3.35:1 on #fafafa */
-  --color-accent-dark: #a03c00;                /* 小字安全橘 · 6.41:1 on #fafafa */
-  --color-accent-soft: #c94700;                /* 中等强度橘 · 填充 / hover · 4.59:1 on #fafafa（实测已达正文 4.5 阈值） */
-  --color-accent-on-accent: #0a0a0a;           /* 橘底文字 · 5.66:1 on #e85d04（原注释 8.8:1 失准 +3.14，为全块最大失准项） */
-  --color-accent-tint: color-mix(in srgb, #e85d04 10%, #ffffff);  /* 橘色浅底 */
-  --color-accent-tint-strong: color-mix(in srgb, #e85d04 20%, #ffffff);
+  /* 强调色（赤陶 · 品牌规范的唯一强调色相）
+     语义架构沿用旧版「亮底 + 深字」：accent 类令牌都够亮，配 accent-on-accent(深) 使用。
+     这样任何 `color: var(--color-accent-on-accent)` 在纸底上仍是 13.62:1，
+     不会退化成同色。 */
+  --color-accent: #d77656;                     /* 主强调 · 图形 / 边框 / 大字号 · 3.01:1 纸；承载深字时 4.52:1 */
+  --color-accent-dark: #8f3d28;                /* 小字安全强调 · 6.96:1 纸 · 6.46:1 暖 */
+  --color-accent-soft: #bc513a;                /* 中等强度 · 文字/边框/hover 加深 · 4.55:1 纸 */
+  --color-accent-on-accent: #2b2a27;           /* accent 底上的文字 · 4.52:1 on #d77656 · 纸底 13.62:1 */
+  --color-accent-tint: color-mix(in srgb, #d77656 10%, #faf9f5);  /* 赤陶浅底 */
+  --color-accent-tint-strong: color-mix(in srgb, #d77656 20%, #faf9f5);
 
   /* Agent 角色色（6 个 · 单一真相源）
      用途一：首页滚动展示卡的强调色（index.astro showcase）
      用途二：首页编排拓扑图借同一色板编码「哪一步由哪个角色完成」的流向状态
      两处的颜色因此必须一致；改这里即可同时生效，不要在业务文件里再写字面量。 */
   --role-men: var(--color-accent);              /* 门 · 编排核心（同主强调色，不重复字面量） */
-  --role-si: #4a90d9;                           /* 思 · 思考与知识 */
-  --role-ji: #2ea043;                           /* 记 · 代码与工程 */
-  --role-chi: #bf8700;                          /* 持 · 投资与评审 */
-  --role-yi: #a371f7;                           /* 艺 · 视觉与生成 */
-  --role-xun: #8b5cf6;                          /* 寻 · 研究与会话 */
+  --role-si: #6f90a7;                           /* 思 · 思考与知识 · 雾蓝 */
+  --role-ji: #5e9963;                           /* 记 · 代码与工程 · 苔绿 */
+  --role-chi: #a4874d;                          /* 持 · 投资与评审 · 赭金 */
+  --role-yi: #a47faa;                           /* 艺 · 视觉与生成 · 灰紫 */
+  --role-xun: #9086ab;                          /* 寻 · 研究与会话 · 蓝紫灰 */
   /* 角色色 · 文本专用深色变体（AA 小文本合规）
-     上面 6 个亮色在 #f6f8fa 上只有 2.95–3.37:1，仅够 WCAG「大文本」(≥24px 或
+     上面 6 个亮色在纸底上只有 3.01–3.24:1，仅够 WCAG「大文本」(≥24px 或
      ≥18.66px 粗体) 的 3:1；用作正文级小字（拓扑图的 9–11px 标签）不达标。
-     以下为同色相压暗版，在 #f6f8fa 上实测 4.64–4.67:1。
+     以下为同色相压暗版，纸底与暖底双达标（4.55–6.96:1）。
      规则：role 亮色 → 大面积填充/描边/大号标题；role-*-text → 小字文本。 */
-  --role-men-text: #be4c03;                     /* 4.67:1 */
-  --role-si-text: #3b73ae;                      /* 4.64:1 */
-  --role-ji-text: #258036;                      /* 4.67:1 */
-  --role-chi-text: #936800;                     /* 4.67:1 */
-  --role-yi-text: #825ac6;                      /* 4.67:1 */
-  --role-xun-text: #7e54e0;                     /* 4.66:1 */
+  --role-men-text: #8f3d28;                     /* 6.96:1 纸 · 6.46:1 暖 */
+  --role-si-text: #447191;                      /* 4.96:1 纸 · 4.61:1 暖 */
+  --role-ji-text: #3a7a3f;                      /* 4.94:1 纸 · 4.59:1 暖 */
+  --role-chi-text: #85682f;                     /* 4.96:1 纸 · 4.61:1 暖 */
+  --role-yi-text: #9753a1;                      /* 4.90:1 纸 · 4.55:1 暖 */
+  --role-xun-text: #7361aa;                     /* 4.96:1 纸 · 4.61:1 暖 */
 
   /* 边框 / 分割线 */
-  --color-line: #d9d9d9;                       /* 标准边框 */
-  --color-line-strong: #b0b0b0;                /* 加强边框（hover / focus） */
-  --color-line-soft: #eeeeee;                  /* 细分割线 */
-  --color-line-faint: #f5f5f5;                 /* 极淡分割线 */
+  --color-line: #e6dfd8;                       /* 标准边框 · 1.25:1 纸 */
+  --color-line-strong: #c9bfb0;                /* 加强边框（hover / focus） · 1.72:1 纸 */
+  --color-line-soft: #efe9df;                  /* 细分割线 */
+  --color-line-faint: #f5f0e8;                 /* 极淡分割线 */
   /* 交互控件边界（WCAG 2.2 §1.4.11 非文本对比度 ≥3:1）
      仅用于「除填充外无其他可见内容」的控件（如首页 showcase 分页点）。
      有可见文字/图标的按钮不必靠边框识别，按 1.4.11 的 Boundaries 条款不要求
      可见边界，故仍用 --color-line*，不必一律抬到本令牌。
-     #848484 是能在全部真实承载体上都守住 3:1 的中性灰：
-       #ffffff 3.74 · #fafafa 3.58 · #f6f8fa 3.51 · #f5f5f5 3.43
-       #f0f0f0 3.28 · #eaeef2 3.21 · #f0ebe2 3.15
-     勿复用 --color-fg-decorative(#8a8a8a)：在暖底 #f0ebe2 只有 2.91、终端
-     chrome #eaeef2 只有 2.96，且它本是被注释限定「禁用于正文」的文本令牌。 */
-  --color-line-ui: #848484;                    /* UI 控件边界 · ≥3:1（§1.4.11） */
+     #847a6d 是能在全部真实承载体上都守住 3:1 的暖调灰：
+       #ffffff 4.21 · #faf9f5 4.00 · #f5f0e8 3.71
+       #efe8db 3.46 · #eee7d9 3.42 · #e8e6dc 3.37
+     勿复用 --color-fg-decorative(#8a877e)：在暖调面板 #efe8db 上只有 2.9 出头，
+     且它本是被注释限定「禁用于正文」的文本令牌。 */
+  --color-line-ui: #847a6d;                    /* UI 控件边界 · ≥3:1（§1.4.11） */
 
   /* 代码 / 行内块 */
-  --color-code: #1a1a1a;                       /* 代码文字 · 15.96:1 on #f5f5f5（--color-code-bg） */
-  --color-code-bg: #f5f5f5;                    /* 代码底色 */
-  --color-meta: #efe7d2;                       /* 元数据标签底色 */
+  --color-code: #2b2a27;                       /* 代码文字 · 12.65:1 on #f5f0e8（--color-code-bg） */
+  --color-code-bg: #f5f0e8;                    /* 代码底色 */
+  --color-meta: #eee7d9;                       /* 元数据标签底色 */
 
   /* 表面层 */
   --color-surface: #ffffff;                    /* 卡片 / 面板 */
-  --color-surface-warm: #f5f5f5;               /* 暖调面板 */
-  --color-surface-dark: #f0f0f0;               /* 深调面板 */
+  --color-surface-warm: #f5f0e8;               /* 暖调面板 */
+  --color-surface-dark: #efe8db;               /* 深调面板 */
 
   /* 状态色 */
   --color-done-bg: var(--color-accent-tint);
@@ -982,18 +996,22 @@ main {
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-line-soft);
+  text-wrap: balance;
 }
 .doc-section h3 {
   font-size: var(--font-size-h5);
   font-weight: var(--font-weight-semi);
   color: var(--color-fg);
   margin: var(--space-5) 0 var(--space-2);
+  text-wrap: balance;
 }
 .doc-section p {
   font-size: var(--font-size-body);
   color: var(--color-fg-secondary);
   line-height: var(--line-height-relaxed);
   margin-bottom: var(--space-3);
+  text-wrap: pretty;
+  max-width: var(--content-width);
 }
 .doc-section p strong, .doc-section li strong { color: var(--color-fg); }
 .doc-section code {

@@ -5,23 +5,23 @@ import { Icon } from 'astro-icon/components';
 
 const base = '/';
 const pageTitle = '核心机制 — ' + content.hero.title;
-const pageDesc = '系统如何运转：意图门拦截与路由、10 步编排协议、五项机械验证、门禁与事件审计，以及自主学习回路把经验写回知识库的全过程。';
+const pageDesc = '系统如何运转：意图门拦截与路由、10 步编排协议、五项机械验证、门禁与全程留痕，以及越用越聪明把经验写回知识库的全过程。';
 const steps = content.protocol.steps;
 const mechanisms = content.mechanisms;
 const commands = content.commands;
 const checks = content.checks;
 
 const pipeline = [
-  { n: '01', en: 'CERTAINTY', cn: '需求确认', icon: 'lucide:circle-check' },
-  { n: '02', en: 'TRIAGE', cn: '意图分诊', icon: 'lucide:git-branch' },
-  { n: '03', en: 'PLAN', cn: 'si 规划', icon: 'lucide:file-text' },
-  { n: '04', en: 'DISPATCH', cn: 'Wave 调度', icon: 'lucide:zap' },
-  { n: '05', en: 'COLLECT', cn: '收集产物', icon: 'lucide:download' },
-  { n: '06', en: 'EVALUATE', cn: 'si 回评', icon: 'lucide:bar-chart-3' },
-  { n: '07', en: 'VERIFY', cn: '双层验证', icon: 'lucide:shield-check' },
-  { n: '08', en: 'REPORT', cn: '汇总汇报', icon: 'lucide:file-text' },
-  { n: '09', en: 'LOOP', cn: '循环重试', icon: 'lucide:refresh-cw' },
-  { n: '10', en: 'LEARN', cn: '自主学习', icon: 'lucide:brain' },
+  { n: '01', en: 'CERTAINTY', cn: '确认意图', icon: 'lucide:circle-check' },
+  { n: '02', en: 'TRIAGE', cn: '判断派谁', icon: 'lucide:git-branch' },
+  { n: '03', en: 'PLAN', cn: '思拆任务', icon: 'lucide:file-text' },
+  { n: '04', en: 'DISPATCH', cn: '同时开工', icon: 'lucide:zap' },
+  { n: '05', en: 'COLLECT', cn: '收齐成果', icon: 'lucide:download' },
+  { n: '06', en: 'EVALUATE', cn: '对照标准', icon: 'lucide:bar-chart-3' },
+  { n: '07', en: 'VERIFY', cn: '机器检查', icon: 'lucide:shield-check' },
+  { n: '08', en: 'REPORT', cn: '交报告', icon: 'lucide:file-text' },
+  { n: '09', en: 'LOOP', cn: '失败重试', icon: 'lucide:refresh-cw' },
+  { n: '10', en: 'LEARN', cn: '提取经验', icon: 'lucide:brain' },
 ];
 ---
 
@@ -33,8 +33,7 @@ const pipeline = [
         核心机制
       </h1>
       <p class="mech-subtitle">
-        10 步编排协议 · 双层验证 · 事件系统 · 自主学习回路 —
-        从任务到交付的完整运行体系。
+        你说一句话，门自动走 10 步——分工、干活、检查、交报告。这页展示全过程怎么运转的。
       </p>
     </header>
 
@@ -44,7 +43,7 @@ const pipeline = [
         <span class="mech-pipeline__num">01</span>
         10 步编排协议
       </h2>
-      <p class="mech-pipeline__desc">每次 /ultrawork 任务自动执行以下步骤</p>
+      <p class="mech-pipeline__desc">每次任务自动走这 10 步，你不用记</p>
 
       <div class="pipeline-diagram" aria-hidden="true">
         <div class="pipeline-track">
@@ -92,16 +91,16 @@ const pipeline = [
     <section class="mech-wave" aria-labelledby="wave-title">
       <h2 id="wave-title" class="mech-wave__title">
         <span class="mech-wave__num">03</span>
-        Wave 并行调度
+        同时开工
       </h2>
-      <p class="mech-wave__desc">无依赖任务同时开工，依赖 Wave N-1 产物的后续波次串行执行</p>
+      <p class="mech-wave__desc">没有依赖关系的任务同时做，有先后关系的排队等</p>
 
       <div class="wave-diagram" aria-hidden="true">
         <div class="wave-lane">
-          <span class="wave-lane__label">WAVE 1</span>
-          <div class="wave-task" style="--wave-delay: 0s"><span>si · 规划</span></div>
-          <div class="wave-task" style="--wave-delay: 0.2s"><span>xun · 搜索</span></div>
-          <div class="wave-task" style="--wave-delay: 0.4s"><span>chi · 分析</span></div>
+          <span class="wave-lane__label">第一批</span>
+          <div class="wave-task" style="--wave-delay: 0s"><span>思 · 拆任务</span></div>
+          <div class="wave-task" style="--wave-delay: 0.2s"><span>寻 · 查资料</span></div>
+          <div class="wave-task" style="--wave-delay: 0.4s"><span>持 · 做分析</span></div>
         </div>
         <div class="wave-connector">
           <span class="wave-connector__dot"></span>
@@ -109,21 +108,21 @@ const pipeline = [
           <span class="wave-connector__dot"></span>
         </div>
         <div class="wave-lane">
-          <span class="wave-lane__label">WAVE 2</span>
-          <div class="wave-task wave-task--depends" style="--wave-delay: 0.8s"><span>ji · 实现</span></div>
-          <div class="wave-task wave-task--depends" style="--wave-delay: 1.0s"><span>yi · 设计</span></div>
+          <span class="wave-lane__label">第二批</span>
+          <div class="wave-task wave-task--depends" style="--wave-delay: 0.8s"><span>记 · 写代码</span></div>
+          <div class="wave-task wave-task--depends" style="--wave-delay: 1.0s"><span>艺 · 做设计</span></div>
         </div>
         <div class="wave-connector">
           <span class="wave-connector__dot"></span>
           <span class="wave-connector__dot"></span>
         </div>
         <div class="wave-lane">
-          <span class="wave-lane__label">WAVE 3</span>
-          <div class="wave-task" style="--wave-delay: 1.4s"><span>si · 回评</span></div>
-          <div class="wave-task" style="--wave-delay: 1.6s"><span>chi · 验证</span></div>
+          <span class="wave-lane__label">第三批</span>
+          <div class="wave-task" style="--wave-delay: 1.4s"><span>思 · 评估</span></div>
+          <div class="wave-task" style="--wave-delay: 1.6s"><span>持 · 审核</span></div>
         </div>
       </div>
-      <p class="src-ref">并行上限 ≤ 4 · 每 prompt 完整自洽 · 子 agent 无法追问</p>
+      <p class="src-ref">最多 4 个同时跑 · 每个人拿到的指令都完整清楚 · 各干各的互不干扰</p>
     </section>
 
     <!-- ======== Commands Structure ======== -->
@@ -154,13 +153,13 @@ const pipeline = [
     <section class="mech-verify" aria-labelledby="verify-title">
       <h2 id="verify-title" class="mech-verify__title">
         <span class="mech-verify__num">05</span>
-        双层验证
+        两层检查
       </h2>
-      <p class="mech-verify__desc">机械验证全 PASS 后，chi 做 fresh-context 语义复核</p>
+      <p class="mech-verify__desc">先跑脚本查文件，过了再由持用全新视角审一遍</p>
 
       <div class="verify-flow" aria-hidden="true">
         <div class="verify-layer verify-layer--mech">
-          <span class="verify-layer__label">第一层 · 机械</span>
+          <span class="verify-layer__label">第一层 · 脚本查</span>
           <div class="verify-checks">
             {checks.map((c) => (
               <div class="verify-check">
@@ -169,21 +168,21 @@ const pipeline = [
               </div>
             ))}
           </div>
-          <span class="verify-layer__status">→ 全 PASS</span>
+          <span class="verify-layer__status">→ 全过</span>
         </div>
         <div class="verify-arrow">
           <span>→</span>
-          <span>chi Judge</span>
+          <span>持审核</span>
         </div>
         <div class="verify-layer verify-layer--semantic">
-          <span class="verify-layer__label">第二层 · 语义</span>
+          <span class="verify-layer__label">第二层 · 持审</span>
           <div class="verify-checks">
-            <div class="verify-check"><span class="verify-check__name">内容质量</span></div>
-            <div class="verify-check"><span class="verify-check__name">需求满足度</span></div>
-            <div class="verify-check"><span class="verify-check__name">逻辑一致性</span></div>
-            <div class="verify-check"><span class="verify-check__name">可信度核查</span></div>
+            <div class="verify-check"><span class="verify-check__name">内容好不好</span></div>
+            <div class="verify-check"><span class="verify-check__name">做到位没有</span></div>
+            <div class="verify-check"><span class="verify-check__name">前后说得通</span></div>
+            <div class="verify-check"><span class="verify-check__name">靠不靠谱</span></div>
           </div>
-          <span class="verify-layer__status verify-layer__status--ok">两层都过 = 完成</span>
+          <span class="verify-layer__status verify-layer__status--ok">两层都过才算完成</span>
         </div>
       </div>
     </section>
@@ -192,9 +191,9 @@ const pipeline = [
     <section class="mech-events" aria-labelledby="events-title">
       <h2 id="events-title" class="mech-events__title">
         <span class="mech-events__num">06</span>
-        事件审计
+        全程留痕
       </h2>
-      <p class="mech-events__desc">14 种事件写入 events.jsonl，支持命令行回放</p>
+      <p class="mech-events__desc">每一步都记下来，事后可以回看整个过程</p>
       <div class="events-grid">
         {content.events.map((ev) => (
           <div class="event-item">
@@ -221,39 +220,39 @@ const pipeline = [
     <section class="mech-learn" aria-labelledby="learn-title">
       <h2 id="learn-title" class="mech-learn__title">
         <span class="mech-learn__num">07</span>
-        自主学习回路
+        越用越聪明
       </h2>
-      <p class="mech-learn__desc">REPORT 后自动触发，从事件流提取经验写入知识库</p>
+      <p class="mech-learn__desc">每次做完自动总结经验——踩过的坑下次绕开</p>
 
       <div class="learn-loop" aria-hidden="true">
         <div class="learn-node">
           <span class="learn-node__icon"><Icon name="lucide:bar-chart-3" width="20" height="20" /></span>
-          <span class="learn-node__label">读取 events.jsonl</span>
+          <span class="learn-node__label">读过程记录</span>
         </div>
         <div class="learn-arrow"></div>
         <div class="learn-node">
           <span class="learn-node__icon"><Icon name="lucide:search" width="20" height="20" /></span>
-          <span class="learn-node__label">提取错误模式</span>
+          <span class="learn-node__label">找踩过的坑</span>
         </div>
         <div class="learn-arrow"></div>
         <div class="learn-node">
           <span class="learn-node__icon"><Icon name="lucide:file-text" width="20" height="20" /></span>
-          <span class="learn-node__label">写入 knowledge/errors</span>
+          <span class="learn-node__label">记进经验库</span>
         </div>
         <div class="learn-arrow learn-arrow--loop"></div>
         <div class="learn-node">
           <span class="learn-node__icon"><Icon name="lucide:book-open" width="20" height="20" /></span>
-          <span class="learn-node__label">下次任务前读取</span>
+          <span class="learn-node__label">下次自动避开</span>
         </div>
       </div>
     </section>
 
     <section class="mech-nav">
       <a href={base + 'roles'} class="mech-nav__link">
-        ← 角色 <span>6 个 Agent 详情</span>
+        ← 角色 <span>6 个角色详情</span>
       </a>
       <a href={base + 'docs'} class="mech-nav__link mech-nav__link--next">
-        文档 → <span>技术细节与完整文档</span>
+        文档 → <span>完整文档</span>
       </a>
     </section>
   </section>

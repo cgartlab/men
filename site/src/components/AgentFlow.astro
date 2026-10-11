@@ -3,10 +3,12 @@
 // 视觉叙事：中心门发出粒子流 → 经过 5 个 Agent 区域变色 →
 //   汇聚到 verify 门禁 → 验证通过变绿 → 回流到门。
 // 渲染架构：WebGL1 instanced（ANGLE_instanced_arrays）+ Canvas2D fallback。
-//   粒子走 WebGL 单批次 drawArraysInstancedANGLE（GPU 端圆形裁剪 + 柔光），
-//   连线/门/门禁/标签走 Canvas2D（避免中文字体 atlas 复杂度）。
+//   粒子走 WebGL 单批次 drawArraysInstancedANGLE（GPU 端圆形裁剪 + 柔光）。
 // 性能：桌面 2400 / 移动 600 / reduced-motion 静态帧；DPR ≤2。
 // 纯 vanilla JS，零框架依赖，IIFE 包裹无全局泄漏。
+//
+// 2026-10-06：按产品决策移除 Canvas2D overlay 层（连线/门框/角色标签/verify 门禁/
+// 底部标语），仅保留 WebGL 粒子流。SHOW_OVERLAY 开关可一键恢复。
 ---
 
 <canvas
@@ -23,6 +25,7 @@
   // ════════════════════════════════════════════════════════════════
   // §1  无障碍 & 设备检测
   // ════════════════════════════════════════════════════════════════
+  const SHOW_OVERLAY = false; // 2026-10-06: 移除连线/门框/角色标签/verify 门禁/底部标语
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || innerWidth < 768;
   const isLowEnd = isMobile && (navigator.hardwareConcurrency || 4) <= 4;
@@ -50,14 +53,15 @@
     gateX:         0.80,       // 相对 canvas 宽度
     gateH:         0.35,       // 相对 canvas 高度
     // 颜色（RGB 0-1，从 design token 读取失败时的 fallback）
+    // 与 global.css 的 --role-* 保持一致（品牌规范：莫兰迪暖调）
     colors: {
-      men:  [0.91, 0.36, 0.02],   // #e85d04 橙
-      si:   [0.29, 0.56, 0.85],   // #4a90d9 蓝
-      ji:   [0.18, 0.63, 0.26],   // #2ea043 绿
-      chi:  [0.75, 0.53, 0.00],   // #bf8700 琥珀
-      yi:   [0.64, 0.44, 0.97],   // #a371f7 紫
-      xun:  [0.55, 0.36, 0.96],   // #8b5cf6 深紫
-      gate: [0.18, 0.63, 0.26],   // verify 绿
+      men:  [0.843, 0.463, 0.337], // #d77656 赤陶
+      si:   [0.435, 0.565, 0.655], // #6f90a7 雾蓝
+      ji:   [0.369, 0.600, 0.388], // #5e9963 苔绿
+      chi:  [0.643, 0.529, 0.302], // #a4874d 赭金
+      yi:   [0.643, 0.498, 0.667], // #a47faa 灰紫
+      xun:  [0.565, 0.525, 0.671], // #9086ab 蓝紫灰
+      gate: [0.369, 0.600, 0.388], // verify = ji 苔绿
     },
     // Agent 区域（相对于 canvas 中心的偏移，稍后 layout() 中算实际像素）
     agentAngles: [-90, -18, 54, 126, 198], // 度：思/记/持/艺/寻 等分
@@ -722,8 +726,8 @@ void main(){
       fallbackCtx.restore();
     }
 
-    // Overlay（连线/门/门禁/标签）
-    drawOverlay(time);
+    // Overlay（连线/门/门禁/标签）— 已移除
+    if (SHOW_OVERLAY) drawOverlay(time);
 
     requestAnimationFrame(loop);
   }
@@ -736,7 +740,7 @@ void main(){
     for (let i = 0; i < 60; i++) spawn();
     tick(0);
     if (gl) gl.draw();
-    drawOverlay(0);
+    if (SHOW_OVERLAY) drawOverlay(0);
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -756,8 +760,8 @@ void main(){
       gl = null;
     }
 
-    // Overlay canvas（连线/门/标签，始终需要）
-    createOverlay();
+    // Overlay canvas（连线/门/标签）— 2026-10-06 产品决策移除，SHOW_OVERLAY=false 跳过
+    if (SHOW_OVERLAY) createOverlay();
 
     // WebGL 不可用时，用主 canvas 做 2D fallback
     if (!gl) {
@@ -818,7 +822,7 @@ void main(){
   window.addEventListener('resize', () => {
     layout();
     if (gl) gl.resize();
-    resizeOverlay();
+    if (SHOW_OVERLAY) resizeOverlay();
     if (fallbackCtx) fallbackCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // 重新生成路径（坐标变了）
     paths = generatePaths();

@@ -9,7 +9,7 @@ const PROJECTS = [
   { name: '冥想系列', type: '创作企划', year: '策划中', desc: '以动态影像与声音为媒介的冥想视觉实验系列。', href: 'https://cgartlab.com' },
 ];
 
-const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编排系统 —— 出品机构、品牌方法论、作品矩阵（EDIC / Argus 等）、开源许可与联系方式。';
+const aboutDesc = '关于 men（门）：CG 艺术实验室的开源协作工具 —— 出品机构、品牌方法论、作品矩阵（EDIC / Argus 等）、开源许可与联系方式。';
 
 ---
 
@@ -19,9 +19,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     <header class="about-header">
       <div class="about-brand-block">
         <div class="about-brand-mark" aria-hidden="true">
-          <span class="about-brand-mark__dot"></span>
-          <span class="about-brand-mark__dot"></span>
-          <span class="about-brand-mark__dot"></span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 83.7963" fill="none"><path fill-rule="evenodd" d="M 49.4949,12.2222 C 34.4265,12.2222 33.9309,0.0 25.5529,0.0 C -3.0669,0.0 0.104,11.5407 0.104,41.3544 C 0.104,70.5679 -0.8861,74.2725 20.6975,83.2112 C 32.2645,88.0015 27.2247,61.9479 49.8298,61.9479 C 71.9301,61.9479 67.6945,87.8998 78.962,83.0437 C 100.8451,73.6126 100.8205,70.6946 99.5555,40.5173 C 98.3835,12.557 102.3083,0.0 74.4415,0.0 C 66.6945,0.0 67.0189,12.2222 49.4949,12.2222 Z M 61.7169,40.601 A 11.8034,11.8034 0 1 0 38.1101,40.601 A 11.8034,11.8034 0 1 0 61.7169,40.601 Z" fill="currentColor"/></svg>
         </div>
         <div>
           <p class="about-brand-meta">
@@ -32,7 +30,7 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
             <span>出品 {content.about.brand}</span>
           </p>
           <h1 class="about-brand-name">men（门）</h1>
-          <p class="about-brand-tagline">围绕一人内容创作与工程协作的 6+1 Agent 团队系统</p>
+          <p class="about-brand-tagline">帮你把 AI 变成一支协作团队——说句话，自动分工、执行、验证、交付</p>
         </div>
       </div>
     </header>
@@ -43,9 +41,10 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
     <section class="about-section" aria-labelledby="intro-title">
       <h2 class="about-h2" id="intro-title">men 是什么</h2>
       <p class="about-lede">
-        <strong>men（门）</strong>是 {content.about.brand} 推出的开源 Agent 编排系统：
-        门（编排）· 思（思考）· 记（写作/工程）· 持（数据/评审）· 艺（文生图）· 寻（搜索），
-        机械验证优先，假完成必识破。采用 {SITE.license} 许可，仓库
+        <strong>men（门）</strong>是 {content.about.brand} 做的一个开源工具：你跟它说一句话，
+        它自动把任务拆开、派给合适的角色去做、检查做完了没有、最后给你一份报告。
+        6 个角色各干各的——门管分工，思想问题，记写代码和文章，持查质量，艺做图，寻查资料。
+        采用 {SITE.license} 许可，仓库
         <a href={SITE.repo} target="_blank" rel="noopener">{SITE.repoLabel}</a>。
       </p>
     </section>
@@ -170,19 +169,18 @@ const aboutDesc = '关于 men（门）：CG 艺术实验室的开源 Agent 编�
 
   .about-brand-mark {
     display: flex;
-    flex-direction: column;
-    gap: 3px;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
     padding: var(--space-3);
     background: var(--color-surface);
     border: 1px solid var(--color-line-soft);
     border-radius: var(--radius-md);
+    color: var(--color-accent-dark);
   }
-  .about-brand-mark__dot {
-    width: 4px;
-    height: 4px;
-    background: var(--color-accent);
-    border-radius: var(--radius-pill);
+  .about-brand-mark svg {
+    width: 30px;
+    height: auto;
     display: block;
   }
 

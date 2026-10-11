@@ -2,7 +2,7 @@
 // BackgroundCanvas — R8 · 全局点阵背景（Layer A 静态 + Layer B 20s 无限漂移 + Layer C 网格流动）
 // 性能：纯 CSS 三层 background-image，零 JS，GPU 合成
 // 关键修复：z-index 从 -1 改为 0，配合 body { background: transparent }
-//   - z-index: -1 + position: fixed 在 <body> 内会被 body 背景色 (#fafafa) 覆盖
+//   - z-index: -1 + position: fixed 在 <body> 内会被 body 背景色 (#faf9f5) 覆盖
 //   - 改为 z-index: 0，body::before 纸纹保留 z-index: 3，覆盖顺序：
 //       0: BackgroundCanvas (color+dots) → 1: main 内容 → 3: body::before 纸纹
 // ================================================================

@@ -4,13 +4,15 @@
 // 原为三层叠加：符号矩阵（40×28 = 1120 个 M/E/N、门思记持艺寻 字形漂移）
 // + ASCII dither 上下弧线带 + AgentFlow WebGL 粒子。前两层是纯装饰噪音
 // （满屏散落字形各自随机漂移 + 上下抖动字符带），已按产品决策移除。
-// 现只保留 AgentFlow 的「门→Agent→verify→report」网络流。
+//
+// 2026-10-06：AgentFlow 的 Canvas2D overlay 层（连线/门框/角色标签/verify 门禁/
+// 底部标语）也按产品决策移除，仅保留 WebGL 粒子流。SHOW_OVERLAY 开关可恢复。
 //
 // 注：符号矩阵曾因 Astro scoped 样式不作用于 createElement 元素而整体失效
 // （实测 animationName 为 none），一度是「看得见但不动画」；其 :global() 修复
 // 与 reduced-motion 覆盖随之删除，因为该层已不复存在。
 //
-// AgentFlow：WebGL GPU 加速 Agent 网络流，其自身负责 prefers-reduced-motion。
+// AgentFlow：WebGL GPU 加速粒子流，其自身负责 prefers-reduced-motion。
 // ================================================================
 import AgentFlow from './AgentFlow.astro';
 ---

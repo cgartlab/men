@@ -6,23 +6,24 @@ import { SITE } from '../../data/site';
 import content from '../../data/content.json';
 
 const pageTitle = '概览 — ' + content.hero.title;
-const pageDesc = 'men（门）是什么：一页看懂项目定位与设计原则、6+1 角色团队组成，以及从安装到第一个任务的快速开始路径。';
+const pageDesc = 'men（门）是什么：一页看懂项目定位、使用场景、设计原则和团队组成，以及从安装到第一个任务的快速开始路径。';
 const base = '/';
 
 const infobox = [
   { k: '名称', v: '<strong>men（门）</strong>' },
   { k: '类型', v: 'OpenCode 原生 Agent 团队配置' },
   { k: '版本', v: `<code>${SITE.version}</code>` },
-  { k: '角色数', v: '6+1（men 编排 + 5 子 Agent）' },
+  { k: '角色数', v: '6（men 编排 + 5 个 AI 帮手）' },
   { k: '许可证', v: '<code>MIT</code>' },
   { k: '仓库', v: `<a href="${SITE.repo}" target="_blank" rel="noopener">cgartlab/men</a>` },
   { k: '出品', v: SITE.brand },
 ];
 
 const toc = [
-  { id: 'definition', label: '定义' },
-  { id: 'principles', label: '设计原则' },
-  { id: 'team', label: '团队组成' },
+  { id: 'definition', label: 'men 是什么' },
+  { id: 'usecases', label: '你能用它做什么' },
+  { id: 'principles', label: '它做事的原则' },
+  { id: 'team', label: '团队成员' },
   { id: 'quickstart', label: '快速开始' },
 ];
 
@@ -30,11 +31,8 @@ const seealso = [
   { href: base + 'docs/install', label: '安装', desc: '多平台安装命令' },
   { href: base + 'docs/configure', label: '配置', desc: '模型连接与配置' },
   { href: base + 'docs/quickstart', label: '快速上手', desc: '30 分钟跑通第一个任务' },
-  { href: base + 'docs/agents', label: '角色说明', desc: '6 个 agent 详解' },
-  { href: base + 'docs/protocols', label: '协议规范', desc: '验证与审计' },
+  { href: base + 'docs/agents', label: '角色说明', desc: '6 个角色详解' },
   { href: base + 'docs/architecture', label: '架构设计', desc: '拓扑与流程' },
-  { href: base + 'docs/governance', label: '治理', desc: '决策与发布' },
-  { href: base + 'docs/releases', label: '路线图', desc: '里程碑与版本' },
 ];
 ---
 
@@ -42,43 +40,89 @@ const seealso = [
   <WikiManual
     crumb="概览"
     title="概览"
-    lead={`<strong>men（门）</strong>是一个围绕<strong>一人内容创作与工程协作</strong>设计的 Agent 编排系统：通过 6+1 角色的 Agent 团队实现任务分诊、路由分发、质量验证与自主学习，使单个开发者具备完整的团队协作能力。`}
+    lead={`如果你一个人既写代码又写文章、又要做设计、还要查资料——<strong>men（门）</strong>就是为你设计的。它把 6 个各司其职的 AI 帮手组成一支团队，你只需要说一句话，剩下的交给门来分配。`}
     infoboxTitle="基本信息"
     infobox={infobox}
     toc={toc}
     seealso={seealso}
   >
     <section id="definition" class="doc-section">
-      <h2>定义</h2>
+      <h2>men 是什么</h2>
       <p>
-        <strong>men</strong>（门 · 编排与路由核心）是一个 <strong>OpenCode 原生 Agent 团队</strong>。
-        它不是独立的可安装程序，而是一套由 <code>agent 定义 + 脚本 + 知识库</code> 组成的配置体系：
-        通过 <code>opencode.json</code> 挂载 6 个角色（men / si / ji / chi / yi / xun），
-        由 men 作为编排核心统一接收用户指令、判定意图、分发任务并汇总结果。
+        <strong>men</strong>（门）是一套安装在 OpenCode 里的 AI 团队配置。
+        它不是一个单独的软件，而是 6 个 AI 角色的设定文件加上一些自动检查的脚本。
+        门是整个团队的编排与路由核心——所有指令先经过它，它来决定谁去干。
       </p>
-      <dl class="wiki-term-list">
-        <dt>门（men）</dt>
-        <dd>编排与路由核心，用户唯一对话入口，本身不执行具体产出。</dd>
-        <dt>意图门（IntentGate）</dt>
-        <dd>men 内的分诊机制，将指令分为 search / analyze / team / hyperplan 四类意图。</dd>
-        <dt>机械验证</dt>
-        <dd>以退出码、文件存在性等机械证据为准的完成判定方式，拒绝 LLM 自评。</dd>
-      </dl>
+      <p>
+        打个比方：你把 men 当成一个项目经理。
+        你说"帮我写一篇关于 AI 的文章"，它会判断这件事需要谁来做——
+        查资料的交给寻，写正文的交给记，画图的交给艺——
+        然后等所有人做完，再交给你一份检查结果。
+      </p>
+      <p>
+        关键一点：它不会只说一句"做完了"就算完事。
+        它会用脚本检查文件是不是真的存在、格式对不对，才算真正完成。
+      </p>
       <SrcRef files={['README.md','.opencode/agent/men.md']} />
     </section>
 
-    <section id="principles" class="doc-section">
-      <h2>设计原则</h2>
+    <section id="usecases" class="doc-section">
+      <h2>你能用它做什么</h2>
+      <p>下面是最常见的 6 类任务场景：</p>
       <div class="wiki-table">
         <table>
-          <thead><tr><th>#</th><th>原则</th><th>含义</th></tr></thead>
+          <thead><tr><th>场景</th><th>怎么说</th><th>谁来干</th></tr></thead>
           <tbody>
-            <tr><td>01</td><td><strong>机械优先</strong></td><td>完成 = 验证过的完成。所有验证基于退出码、文件存在性，拒绝 LLM 自评。</td></tr>
-            <tr><td>02</td><td><strong>本地优先</strong></td><td>OpenCode 原生 agent 定义 + 自定义 command，不依赖第三方插件或云服务。</td></tr>
-            <tr><td>03</td><td><strong>自治路由</strong></td><td>men 根据关键词判定表自动分类路由，低置信时向用户确认，不猜。</td></tr>
-            <tr><td>04</td><td><strong>事件审计</strong></td><td>所有关键节点写入 <code>events.jsonl</code>，支持完整回放和学习回路。</td></tr>
-            <tr><td>05</td><td><strong>自主学习</strong></td><td>任务完成后触发经验提取，错误模式沉淀到知识库，评估 KPI 可量化。</td></tr>
-            <tr><td>06</td><td><strong>不伪造输出</strong></td><td>7 条全员红线：不跳过验证、不泄露隐私、外部操作先确认、需求模糊先问。</td></tr>
+            <tr>
+              <td><strong>查最新信息</strong></td>
+              <td><code>/ultrawork 查一下本周 AI 领域最新发布的大模型</code></td>
+              <td><strong>寻（xun）</strong>去搜网页，整理成清单</td>
+            </tr>
+            <tr>
+              <td><strong>写一篇文章</strong></td>
+              <td><code>/ultrawork 写一篇关于 AI 趋势的博客</code></td>
+              <td><strong>思</strong>规划大纲 -> <strong>寻</strong>查资料 -> <strong>记</strong>写正文</td>
+            </tr>
+            <tr>
+              <td><strong>写代码</strong></td>
+              <td><code>/ultrawork 实现一个深色模式切换组件</code></td>
+              <td><strong>记（ji）</strong>写代码并检查语法</td>
+            </tr>
+            <tr>
+              <td><strong>生成配图</strong></td>
+              <td><code>/ultrawork 为文章生成一组科技感配图</code></td>
+              <td><strong>艺（yi）</strong>生成提示词并出图</td>
+            </tr>
+            <tr>
+              <td><strong>分析评估</strong></td>
+              <td><code>/ultrawork 评估某开源模型对行业的影响</code></td>
+              <td><strong>持（chi）</strong>分析，再用全新视角复核一遍</td>
+            </tr>
+            <tr>
+              <td><strong>规划项目</strong></td>
+              <td><code>/hyperplan 设计一个多角色协作系统</code></td>
+              <td><strong>思（si）</strong>深度思考，产出完整方案</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="wiki-note">
+        所有任务只需一条指令。门会自动判断该派谁做，做完了还要检查——你不需要记住每个角色的名字。
+      </div>
+    </section>
+
+    <section id="principles" class="doc-section">
+      <h2>它做事的原则</h2>
+      <p>这 5 条原则决定了 men 的行为方式：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>#</th><th>原则</th><th>具体含义</th></tr></thead>
+          <tbody>
+            <tr><td>01</td><td><strong>先检查再算完</strong></td><td>做完了不等于说完了。门会用脚本检查文件是否存在、格式是否正确，才算真正完成。</td></tr>
+            <tr><td>02</td><td><strong>东西放在你自己电脑上</strong></td><td>不依赖云服务，不上传你的数据。所有文件都在你的本地运行。</td></tr>
+            <tr><td>03</td><td><strong>拿不准就问</strong></td><td>如果你说的话不够清楚，门会先问你再动手。不猜、不脑补。</td></tr>
+            <tr><td>04</td><td><strong>全程留痕</strong></td><td>每一步操作都记录下来。事后可回答："当时为什么这么分配？"</td></tr>
+            <tr><td>05</td><td><strong>越用越聪明</strong></td><td>每次任务完成后自动总结经验，下次不会再犯同样的错。</td></tr>
           </tbody>
         </table>
       </div>
@@ -86,32 +130,45 @@ const seealso = [
     </section>
 
     <section id="team" class="doc-section">
-      <h2>团队组成</h2>
-      <p>6 个角色各司其职，men 是唯一接收用户指令的入口：</p>
+      <h2>团队成员</h2>
+      <p>6 个角色各司其职。你只需要和门对话，它会把活分给其他人：</p>
       <div class="wiki-table">
         <table>
-          <thead><tr><th>代号</th><th>中文名</th><th>职责</th><th>模型</th></tr></thead>
+          <thead><tr><th>代号</th><th>中文名</th><th>一句话职责</th></tr></thead>
           <tbody>
-            <tr><td><strong>men</strong></td><td>门</td><td>编排与路由核心</td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
-            <tr><td><strong>si</strong></td><td>思</td><td>思考与知识管理</td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
-            <tr><td><strong>ji</strong></td><td>记</td><td>代码与工程执行</td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
-            <tr><td><strong>chi</strong></td><td>持</td><td>投资分析 + 独立评审</td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
-            <tr><td><strong>yi</strong></td><td>艺</td><td>文生图提示词与生图</td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
-            <tr><td><strong>xun</strong></td><td>寻</td><td>搜索与调研</td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
+            <tr><td><strong>men</strong></td><td>门</td><td>团队老大——所有指令先经过它，它负责分工和汇总</td></tr>
+            <tr><td><strong>si</strong></td><td>思</td><td>想事情的——写方案、做计划、拆解任务</td></tr>
+            <tr><td><strong>ji</strong></td><td>记</td><td>写代码的——也负责写文章和检查代码质量</td></tr>
+            <tr><td><strong>chi</strong></td><td>持</td><td>看质量的——检查别人的产出，用全新视角审一遍</td></tr>
+            <tr><td><strong>yi</strong></td><td>艺</td><td>画图的——生成配图提示词和设计概念</td></tr>
+            <tr><td><strong>xun</strong></td><td>寻</td><td>查资料的——搜集信息、核实事实</td></tr>
           </tbody>
         </table>
       </div>
+      <p>
+        其中<strong>持（chi）</strong>有个特殊身份：它既是做分析的角色，
+        又负责检查其他角色的产出。它用全新的上下文来审核——
+        只看实际文件，不听"我做完了"的口头汇报。
+      </p>
       <SrcRef files={['opencode.json','.opencode/agent/men.md']} />
     </section>
 
     <section id="quickstart" class="doc-section">
       <h2>快速开始</h2>
+      <p>安装只需要两条命令。确保你的电脑已安装 Node.js 18 或更高版本和 OpenCode：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
-        <pre><code>npx @cgartlab/men        # npm 一行安装（任意目录，自动脚手架+依赖+验证）
-opencode                 # 启动 TUI</code></pre>
+        <pre><code>npx @cgartlab/men        # 一行安装（任意目录都可以）
+opencode                 # 启动 OpenCode</code></pre>
       </div>
-      <p>站点预览：<code>npx astro dev --config site/astro.config.mjs</code>（地址 http://localhost:4399/）</p>
+      <p>
+        安装成功后，输入 <code>/ultrawork</code> 开头就是你的第一个任务——
+        例如 <code>/ultrawork 查一下本周 AI 领域最新发布的开源模型</code>。
+        详细步骤见 <a href={base + 'docs/quickstart'}>快速上手</a>。
+      </p>
+      <p>
+        <strong>站点本地预览</strong>：<code>npx astro dev --config site/astro.config.mjs</code>（地址 http://localhost:4399/）
+      </p>
     </section>
   </WikiManual>
 </BaseLayout>

@@ -38,56 +38,56 @@ const showcaseAgents = [
   {
     id: 'men',
     cn: '门',
-    role: '编排与路由核心',
+    role: '团队经理',
     icon: 'lucide:door-open',
-    desc: '唯一接收用户指令的角色。意图分诊、任务路由、多 Agent 编排、结果汇总。所有指令从这扇门进入。',
-    skills: ['意图判定 (IntentGate)', '混合任务拆分', '多 Wave 调度', '结果汇总与去冲突', '事件审计写入'],
-    constraint: '本身不执行具体产出，不写代码、不写作、不设计',
+    desc: '你说一句话，门判断该谁做、派活、收结果、交报告。所有事从这扇门进。',
+    skills: ['判断该谁做', '拆任务', '同时派活', '收齐整理', '全程留痕'],
+    constraint: '只管分工不干活——不写代码、不写文章、不做设计',
   },
   {
     id: 'si',
     cn: '思',
-    role: '思考与知识管理',
+    role: '策略师',
     icon: 'lucide:pen-tool',
-    desc: '深度思考与多角度方案，产出 plan envelope（依赖图 + 并行波次 + 验收标准）。知识库管理与沉淀。',
-    skills: ['Plan Envelope 产出', '需求访谈拆解', '知识库沉淀', '回评子 Agent 产物'],
-    constraint: '只规划不执行代码，方案与计划需经 chi 验证',
+    desc: '把大任务拆成小任务，标好先后顺序，给每个小任务写"做成什么样算完"。',
+    skills: ['拆任务', '标先后顺序', '写验收标准', '记经验'],
+    constraint: '只拆任务不写代码，方案要经持审核',
   },
   {
     id: 'ji',
     cn: '记',
-    role: '代码与工程',
+    role: '工程师',
     icon: 'lucide:code-2',
-    desc: '按 plan 实现代码，前端开发优先。GitHub 操作、L1 机械验证、目录结构审计。',
-    skills: ['前端实现 (HTML/CSS/JS)', 'GitHub PR/Issue 操作', 'L1 验证 (typecheck/lint)', '写作 (技术文档/周报)', '目录结构审计'],
-    constraint: '本地 gate 验证通过后才交付，自我审查后再交 chi',
+    desc: '写代码、管 GitHub、写文章和文档。代码写完先跑检查，过了才交。',
+    skills: ['写代码', '管 GitHub', '跑检查', '写文章文档', '整理文件'],
+    constraint: '检查全过才交，不编"我做完了"',
   },
   {
     id: 'chi',
     cn: '持',
-    role: '数据/投资评审 / Judge',
+    role: '质检员 + 投资分析',
     icon: 'lucide:scale',
-    desc: '双重身份：投资持仓分析 + 独立 Judge。作为 judge 时用 fresh context 机械验证，只信产物不信自述。',
-    skills: ['持仓分析与收益计算', '独立 Judge (fresh-context)', '机械验证复核', '质量门禁判定', '投资数据分析'],
-    constraint: 'judge spawn 时用全新 context，不复用被验证者的上下文',
+    desc: '做投资分析，也当质检员——用全新视角审核别人的产出，只看实际文件。',
+    skills: ['分析持仓', '独立审核', '脚本复查', '查质量', '查数据'],
+    constraint: '审核时全新视角，不继承被审者的上下文',
   },
   {
     id: 'yi',
     cn: '艺',
-    role: '文生图与审美',
+    role: '设计师',
     icon: 'lucide:palette',
-    desc: '文生图提示词专家：思考中生成多方案提示词，经 SenseNova 出图。审美分析、设计决策、配色与版式。',
-    skills: ['设计决策与 Token 定义', '生图 (SenseNova U1)', '配色与版式', '审美分析', 'Logo 概念'],
-    constraint: '生图能力仅 yi 挂载，设计产出需附设计决策说明',
+    desc: '做设计决策——配色、字体、间距、布局。也生成配图和插画。',
+    skills: ['做设计', '生配图', '配色', '查无障碍', '做 Logo'],
+    constraint: '生图只有艺能直接出，别人要经过艺',
   },
   {
     id: 'xun',
     cn: '寻',
-    role: '搜索与研究',
+    role: '研究员',
     icon: 'lucide:search',
-    desc: '网络搜索、RSS 聚合、知识库检索、事实核查。只读约束，不修改源数据。',
-    skills: ['网页搜索 (Exa)', 'RSS 聚合扫描', '事实核查 (多源交叉)', '知识库检索', '来源验证与可信度评分'],
-    constraint: '只读约束，不修改源数据，搜索结果附来源链接',
+    desc: '搜网页、查资料、交叉核实信息真假。每条信息都标来源。',
+    skills: ['搜网页', '扫订阅源', '交叉核实', '查知识库', '标来源'],
+    constraint: '只查不改，搜不到就老实说',
   },
 ];
 
@@ -125,7 +125,7 @@ const faq = install.faq || [];
   <section class="install" aria-labelledby="install-title">
     <div class="install__header">
       <h2 id="install-title" class="install__title">快速开始</h2>
-      <a href={base + 'docs/install'} class="install__guide">完整安装指南 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+      <a href={base + 'docs/install'} class="install__guide">安装指南 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
     </div>
 
     <div class="terminal">
@@ -144,7 +144,7 @@ const faq = install.faq || [];
       <div class="terminal__body">
         <!-- Agent tab -->
         <div class="terminal__panel" id="term-panel-agent" role="tabpanel">
-          <p class="terminal__intro">把这句话发给任何 AI 助手（OpenCode / Claude / Cursor），一键复制全文：</p>
+          <p class="terminal__intro">把这句话复制给 AI 助手（OpenCode / Claude / Cursor），让它帮你装好：</p>
           <div class="terminal__cmd">
             <div class="terminal__cmd-line">
               <span class="terminal__ps1 terminal__ps1--agent">{'>'}</span>
@@ -195,7 +195,7 @@ const faq = install.faq || [];
     <div class="showcase__header">
       <p class="showcase__label">THE TEAM</p>
       <h3 class="showcase__heading">六个角色，一个核心</h3>
-      <p class="showcase__sub">各司其职，机械验证优先，假完成必识破。</p>
+      <p class="showcase__sub">你说一句话，团队自动分工、干活、检查、交报告。</p>
     </div>
     <div class="showcase__track">
       {showcaseAgents.map((a) => (
@@ -230,43 +230,43 @@ const faq = install.faq || [];
           <div class="showcase__trait">
             <Icon name="lucide:git-branch" width="16" height="16" />
             <div>
-              <strong>Wave 并行调度</strong>
-              <span>无依赖任务同时开工，依赖关系自动保障</span>
+              <strong>同时开工</strong>
+              <span>没有依赖关系的任务同时做，有先后关系的排队等</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:shield-check" width="16" height="16" />
             <div>
-              <strong>双层机械验证</strong>
-              <span>verify.mjs 五项检查 + chi 独立 Judge 语义复核</span>
+              <strong>两层检查</strong>
+              <span>先跑脚本查文件，再由持用全新视角审一遍</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:activity" width="16" height="16" />
             <div>
-              <strong>全量事件审计</strong>
-              <span>events.jsonl 记录 14 种事件，所有决策可追溯</span>
+              <strong>全程留痕</strong>
+              <span>每一步都记下来，事后可以回看整个过程</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:brain" width="16" height="16" />
             <div>
-              <strong>自主学习回路</strong>
-              <span>learn.mjs 自动提取经验，eval-metrics 计算 KPI</span>
+              <strong>越用越聪明</strong>
+              <span>每次做完自动总结经验——踩过的坑下次绕开</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:lock" width="16" height="16" />
             <div>
-              <strong>安全门禁</strong>
-              <span>gate.mjs 白名单防注入，上限 5 次防死循环</span>
+              <strong>防死循环</strong>
+              <span>最多重试 5 次，不行就老实说卡住了</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:file-code" width="16" height="16" />
             <div>
-              <strong>零依赖脚本</strong>
-              <span>纯 Node 运行，验证/门禁/审计三件套无第三方依赖</span>
+              <strong>轻量运行</strong>
+              <span>所有脚本零依赖，装好 Node 就能跑</span>
             </div>
           </div>
         </div>
@@ -284,16 +284,16 @@ const faq = install.faq || [];
   </section>
   <section class="topo" aria-labelledby="topo-title">
     <div class="topo__header">
-      <h2 id="topo-title" class="topo__title">团队拓扑</h2>
-      <a href={base + 'roles'} class="topo__all">查看全部角色 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+      <h2 id="topo-title" class="topo__title">团队怎么协作</h2>
+      <a href={base + 'roles'} class="topo__all">看全部角色 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
     </div>
-    <p class="topo__desc">用户指令 → IntentGate 分诊 → Wave 并发 spawn → verify.mjs 机械门禁 → chi fresh-context 复核 → 四段汇报回传；失败回到失败点重试 ≤5 次</p>
+    <p class="topo__desc">你说一句话 → 门判断该谁做 → 同时派活 → 两层检查 → 交报告给你；不行就重试，最多 5 次</p>
 
     <div class="topo-diagram">
       <svg viewBox="0 0 1200 560" class="topo-svg" aria-hidden="true">
         <defs>
           <!-- Arrowheads -->
-          <marker id="mk-fg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8b949e" /></marker>
+          <marker id="mk-fg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--color-fg-muted)" /></marker>
           <marker id="mk-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--color-accent)" /></marker>
           <marker id="mk-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-ji)" /></marker>
           <marker id="mk-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-chi)" /></marker>
@@ -380,8 +380,8 @@ const faq = install.faq || [];
         <g>
           <rect x="280" y="232" width="220" height="100" rx="16" class="topo-node topo-node--hub" />
           <text x="390" y="268" text-anchor="middle" class="topo-label topo-label--hub-cn">men 门</text>
-          <text x="390" y="292" text-anchor="middle" class="topo-label topo-label--hub-sub">IntentGate · 唯一 spawner</text>
-          <text x="390" y="312" text-anchor="middle" class="topo-label topo-label--hub-sub2">Wave ≤4 并行 · COLLECT</text>
+          <text x="390" y="292" text-anchor="middle" class="topo-label topo-label--hub-sub">判断该谁做 · 派活</text>
+          <text x="390" y="312" text-anchor="middle" class="topo-label topo-label--hub-sub2">最多4个同时跑</text>
           <rect x="280" y="232" width="220" height="100" rx="16" class="topo-pulse" />
         </g>
 
@@ -389,31 +389,31 @@ const faq = install.faq || [];
         <g>
           <rect x="620" y="70" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="94" text-anchor="middle" class="topo-label topo-label--agent-cn">思</text>
-          <text x="668" y="112" text-anchor="middle" class="topo-label topo-label--agent-id">si · 思考/知识管理</text>
+          <text x="668" y="112" text-anchor="middle" class="topo-label topo-label--agent-id">si · 拆任务</text>
           <circle cx="740" cy="78" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="138" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="162" text-anchor="middle" class="topo-label topo-label--agent-cn">记</text>
-          <text x="668" y="180" text-anchor="middle" class="topo-label topo-label--agent-id">ji · 代码/写作</text>
+          <text x="668" y="180" text-anchor="middle" class="topo-label topo-label--agent-id">ji · 写代码/文章</text>
           <circle cx="740" cy="146" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="206" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="230" text-anchor="middle" class="topo-label topo-label--agent-cn">寻</text>
-          <text x="668" y="248" text-anchor="middle" class="topo-label topo-label--agent-id">xun · 搜索/核查</text>
+          <text x="668" y="248" text-anchor="middle" class="topo-label topo-label--agent-id">xun · 查资料</text>
           <circle cx="740" cy="214" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="274" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="298" text-anchor="middle" class="topo-label topo-label--agent-cn">艺</text>
-          <text x="668" y="316" text-anchor="middle" class="topo-label topo-label--agent-id">yi · 文生图/审美</text>
+          <text x="668" y="316" text-anchor="middle" class="topo-label topo-label--agent-id">yi · 做设计</text>
           <circle cx="740" cy="282" r="4" class="topo-status topo-status--active" />
         </g>
         <g>
           <rect x="620" y="342" width="130" height="54" class="topo-node topo-node--agent" />
           <text x="668" y="366" text-anchor="middle" class="topo-label topo-label--agent-cn">持</text>
-          <text x="668" y="384" text-anchor="middle" class="topo-label topo-label--agent-id">chi · 数据/投资</text>
+          <text x="668" y="384" text-anchor="middle" class="topo-label topo-label--agent-id">chi · 投资/审核</text>
           <circle cx="740" cy="350" r="4" class="topo-status topo-status--verify" />
           <rect x="700" y="330" width="62" height="18" rx="9" class="topo-badge" />
           <text x="731" y="343" text-anchor="middle" class="topo-label topo-label--badge">兼 Judge</text>
@@ -422,26 +422,26 @@ const faq = install.faq || [];
         <!-- Mechanical gate -->
         <g>
           <rect x="830" y="256" width="150" height="60" rx="10" class="topo-node topo-node--verify" />
-          <text x="905" y="280" text-anchor="middle" class="topo-label topo-label--node-title">verify.mjs</text>
-          <text x="905" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">五项机械检查</text>
-          <text x="905" y="310" text-anchor="middle" class="topo-label topo-label--node-micro">产物·密钥·TODO·结构·退出码</text>
+          <text x="905" y="280" text-anchor="middle" class="topo-label topo-label--node-title">脚本检查</text>
+          <text x="905" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">五项检查</text>
+          <text x="905" y="310" text-anchor="middle" class="topo-label topo-label--node-micro">文件·密钥·TODO·结构·退出码</text>
           <circle cx="968" cy="264" r="4" class="topo-status topo-status--active" />
         </g>
 
         <!-- Judge -->
         <g>
           <rect x="1040" y="256" width="140" height="60" rx="10" class="topo-node topo-node--judge" />
-          <text x="1110" y="280" text-anchor="middle" class="topo-label topo-label--node-title">chi · Judge</text>
-          <text x="1110" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">fresh-context 语义复核</text>
-          <text x="1110" y="310" text-anchor="middle" class="topo-label topo-label--node-micro">只信产物 · 不信自述</text>
+          <text x="1110" y="280" text-anchor="middle" class="topo-label topo-label--node-title">持 · 审核</text>
+          <text x="1110" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">全新视角审核</text>
+          <text x="1110" y="310" text-anchor="middle" class="topo-label topo-label--node-micro">只看文件 · 不听汇报</text>
           <circle cx="1168" cy="264" r="4" class="topo-status topo-status--verify" />
         </g>
 
         <!-- Knowledge sink -->
         <g>
           <rect x="540" y="492" width="220" height="48" rx="10" class="topo-node topo-node--knowledge" />
-          <text x="650" y="512" text-anchor="middle" class="topo-label topo-label--node-title">knowledge/</text>
-          <text x="650" y="528" text-anchor="middle" class="topo-label topo-label--node-sub">LEARN 自主学习沉淀</text>
+          <text x="650" y="512" text-anchor="middle" class="topo-label topo-label--node-title">经验库</text>
+          <text x="650" y="528" text-anchor="middle" class="topo-label topo-label--node-sub">自动总结经验</text>
         </g>
       </svg>
     </div>
@@ -449,11 +449,11 @@ const faq = install.faq || [];
     <div class="topo-legend">
       <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--input"></span>用户输入</span>
       <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--hub"></span>编排核心</span>
-      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--agent"></span>子 Agent</span>
-      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--verify"></span>机械门禁</span>
-      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--judge"></span>Judge 复核</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--agent"></span>子角色</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--verify"></span>脚本检查</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--judge"></span>持审核</span>
       <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--report"></span>结果回传</span>
-      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--fail"></span>FAIL 重试</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--fail"></span>失败重试</span>
     </div>
 
   </section>
@@ -462,7 +462,7 @@ const faq = install.faq || [];
   <section class="mechanisms" aria-labelledby="mech-title">
     <div class="mechanisms__header">
       <h2 id="mech-title" class="mechanisms__title">核心机制</h2>
-      <a href={base + 'mechanisms'} class="mechanisms__all">了解全部 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+      <a href={base + 'mechanisms'} class="mechanisms__all">看全部 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
     </div>
     <div class="mechanisms__list">
       {mechanisms.map((m, i) => (
@@ -482,10 +482,13 @@ const faq = install.faq || [];
     <h2 id="faq-title" class="faq__title">常见问题</h2>
     <div class="faq__list">
       {(faq.length > 0 ? faq : [
-        { q: 'men 是什么？', a: '6+1 角色的 Agent 编排系统，围绕一人内容创作与工程协作设计。所有定义、脚本、知识库托管在 GitHub。' },
-        { q: '如何使用？', a: '克隆仓库，运行 <code>npx astro dev --config site/astro.config.mjs</code>，浏览器打开 <code>localhost:4399/</code>。' },
-        { q: '可以自定义角色吗？', a: '编辑 <code>.opencode/agent/*.md</code>，修改 <code>opencode.json</code>，重新同步。详见配置指南。' },
-        { q: '如何验证？', a: '运行 <code>node scripts/verify.mjs</code>，五项机械检查全 PASS 即可。' },
+        { q: 'men 是什么？', a: '你说一句话，AI 团队自动分工、干活、检查、交报告。6 个角色各干各的，你不用指定谁做什么。' },
+
+        { q: '怎么开始用？', a: '在终端运行 <code>npx @cgartlab/men</code>，装完就能用。然后在 OpenCode 里输入 <code>/ultrawork 你的任务</code>。' },
+
+        { q: '我不会写代码，能用吗？', a: '能用。日常使用只需要用大白话说出你想做什么。' },
+
+        { q: '怎么检查装对了？', a: '安装完成后会自动验证。你也可以手动运行验证命令，五项检查全过就对了。' },
       ]).map((item) => (
         <details class="faq__item">
           <summary class="faq__q">{item.q}</summary>
@@ -498,11 +501,11 @@ const faq = install.faq || [];
   <!-- ===== CTA ===== -->
   <section class="cta" aria-label="开始使用">
     <div class="cta__inner">
-      <h2 class="cta__title">现在就<em>推门而入</em></h2>
-      <p class="cta__desc">认识角色，了解机制，开始协作。</p>
+      <h2 class="cta__title">现在就<em>开始用</em></h2>
+      <p class="cta__desc">30 秒装好，一句话开工。</p>
       <div class="cta__actions">
-        <a href={base + 'roles'} class="hero-cta hero-cta--primary">认识角色 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
-        <a href={base + 'mechanisms'} class="hero-cta hero-cta--ghost">核心机制 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+        <a href={base + 'roles'} class="hero-cta hero-cta--primary">认识团队 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+        <a href={base + 'mechanisms'} class="hero-cta hero-cta--ghost">了解机制 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
       </div>
     </div>
   </section>
@@ -535,46 +538,47 @@ const faq = install.faq || [];
   .install__guide { font-family: var(--font-mono); font-size: 0.76rem; color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s; }
   .install__guide:hover { color: var(--color-accent-dark); text-decoration: none; }
 
-  .terminal { background: #f6f8fa; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid #d0d7de; }
-  .terminal__chrome { display: flex; align-items: center; gap: var(--space-4); padding: 10px var(--space-4); background: #eaeef2; border-bottom: 1px solid #d0d7de; }
+  .terminal { background: var(--color-bg-paper); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-line); }
+  .terminal__chrome { display: flex; align-items: center; gap: var(--space-4); padding: 10px var(--space-4); background: var(--color-bg-warm); border-bottom: 1px solid var(--color-line); }
   .terminal__dots { display: flex; gap: 8px; flex-shrink: 0; }
   .terminal__dot { width: 12px; height: 12px; border-radius: 50%; }
+  /* macOS 窗口三色：图标性符号，不随品牌配色变动 */
   .terminal__dot--red { background: #ff5f57; }
   .terminal__dot--yellow { background: #febc2e; }
   .terminal__dot--green { background: #28c840; }
   .terminal__tabs { display: flex; gap: 0; flex: 1; overflow-x: auto; }
   .terminal__tab {
     font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi);
-    color: #656d76; background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--color-fg-tertiary); background: none; border: none; border-bottom: 2px solid transparent;
     padding: 6px var(--space-4); cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
   }
-  .terminal__tab[aria-selected="true"] { color: #1f2328; border-bottom-color: var(--color-accent); }
-  .terminal__tab:hover { color: #1f2328; }
+  .terminal__tab[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-accent); }
+  .terminal__tab:hover { color: var(--color-fg); }
 
   .terminal__body { padding: var(--space-5) var(--space-6); min-height: 120px; }
-  .terminal__intro { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: #656d76; margin-bottom: var(--space-4); line-height: 1.6; }
-  .terminal__hint { font-family: var(--font-mono); font-size: 0.68rem; color: #8b949e; margin-top: var(--space-3); line-height: 1.5; }
-  .terminal__cmd { margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid #d8dee4; }
+  .terminal__intro { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-tertiary); margin-bottom: var(--space-4); line-height: 1.6; }
+  .terminal__hint { font-family: var(--font-mono); font-size: 0.68rem; color: var(--color-fg-muted); margin-top: var(--space-3); line-height: 1.5; }
+  .terminal__cmd { margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-line); }
   .terminal__cmd:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
   .terminal__cmd-meta { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: 6px; flex-wrap: wrap; }
-  .terminal__cmd-label { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: #1f2328; }
-  .terminal__cmd-desc { font-family: var(--font-mono); font-size: 0.68rem; color: #8b949e; }
+  .terminal__cmd-label { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .terminal__cmd-desc { font-family: var(--font-mono); font-size: 0.68rem; color: var(--color-fg-muted); }
   .terminal__cmd-line {
     display: flex; align-items: flex-start; gap: var(--space-2);
-    background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 10px var(--space-3);
+    background: var(--color-bg); border: 1px solid var(--color-line); border-radius: 6px; padding: 10px var(--space-3);
   }
   .terminal__ps1 { font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-accent-dark); flex-shrink: 0; font-weight: var(--font-weight-bold); line-height: 1.5; }
-  .terminal__ps1--agent { color: #0969da; }
+  .terminal__ps1--agent { color: var(--role-si-text); }
   .terminal__cmd-line code {
-    font-family: var(--font-mono); font-size: var(--font-size-body); color: #1f2328;
+    font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-fg);
     flex: 1; min-width: 0; word-break: break-word; line-height: 1.5; white-space: pre-wrap;
   }
   .terminal__copy {
     flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border: 1px solid #d0d7de; border-radius: 6px;
-    background: #f6f8fa; color: #656d76; cursor: pointer; transition: all 0.2s;
+    width: 32px; height: 32px; border: 1px solid var(--color-line); border-radius: 6px;
+    background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
   }
-  .terminal__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: #fff; }
+  .terminal__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
   .terminal__panel { display: block; }
   .terminal__panel[hidden] { display: none; }
 
@@ -674,7 +678,7 @@ const faq = install.faq || [];
 
   /* Bézier lines */
   .topo-bezier { fill: none; stroke-width: 1.5; }
-  .topo-bezier--input { stroke: #8b949e; }
+  .topo-bezier--input { stroke: var(--color-fg-muted); }
   .topo-bezier--branch { stroke: var(--color-accent); stroke-opacity: 0.45; }
   .topo-bezier--return { stroke: var(--role-ji); stroke-opacity: 0.6; stroke-dasharray: 6 4; }
   .topo-bezier--verdict { stroke: var(--role-ji); stroke-width: 1.8; }
@@ -685,7 +689,7 @@ const faq = install.faq || [];
 
   /* Animated dots */
   .topo-dot { fill: var(--color-accent); }
-  .topo-dot--input { fill: #8b949e; }
+  .topo-dot--input { fill: var(--color-fg-muted); }
   .topo-dot--return { fill: var(--role-ji); }
   .topo-dot--verdict { fill: var(--role-ji); }
   .topo-dot--fail { fill: var(--role-chi); }
@@ -695,36 +699,39 @@ const faq = install.faq || [];
 
   /* Nodes */
   .topo-node { rx: 10; ry: 10; }
-  .topo-node--input { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
+  .topo-node--input { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
+  /* hub 用赤陶填充 + 深字（4.52:1）；配合 --color-accent-on-accent(深) 使用 */
   .topo-node--hub { fill: var(--color-accent); stroke: none; }
-  .topo-node--agent { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--judge { fill: #f6f8fa; stroke: var(--role-chi); stroke-width: 1.5; }
-  .topo-node--output { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
-  .topo-node--verify { fill: #f6f8fa; stroke: var(--role-ji); stroke-width: 1.5; }
-  .topo-node--knowledge { fill: #fafafa; stroke: var(--role-xun); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .topo-node--agent { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
+  .topo-node--judge { fill: var(--color-bg-paper); stroke: var(--role-chi); stroke-width: 1.5; }
+  .topo-node--output { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
+  .topo-node--verify { fill: var(--color-bg-paper); stroke: var(--role-ji); stroke-width: 1.5; }
+  .topo-node--knowledge { fill: var(--color-bg); stroke: var(--role-xun); stroke-width: 1.2; stroke-dasharray: 5 4; }
   .topo-badge { fill: var(--role-chi); fill-opacity: 0.14; stroke: var(--role-chi); stroke-opacity: 0.5; stroke-width: 1; }
 
   /* Labels */
   .topo-label { font-family: var(--font-mono); }
-  .topo-label--input { fill: #1f2328; font-size: 16px; font-weight: 600; }
-  .topo-label--sub { fill: #656d76; font-size: 11px; font-weight: 400; }
-  .topo-label--hub-cn { fill: #fff; font-size: 20px; font-weight: 700; }
-  .topo-label--hub-sub { fill: rgba(255,255,255,0.85); font-size: 12px; }
-  .topo-label--agent-cn { fill: #1f2328; font-size: 16px; font-weight: 700; }
-  .topo-label--agent-id { fill: #656d76; font-size: 11px; }
-  .topo-label--judge-cn { fill: #1f2328; font-size: 15px; font-weight: 600; }
-  .topo-label--judge-sub { fill: #656d76; font-size: 11px; }
+  .topo-label--input { fill: var(--color-fg); font-size: 16px; font-weight: 600; }
+  .topo-label--sub { fill: var(--color-fg-tertiary); font-size: 11px; font-weight: 400; }
+  /* hub 上的文字：赤陶底 #d77656 → 深字 4.52:1
+     注意不要用半透明来弱化副标题 —— alpha 会把对比度拉到 4.5 以下，改用字号/字重区分 */
+  .topo-label--hub-cn { fill: var(--color-accent-on-accent); font-size: 20px; font-weight: 700; }
+  .topo-label--hub-sub { fill: var(--color-accent-on-accent); font-size: 12px; font-weight: 500; }
+  .topo-label--agent-cn { fill: var(--color-fg); font-size: 16px; font-weight: 700; }
+  .topo-label--agent-id { fill: var(--color-fg-tertiary); font-size: 11px; }
+  .topo-label--judge-cn { fill: var(--color-fg); font-size: 15px; font-weight: 600; }
+  .topo-label--judge-sub { fill: var(--color-fg-tertiary); font-size: 11px; }
   .topo-label--judge-tag { fill: var(--role-chi-text); font-size: 11px; font-weight: 600; font-style: italic; }
   .topo-label--badge { fill: var(--role-chi-text); font-size: 9px; font-weight: 600; }
-  .topo-label--hub-sub2 { fill: rgba(255,255,255,0.75); font-size: 10px; }
-  .topo-label--node-title { fill: #1f2328; font-size: 13px; font-weight: 600; }
-  .topo-label--node-sub { fill: #656d76; font-size: 10px; }
-  .topo-label--node-micro { fill: #8b949e; font-size: 8.5px; }
+  .topo-label--hub-sub2 { fill: var(--color-accent-on-accent); font-size: 10px; }
+  .topo-label--node-title { fill: var(--color-fg); font-size: 13px; font-weight: 600; }
+  .topo-label--node-sub { fill: var(--color-fg-tertiary); font-size: 10px; }
+  .topo-label--node-micro { fill: var(--color-fg-muted); font-size: 8.5px; }
   .topo-elabel { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
   .topo-elabel--pass { fill: var(--role-ji-text); }
   .topo-elabel--fail { fill: var(--role-chi-text); }
   .topo-elabel--report { fill: var(--role-ji-text); }
-  .topo-label--output { fill: #1f2328; font-size: 16px; font-weight: 600; }
+  .topo-label--output { fill: var(--color-fg); font-size: 16px; font-weight: 600; }
 
   /* Pulse animation on hub */
   .topo-pulse {
@@ -748,11 +755,11 @@ const faq = install.faq || [];
   .topo-legend { display: flex; gap: var(--space-5); justify-content: center; padding-top: var(--space-5); flex-wrap: wrap; }
   .topo-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
   .topo-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
-  .topo-legend__dot--input { background: #8b949e; }
+  .topo-legend__dot--input { background: var(--color-fg-muted); }
   .topo-legend__dot--hub { background: var(--color-accent); }
-  .topo-legend__dot--agent { background: #f6f8fa; border: 1px solid #d0d7de; }
-  .topo-legend__dot--judge { background: #f6f8fa; border: 1.5px solid var(--role-chi); }
-  .topo-legend__dot--verify { background: #f6f8fa; border: 1.5px solid var(--role-ji); }
+  .topo-legend__dot--agent { background: var(--color-bg-paper); border: 1px solid var(--color-line); }
+  .topo-legend__dot--judge { background: var(--color-bg-paper); border: 1.5px solid var(--role-chi); }
+  .topo-legend__dot--verify { background: var(--color-bg-paper); border: 1.5px solid var(--role-ji); }
   .topo-legend__dot--report { background: var(--role-ji); }
   .topo-legend__dot--fail { background: var(--role-chi); }
 
@@ -835,7 +842,7 @@ const faq = install.faq || [];
       try {
         await navigator.clipboard.writeText(cmd);
         btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
-        (btn as HTMLElement).style.color = '#28c840';
+        (btn as HTMLElement).style.color = 'var(--role-ji-text)';
         btn.setAttribute('aria-label', '已复制');
         setTimeout(() => {
           btn.innerHTML = ICON_COPY;
@@ -845,7 +852,7 @@ const faq = install.faq || [];
       } catch {
         /* 剪贴板写入失败（权限被拒 / 非安全上下文）：显式报错并指明替代做法 */
         btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
-        (btn as HTMLElement).style.color = '#cf222e';
+        (btn as HTMLElement).style.color = '#a83a2e';
         btn.setAttribute('aria-label', '复制失败：请手动选中并复制');
         setTimeout(() => {
           btn.innerHTML = ICON_COPY;

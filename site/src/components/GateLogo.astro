@@ -5,39 +5,49 @@ interface Props {
 }
 
 const { size = 32, minimal = false } = Astro.props;
+
+/* ============================================================
+   品牌标识（men 标识 v1 · 有机环 + 中心负形孔）
+   —— 曲线逐点取自设计稿，未修改任何控制点。
+   几何：外半宽 = 孔半径 × φ²   ⇒   50 = R × 2.618034
+   正负形：单条复合路径 + fill-rule=evenodd，孔是真空而非叠色，
+           换任何底色都不会破。
+
+   孔径随尺寸切换（同一个 φ 关系，方向相反）：
+     主孔  R     = 19.0983   —— 用于 ≥48px
+     小孔  R / φ = 11.8034   —— 用于 <48px
+   原因：下方凹口离孔边只剩 2.25 单位实体，主孔在 22px 下会缩到 0.5px
+         而断开；换成 R/φ 后最薄处回到 9.54 单位。
+   ============================================================ */
+const VB_H    = 83.7963;   /* viewBox 高度（宽度 100） */
+const HCX     = 49.9135;  /* 孔心 x */
+const HCY     = 40.6010;  /* 孔心 y */
+const R_FULL  = 19.0983; /* 主孔 = 50 / φ² */
+const R_SMALL = 11.8034; /* 小孔 = R_FULL / φ */
+const hole    = (size >= 48 && !minimal) ? R_FULL : R_SMALL;
+
+const OUTER =
+  'M 49.4949,12.2222 C 34.4265,12.2222 33.9309,0.0 25.5529,0.0 C -3.0669,0.0 0.104,11.5407 0.104,41.3544 C 0.104,70.5679 -0.8861,74.2725 20.6975,83.2112 C 32.2645,88.0015 27.2247,61.9479 49.8298,61.9479 C 71.9301,61.9479 67.6945,87.8998 78.962,83.0437 C 100.8451,73.6126 100.8205,70.6946 99.5555,40.5173 C 98.3835,12.557 102.3083,0.0 74.4415,0.0 C 66.6945,0.0 67.0189,12.2222 49.4949,12.2222 Z';
+
+/* 内孔：两段半圆弧闭合成整圆，与 OUTER 组成 evenodd 复合路径 */
+const holePath =
+  'M ' + (HCX + hole) + ',' + HCY +
+  ' A ' + hole + ',' + hole + ' 0 1 0 ' + (HCX - hole) + ',' + HCY +
+  ' A ' + hole + ',' + hole + ' 0 1 0 ' + (HCX + hole) + ',' + HCY + ' Z';
+
+const d = OUTER + ' ' + holePath;
+const height = (size / (100 / VB_H)).toFixed(2);
 ---
 
 <svg
   class="gate-logo"
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 32 32"
+  viewBox={"0 0 100 " + VB_H}
   width={size}
-  height={size}
+  height={height}
   aria-hidden="true"
 >
-  <g
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <!-- 外框顶横线 -->
-    <path d="M6 4 H 26" />
-    <!-- 外框左竖线 -->
-    <path d="M6 4 V 22" />
-    <!-- 外框右竖线 -->
-    <path d="M26 4 V 22" />
-    <!-- 左门扇（微斜，半开） -->
-    <path d="M12 4 L 14 22" />
-    <!-- 右门扇（垂直） -->
-    <path d="M20 4 V 22" />
-    <!-- 门把手：极简版省略 -->
-    {!minimal && (
-      <circle cx="13.5" cy="13" r="1.2" fill="currentColor" stroke="none" />
-    )}
-    <!-- 底部开口：不画横线，形成门槛缺口意象 -->
-  </g>
+  <path fill="currentColor" fill-rule="evenodd" d={d} />
 </svg>
 
 <style>

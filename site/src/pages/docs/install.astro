@@ -5,23 +5,20 @@ import SrcRef from '../../components/SrcRef.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '安装 — ' + content.hero.title;
-const pageDesc = '两种安装方式：npx @cgartlab/men 一行完成脚手架、依赖安装与环境自检，或按平台运行一键安装脚本（Linux·macOS / Windows）克隆到本地。';
+const pageDesc = '两种安装方式：npx @cgartlab/men 一行完成安装，或按平台运行一键安装脚本。';
 const base = '/';
 const rawBase = 'https://raw.githubusercontent.com/cgartlab/men/main';
 
 const infobox = [
   { k: '分发方式', v: '<strong>npm 包</strong>（<code>@cgartlab/men</code>）+ <strong>Git 仓库</strong>双通道' },
   { k: '前置依赖', v: '<code>Node ≥ 18</code> / <code>npm</code> / <code>git</code>' },
-  { k: 'npm 一步安装', v: '<code>npx @cgartlab/men</code>' },
-  { k: 'Linux·macOS', v: '<code>bash &lt;(curl -fsSL …/install.sh)</code>' },
-  { k: 'Windows', v: '<code>irm …/install.ps1 | iex</code>' },
-  { k: '就地安装', v: '<code>./install.sh</code> / <code>./install.ps1</code>' },
-  { k: '端到端验证', v: '<code>node scripts/verify.mjs men --json</code>' },
+  { k: '推荐方式', v: '<code>npx @cgartlab/men</code>' },
 ];
 
 const toc = [
   { id: 'prereq', label: '前置要求' },
-  { id: 'npm', label: 'npm 一步安装（npx @cgartlab/men）' },
+  { id: 'check-versions', label: '检查版本' },
+  { id: 'npm', label: 'npm 一行安装（推荐）' },
   { id: 'linux-macos', label: '一键安装（Linux·macOS）' },
   { id: 'windows', label: '一键安装（Windows）' },
   { id: 'inplace', label: '就地安装' },
@@ -32,8 +29,6 @@ const toc = [
 const seealso = [
   { href: base + 'docs/quickstart', label: '快速上手', desc: '安装后跑通第一个任务' },
   { href: base + 'docs/configure', label: '配置', desc: '模型连接与配置' },
-  { href: base + 'docs/protocols', label: '协议规范', desc: '验证与审计' },
-  { href: base + 'docs/architecture', label: '架构设计', desc: '拓扑与流程' },
   { href: base + 'docs/overview', label: '概览', desc: '项目定位与角色' },
 ];
 ---
@@ -42,9 +37,7 @@ const seealso = [
   <WikiManual
     crumb="安装"
     title="安装"
-    lead={`<strong>men（门）</strong>以 <strong>npm 包</strong>（<code>@cgartlab/men</code>）与 <strong>Git 仓库</strong>双通道分发：` +
-      `<code>npx @cgartlab/men</code> 可在任意目录一步 scaffold 并完成安装；Git 一键脚本负责检测依赖、拉取仓库，` +
-      `两条路径最终都调用共享核心 <code>scripts/install.mjs</code> 完成依赖安装、环境配置与端到端验证。`}
+    lead="men 有两种安装方式：推荐用 <code>npx @cgartlab/men</code> 一行装好，或者按平台运行一键脚本。安装完成后直接运行 <code>opencode</code> 就能用。"
     infoboxTitle="安装概要"
     infobox={infobox}
     toc={toc}
@@ -52,28 +45,49 @@ const seealso = [
   >
     <section id="prereq" class="doc-section">
       <h2>前置要求</h2>
-      <p>安装器会检测以下三个命令是否存在，任一缺失即报错退出（提示先安装 <code>Node ≥ 18</code> 与 <code>git</code>）：</p>
+      <p>安装器会检查以下三个工具是否就绪，缺一个就报错：</p>
       <ul>
-        <li><strong>Node.js ≥ 18</strong> — 运行 <code>scripts/install.mjs</code> 与机械验证脚本（<code>node --version</code> 检查）</li>
-        <li><strong>npm</strong> — 安装 <code>.opencode/</code> 依赖</li>
-        <li><strong>git</strong> — 拉取 / 克隆仓库（一键安装时自动执行）</li>
+        <li><strong>Node.js 18 或更高</strong> —— 运行安装脚本所需</li>
+        <li><strong>npm</strong> —— 安装依赖</li>
+        <li><strong>git</strong> —— 拉取仓库代码</li>
       </ul>
-      <div class="wiki-note">
-        <code>install.mjs</code> 会在流程最前做 <strong>Node 版本检查</strong>，主版本低于 <code>18</code> 时直接报错并以非 0 退出码结束。
-      </div>
       <SrcRef files={['install.sh','install.ps1','scripts/install.mjs']} />
     </section>
 
+    <section id="check-versions" class="doc-section">
+      <h2>检查版本</h2>
+      <p>花 30 秒确认环境就绪。打开终端，依次运行：</p>
+      <div class="code-block">
+        <span class="code-block__lang">bash</span>
+        <pre><code>node --version    # 应显示 v18.x 或更高
+npm --version     # 应显示版本号
+git --version     # 应显示版本号</code></pre>
+      </div>
+      <p>如果任何一条报错，先安装对应的工具再继续：</p>
+      <ul>
+        <li>Node.js —— 从 <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a> 下载 LTS 版本</li>
+        <li>npm —— 随 Node.js 一起安装，不用单独装</li>
+        <li>git —— 从 <a href="https://git-scm.com" target="_blank" rel="noopener">git-scm.com</a> 下载，Windows 上也可以用 <code>winget install Git</code></li>
+      </ul>
+      <p>三条命令都能正常输出版本号后，就可以开始安装了。</p>
+    </section>
+
     <section id="npm" class="doc-section">
-      <h2>npm 一步安装（npx @cgartlab/men）</h2>
-      <p>在<strong>任意目录</strong>运行（前置：Node ≥ 18、已装 OpenCode；模型密钥由 CC Switch 在本地托管，无需提供）：</p>
+      <h2>npm 一行安装（推荐）</h2>
+      <p>这是最推荐的方式。在<strong>任意目录</strong>运行：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>npx @cgartlab/men</code></pre>
       </div>
-      <p>首次执行 <code>npx</code> 会询问 "Ok to proceed? (y)"——输入 <code>y</code> 回车即可；或直接 <code>npx -y @cgartlab/men</code> 跳过确认。</p>
-      <p>安装器自动完成：scaffold 运行时资产到当前目录（<code>opencode.json</code> / <code>.opencode/</code> / <code>scripts/</code> / <code>config/</code> / <code>knowledge/</code>）→ 安装 <code>.opencode/</code> 依赖 → 从 <code>.env.example</code> 生成 <code>.env</code> → 端到端验证。若当前目录已是 men 仓库根，则幂等跳过复制、直接就地安装；依赖安装失败仅告警不中止（插件为增强项，加载失败不阻止 OpenCode 启动；V2 下 <code>@opencode/plugin</code> 自带类型，无需 V1 <code>@opencode-ai/plugin</code>）。</p>
-      <p>完成后在<strong>当前目录</strong>运行 <code>opencode</code> 即可进入 TUI：</p>
+      <p>首次执行会询问 "Ok to proceed? (y)"——输入 <code>y</code> 回车；或者直接 <code>npx -y @cgartlab/men</code> 跳过确认。</p>
+      <p>安装器会自动完成以下步骤：</p>
+      <ol>
+        <li><strong>生成运行文件</strong>到当前目录</li>
+        <li><strong>安装依赖</strong></li>
+        <li><strong>生成配置文件</strong></li>
+        <li><strong>自动验证</strong>安装是否正确</li>
+      </ol>
+      <p>完成后，在当前目录运行 <code>opencode</code> 就能使用：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>opencode</code></pre>
@@ -83,18 +97,18 @@ const seealso = [
 
     <section id="linux-macos" class="doc-section">
       <h2>一键安装（Linux·macOS）</h2>
-      <p>在支持 <code>bash</code> 的 Linux / macOS 终端中，直接运行一键命令（使用 <code>curl</code> 拉取 <code>install.sh</code> 并交给 <code>bash</code> 执行），脚本会检测依赖、<code>git clone</code> 到默认目录 <code>men/</code>，再调用共享核心完成安装：</p>
+      <p>在 Linux 或 macOS 终端中直接运行：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
-        <pre><code>bash <(curl -fsSL {rawBase}/install.sh)</code></pre>
+        <pre><code>bash &lt;(curl -fsSL {rawBase}/install.sh)</code></pre>
       </div>
-      <p>可追加选项控制安装行为，例如指定安装目录：</p>
+      <p>脚本会自动检测依赖、克隆代码到默认目录 <code>men/</code>，然后完成安装。如需指定安装目录：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
-        <pre><code>bash <(curl -fsSL {rawBase}/install.sh) --dir ~/men</code></pre>
+        <pre><code>bash &lt;(curl -fsSL {rawBase}/install.sh) --dir ~/men</code></pre>
       </div>
       <div class="wiki-note">
-        若 <code>curl</code> 因网络/代理失败，进程替换可能静默成功（无任何输出）。建议先显式下载再执行，失败时能看到明确报错：
+        如果 <code>curl</code> 因网络问题失败，建议先手动下载再运行：
         <pre><code>curl -fsSL {rawBase}/install.sh -o /tmp/men-install.sh &amp;&amp; bash /tmp/men-install.sh [选项]</code></pre>
       </div>
       <SrcRef files={['install.sh','scripts/install.mjs']} />
@@ -102,12 +116,12 @@ const seealso = [
 
     <section id="windows" class="doc-section">
       <h2>一键安装（Windows）</h2>
-      <p>在 <strong>PowerShell 5.1+（推荐 7+）</strong> 中运行一键命令（使用 <code>irm</code> 拉取 <code>install.ps1</code> 并交给 <code>iex</code> 执行），脚本同样会检测依赖并 <code>git clone</code> 到默认目录 <code>men/</code>：</p>
+      <p>在 <strong>PowerShell</strong> 中运行：</p>
       <div class="code-block">
         <span class="code-block__lang">powershell</span>
         <pre><code>irm {rawBase}/install.ps1 | iex</code></pre>
       </div>
-      <p><strong>管道模式不支持传参</strong>（<code>iex -Dir ...</code> 会把 <code>-Dir</code> 当作 <code>iex</code> 的参数导致报错）。如需指定目录，请先下载脚本再本地运行：</p>
+      <p><strong>管道模式不能传参数</strong>。如需指定目录，先下载脚本再本地运行：</p>
       <div class="code-block">
         <span class="code-block__lang">powershell</span>
         <pre><code>irm {rawBase}/install.ps1 -OutFile install.ps1
@@ -118,8 +132,8 @@ const seealso = [
 
     <section id="inplace" class="doc-section">
       <h2>就地安装</h2>
-      <p>如果已克隆 / 已拥有仓库源码，可在仓库根目录就地执行引导脚本——脚本检测到 <code>scripts/install.mjs</code> 存在时，直接以当前目录为安装目标，不再重复拉取。</p>
-      <p>Linux / macOS（先赋予执行权限）：</p>
+      <p>如果已经克隆了仓库源码，可以在仓库根目录直接运行安装脚本——它会自动检测，不重复拉取代码。</p>
+      <p>Linux / macOS（先给执行权限）：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>chmod +x install.sh
@@ -130,55 +144,49 @@ const seealso = [
         <span class="code-block__lang">powershell</span>
         <pre><code>./install.ps1 [-Dir &lt;path&gt;] [-SkipDeps] [-SkipVerify] [-Json] [-Help]</code></pre>
       </div>
-      <p>也可绕过平台引导，直接调用共享核心安装器：</p>
+      <p>也可以绕过平台脚本，直接调用安装核心：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code>node scripts/install.mjs [--dir &lt;path&gt;] [--skip-deps] [--skip-verify] [--json] [--help]</code></pre>
-      </div>
-      <div class="wiki-note">
-        分发脚本中的 <code>INSTALL_URL</code> 与 <code>REPO_URL</code> 已<strong>硬编码为真实地址</strong>：前者指向安装脚本的原始 URL（即 <code>raw.githubusercontent.com/cgartlab/men/main/&lt;install.sh|install.ps1&gt;</code>），后者是 <code>git clone</code> 使用的仓库地址（<code>github.com/cgartlab/men.git</code>）。
       </div>
       <SrcRef files={['install.sh','install.ps1','scripts/install.mjs']} />
     </section>
 
     <section id="options" class="doc-section">
       <h2>选项说明</h2>
-      <p>共享核心 <code>install.mjs</code> 定义了三平台一致的选项；<code>install.sh</code>（<code>--</code> 前缀）与 <code>install.ps1</code>（大写开关）只是语法上的平台差异，透传给核心后行为相同：</p>
+      <p>安装脚本支持以下选项：</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>选项</th><th>PowerShell</th><th>说明</th></tr></thead>
           <tbody>
-            <tr><td><code>--dir &lt;path&gt;</code></td><td><code>-Dir &lt;path&gt;</code></td><td>安装目标目录。默认当前目录；指向不存在的目录时从当前仓库根复制源码（排除 <code>node_modules</code>、<code>.env</code> 等运行态路径）。</td></tr>
-            <tr><td><code>--global</code></td><td>—（仅 npm 通道）</td><td>完整全局安装：部署 agents/commands/skills/plugins 到 <code>~/.config/opencode/</code>，合并全局 <code>opencode.json</code> 仅设置 <code>default_agent: men</code>（<strong>不动 mcp 与 plugin</strong>，两者由 CC Switch 统一管理），TUI 插件以相对路径注册（不依赖 opencode npm 缓存）；重启 OpenCode 后<strong>任意目录</strong>生效。用法：<code>npx @cgartlab/men --global</code>。</td></tr>
-            <tr><td><code>--global-remove</code></td><td>—（仅 npm 通道）</td><td>卸载全局安装：删除部署的 agents/commands/skills/plugins，还原 <code>opencode.json</code>（有备份则从备份还原；无备份则移除 <code>default_agent</code>，不动 plugin 数组），从 <code>tui.json</code> 注销（插件清空时删除文件）。幂等，重复执行安全。用法：<code>npx @cgartlab/men --global-remove</code>。</td></tr>
-            <tr><td><code>--skip-deps</code></td><td><code>-SkipDeps</code></td><td>跳过 <code>.opencode/</code> 依赖安装（<code>npm install --prefix .opencode</code>）。</td></tr>
-            <tr><td><code>--skip-verify</code></td><td><code>-SkipVerify</code></td><td>跳过端到端验证（<code>scripts/verify.mjs men --json</code>）。</td></tr>
-            <tr><td><code>--json</code></td><td><code>-Json</code></td><td>以 JSON 格式输出安装摘要。</td></tr>
-            <tr><td><code>--help</code> / <code>-h</code></td><td><code>-Help</code></td><td>显示帮助信息后退出。</td></tr>
+            <tr><td><code>--dir &lt;path&gt;</code></td><td><code>-Dir &lt;path&gt;</code></td><td>安装到指定目录。默认当前目录。</td></tr>
+            <tr><td><code>--global</code></td><td>—（仅 npm 通道）</td><td>全局安装：任意目录都能用。用法：<code>npx @cgartlab/men --global</code>。</td></tr>
+            <tr><td><code>--global-remove</code></td><td>—（仅 npm 通道）</td><td>卸载全局安装。用法：<code>npx @cgartlab/men --global-remove</code>。</td></tr>
+            <tr><td><code>--skip-deps</code></td><td><code>-SkipDeps</code></td><td>跳过依赖安装。</td></tr>
+            <tr><td><code>--skip-verify</code></td><td><code>-SkipVerify</code></td><td>跳过安装后的自动验证。</td></tr>
+            <tr><td><code>--json</code></td><td><code>-Json</code></td><td>以 JSON 格式输出安装结果。</td></tr>
+            <tr><td><code>--help</code></td><td><code>-Help</code></td><td>显示帮助信息。</td></tr>
           </tbody>
         </table>
       </div>
       <div class="wiki-note">
-        安装流程共 6 步：<strong>1.</strong> Node 版本检查 → <strong>2.</strong> 确定目标目录（就地或复制）→ <strong>3.</strong> 安装 <code>.opencode/</code> 依赖 → <strong>4.</strong> 环境配置（<code>.env</code> 不存在时从 <code>.env.example</code> 复制）→ <strong>5.</strong> 端到端验证 → <strong>6.</strong> 检测运行环境（opencode 命令、模型配置）。第 3、5 步分别由 <code>--skip-deps</code>、<code>--skip-verify</code> 跳过。
-      </div>
-      <div class="wiki-note">
-        <strong>MCP 依赖说明</strong>：Men 仓库的 <code>opencode.json</code> <strong>不含 mcp 配置</strong>——MCP 由 <strong>CC Switch</strong> 统一管理（模型 / 密钥 / MCP 均本地托管）。需联网的 MCP 服务（Exa / Context7 / grep.app / GitHub / memory / sequential-thinking 等）由你的 OpenCode 运行环境按需提供并注入；MCP 连接失败通常只是降级提示，不阻塞核心使用。
+        <strong>安装流程共 6 步</strong>：版本检查 -> 确定目录 -> 安装依赖 -> 生成配置 -> 自动验证 -> 检测环境。第 3、5 步分别可以用 <code>--skip-deps</code> 和 <code>--skip-verify</code> 跳过。
       </div>
       <SrcRef files={['scripts/install.mjs']} />
     </section>
 
     <section id="verify" class="doc-section">
       <h2>验证安装</h2>
-      <p>安装器默认会在末尾执行端到端验证 <code>scripts/verify.mjs men --json</code>，<strong>退出码为 0</strong> 才打印「安装成功」；验证失败则以非 0 退出码终止。如需手动复核环境，可运行：</p>
+      <p>安装完成后可以手动验证环境是否正确：</p>
       <div class="code-block">
         <span class="code-block__lang">bash</span>
         <pre><code># 1. 检查 Node 版本（要求 ≥ 18）
 node --version
 
-# 2. 运行端到端机械验证（JSON 输出）
+# 2. 运行自动验证
 node scripts/verify.mjs men --json</code></pre>
       </div>
-      <p>若输出中验证项全部 <code>PASS</code> 且退出码为 0，说明安装正确；安装完成后，在项目目录运行 <code>opencode</code> 即可进入 TUI 使用。</p>
+      <p>如果验证全部通过且退出码为 0，说明安装正确。然后在项目目录运行 <code>opencode</code> 就能使用了。</p>
       <SrcRef files={['scripts/install.mjs']} />
       <div class="wiki-note"><strong>线上地址</strong>：站点正式环境部署于 <a href="https://men.cgartlab.com" target="_blank" rel="noopener">men.cgartlab.com</a>；本地预览仅用于开发验证，内容与线上一致。</div>
     </section>

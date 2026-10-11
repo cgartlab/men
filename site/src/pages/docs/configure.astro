@@ -5,38 +5,33 @@ import SrcRef from '../../components/SrcRef.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '配置 — ' + content.hero.title;
-const pageDesc = '配置文件结构与模型分配：opencode.json 根配置、men.jsonc 全局预设、CC Switch 与 Men 的职责划分、MCP 服务声明，以及技能与命令的自定义路径。';
+const pageDesc = '配置文件结构、模型分配、技能与命令路径，以及编辑角色定义的规则。';
 const base = '/';
 
 const infobox = [
   { k: '根配置', v: '<code>opencode.json</code>' },
-  { k: '默认 Agent', v: '<strong>men</strong>（primary）' },
-  { k: '模型数', v: '6 个（men / si / ji / chi / yi / xun）' },
-  { k: 'MCP 服务', v: '<strong>7 个</strong>（3 remote + 4 本地）' },
-  { k: '插件', v: '<code>@opencode/plugin</code> 2.0.6（本地安装，V2 native）' },
+  { k: '角色数', v: '6 个（门/思/记/持/艺/寻）' },
   { k: '技能包', v: '15 个（<code>.opencode/skills</code>）' },
-  { k: '自定义命令', v: '3 个（<code>ultrawork</code> / <code>verify</code> / <code>hyperplan</code>）' },
+  { k: '自定义命令', v: '3 个（<code>/ultrawork</code> / <code>/verify</code> / <code>/hyperplan</code>）' },
 ];
 
 const toc = [
   { id: 'config-file', label: '配置文件结构' },
   { id: 'models', label: '模型分配' },
-  { id: 'mcp', label: 'MCP 服务' },
-  { id: 'skills-commands', label: '技能与命令路径' },
-  { id: 'agent-rules', label: '编辑 Agent 定义规则' },
-  { id: 'sync', label: '全局配置' },
+  { id: 'skills-commands', label: '技能与命令' },
+  { id: 'agent-rules', label: '编辑角色规则' },
 ];
 
 const seealso = [
   { href: base + 'docs/install', label: '安装', desc: '多平台安装命令' },
   { href: base + 'docs/quickstart', label: '快速上手', desc: '30 分钟跑通第一个任务' },
-  { href: base + 'docs/agents', label: '角色说明', desc: '6 个 agent 详解' },
+  { href: base + 'docs/agents', label: '角色说明', desc: '6 个角色详解' },
 ];
 
 const agentTemplate = `# .opencode/agent/agent-name.md
 ---
-description: Agent 简短描述
-mode: subagent            # 或 primary
+description: 角色简短描述
+mode: subagent            # 或 primary（仅门用）
 model: <model-id>
 ---
 
@@ -47,23 +42,21 @@ model: <model-id>
 1. 职责一
 2. 职责二
 
-## CHARTER_CHECK
-- Clarification level: HIGH / MEDIUM / LOW
-- Task domain: 任务领域
-- Must NOT do:
-  - 禁止项
-- Success criteria:
-  - 验收标准
+## 行为准则
+- 遇到模糊需求时：先问再动手
+- 任务领域：说明你擅长什么
+- 禁止事项：列出不该做的事
+- 验收标准：什么算做完了
 
 ## 全员红线
-（6 个 agent 必须逐字一致的 7 条红线）`;
+（6 个角色必须逐字一致的 7 条底线）`;
 ---
 
 <BaseLayout title={pageTitle} description={pageDesc}>
   <WikiManual
     crumb="配置"
     title="配置"
-    lead={`men（门）的运行时配置以 <strong>opencode.json</strong> 为唯一入口：它定义默认 Agent、六个角色的模型分配、七个 MCP 服务与技能搜索路径，角色行为则由 <code>.opencode/agent/*.md</code> 承载。仓库 <code>opencode.json</code> 在仓库目录内启动 OpenCode 即生效；模型与密钥由 CC Switch 在本地统一托管。`}
+    lead={`men 的配置分两层：<strong>opencode.json</strong> 管『谁用什么模型』，<code>.opencode/agent/*.md</code> 管『每个角色怎么干活』。如果你只是安装后正常使用，安装器已经帮你配好了——这一页主要给想自定义角色或切换模型的人看。`}
     infoboxTitle="配置概要"
     infobox={infobox}
     toc={toc}
@@ -72,23 +65,25 @@ model: <model-id>
     <section id="config-file" class="doc-section">
       <h2>配置文件结构</h2>
       <p>
-        men 采用<strong>两层配置体系</strong>：根目录的 <code>opencode.json</code> 负责运行时装配（默认 Agent、模型、MCP、技能路径），
-        <code>.opencode/agent/*.md</code> 负责角色行为（frontmatter + CHARTER_CHECK + 全员红线）。
-        <code>opencode.json</code> 的关键字段如下：
+        men 有两个配置文件：<code>opencode.json</code> 负责运行时设置（默认角色、模型分配、技能路径），
+        <code>.opencode/agent/*.md</code> 负责每个角色的行为定义（身份、职责、底线）。
       </p>
+      <div class="wiki-note">
+        如果你只是正常使用 men，安装器已经帮你生成好了 <code>opencode.json</code>——不需要手动编辑。下面供你想自定义时查阅。
+      </div>
+      <p><code>opencode.json</code> 的关键字段：</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>字段</th><th>值</th><th>用途</th></tr></thead>
           <tbody>
-            <tr><td><code>$schema</code></td><td><code>https://opencode.ai/config.json</code></td><td>配置校验 schema</td></tr>
+            <tr><td><code>$schema</code></td><td><code>https://opencode.ai/config.json</code></td><td>配置格式校验</td></tr>
             <tr><td><code>version</code></td><td><code>0.6.1</code></td><td>配置版本号</td></tr>
-            <tr><td><code>default_agent</code></td><td><code>men</code></td><td>默认（primary）对话 Agent</td></tr>
-            <tr><td><code>instructions</code></td><td><code>AGENTS.md</code></td><td>注入的全局说明文件</td></tr>
-            <tr><td><code>agent</code></td><td>6 个角色模型映射</td><td>每个 Agent 的运行时模型（见下节）</td></tr>
-            <tr><td><code>agent.men.permissions</code></td><td>V2 native 数组</td><td>men 权限：<code>[&#123; action: "question", resource: "*", effect: "allow" &#125;]</code>（V2 有序数组，最后匹配胜出；非 V1 <code>permission</code> 对象）</td></tr>
-            <tr><td>插件发现</td><td>V2 自动发现</td><td><code>.opencode/plugins/men-sidebar/&#123;index,tui&#125;.js</code> 自动加载，<strong>不再需要 <code>tui.json</code></strong>（V1 机制已废弃；V1 配置形态见 <code>v1-compat</code> 分支）</td></tr>
+            <tr><td><code>default_agent</code></td><td><code>men</code></td><td>默认对话角色（门）</td></tr>
+            <tr><td><code>instructions</code></td><td><code>AGENTS.md</code></td><td>全局说明文件</td></tr>
+            <tr><td><code>agent</code></td><td>6 个角色模型映射</td><td>每个角色用哪个模型（见下节）</td></tr>
+            <tr><td><code>agent.men.permissions</code></td><td>权限数组</td><td>门的权限设置（允许提问等）</td></tr>
+            <tr><td>插件发现</td><td>自动加载</td><td><code>.opencode/plugins/</code> 下的插件自动发现</td></tr>
             <tr><td><code>skills.paths</code></td><td><code>.opencode/skills</code></td><td>技能包搜索路径</td></tr>
-            <tr><td><code>mcp</code></td><td>7 个服务</td><td>外部工具服务（见 MCP 节）</td></tr>
           </tbody>
         </table>
       </div>
@@ -97,46 +92,26 @@ model: <model-id>
 
     <section id="models" class="doc-section">
       <h2>模型分配</h2>
-      <p>
-        六个角色各自挂载不同模型，通过 <code>opencode.json</code> 的 <code>agent</code> 字段配置。
-        <strong>运行时权威配置以该字段为准</strong>，agent 定义文件 frontmatter 中的 <code>model</code> 仅为声明。
-        men 是唯一 <code>primary</code> 角色，其余五个均为 <code>subagent</code>。
-      </p>
+      <p>六个角色各自使用不同模型，在 <code>opencode.json</code> 的 <code>agent</code> 字段配置。想换模型，直接改对应字段的值即可。模型密钥由你的本地环境管理，不需要写在代码里。</p>
       <div class="wiki-table">
         <table>
-          <thead><tr><th>角色</th><th>中文名</th><th>模式</th><th>模型</th></tr></thead>
+          <thead><tr><th>角色</th><th>中文名</th><th>类型</th><th>模型</th></tr></thead>
           <tbody>
-            <tr><td><strong>men</strong></td><td>门</td><td><code>primary</code></td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
-            <tr><td><strong>si</strong></td><td>思</td><td><code>subagent</code></td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
-            <tr><td><strong>ji</strong></td><td>记</td><td><code>subagent</code></td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
-            <tr><td><strong>chi</strong></td><td>持</td><td><code>subagent</code></td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
-            <tr><td><strong>yi</strong></td><td>艺</td><td><code>subagent</code></td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
-            <tr><td><strong>xun</strong></td><td>寻</td><td><code>subagent</code></td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
+            <tr><td><strong>men</strong></td><td>门</td><td>老大</td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
+            <tr><td><strong>si</strong></td><td>思</td><td>帮手</td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
+            <tr><td><strong>ji</strong></td><td>记</td><td>帮手</td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
+            <tr><td><strong>chi</strong></td><td>持</td><td>帮手</td><td><code>sensenova/deepseek-v4-flash</code></td></tr>
+            <tr><td><strong>yi</strong></td><td>艺</td><td>帮手</td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
+            <tr><td><strong>xun</strong></td><td>寻</td><td>帮手</td><td><code>sensenova/sensenova-6.8-flash-lite</code></td></tr>
           </tbody>
         </table>
       </div>
       <SrcRef files={['opencode.json','AGENTS.md']} />
     </section>
 
-    <section id="mcp" class="doc-section">
-      <h2>MCP 服务</h2>
-      <p>
-        <strong>Men 不携带任何 MCP 配置</strong>——MCP 由 <strong>CC Switch</strong> 统一管理（模型 / 密钥 / MCP 均本地托管），
-        <code>opencode.json</code> 不含 <code>mcp</code> 字段。这样 Men 保持"纯 Agent + 协作代码"定位，MCP 工具集由你的运行环境按需提供。
-      </p>
-      <p>
-        若需要在 OpenCode 中启用 MCP（如 Exa / Context7 / grep.app / GitHub / memory / sequential-thinking），
-        请在 <strong>CC Switch</strong> 中配置并确保其注入到 OpenCode 的全局配置；仓库不会也不应声明 MCP。
-      </p>
-      <SrcRef files={['opencode.json']} />
-    </section>
-
     <section id="skills-commands" class="doc-section">
-      <h2>技能与命令路径</h2>
-      <p>
-        <code>skills.paths</code> 指向 <code>.opencode/skills</code>（<strong>15 个技能包</strong>），
-        自定义命令位于 <code>.opencode/command/</code>（<strong>3 个命令</strong>）。技能按角色分配，对应专项工作流：
-      </p>
+      <h2>技能与命令</h2>
+      <p>技能包教会每个角色怎么干具体的活，自定义命令是快捷入口：</p>
       <div class="wiki-table">
         <table>
           <thead><tr><th>类型</th><th>路径</th><th>数量</th><th>内容</th></tr></thead>
@@ -145,13 +120,13 @@ model: <model-id>
               <td>技能包</td>
               <td><code>.opencode/skills/</code></td>
               <td>15</td>
-              <td>ji ×4（frontend-design / github / l1-verify / content-write）、si ×2（knowledge / plan-compose）、xun ×3（search / factcheck / rss-scan）、chi ×2（invest / judge）、yi ×2（design / imagegen）、men ×2（status / update）</td>
+              <td>记 4 个、思 2 个、寻 3 个、持 2 个、艺 2 个、门 2 个</td>
             </tr>
             <tr>
               <td>自定义命令</td>
               <td><code>.opencode/command/</code></td>
               <td>3</td>
-              <td><code>/ultrawork</code> · <code>/verify</code> · <code>/hyperplan</code></td>
+              <td><code>/ultrawork</code>（日常任务）· <code>/verify</code>（检查产出）· <code>/hyperplan</code>（规划项目）</td>
             </tr>
           </tbody>
         </table>
@@ -160,34 +135,23 @@ model: <model-id>
     </section>
 
     <section id="agent-rules" class="doc-section">
-      <h2>编辑 Agent 定义规则</h2>
+      <h2>编辑角色定义规则</h2>
       <p>
-        <code>.opencode/agent/*.md</code> 是 6 个 agent 定义的<strong>唯一源代码</strong>。新增或修改 agent 时，必须遵守
-        <code>AGENTS.md</code> 的「编辑 agent 定义时必须遵守」一节：
+        <code>.opencode/agent/*.md</code> 是每个角色行为的唯一源代码。修改时必须遵守以下规则：
       </p>
-      <ul>
-        <li><strong>先 read 再 edit</strong> — 每次编辑必须先读取文件</li>
-        <li><strong>YAML frontmatter 三字段</strong>必须保留：<code>description</code> / <code>mode</code> / <code>model</code></li>
-        <li><strong>CHARTER_CHECK 字段</strong>：每个 agent 必须有，含 Clarification level / Task domain / Must NOT do / Success criteria</li>
-        <li><strong>全员红线</strong>：6 个 agent 必须逐字一致（复制粘贴，不修改）</li>
-        <li><strong>model 值</strong>：运行时以 <code>opencode.json</code> 的 <code>agent</code> 字段为准</li>
-      </ul>
+      <ol>
+        <li><strong>先读后改</strong> —— 每次编辑前必须先读取文件</li>
+        <li><strong>保留必要字段</strong> —— <code>description</code> / <code>mode</code> / <code>model</code> 三个字段不能删</li>
+        <li><strong>行为准则完整</strong> —— 每个角色必须有：遇到模糊需求怎么做、擅长什么、不该做什么、什么算做完</li>
+        <li><strong>底线逐字一致</strong> —— 6 个角色的 7 条底线必须完全一样（复制粘贴，不修改）</li>
+        <li><strong>模型以配置为准</strong> —— 角色文件里的 model 字段只是声明，运行时以 <code>opencode.json</code> 为准</li>
+      </ol>
       <p>标准模板结构：</p>
       <div class="code-block">
         <span class="code-block__lang">yaml</span>
         <pre><code>{agentTemplate}</code></pre>
       </div>
       <SrcRef files={['AGENTS.md','.opencode/agent/si.md','.opencode/agent/chi.md']} />
-    </section>
-
-    <section id="sync" class="doc-section">
-      <h2>全局配置</h2>
-      <p>
-        全局模型与密钥由 <strong>CC Switch</strong>（或本机 <code>~/.config/opencode/opencode.json</code>）统一管理；
-        仓库 <code>opencode.json</code> 在仓库目录内启动即自动加载。
-        若要在任意目录使用整支团队，运行 <code>npx @cgartlab/men</code> 一键安装。
-      </p>
-      <SrcRef files={['opencode.json']} />
     </section>
   </WikiManual>
 </BaseLayout>
