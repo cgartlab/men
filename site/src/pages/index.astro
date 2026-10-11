@@ -557,7 +557,12 @@ const faq = install.faq || [];
   }
   .hero-install__tab:hover { color: var(--color-fg); }
   .hero-install__tab[aria-selected="true"] { color: var(--color-accent-dark); border-bottom-color: var(--color-accent); }
-  .hero-install__panel[hidden] { display: none; }
+  /* 面板叠在同一格里：隐藏的面板只做 visibility: hidden（仍占位），
+     这样卡片高度 = 最高面板的高度 → 切换标签时卡片不变高矮，
+     左侧大标题也不会因为 hero 的 align-items: center 被顶着上下移动。 */
+  .hero-install__panels { display: grid; }
+  .hero-install__panel { grid-area: 1 / 1; }
+  .hero-install__panel[hidden] { display: block; visibility: hidden; }
   .hero-install__hint { font-size: var(--font-size-small); color: var(--color-fg-tertiary); line-height: 1.6; margin: 0 0 var(--space-2); }
   .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
   .hero-install__cmd-label { display: block; font-size: var(--font-size-small); color: var(--color-fg-tertiary); margin-bottom: var(--space-1); }
