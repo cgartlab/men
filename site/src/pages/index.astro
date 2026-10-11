@@ -9,6 +9,28 @@ const base = '/';
 const pageTitle = content.hero.title + ' — ' + content.hero.subtitle;
 const install = content.install || {};
 
+/* ---------- 安装：三种方式（信息完整，样式从简）---------- */
+const agentPrompt =
+  '帮我安装并启动 men：npx @cgartlab/men && opencode';
+
+const platformTabs = [
+  { id: 'agent', label: '面向 Agent' },
+  { id: 'bash', label: 'macOS / Linux' },
+  { id: 'windows', label: 'Windows' },
+];
+const manualCmds: Record<string, { label: string; cmd: string }[]> = {
+  bash: [
+    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
+    { label: '一键安装（管道）', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)' },
+    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
+  ],
+  windows: [
+    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
+    { label: '一键安装（管道）', cmd: 'irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex' },
+    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
+  ],
+};
+
 /* ---------- 滚动展示：Agent 数据 ---------- */
 const showcaseAgents = [
   {
@@ -97,16 +119,46 @@ const faq = install.faq || [];
         </div>
       </div>
 
-      <!-- 右栏：一行安装命令（极简：命令 + 复制 + 一行说明） -->
-      <aside class="hero-install" aria-label="安装命令">
+      <!-- 右栏：安装（可切换平台，信息完整；样式从简 —— 无终端装饰） -->
+      <aside class="hero-install" aria-label="安装">
         <p class="hero-install__label">安装</p>
-        <div class="hero-install__cmd">
-          <span class="hero-install__prompt" aria-hidden="true">$</span>
-          <code class="hero-install__code">npx @cgartlab/men</code>
-          <button class="hero-install__copy" data-cmd="npx @cgartlab/men" aria-label="复制安装命令">
-            <Icon name="lucide:copy" width="14" height="14" />
-          </button>
+
+        <div class="hero-install__tabs" role="tablist" aria-label="安装方式">
+          {platformTabs.map((t, i) => (
+            <button class="hero-install__tab" role="tab" id={`itab-${t.id}`} aria-controls={`ipanel-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-platform={t.id}>{t.label}</button>
+          ))}
         </div>
+
+        <div class="hero-install__panels">
+          <div class="hero-install__panel" id="ipanel-agent" role="tabpanel" aria-labelledby="itab-agent">
+            <p class="hero-install__hint">把这句话复制给 AI 助手（OpenCode / Claude / Cursor），让它自动帮你装好：</p>
+            <div class="hero-install__row">
+              <code class="hero-install__code">{agentPrompt}</code>
+              <button class="hero-install__copy" data-cmd={agentPrompt} aria-label="复制提示词">
+                <Icon name="lucide:copy" width="14" height="14" />
+              </button>
+            </div>
+          </div>
+
+          {platformTabs.filter((t) => t.id !== 'agent').map((t) => (
+            <div class="hero-install__panel" id={`ipanel-${t.id}`} role="tabpanel" aria-labelledby={`itab-${t.id}`} hidden>
+              <ul class="hero-install__cmds">
+                {manualCmds[t.id].map((c) => (
+                  <li class="hero-install__cmd">
+                    <span class="hero-install__cmd-label">{c.label}</span>
+                    <div class="hero-install__row">
+                      <code class="hero-install__code">{c.cmd}</code>
+                      <button class="hero-install__copy" data-cmd={c.cmd} aria-label={`复制 ${c.label}`}>
+                        <Icon name="lucide:copy" width="14" height="14" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
         <p class="hero-install__meta">Node ≥ 18 · 零依赖 · 不用克隆仓库</p>
       </aside>
     </div>
@@ -454,7 +506,7 @@ const faq = install.faq || [];
        （max-width 1360 + padding 0 64px → 桌面 1232px / 手机 342px），
        不再自己收窄到 --page-max(720px)。 */
   }
-  .hero-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .hero-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; }
   .hero-logo { color: var(--color-accent); filter: drop-shadow(0 0 24px color-mix(in srgb, var(--color-accent) 30%, transparent)); margin-bottom: var(--space-3); }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
   .hero-title {
@@ -477,35 +529,55 @@ const faq = install.faq || [];
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
   .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
 
-  /* 右栏安装卡：只用「标签 + 命令 + 一行说明」，不放终端装饰 */
+  /* 右栏安装卡：可切换平台，样式从简（不用终端窗口装饰，只留标签页 + 命令行） */
   .hero-install {
     border: 1px solid var(--color-line);
     border-radius: var(--radius-md);
     background: var(--color-surface);
-    padding: var(--space-5);
+    padding: var(--space-4) var(--space-5) var(--space-5);
+    /* 关键：网格项默认 min-width:auto，安装命令里的长 URL（nowrap）会把整列撑到 ~787px，
+       再被 .hero 的 overflow:hidden 裁掉 —— 必须允许收缩，让 .hero-install__code 自己横向滚动。 */
+    min-width: 0;
   }
+  .hero-install__panel, .hero-install__cmds, .hero-install__cmd, .hero-install__row { min-width: 0; }
   .hero-install__label {
     font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi);
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-fg-muted); margin: 0 0 var(--space-3);
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-fg-muted); margin: 0 0 var(--space-2);
   }
-  .hero-install__cmd {
+  /* 平台切换：文字标签 + 选中下划线（不用胶囊/描边，保持轻） */
+  .hero-install__tabs {
+    display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4);
+    border-bottom: 1px solid var(--color-line-soft); margin-bottom: var(--space-4);
+  }
+  .hero-install__tab {
+    font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi);
+    color: var(--color-fg-tertiary); background: none; border: none; cursor: pointer;
+    padding: var(--space-2) 0; min-height: 36px; margin-bottom: -1px;
+    border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s;
+  }
+  .hero-install__tab:hover { color: var(--color-fg); }
+  .hero-install__tab[aria-selected="true"] { color: var(--color-accent-dark); border-bottom-color: var(--color-accent); }
+  .hero-install__panel[hidden] { display: none; }
+  .hero-install__hint { font-size: var(--font-size-small); color: var(--color-fg-tertiary); line-height: 1.6; margin: 0 0 var(--space-2); }
+  .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .hero-install__cmd-label { display: block; font-size: var(--font-size-small); color: var(--color-fg-tertiary); margin-bottom: var(--space-1); }
+  .hero-install__row {
     display: flex; align-items: center; gap: var(--space-2);
     background: var(--color-bg-warm); border: 1px solid var(--color-line-soft);
-    border-radius: var(--radius-sm); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm); padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
   }
-  .hero-install__prompt { font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-accent-dark); flex-shrink: 0; }
   .hero-install__code {
     flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap;
     font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg);
-    background: none; padding: 0;
+    background: none; padding: 0; line-height: 1.5;
   }
   .hero-install__copy {
     flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border: 1px solid var(--color-line); border-radius: 6px;
+    width: 36px; height: 36px; border: 1px solid var(--color-line); border-radius: 6px;
     background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
   }
   .hero-install__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
-  .hero-install__meta { margin: var(--space-3) 0 0; font-size: var(--font-size-caption); color: var(--color-fg-tertiary); }
+  .hero-install__meta { margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-line-soft); font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
   .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Showcase (scroll-driven agent cards) ===== */
@@ -790,13 +862,20 @@ const faq = install.faq || [];
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
+    /* 窄屏：第一板块改单列并整体居中（两栏在 481–768px 会把卡片挤到 ~240px） */
+    .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
+    .hero-content { align-items: center; text-align: center; }
+    .hero-title, .hero-desc { margin-left: auto; margin-right: auto; }
+    .hero-actions { justify-content: center; }
+    .hero-version { justify-content: center; }
+    .hero-install__label, .hero-install__tabs { justify-content: center; text-align: center; }
+    .hero-install__label { display: block; }
     .topo__header { flex-direction: column; gap: var(--space-2); }
     .showcase__card { flex: 0 0 280px; }
     .showcase__card--team { flex: 0 0 300px; }
   }
   @media (max-width: 480px) {
     .hero-title { font-size: clamp(1.8rem, 8vw, 2.2rem); }
-    .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
     /* 窄屏下拓扑图是「固定宽度 + 横向滚动」，右侧渐隐提示还有内容 */
     .topo-diagram {
       -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
@@ -812,6 +891,22 @@ const faq = install.faq || [];
 </style>
 
 <script>
+  /* 平台切换（hero 安装卡） */
+  document.querySelectorAll('.hero-install__tabs').forEach(tablist => {
+    const panels = tablist.parentElement ? tablist.parentElement.querySelector('.hero-install__panels') : null;
+    tablist.querySelectorAll('[role="tab"]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const id = (tab as HTMLElement).dataset.platform;
+        tablist.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', 'false'));
+        tab.setAttribute('aria-selected', 'true');
+        if (!panels) return;
+        panels.querySelectorAll('[role="tabpanel"]').forEach(p => { (p as HTMLElement).hidden = true; });
+        const target = panels.querySelector('#ipanel-' + id);
+        if (target) (target as HTMLElement).hidden = false;
+      });
+    });
+  });
+
   /* Copy buttons */
   document.querySelectorAll('.hero-install__copy').forEach(btn => {
     const ICON_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';

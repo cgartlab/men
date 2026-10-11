@@ -46,7 +46,7 @@ const DETECT = String.raw`(() => {
     const b = el.getBoundingClientRect();
     return b.width > 4 && b.height > 4;
   };
-  const out = { pairs: [], overflow: [], fixedOver: [] };
+  const out = { pairs: [], overflow: [], fixedOver: [], clipped: [] };
   const all = [...document.querySelectorAll('body *')].filter(visible);
   const rects = new Map();
   for (const el of all) rects.set(el, el.getBoundingClientRect());
@@ -64,6 +64,10 @@ const DETECT = String.raw`(() => {
       const a = interesting[i], b = interesting[j];
       if (a.contains(b) || b.contains(a)) continue;
       if (isInline(a) && isInline(b)) continue;   // 同行内元素不可能互相遮挡
+      // 已知无害：代码块头部条里，语言标签的**盒子**横跨整条（display:block），
+      // 复制按钮绝对定位在右端 —— 标签文字已 padding-right 让位，实际不会碰到按钮。
+      const isHeadBar = (x) => (x.closest && x.closest('.code-block')) || x.classList.contains('copy-btn');
+      if (isHeadBar(a) && isHeadBar(b)) continue;
       const ra = rects.get(a), rb = rects.get(b);
       const ox = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left);
       const oy = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
@@ -75,6 +79,28 @@ const DETECT = String.raw`(() => {
         A: [Math.round(ra.left), Math.round(ra.top), Math.round(ra.width), Math.round(ra.height)],
         B: [Math.round(rb.left), Math.round(rb.top), Math.round(rb.width), Math.round(rb.height)] });
     }
+  }
+
+  // ④ 被裁切：元素比「overflow: hidden 的祖先」还宽 → 内容被切掉（溢出检测查不到，因为没有滚动条）
+  for (const el of all) {
+    const b = rects.get(el);
+    let anc = el.parentElement, skip = false;
+    while (anc && anc !== document.body) {
+      const cs2 = getComputedStyle(anc);
+      // 祖先里有可滚动容器（overflow-x: auto/scroll）→ 超出部分是「可以滚出来的」，不是裁切
+      if (cs2.overflowX === 'auto' || cs2.overflowX === 'scroll') { skip = true; break; }
+      if (cs2.overflowX === 'hidden' || cs2.overflowY === 'hidden') {
+        const rb = rects.get(anc) || anc.getBoundingClientRect();
+        const over = Math.round(b.right - rb.right);
+        if (over > 2 && b.width > 8) {
+          const cls = (typeof anc.className === 'string' ? anc.className : '').split(/\s+/)[0];
+          out.clipped.push({ d: label(el), over, clip: anc.tagName.toLowerCase() + (cls ? '.' + cls : ''), w: Math.round(b.width), clipW: Math.round(rb.width) });
+        }
+        break;
+      }
+      anc = anc.parentElement;
+    }
+    void skip;
   }
 
   const fixeds = all.filter((el) => ['fixed', 'sticky'].includes(getComputedStyle(el).position))
@@ -101,17 +127,18 @@ const br = await launchBrowser();
 try {
   for (const [label, w, h] of [['1440', 1440, 900], ['390', 390, 844], ['360', 360, 800]]) {
     const ctx = await br.newContext({ viewport: { width: w, height: h } });
-    for (const pg of ['index.html', 'roles/index.html', 'mechanisms/index.html', 'docs/quickstart/index.html']) {
+    for (const pg of ['index.html', 'roles/index.html', 'mechanisms/index.html', 'about/index.html', 'docs/quickstart/index.html', 'docs/install/index.html']) {
       const page = await ctx.newPage();
       await page.goto(`http://127.0.0.1:${PORT}/${pg}`, { waitUntil: 'load' });
       await page.waitForTimeout(250);
       const r = await page.evaluate(DETECT);
       const tag = `${label}px ${pg}`;
-      const problems = r.overflow.length + r.pairs.length + r.fixedOver.length;
+      const problems = r.overflow.length + r.pairs.length + r.fixedOver.length + r.clipped.length;
       if (!problems) { console.log(`✓ [${tag}] 无遮挡/越界 · 页头高 ${r.header.h}px，正文首元素 top=${r.firstContent.top}px`); }
       else {
         console.log(`\n⚠ [${tag}] 页头高 ${r.header.h}px · 正文首元素「${r.firstContent.d}」top=${r.firstContent.top}px`);
         for (const x of r.overflow.slice(0, 5)) console.log(`    [越界] ${x.d} left=${x.left} right=${x.right}`);
+        for (const x of r.clipped.slice(0, 6)) console.log(`    [被裁切] ${x.d}（宽 ${x.w} 超出 ${x.clip} 的 ${x.clipW} 共 ${x.over}px）`);
         for (const x of r.fixedOver.slice(0, 5)) console.log(`    [页头压住] ${x.fixed} → ${x.covered}（${(x.ratio * 100) | 0}%）`);
         for (const x of r.pairs.sort((p, q) => q.ratio - p.ratio).slice(0, 6)) console.log(`    [互相压住] ${x.a} ↔ ${x.b}（${(x.ratio * 100) | 0}%）A=${x.A} B=${x.B}`);
       }
