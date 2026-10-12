@@ -70,7 +70,7 @@ const showcaseAgents = [
     cn: '寻',
     role: '研究员',
     icon: 'lucide:search',
-    desc: '搜网页、查资料、交叉核实信息真假。每条信息都标来源。',
+    desc: '搜网页、查资料、交叉核实，标来源。',
     skills: ['搜网页', '扫订阅源', '交叉核实', '查知识库', '标来源'],
     constraint: '只查不改，搜不到就老实说',
   },
@@ -136,106 +136,34 @@ const faq = install.faq || [];
     </div>
   </header>
 
-  <!-- ===== Agent 扇形扑克牌 ===== -->
-  <section class="showcase" aria-labelledby="showcase-title">
-    <h2 id="showcase-title" class="sr-only">Agent 团队</h2>
-    <div class="showcase__header">
-      <p class="showcase__label">THE TEAM</p>
-      <h2 class="showcase__heading">六个角色，一个核心</h2>
+  <!-- ===== Team（编辑索引网格，非卡片）===== -->
+  <section class="team" aria-labelledby="team-title">
+    <div class="team__header">
+      <div>
+        <p class="team__eyebrow">The Team · 团队</p>
+        <h2 id="team-title" class="team__title">六个角色，各司其职</h2>
+      </div>
+      <p class="team__desc">你不用管"这件事该谁做"。门是唯一入口，按角色把活派出去；剩下五个各干各的，产出独立。</p>
     </div>
 
-    <!-- 角色牌：六张真实扑克牌尺寸（2.5×3.5in = 240×336）横向排列，按住拖动浏览 -->
-    <div class="showcase__track" id="showcase-track" role="listbox" tabindex="0"
-         aria-label="六个角色卡片，可按住拖动浏览，或用左右方向键切换">
+    <div class="team__grid">
       {showcaseAgents.map((a, i) => (
-        <article class="showcase__card" role="option" aria-selected={i === 0 ? 'true' : 'false'}
-                 data-agent={a.id} data-index={i}
-                 style={`--card-accent: var(--role-${a.id}); --card-accent-text: var(--role-${a.id}-text);`}>
-          <div class="showcase__card-top">
-            <div class="showcase__card-icon">
-              <Icon name={a.icon} width="20" height="20" />
+        <article class={`team__cell${a.id === 'men' ? ' team__cell--men' : ''}`}>
+          <div class="team__cell-top">
+            <span class="team__cell-idx">{String(i + 1).padStart(2, '0')}</span>
+            <span class="team__cell-label">{a.id === 'men' ? 'primary' : 'subagent'}</span>
+          </div>
+          <div class="team__cell-role">
+            <span class="team__cell-cn" style={a.id !== 'men' ? `color: var(--role-${a.id}-text)` : ''}>{a.cn}</span>
+            <div class="team__cell-info">
+              <span class="team__cell-name">{a.id} · {a.id === 'men' ? 'Men' : a.id.charAt(0).toUpperCase() + a.id.slice(1)}</span>
+              <span class="team__cell-en">{a.role}</span>
             </div>
-            <span class="showcase__card-id">{a.id}</span>
           </div>
-          <div class="showcase__card-head">
-            <span class="showcase__card-cn">{a.cn}</span>
-            <span class="showcase__card-role">{a.role}</span>
-          </div>
-          <p class="showcase__card-desc">{a.desc.length > 22 ? a.desc.slice(0, 22) + '…' : a.desc}</p>
-          <div class="showcase__card-skills">
-            {a.skills.slice(0, 3).map((s) => (
-              <span class="showcase__skill">{s}</span>
-            ))}
-          </div>
-          <p class="showcase__card-constraint">
-            <Icon name="lucide:shield" width="11" height="11" />
-            {a.constraint.length > 18 ? a.constraint.slice(0, 18) + '…' : a.constraint}
-          </p>
+          <p class="team__cell-desc">{a.desc}</p>
         </article>
       ))}
     </div>
-
-    <div class="showcase__nav">
-      <button class="showcase__arrow" id="showcase-prev" aria-label="上一张">
-        <Icon name="lucide:chevron-left" width="20" height="20" />
-      </button>
-      <div class="showcase__dots" id="showcase-dots"></div>
-      <button class="showcase__arrow" id="showcase-next" aria-label="下一张">
-        <Icon name="lucide:chevron-right" width="20" height="20" />
-      </button>
-    </div>
-
-    <!-- 团队特性卡片：六条特性横排三列，收在扇形下方 -->
-    <article class="showcase__card showcase__card--team" style={`--card-accent: var(--color-accent)`}>
-      <div class="showcase__card-icon">
-        <Icon name="lucide:users" width="32" height="32" />
-      </div>
-      <p class="showcase__card-role showcase__card-role--team">团队特性</p>
-      <div class="showcase__team-traits">
-        <div class="showcase__trait">
-          <Icon name="lucide:git-branch" width="16" height="16" />
-          <div>
-            <strong>同时开工</strong>
-            <span>独立任务同时做，依赖排队</span>
-          </div>
-        </div>
-        <div class="showcase__trait">
-          <Icon name="lucide:shield-check" width="16" height="16" />
-          <div>
-            <strong>两层检查</strong>
-            <span>先跑脚本查文件，再由持用全新视角复核</span>
-          </div>
-        </div>
-        <div class="showcase__trait">
-          <Icon name="lucide:activity" width="16" height="16" />
-          <div>
-            <strong>全程留痕</strong>
-            <span>每一步都记下来，事后可回看完整过程</span>
-          </div>
-        </div>
-        <div class="showcase__trait">
-          <Icon name="lucide:brain" width="16" height="16" />
-          <div>
-            <strong>越用越聪明</strong>
-            <span>经验自动总结，坑下次绕开</span>
-          </div>
-        </div>
-        <div class="showcase__trait">
-          <Icon name="lucide:lock" width="16" height="16" />
-          <div>
-            <strong>防死循环</strong>
-            <span>最多重试 5 次，<br />不行就老实说卡住了</span>
-          </div>
-        </div>
-        <div class="showcase__trait">
-          <Icon name="lucide:file-code" width="16" height="16" />
-          <div>
-            <strong>轻量运行</strong>
-            <span>所有脚本零依赖，<br />装好 Node 就能跑</span>
-          </div>
-        </div>
-      </div>
-    </article>
   </section>
   <section class="topo" aria-labelledby="topo-title">
     <div class="topo__header">
@@ -715,197 +643,77 @@ const faq = install.faq || [];
   .hero-install__copy:hover { color: var(--color-accent-dark); background: var(--color-accent-tint); }
   .hero-install__meta { margin: var(--space-3) 0 0; font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
 
-  /* ===== Showcase (scroll-driven agent cards) ===== */
-  .showcase { padding: var(--section-pad) 0; overflow: hidden; }
-  /* 头部内容居中，不需要额外的 24px 水平内边距（去掉后盒子与其它板块同在 104px 上） */
-  .showcase__header { text-align: center; margin-bottom: var(--space-8); }
-  .showcase__label {
-    font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); text-transform: uppercase; color: var(--color-accent-dark); margin-bottom: var(--space-3);
-    letter-spacing: var(--letter-spacing-label);
-}
-  .showcase__heading {
-    font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
-    font-size: var(--font-size-h2);
-    line-height: var(--line-height-heading);
+  /* ===== Team（编辑索引网格，非卡片）=====
+     参考 docs/design/men-home-redesign.html 的 .team 段落。
+     不是卡片——是 1px 间隙分隔的连续网格，每个角色用大号汉字做视觉锚点。 */
+  .team { padding: var(--section-pad) 0; max-width: var(--container-max); margin: 0 auto; }
+  .team__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-12); margin-bottom: var(--space-12); align-items: end;
+  }
+  .team__eyebrow {
+    font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-accent-dark);
+    letter-spacing: 0.18em; text-transform: uppercase; font-weight: var(--font-weight-semi);
+    margin-bottom: var(--space-3);
+  }
+  .team__title {
+    font-size: clamp(30px, 3vw, 40px); font-weight: var(--font-weight-semi);
+    line-height: var(--line-height-heading); color: var(--color-fg); max-width: 14em; text-wrap: balance;
     letter-spacing: var(--letter-spacing-heading);
-}
-
-  /* ===== 角色牌：真实扑克牌尺寸，横向排列 =====
-     poker size 2.5×3.5 英寸 = 5:7 比例。按住拖动浏览（跟手），
-     悬停浮起 + 高光边缘（厚度感）。 */
-  .showcase__track {
-    position: relative;
-    display: flex; gap: var(--space-6);
-    overflow-x: auto; scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    /* proximity 而非 mandatory：拖动是 JS 直接改 scrollLeft，mandatory 会在跟手阶段抢滚动；
-       proximity 只在松手后接近对齐点时吸附（P1-3） */
-    scroll-snap-type: x proximity;
-    padding: var(--space-4) var(--space-2) var(--space-8);
-    cursor: grab;
-    user-select: none;
   }
-  .showcase__track.is-dragging { cursor: grabbing; }
-  .showcase__track::-webkit-scrollbar { display: none; }
-  .showcase__hand { display: none; }   /* 扇形布局已废弃 */
-  /* 单张牌：poker size 5:7 比例（236×330），纸面质感 + 牌厚 */
-  .showcase__card {
-    /* 牌面：自上而下的微暖渐变（顶部受光），与纸白内描边形成「纸缘」层次 */
-    background: linear-gradient(180deg, var(--color-surface) 0%, color-mix(in srgb, var(--color-surface) 90%, var(--color-bg-warm)) 100%);
-    border: 1px solid var(--color-line-soft);
-    border-right-color: var(--color-line);
-    border-bottom-color: var(--color-line);
-    border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    display: flex; flex-direction: column; gap: var(--space-2);
-    position: relative; overflow: hidden;
-    width: 236px;
-    aspect-ratio: 5 / 7;          /* 真实扑克牌比例（用户要求）*/
-    flex: 0 0 auto;
-    scroll-snap-align: center;
-    min-height: 0;
-    /* 牌厚：内描边纸白高光 + 多层投影（近实远虚）+ 右/下边略深（受光方向一致） */
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
-      inset -1px -1px 0 0 color-mix(in srgb, var(--color-bg-warm) 60%, transparent),
-      0 2px 4px rgba(43, 42, 39, 0.05),
-      0 12px 24px -10px rgba(43, 42, 39, 0.16),
-      0 24px 44px -26px rgba(43, 42, 39, 0.2);
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
-  }
-  /* 流动高光边缘：一道细光沿卡边缓慢环游（conic-gradient 描边 + 旋转），
-     边缘因此像有金属反光——卡面有厚度的关键；常态就可见（淡），悬停/选中变亮变快。 */
-  .showcase__card::before {
-    content: ''; position: absolute; inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    background: conic-gradient(
-      from var(--glow, 0deg),
-      transparent 0deg,
-      color-mix(in srgb, var(--card-accent) 40%, transparent) 34deg,
-      color-mix(in srgb, #fff 85%, transparent) 58deg,
-      color-mix(in srgb, var(--card-accent) 45%, transparent) 82deg,
-      transparent 126deg,
-      transparent 360deg
-    );
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    mask-composite: exclude;
-    opacity: 0.5;                       /* 常态可见：边缘始终有一道流动的薄光 */
-    transition: opacity 0.35s ease;
-    pointer-events: none;
-    animation: card-sheen 14s linear infinite;
-  }
-  /* 高光旋转：用 @property 让角度可动画（Chromium/Safari 支持；不支持则静态停在 0deg，仍然好看） */
-  @property --glow {
-    syntax: '<angle>';
-    inherits: false;
-    initial-value: 0deg;
-  }
-  @keyframes card-sheen { to { --glow: 360deg; } }
-  /* 高光提亮：悬停 / 键盘选中（aria-selected）都要响应 —— 
-     原来挂在 .showcase__hand（已废弃容器，DOM 中不存在）→ 反馈全死（P0-1） */
-  .showcase__card:hover::before,
-  .showcase__card[aria-selected="true"]::before { opacity: 1; }
-  .showcase__card:hover::before { animation-duration: 3.4s; }
-  .showcase__card[aria-selected="true"]::before { animation-duration: 2.2s; }
-  /* 悬停 / 选中：牌被抬起，阴影加深（配合上面的 transform） */
-  /* 悬停 / 选中：牌被抬起，阴影加深 + 边缘着色（P0-1：去掉失效的 .showcase__hand 前缀） */
-  .showcase__card:hover {
-    transform: translateY(-6px);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
-      inset -1px -1px 0 0 color-mix(in srgb, var(--color-bg-warm) 60%, transparent),
-      0 4px 8px rgba(43, 42, 39, 0.06),
-      0 18px 34px -12px rgba(43, 42, 39, 0.20),
-      0 32px 56px -28px rgba(43, 42, 39, 0.24);
-  }
-  .showcase__card[aria-selected="true"] {
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
-      inset -1px -1px 0 0 color-mix(in srgb, var(--color-bg-warm) 60%, transparent),
-      0 6px 12px rgba(43, 42, 39, 0.07),
-      0 26px 44px -14px rgba(43, 42, 39, 0.22),
-      0 44px 72px -32px rgba(43, 42, 39, 0.26);
-    border-color: color-mix(in srgb, var(--card-accent) 45%, var(--color-line));
+  .team__desc {
+    font-size: var(--font-size-body); line-height: 1.75; color: var(--color-fg-secondary);
+    max-width: 36em; padding-bottom: 6px;
   }
 
-  /* 卡顶行：图标 + 代号（扑克牌的「角标」位置） */
-  .showcase__card-top { display: flex; align-items: center; justify-content: space-between; }
-  .showcase__card-top .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
-  .showcase__card-icon { color: var(--card-accent); }
-  .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
-  .showcase__card-cn { font-family: var(--font-sans); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
-  /* role 标签是 13px 小字 → 必须用 role-*-text 深色变体（亮色 3.01–3.24:1 不达 AA 4.5:1，P1-1）
-     团队卡沿用 --role-men-text（已在下方覆盖） */
-  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi); color: var(--card-accent-text, var(--role-men-text)); }
-  .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
-  /* 团队特性卡底色是暖底 #efe8db：accent 赤陶在此只有 2.61:1（大文本需 3:1）→ 用同色相压暗版 */
-  .showcase__card-role--team { color: var(--role-men-text); }
-  /* 描述字号压到 small（13px，中文下限）——用户要求「描述标签不用太大」 */
-  .showcase__card-desc { font-size: var(--font-size-small); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
-  .showcase__card-skills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .showcase__skill {
-    font-family: var(--font-mono); color: var(--color-fg-tertiary);
-    background: var(--color-bg-warm); padding: 2px 8px; border-radius: var(--radius-xs);
-    border: 1px solid var(--color-line-soft);
-    font-size: var(--font-size-small);
-    line-height: var(--line-height-ui);
-}
-  .showcase__card-constraint {
-    font-style: italic;
-    display: flex; align-items: center; gap: var(--space-1);
-    /* 卡片等高（track: align-items: stretch）后，此行 margin-top: auto 推到卡底收尾。
-       等高差只有 19px，不会再出现当年 20/185px 的 9 倍视觉差（那是因为卡被拉高 170px）。 */
-    margin-top: auto;
-    font-size: var(--font-size-small);
-    line-height: var(--line-height-ui);
-    color: var(--color-fg-tertiary);
-}
-
-  /* 团队特性卡：横排三列收在扇形下方（告别「塞进牌堆」）*/
-  .showcase__card--team {
-    background: var(--color-bg-warm);
-    max-width: 900px; margin: var(--space-8) auto 0;
-    box-shadow: none; border-color: var(--color-line);
+  .team__grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px; background: var(--color-line-soft); border: 1px solid var(--color-line-soft);
   }
-  .showcase__team-traits { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4) var(--space-6); align-content: start; }
-  .showcase__trait { display: flex; gap: var(--space-3); align-items: flex-start; }
-  .showcase__trait svg { color: var(--color-accent); flex-shrink: 0; margin-top: 2px; }
-  .showcase__trait strong { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 1px; }
-  .showcase__trait span {
-    color: var(--color-fg-tertiary);
-    font-size: var(--font-size-small);
-    line-height: var(--line-height-ui);
-}
-
-  /* Showcase nav */
-  .showcase__nav { display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-top: var(--space-5); }
-  .showcase__arrow {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border-radius: 50%;
-    border: 1px solid var(--color-line); background: var(--color-surface);
-    color: var(--color-fg-secondary); cursor: pointer;
-    transition: all 0.2s; flex-shrink: 0;
+  .team__cell {
+    padding: var(--space-8) var(--space-6) var(--space-6);
+    background: var(--color-bg);
+    display: grid; grid-template-rows: 1fr auto; row-gap: var(--space-6);
+    min-height: 260px; position: relative; transition: background .25s ease;
   }
-  .showcase__arrow:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); }
-  .showcase__arrow:active { transform: scale(0.92); }
-  /* 分页点由 JS 的 document.createElement 动态创建，不会带上 Astro scoped 样式的
-     data-astro-cid-* 属性，故这些规则必须用 :global()，否则永不匹配 ——
-     实测曾导致分页点渲染为 0×0、完全不可见不可点。 */
-  :global(.showcase__dots) { display: flex; gap: 0; align-items: center; }
-  /* 分页点：可见圆点仍是 8px，但按钮触控区放大到 24×44（WCAG 2.2 §2.5.8 ≥24px）；
-     点间距与改版前一致（原 8px 点 + 8px 间隙 = 16px 节距）。 */
-  :global(.showcase__dot) {
-    position: relative; width: 24px; height: 44px; padding: 0; background: none; border: none; cursor: pointer;
+  .team__cell:hover { background: #fdfcfa; }
+  .team__cell--men { background: var(--color-bg-warm); }
+  .team__cell--men:hover { background: #ece4d3; }
+  .team__cell-top {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: var(--space-3); margin-bottom: var(--space-1);
   }
-  :global(.showcase__dot)::before {
-    content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    /* 裸控件边界须满足 WCAG 2.2 §1.4.11 的 3:1；--color-line 仅 1.35:1 */
-    width: 8px; height: 8px; border-radius: 50%; background: var(--color-line-ui); transition: all 0.25s;
+  .team__cell-idx {
+    font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-tertiary);
+    letter-spacing: 0.16em; font-weight: var(--font-weight-semi);
   }
-  :global(.showcase__dot--active)::before { width: 24px; border-radius: 4px; background: var(--color-accent); }
+  .team__cell-label {
+    font-family: var(--font-mono); font-size: 12px; color: var(--color-accent-dark);
+    letter-spacing: 0.14em; text-transform: uppercase; font-weight: var(--font-weight-semi);
+  }
+  .team__cell-role {
+    display: grid; grid-template-columns: 88px 1fr; gap: var(--space-6); align-items: end;
+  }
+  .team__cell-cn {
+    font-size: 80px; font-weight: var(--font-weight-semi); line-height: 1; color: var(--color-fg);
+    letter-spacing: -0.005em;
+  }
+  .team__cell--men .team__cell-cn { color: var(--color-accent-dark); }
+  .team__cell-info {
+    display: flex; flex-direction: column; gap: var(--space-1); padding-bottom: 6px;
+  }
+  .team__cell-name {
+    font-family: var(--font-mono); font-size: var(--font-size-small); color: var(--color-fg-tertiary);
+    letter-spacing: 0.06em;
+  }
+  .team__cell-en {
+    font-size: 16px; color: var(--color-fg-secondary); line-height: 1.5;
+  }
+  .team__cell-desc {
+    grid-column: 1 / -1; font-size: 15px; line-height: 1.7; color: var(--color-fg-secondary);
+    padding-top: var(--space-5); border-top: 1px solid var(--color-line-soft);
+  }
 
   /* ===== Topology ===== */
   /* 去掉这里原有的 padding-left/right: 24px —— 它让本板块标题落在 128px，
@@ -1120,13 +928,18 @@ const faq = install.faq || [];
     .hero__grid { grid-template-columns: 1fr; gap: var(--space-8); }
     :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
     .topo__header { flex-direction: column; gap: var(--space-2); }
-    /* 窄屏：横向牌堆紧凑化（手指左右拨牌；卡宽收到 200px 一屏能露出下一张的边缘）*/
-    .showcase__track { gap: var(--space-4); padding: var(--space-2) var(--space-4) var(--space-6); }
-    .showcase__card { width: 220px; }
     /* 窄屏触控目标：tab 补到 44px（站内标准，P2-4） */
     .hero-install__tab { min-height: 44px; }
-    .showcase__card--team { max-width: none; }
-    .showcase__team-traits { grid-template-columns: 1fr; }
+    /* 团队网格：两栏 → 单栏 */
+    .team__grid { grid-template-columns: 1fr; }
+    .team__header { grid-template-columns: 1fr; gap: var(--space-4); margin-bottom: var(--space-8); }
+    .team__cell-role { grid-template-columns: 72px 1fr; gap: var(--space-4); }
+    .team__cell-cn { font-size: 64px; }
+  }
+  @media (max-width: 480px) {
+    .team__cell-role { grid-template-columns: 1fr; }
+    .team__cell-cn { font-size: 56px; }
+    .team__cell { min-height: 0; padding: var(--space-6) var(--space-5) var(--space-5); }
   }
   @media (max-width: 480px) {
     .hero-title { font-size: clamp(1.8rem, 8vw, 2.2rem); }
@@ -1195,102 +1008,4 @@ const faq = install.faq || [];
     });
   });
 
-  /* 扑克牌横向排列：按住拖动跟手浏览（真实扑克的手感）
-     —— 5px 死区（轻点不算拖）；拖动中 card pointer-events:none 保证帧帧跟手
-     —— 松手后按拖出距离决定是否惯性滑行；左右方向键切卡（aria-selected 同步） */
-  (() => {
-    const track = document.querySelector<HTMLElement>('.showcase__track');
-    if (!track) return;
-    const cards = [...track.querySelectorAll<HTMLElement>('.showcase__card')];
-    if (!cards.length) return;
-    let selected = 0;
-    let down = false, moved = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vx = 0, raf = 0;
-
-    const stopInertia = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
-
-    const setSelected = (idx: number) => {
-      selected = ((idx % cards.length) + cards.length) % cards.length;
-      cards.forEach((c, i) => c.setAttribute('aria-selected', String(i === selected)));
-      const d = document.querySelectorAll('.showcase__dot');
-      d.forEach((x, i) => x.classList.toggle('showcase__dot--active', i === selected));
-    };
-
-    // 分页点
-    const dotsHost = document.getElementById('showcase-dots');
-    if (dotsHost) {
-      dotsHost.innerHTML = '';
-      cards.forEach((c, i) => {
-        const dot = document.createElement('button');
-        dot.className = 'showcase__dot';
-        dot.setAttribute('aria-label', `第 ${i + 1} 张：${c.querySelector('.showcase__card-cn')?.textContent ?? ''}`);
-        dot.addEventListener('click', () => setSelected(i));
-        dotsHost.appendChild(dot);
-      });
-    }
-
-    track.addEventListener('pointerdown', (e: PointerEvent) => {
-      if (e.button !== 0) return;
-      down = true; moved = false;
-      startX = e.clientX; startScroll = track.scrollLeft;
-      lastX = e.clientX; lastT = performance.now(); vx = 0;
-      stopInertia();
-    });
-
-    track.addEventListener('pointermove', (e: PointerEvent) => {
-      if (!down) return;
-      const dx = e.clientX - startX;
-      if (!moved && Math.abs(dx) < 5) return;
-      if (!moved) { moved = true; track.classList.add('is-dragging'); track.setPointerCapture(e.pointerId); }
-      const now = performance.now();
-      const dt = Math.max(1, now - lastT);
-      vx = (e.clientX - lastX) / dt;
-      lastX = e.clientX; lastT = now;
-      track.scrollLeft = startScroll - dx;
-      e.preventDefault();
-    });
-
-    const end = (e: PointerEvent) => {
-      if (!down) return;
-      down = false;
-      if (!moved) return;
-      track.classList.remove('is-dragging');
-      if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
-      // 惯性滑行
-      let v = vx * 16;
-      const glide = () => {
-        v *= 0.94;
-        if (Math.abs(v) < 0.4) { raf = 0; return; }
-        track.scrollLeft -= v;
-        raf = requestAnimationFrame(glide);
-      };
-      if (Math.abs(v) > 1) raf = requestAnimationFrame(glide);
-    };
-    track.addEventListener('pointerup', end);
-    track.addEventListener('pointercancel', end);
-
-    // 键盘
-    track.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') { setSelected(selected + 1); track.scrollTo({ left: cards[selected].offsetLeft - 24, behavior: 'smooth' }); e.preventDefault(); }
-      if (e.key === 'ArrowLeft') { setSelected(selected - 1); track.scrollTo({ left: cards[selected].offsetLeft - 24, behavior: 'smooth' }); e.preventDefault(); }
-    });
-
-    // 箭头
-    document.getElementById('showcase-prev')?.addEventListener('click', () => setSelected(selected - 1));
-    document.getElementById('showcase-next')?.addEventListener('click', () => setSelected(selected + 1));
-
-    // 滚动同步选中
-    track.addEventListener('scroll', () => {
-      if (down) return;
-      const center = track.getBoundingClientRect().left + track.clientWidth / 2;
-      let closest = 0, minDist = Infinity;
-      cards.forEach((c, i) => {
-        const r = c.getBoundingClientRect();
-        const dist = Math.abs(r.left + r.width / 2 - center);
-        if (dist < minDist) { minDist = dist; closest = i; }
-      });
-      if (closest !== selected) setSelected(closest);
-    }, { passive: true });
-
-    setSelected(0);
-  })();
 </script>
