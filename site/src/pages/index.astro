@@ -119,8 +119,6 @@ const faq = install.faq || [];
 
       <!-- 右栏：安装（可切换平台，信息完整；样式从简 —— 无终端装饰） -->
       <aside class="hero-install" aria-label="安装">
-        <p class="hero-install__label">安装</p>
-
         <div class="hero-install__tabs" role="tablist" aria-label="安装方式">
           {platformTabs.map((t, i) => (
             <button class="hero-install__tab" role="tab" id={`itab-${t.id}`} aria-controls={`ipanel-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-platform={t.id}>{t.label}</button>
@@ -558,14 +556,10 @@ const faq = install.faq || [];
     min-width: 0;
   }
   .hero-install__panel, .hero-install__cmds, .hero-install__cmd, .hero-install__row { min-width: 0; }
-  .hero-install__label {
-    font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi);
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-fg-muted); margin: 0 0 var(--space-2);
-  }
   /* 平台切换：文字标签 + 选中下划线（不用胶囊/描边，保持轻） */
   .hero-install__tabs {
     display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4);
-    border-bottom: 1px solid var(--color-line-soft); margin-bottom: var(--space-3);
+    margin-bottom: var(--space-3);
   }
   .hero-install__tab {
     font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi);
@@ -585,9 +579,7 @@ const faq = install.faq || [];
   .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
   .hero-install__row {
     display: flex; align-items: center; gap: var(--space-2);
-    /* 行底色用「代码底」而不是暖面板底：高亮 token 的对比度是按 --color-code-bg 断言过的 */
-    background: var(--color-code-bg); border: 1px solid var(--color-line-soft);
-    border-radius: var(--radius-sm); padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
+    /* 简约版：命令行直接坐在卡面上，不再套代码底/边框（--color-code 在白底 13+:1，无忧） */
   }
   .hero-install__cmd-label {
     flex: 0 0 auto; font-size: var(--font-size-small); color: var(--color-fg-tertiary);
@@ -602,11 +594,11 @@ const faq = install.faq || [];
   }
   .hero-install__copy {
     flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px; border: 1px solid var(--color-line); border-radius: 6px;
-    background: var(--color-bg-paper); color: var(--color-fg-tertiary); cursor: pointer; transition: all 0.2s;
+    width: 36px; height: 36px; border: none; border-radius: 6px;
+    background: none; color: var(--color-fg-muted); cursor: pointer; transition: all 0.2s;
   }
-  .hero-install__copy:hover { color: var(--color-accent-dark); border-color: var(--color-accent); background: var(--color-bg); }
-  .hero-install__meta { margin: var(--space-3) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--color-line-soft); font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
+  .hero-install__copy:hover { color: var(--color-accent-dark); background: var(--color-accent-tint); }
+  .hero-install__meta { margin: var(--space-3) 0 0; font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
   .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Showcase (scroll-driven agent cards) ===== */
@@ -932,8 +924,7 @@ const faq = install.faq || [];
     .hero-title, .hero-desc { margin-left: auto; margin-right: auto; }
     .hero-actions { justify-content: center; }
     .hero-version { justify-content: center; }
-    .hero-install__label, .hero-install__tabs { justify-content: center; text-align: center; }
-    .hero-install__label { display: block; }
+    .hero-install__tabs { justify-content: center; }
     .topo__header { flex-direction: column; gap: var(--space-2); }
     .showcase__card { flex: 0 0 280px; }
     /* 窄屏团队卡回到单列竖排（2 列在 280px 里每列只有 ~100px，trait 文字会碎成 4 行） */
