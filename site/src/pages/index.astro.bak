@@ -1,0 +1,1309 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import content from '../data/content.json';
+import { Icon } from 'astro-icon/components';
+
+const base = '/';
+const pageTitle = content.hero.title + ' — ' + content.hero.subtitle;
+const install = content.install || {};
+
+/* ---------- 安装：两个平台各一条 npx 命令 ---------- */
+const platformTabs = [
+  { id: 'bash', label: 'macOS / Linux' },
+  { id: 'windows', label: 'Windows' },
+];
+const manualCmds: Record<string, { label: string; cmd: string }[]> = {
+  bash: [{ label: 'npx 安装', cmd: 'npx @cgartlab/men' }],
+  windows: [{ label: 'npx 安装', cmd: 'npx @cgartlab/men' }],
+};
+
+/* ---------- 滚动展示：Agent 数据 ---------- */
+const showcaseAgents = [
+  {
+    id: 'men',
+    cn: '门',
+    role: '团队经理',
+    icon: 'lucide:door-open',
+    desc: '你说一句话，门判断该谁做、派活、收结果、交报告。所有事都从这扇门中进来。',
+    skills: ['判断该谁做', '拆任务', '同时派活', '收齐整理', '全程留痕'],
+    constraint: '只管分工不干活——不写代码、不写文章、不做设计',
+  },
+  {
+    id: 'si',
+    cn: '思',
+    role: '策略师',
+    icon: 'lucide:pen-tool',
+    desc: '把大任务拆成小任务，标好先后顺序，给每个小任务写"做成什么样算完"。',
+    skills: ['拆任务', '标先后顺序', '写验收标准', '记经验'],
+    constraint: '拆任务不写代码，方案持复核',
+  },
+  {
+    id: 'ji',
+    cn: '记',
+    role: '工程师',
+    icon: 'lucide:code-2',
+    desc: '写代码、管 GitHub、写文章和文档。代码写完先跑检查，过了才交。',
+    skills: ['写代码', '管 GitHub', '跑检查', '写文章文档', '整理文件'],
+    constraint: '检查全过才交，不编"做完了"',
+  },
+  {
+    id: 'chi',
+    cn: '持',
+    role: '质检员 + 投资分析',
+    icon: 'lucide:scale',
+    desc: '做投资分析，也当质检员——用全新视角审核别人的产出，只看实际的文件本身。',
+    skills: ['分析持仓', '独立审核', '脚本复查', '查质量', '查数据'],
+    constraint: '审核时用全新的视角，完全不继承被审者原有的上下文',
+  },
+  {
+    id: 'yi',
+    cn: '艺',
+    role: '设计师',
+    icon: 'lucide:palette',
+    desc: '做设计决策——配色、字体、间距、布局。也生成配图和插画。',
+    skills: ['做设计', '生配图', '配色', '查无障碍', '做 Logo'],
+    constraint: '生图只有艺能出，别人要经艺',
+  },
+  {
+    id: 'xun',
+    cn: '寻',
+    role: '研究员',
+    icon: 'lucide:search',
+    desc: '搜网页、查资料、交叉核实信息真假。每条信息都标来源。',
+    skills: ['搜网页', '扫订阅源', '交叉核实', '查知识库', '标来源'],
+    constraint: '只查不改，搜不到就老实说',
+  },
+];
+
+/* ---------- 机制数据 ---------- */
+const mechanisms = content.mechanisms || [];
+const faq = install.faq || [];
+---
+
+<BaseLayout title={pageTitle}>
+  <!-- ===== Hero（左右两栏：左=标题+副标题+次级链接；右=安装命令卡，唯一主 CTA。
+       背景：巨大有机环 logo 居中 + blur —— C 方案的「纸肌理」手法，bg-warm 色不引入新色相） ===== -->
+  <header class="hero" aria-labelledby="hero-title">
+    <div class="hero-backdrop" aria-hidden="true">
+      <svg viewBox="0 0 100 83.7963" aria-hidden="true">
+        <path fill="currentColor" fill-rule="evenodd" d="M 49.4949,12.2222 C 34.4265,12.2222 33.9309,0.0 25.5529,0.0 C -3.0669,0.0 0.104,11.5407 0.104,41.3544 C 0.104,70.5679 -0.8861,74.2725 20.6975,83.2112 C 32.2645,88.0015 27.2247,61.9479 49.8298,61.9479 C 71.9301,61.9479 67.6945,87.8998 78.962,83.0437 C 100.8451,73.6126 100.8205,70.6946 99.5555,40.5173 C 98.3835,12.557 102.3083,0.0 74.4415,0.0 C 66.6945,0.0 67.0189,12.2222 49.4949,12.2222 Z M 69.0118,40.6010 A 19.0983,19.0983 0 1 0 30.8152,40.6010 A 19.0983,19.0983 0 1 0 69.0118,40.6010 Z" />
+      </svg>
+    </div>
+    <div class="hero__grid">
+      <div class="hero-content">
+        <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
+        <p class="hero-desc">{content.hero.subtitle}</p>
+      </div>
+
+      <aside class="hero-install" aria-label="安装">
+        <div class="hero-install__tabs" role="tablist" aria-label="安装方式">
+          {platformTabs.map((t, i) => (
+            <button class="hero-install__tab" role="tab" id={`itab-${t.id}`} aria-controls={`ipanel-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-platform={t.id}>{t.label}</button>
+          ))}
+        </div>
+
+        <div class="hero-install__body">
+        <div class="hero-install__panels">
+          {platformTabs.map((t) => (
+            <div class="hero-install__panel" id={`ipanel-${t.id}`} role="tabpanel" aria-labelledby={`itab-${t.id}`} hidden={t.id !== 'bash'}>
+              <ul class="hero-install__cmds">
+                {manualCmds[t.id].map((c) => (
+                  <li class="hero-install__cmd">
+                    <div class="hero-install__row">
+                      <span class="hero-install__prompt" aria-hidden="true">$</span>
+                      <code class="hero-install__code" data-lang={t.id === 'windows' ? 'powershell' : 'bash'}>{c.cmd}</code>
+                      <button class="hero-install__copy" data-cmd={c.cmd} aria-label={`复制安装命令`}>
+                        <Icon name="lucide:copy" width="14" height="14" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <!-- 装饰标识：有机环 + 穿过门孔的命令光点（呼应「一行命令进门，团队开工」）。
+            纯装饰 → aria-hidden；不承载文字，故可用亮赤陶 accent（品牌规则：accent 用于图形）。 -->
+        <div class="hero-install__art" aria-hidden="true">
+          <span class="hero-install__art-halo"></span>
+          <span class="hero-install__art-orbit"></span>
+          <svg class="hero-install__art-mark" viewBox="0 0 100 83.7963">
+            <path fill="currentColor" fill-rule="evenodd" d="M 49.4949,12.2222 C 34.4265,12.2222 33.9309,0.0 25.5529,0.0 C -3.0669,0.0 0.104,11.5407 0.104,41.3544 C 0.104,70.5679 -0.8861,74.2725 20.6975,83.2112 C 32.2645,88.0015 27.2247,61.9479 49.8298,61.9479 C 71.9301,61.9479 67.6945,87.8998 78.962,83.0437 C 100.8451,73.6126 100.8205,70.6946 99.5555,40.5173 C 98.3835,12.557 102.3083,0.0 74.4415,0.0 C 66.6945,0.0 67.0189,12.2222 49.4949,12.2222 Z M 69.0118,40.6010 A 19.0983,19.0983 0 1 0 30.8152,40.6010 A 19.0983,19.0983 0 1 0 69.0118,40.6010 Z" />
+          </svg>
+          <span class="hero-install__art-dot"></span>
+          <span class="hero-install__art-spark"></span>
+        </div>
+        </div>
+
+        <p class="hero-install__meta">粘贴命令到终端</p>
+      </aside>
+    </div>
+  </header>
+
+  <!-- ===== Agent 扇形扑克牌 ===== -->
+  <section class="showcase" aria-labelledby="showcase-title">
+    <h2 id="showcase-title" class="sr-only">Agent 团队</h2>
+    <div class="showcase__header">
+      <p class="showcase__label">THE TEAM</p>
+      <h2 class="showcase__heading">六个角色，一个核心</h2>
+    </div>
+
+    <!-- 角色牌：六张真实扑克牌尺寸（2.5×3.5in = 240×336）横向排列，按住拖动浏览 -->
+    <div class="showcase__track" id="showcase-track" role="listbox" tabindex="0"
+         aria-label="六个角色卡片，可按住拖动浏览，或用左右方向键切换">
+      {showcaseAgents.map((a, i) => (
+        <article class="showcase__card" role="option" aria-selected={i === 0 ? 'true' : 'false'}
+                 data-agent={a.id} data-index={i}
+                 style={`--card-accent: var(--role-${a.id});`}>
+          <div class="showcase__card-top">
+            <div class="showcase__card-icon">
+              <Icon name={a.icon} width="20" height="20" />
+            </div>
+            <span class="showcase__card-id">{a.id}</span>
+          </div>
+          <div class="showcase__card-head">
+            <span class="showcase__card-cn">{a.cn}</span>
+            <span class="showcase__card-role">{a.role}</span>
+          </div>
+          <p class="showcase__card-desc">{a.desc}</p>
+          <div class="showcase__card-skills">
+            {a.skills.map((s) => (
+              <span class="showcase__skill">{s}</span>
+            ))}
+          </div>
+          <p class="showcase__card-constraint">
+            <Icon name="lucide:shield" width="11" height="11" />
+            {a.constraint}
+          </p>
+        </article>
+      ))}
+    </div>
+
+    <div class="showcase__nav">
+      <button class="showcase__arrow" id="showcase-prev" aria-label="上一张">
+        <Icon name="lucide:chevron-left" width="20" height="20" />
+      </button>
+      <div class="showcase__dots" id="showcase-dots"></div>
+      <button class="showcase__arrow" id="showcase-next" aria-label="下一张">
+        <Icon name="lucide:chevron-right" width="20" height="20" />
+      </button>
+    </div>
+
+    <!-- 团队特性卡片：六条特性横排三列，收在扇形下方 -->
+    <article class="showcase__card showcase__card--team" style={`--card-accent: var(--color-accent)`}>
+      <div class="showcase__card-icon">
+        <Icon name="lucide:users" width="32" height="32" />
+      </div>
+      <p class="showcase__card-role showcase__card-role--team">团队特性</p>
+      <div class="showcase__team-traits">
+        <div class="showcase__trait">
+          <Icon name="lucide:git-branch" width="16" height="16" />
+          <div>
+            <strong>同时开工</strong>
+            <span>没有依赖关系的任务同时做，有先后关系的就得排队等着</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:shield-check" width="16" height="16" />
+          <div>
+            <strong>两层检查</strong>
+            <span>先跑脚本查文件，再由持用全新视角复核</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:activity" width="16" height="16" />
+          <div>
+            <strong>全程留痕</strong>
+            <span>每一步都记下来，事后可回看完整过程</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:brain" width="16" height="16" />
+          <div>
+            <strong>越用越聪明</strong>
+            <span>经验自动总结，踩过的坑下次绕开</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:lock" width="16" height="16" />
+          <div>
+            <strong>防死循环</strong>
+            <span>最多重试 5 次，<br />不行就老实说卡住了</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:file-code" width="16" height="16" />
+          <div>
+            <strong>轻量运行</strong>
+            <span>所有脚本零依赖，<br />装好 Node 就能跑</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+  <section class="topo" aria-labelledby="topo-title">
+    <div class="topo__header">
+      <h2 id="topo-title" class="topo__title">团队怎么协作</h2>
+      <a href={base + 'roles'} class="topo__all">看全部角色 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+    </div>
+    <p class="topo__desc">你说一句话 → 门判断该谁做 → 同时派活 → 两层检查 → 交报告给你；不行就重试，最多 5 次就停下来</p>
+
+    <div class="topo-diagram">
+      <svg viewBox="0 0 1200 560" class="topo-svg" aria-hidden="true">
+        <defs>
+          <!-- Arrowheads -->
+          <marker id="mk-fg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--color-fg-muted)" /></marker>
+          <marker id="mk-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--color-accent)" /></marker>
+          <marker id="mk-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-ji)" /></marker>
+          <marker id="mk-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-chi)" /></marker>
+          <marker id="mk-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" style="fill: var(--role-xun)" /></marker>
+
+          <!-- Forward paths -->
+          <path id="tz-in" d="M200,282 L276,282" />
+          <path id="tz-br-1" d="M500,282 C565,282 555,97 616,97" />
+          <path id="tz-br-2" d="M500,282 C565,282 555,165 616,165" />
+          <path id="tz-br-3" d="M500,282 C565,282 555,233 616,233" />
+          <path id="tz-br-4" d="M500,282 C565,282 555,301 616,301" />
+          <path id="tz-br-5" d="M500,282 C565,282 555,369 616,369" />
+
+          <!-- Products → mechanical gate -->
+          <path id="tz-out-1" d="M750,97 C798,97 786,286 826,286" />
+          <path id="tz-out-2" d="M750,165 C796,165 788,286 826,286" />
+          <path id="tz-out-3" d="M750,233 C792,233 792,286 826,286" />
+          <path id="tz-out-4" d="M750,301 C792,301 792,286 826,286" />
+          <path id="tz-out-5" d="M750,369 C798,369 786,286 826,286" />
+
+          <!-- Gate → Judge (all PASS) -->
+          <path id="tz-verdict" d="M980,286 L1036,286" />
+
+          <!-- FAIL loops back to dispatch -->
+          <path id="tz-fail-1" d="M905,252 C905,8 390,8 390,228" />
+          <path id="tz-fail-2" d="M1110,252 C1110,8 390,8 390,228" />
+
+          <!-- REPORT back to user -->
+          <path id="tz-report" d="M1110,320 C1110,452 120,452 120,322" />
+
+          <!-- LEARN sink -->
+          <path id="tz-learn" d="M650,452 L650,488" />
+        </defs>
+
+        <!-- Edges -->
+        <use href="#tz-in" class="topo-bezier topo-bezier--input" marker-end="url(#mk-fg)" />
+        <use href="#tz-br-1" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-2" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-3" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-4" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-br-5" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-1" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-2" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-3" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-4" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-out-5" class="topo-bezier topo-bezier--branch" marker-end="url(#mk-accent)" />
+        <use href="#tz-verdict" class="topo-bezier topo-bezier--verdict" marker-end="url(#mk-green)" />
+        <use href="#tz-fail-1" class="topo-bezier topo-bezier--fail" marker-end="url(#mk-amber)" />
+        <use href="#tz-fail-2" class="topo-bezier topo-bezier--fail" marker-end="url(#mk-amber)" />
+        <use href="#tz-report" class="topo-bezier topo-bezier--report" marker-end="url(#mk-green)" />
+        <use href="#tz-learn" class="topo-bezier topo-bezier--learn" marker-end="url(#mk-purple)" />
+
+        <!-- Edge labels -->
+        <text x="1010" y="244" text-anchor="middle" class="topo-elabel topo-elabel--pass">全 PASS</text>
+        <text x="650" y="34" text-anchor="middle" class="topo-elabel topo-elabel--fail">FAIL · LOOP 重试 ≤5 次</text>
+        <text x="615" y="442" text-anchor="middle" class="topo-elabel topo-elabel--report">REPORT · 四段结构化汇报</text>
+
+        <!-- Flow dots -->
+        <circle r="3.5" class="topo-dot topo-dot--input"><animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#tz-in" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#tz-br-1" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.15s"><mpath href="#tz-br-2" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.3s"><mpath href="#tz-br-3" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.45s"><mpath href="#tz-br-4" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2s" repeatCount="indefinite" begin="0.6s"><mpath href="#tz-br-5" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="0.4s"><mpath href="#tz-out-1" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="0.6s"><mpath href="#tz-out-2" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="0.8s"><mpath href="#tz-out-3" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="1.0s"><mpath href="#tz-out-4" /></animateMotion></circle>
+        <circle r="2.8" class="topo-dot"><animateMotion dur="2.2s" repeatCount="indefinite" begin="1.2s"><mpath href="#tz-out-5" /></animateMotion></circle>
+        <circle r="3" class="topo-dot topo-dot--verdict"><animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#tz-verdict" /></animateMotion></circle>
+        <circle r="2.6" class="topo-dot topo-dot--fail"><animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#tz-fail-1" /></animateMotion></circle>
+        <circle r="2.6" class="topo-dot topo-dot--fail"><animateMotion dur="3.2s" repeatCount="indefinite" begin="0.8s"><mpath href="#tz-fail-2" /></animateMotion></circle>
+        <circle r="3.5" class="topo-dot topo-dot--report"><animateMotion dur="3.5s" repeatCount="indefinite"><mpath href="#tz-report" /></animateMotion></circle>
+        <circle r="2.6" class="topo-dot topo-dot--learn"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#tz-learn" /></animateMotion></circle>
+
+        <!-- User -->
+        <g>
+          <rect x="40" y="250" width="160" height="64" class="topo-node topo-node--input" />
+          <text x="120" y="276" text-anchor="middle" class="topo-label topo-label--input">用户</text>
+          <text x="120" y="296" text-anchor="middle" class="topo-label topo-label--sub">自然语言指令</text>
+        </g>
+
+        <!-- Men hub -->
+        <g>
+          <rect x="280" y="232" width="220" height="110" rx="16" class="topo-node topo-node--hub" />
+          <text x="390" y="264" text-anchor="middle" class="topo-label topo-label--hub-cn">Men</text>
+          <text x="390" y="294" text-anchor="middle" class="topo-label topo-label--hub-sub">判断该谁做 · 派活</text>
+          <text x="390" y="324" text-anchor="middle" class="topo-label topo-label--hub-sub2">最多4个同时跑</text>
+          <rect x="280" y="232" width="220" height="110" rx="16" class="topo-pulse" />
+        </g>
+
+        <!-- Agents column -->
+        <g>
+          <rect x="620" y="70" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="685" y="94" text-anchor="middle" class="topo-label topo-label--agent-cn">思</text>
+          <text x="685" y="112" text-anchor="middle" class="topo-label topo-label--agent-id">si · 拆任务</text>
+          <circle cx="740" cy="78" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="138" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="685" y="162" text-anchor="middle" class="topo-label topo-label--agent-cn">记</text>
+          <text x="685" y="180" text-anchor="middle" class="topo-label topo-label--agent-id">ji · 写代码/文章</text>
+          <circle cx="740" cy="146" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="206" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="685" y="230" text-anchor="middle" class="topo-label topo-label--agent-cn">寻</text>
+          <text x="685" y="248" text-anchor="middle" class="topo-label topo-label--agent-id">xun · 查资料</text>
+          <circle cx="740" cy="214" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="274" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="685" y="298" text-anchor="middle" class="topo-label topo-label--agent-cn">艺</text>
+          <text x="685" y="316" text-anchor="middle" class="topo-label topo-label--agent-id">yi · 做设计</text>
+          <circle cx="740" cy="282" r="4" class="topo-status topo-status--active" />
+        </g>
+        <g>
+          <rect x="620" y="342" width="130" height="54" class="topo-node topo-node--agent" />
+          <text x="685" y="366" text-anchor="middle" class="topo-label topo-label--agent-cn">持</text>
+          <text x="685" y="384" text-anchor="middle" class="topo-label topo-label--agent-id">chi · 投资/评审</text>
+          <circle cx="740" cy="350" r="4" class="topo-status topo-status--verify" />
+          <rect x="676" y="327" width="74" height="21" rx="10.5" class="topo-badge" />
+          <text x="713" y="343" text-anchor="middle" class="topo-label topo-label--badge">兼 Judge</text>
+        </g>
+
+        <!-- Mechanical gate -->
+        <g>
+          <rect x="830" y="256" width="186" height="66" rx="10" class="topo-node topo-node--verify" />
+          <text x="923" y="278" text-anchor="middle" class="topo-label topo-label--node-title">脚本检查</text>
+          <text x="923" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">五项检查</text>
+          <text x="923" y="312" text-anchor="middle" class="topo-label topo-label--node-micro">文件·密钥·TODO·结构·退出码</text>
+          <circle cx="1004" cy="264" r="4" class="topo-status topo-status--active" />
+        </g>
+
+        <!-- Judge -->
+        <g>
+          <rect x="1040" y="256" width="140" height="66" rx="10" class="topo-node topo-node--judge" />
+          <text x="1110" y="278" text-anchor="middle" class="topo-label topo-label--node-title">持 · 审核</text>
+          <text x="1110" y="296" text-anchor="middle" class="topo-label topo-label--node-sub">全新视角审核</text>
+          <text x="1110" y="312" text-anchor="middle" class="topo-label topo-label--node-micro">只看文件 · 不听汇报</text>
+          <circle cx="1168" cy="264" r="4" class="topo-status topo-status--verify" />
+        </g>
+
+        <!-- Knowledge sink -->
+        <g>
+          <rect x="540" y="492" width="220" height="48" rx="10" class="topo-node topo-node--knowledge" />
+          <text x="650" y="510" text-anchor="middle" class="topo-label topo-label--node-title">经验库</text>
+          <text x="650" y="526" text-anchor="middle" class="topo-label topo-label--node-sub">自动总结经验</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="topo-legend">
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--input"></span>用户输入</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--hub"></span>编排核心</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--agent"></span>子角色</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--verify"></span>脚本检查</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--judge"></span>持审核</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--report"></span>结果回传</span>
+      <span class="topo-legend__item"><span class="topo-legend__dot topo-legend__dot--fail"></span>失败重试</span>
+    </div>
+
+  </section>
+
+  <!-- ===== 核心机制 ===== -->
+  <section class="mechanisms" aria-labelledby="mech-title">
+    <div class="mechanisms__header">
+      <h2 id="mech-title" class="mechanisms__title">核心机制</h2>
+      <a href={base + 'mechanisms'} class="mechanisms__all">看全部 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+    </div>
+    <div class="mechanisms__list">
+      {mechanisms.map((m, i) => (
+        <div class="mechanisms__item">
+          <span class="mechanisms__idx">{String(i + 1).padStart(2, '0')}</span>
+          <div class="mechanisms__item-body">
+            <h3 class="mechanisms__item-title">{m.title}</h3>
+            <p class="mechanisms__item-desc">{m.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="faq" aria-labelledby="faq-title">
+    <h2 id="faq-title" class="faq__title">常见问题</h2>
+    <div class="faq__list">
+      {(faq.length > 0 ? faq : [
+        { q: 'Men 是什么？', a: '你说一句话，AI 团队自动分工、干活、检查、交报告。6 个角色各干各的，你不用指定谁做什么。' },
+
+        { q: '怎么开始用？', a: '在终端运行 <code>npx @cgartlab/men</code>，装完就能用。然后在 OpenCode 里输入 <code>/ultrawork 你的任务</code>。' },
+
+        { q: '我不会写代码，能用吗？', a: '能用。日常使用只需要用大白话说出你想做什么。' },
+
+        { q: '怎么检查装对了？', a: '安装完成后会自动验证。你也可以手动运行验证命令，五项检查全过就对了。' },
+      ]).map((item) => (
+        <details class="faq__item">
+          <summary class="faq__q">{item.q}</summary>
+          <p class="faq__a" set:html={item.a}></p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="cta" aria-label="开始使用">
+    <div class="cta__inner">
+      <h2 class="cta__title">现在就<em>开始用</em></h2>
+      <p class="cta__desc">30 秒装好，一句话开工。</p>
+      <div class="cta__actions">
+        <a href={base + 'roles'} class="hero-cta hero-cta--primary">认识团队 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+        <a href={base + 'mechanisms'} class="hero-cta hero-cta--ghost">了解机制 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  /* 板块节奏：所有板块共用同一个上下留白 → 板块之间视觉间距恒定（48×2 = 96px；窄屏 32×2 = 64px）。
+     原来各板块各写各的（40/48/32 混用），板块间距实测 88/72/88/80/96px 参差不齐。 */
+  /* --page-max 已无引用（hero 改用 <main> 内容宽度），移除以免误导 */
+  /* --section-measure：列表型板块（核心机制 / 常见问题）的列宽。
+     原来板块占满 1232px，而正文按 --measure-prose 只到 560px →
+     每条的 border-bottom 比正文宽 672px，「没收窄」的观感就来自这里。 */
+  :root { --section-pad: var(--space-12); --section-measure: 640px; }
+
+  /* ===== Hero（左右两栏：左=标题+副标题+次级文字链；右=安装命令卡，唯一主 CTA）===== */
+    .hero { padding: var(--section-pad) 0 var(--space-10); position: relative; }
+    /* 背景层：巨大有机环 logo 居中 + 体积光线（赤陶）。
+       拆层之前 logo 与光线同处一层 blur(25px)，两个都被糊没了；现在各自控模糊：
+       logo 轻糊 10px（形体仍可辨），光线只有 6px（光束能看见）。
+       logo 填充改赤陶 accent α0.10（品牌规则：accent 用于图形装饰）——
+       实测文字区底色 #f6ebe5，正文 12.34:1 / 三级文本 5.67:1，仍稳稳过 AA。 */
+    /* 背景层：随页面上滚的绝对定位层（用户要「固定在后方、会向上滚动、不停在屏幕上」）。
+       几何：从视口顶起、铺满第一屏（100vh），随文档一起上移。
+       不被硬切的做法：椭圆 mask 在 62% 处就淡到全透明 —— 明显早于元素边界，
+       所以外层 overflow:hidden 裁掉的是已经透明的部分，肉眼看不到切口。 */
+    .hero-backdrop {
+      position: absolute;
+      top: calc(-1 * var(--header-h, 84px));   /* 从视口顶开始（抵消 main 的页头内边距） */
+      left: 50%;
+      translate: -50% 0;
+      width: 100%;
+      height: 100vh;
+      display: grid; place-items: center;
+      pointer-events: none;
+      overflow: hidden;                        /* 裁掉超出的光线盘，掩膜已保证切口不可见 */
+      -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 0%, rgba(0,0,0,0.5) 45%, transparent 62%);
+      mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 0%, rgba(0,0,0,0.5) 45%, transparent 62%);
+    }
+    .hero-backdrop svg {
+      width: min(74vmin, 600px); height: auto;
+      color: var(--color-accent);
+      opacity: 0.10;
+      filter: blur(10px);   /* 原 25px：形体糊成一片；10px 保留有机环轮廓与孔洞 */
+    }
+    /* 体积光线：从 logo 中心向四周辐射的赤陶光束，缓慢旋转无限循环。
+       峰值 alpha 0.14、光束带 5deg（原 0.05 / 4deg 弱到看不见），
+       radial mask 扩到 74% 让光线铺得更开；6px 模糊只做柔边不糊光束。 */
+    .hero-backdrop::before {
+      content: ''; position: absolute;
+      width: 130vmax; height: 130vmax;
+      left: 50%; top: 50%;
+      translate: -50% -50%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(215, 118, 86, 0) 0deg,
+        rgba(215, 118, 86, 0.14) 3deg,
+        rgba(215, 118, 86, 0) 14deg
+      );
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.55) 34%, transparent 74%);
+      mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.55) 34%, transparent 74%);
+      filter: blur(6px);
+      animation: hero-rays 32s linear infinite;
+    }
+    @keyframes hero-rays {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-backdrop::before { animation: none; }
+    }
+    /* 上下渐变压淡：护住文字区（现在只压顶部/底部，中段留给 logo 与光线） */
+    .hero-backdrop::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg,
+        var(--color-bg) 0%, rgba(250, 249, 245, 0) 22%,
+        rgba(250, 249, 245, 0) 78%, var(--color-bg) 100%);
+    }
+    .hero__grid {
+      display: grid;
+      /* 左栏文字区吃余量，右栏命令卡按内容收缩（fit-content 由子元素决定） */
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      /* 大标题与安装命令卡**水平中线对齐**（用户要求）：两栏各自垂直居中 → 中线重合。
+         实测：居中前 h1 中线 161 vs 命令条中线 213（差 52px）；居中后都落在 200 附近。 */
+      align-items: center;
+      gap: var(--space-12);
+      position: relative; z-index: 1;
+    }
+    .hero-content { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; min-width: 0; }
+    .hero-title {
+      /* 层级微调：标题从 display 令牌 56px 提到 clamp 68px（A 方案的字号落差手法），
+         与副标题（17px）拉开 4 倍，L1 定海神针 */
+      font-size: clamp(52px, 5.5vw, 68px);
+      font-weight: var(--font-weight-semi);
+      color: var(--color-fg);
+      text-wrap: balance;
+      line-height: var(--line-height-display);
+      letter-spacing: var(--letter-spacing-heading);
+      max-width: 14em;
+      margin: 0 0 var(--space-4);
+    }
+    /* 「这扇门」强调色 + 斜体（用户明确要求斜体）。
+       中文无真斜体字形，浏览器只能合成倾斜 → 用 oblique <angle> 明确指定 12deg，
+       比 Chrome 默认合成的 ~14deg 更克制、更贴合中文方块字的节奏。
+       色用 accent-soft（对纸底 4.55:1）而非亮 accent（3.01:1，贴 3:1 线太紧）。
+       字重保持 600 与其余三字一致。 */
+    .hero-title em {
+      font-style: oblique 12deg;
+      color: var(--color-accent-soft);
+    }
+    .hero-desc {
+      font-size: var(--font-size-body-lg);
+      color: var(--color-fg-secondary);
+      line-height: var(--line-height-body);
+      margin: 0;
+      max-width: 32em;
+    }
+
+  /* 右栏安装（重设计）：不再是「面板卡」，而是裸排在 hero 背景上的紧凑命令条组合 ——
+     tab 在上、命令条居中、meta 在下。参考 Astro / shadcn 的 install 命令条 +
+     Vercel 的 shadow-as-border 描边。高度由内容决定，不与左栏等高。 */
+  .hero-install {
+    display: flex; flex-direction: column;
+    margin-top: var(--space-2);   /* tab 文字盒与 h1 盒顶对齐微调 */
+    /* 关键：网格项默认 min-width:auto，安装命令（pre-wrap）会把整列撑宽，
+       必须允许收缩，让 .hero-install__code 自己换行。 */
+    min-width: 0;
+  }
+  .hero-install__panel, .hero-install__cmds, .hero-install__cmd, .hero-install__row { min-width: 0; }
+  /* 命令条 + 右侧装饰标识 同一行（标识落在命令条右边的空白里，用户红框位置） */
+  .hero-install__body { display: flex; align-items: center; gap: var(--space-6); }
+  /* 装饰标识：有机环（空心的「门」）+ 一颗沿门孔飞过的小光点（无限循环）——
+     表达「一行命令穿过这扇门，团队开工」。纯装饰，不参与语义。 */
+  .hero-install__art {
+    position: relative;
+    flex: 1 1 auto; min-width: 0;
+    height: 96px;
+    display: grid; place-items: center;
+  }
+  /* 外圈柔光：呼吸（放大 + 淡出），把标识与背景连起来 */
+  .hero-install__art-halo {
+    position: absolute;
+    width: 116px; height: 116px; border-radius: 50%;
+    background: radial-gradient(circle, var(--color-accent-tint) 0%, transparent 68%);
+    animation: art-halo 5s ease-in-out infinite;
+  }
+  /* 细描边轨道：缓慢自转，给静止的标识一点「活着」的动静 */
+  .hero-install__art-orbit {
+    position: absolute;
+    width: 84px; height: 84px; border-radius: 50%;
+    border: 1px dashed color-mix(in srgb, var(--color-accent) 45%, transparent);
+    animation: art-orbit 24s linear infinite;
+  }
+  .hero-install__art-mark {
+    position: relative;
+    width: 62px; height: auto;
+    color: var(--color-accent);          /* 图形装饰：亮赤陶（品牌规则允许） */
+    filter: drop-shadow(0 2px 10px color-mix(in srgb, var(--color-accent) 22%, transparent));
+  }
+  /* 小光点：从左穿过门孔到右，无限循环 */
+  .hero-install__art-dot {
+    position: absolute;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--color-accent-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+    animation: art-pass 6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  /* 门内的小闪点：门开合的呼吸感（与光点错相位） */
+  .hero-install__art-spark {
+    position: absolute;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--color-accent-dark);
+    animation: art-spark 3s ease-in-out infinite;
+  }
+  @keyframes art-halo {
+    0%, 100% { transform: scale(0.86); opacity: 0.55; }
+    50%      { transform: scale(1.06); opacity: 0.95; }
+  }
+  @keyframes art-orbit { to { transform: rotate(360deg); } }
+  /* 从左外 → 穿门孔（中心稍作停留）→ 右外，然后淡出重来 */
+  @keyframes art-pass {
+    0%   { translate: -58px 0; opacity: 0; }
+    12%  { opacity: 1; }
+    42%  { translate: -2px 0; opacity: 1; }
+    58%  { translate: 2px 0; opacity: 1; }
+    88%  { opacity: 1; }
+    100% { translate: 58px 0; opacity: 0; }
+  }
+  @keyframes art-spark {
+    0%, 100% { transform: scale(0.7); opacity: 0.35; }
+    50%      { transform: scale(1.5); opacity: 0.9; }
+  }
+  /* 无障碍：用户要求减少动效时全部静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-install__art-halo, .hero-install__art-orbit,
+    .hero-install__art-dot, .hero-install__art-spark { animation: none; }
+    .hero-install__art-dot { opacity: 1; translate: 0 0; }
+  }
+  /* 平台切换：轻文字 tab，选中项加下划线 */
+  .hero-install__tabs {
+    display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4);
+    margin-bottom: var(--space-2);
+  }
+  .hero-install__tab {
+    font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi);
+    color: var(--color-fg-tertiary); background: none; border: none; cursor: pointer;
+    padding: var(--space-1) 0; min-height: 32px; margin-bottom: -1px;
+    border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s;
+  }
+  .hero-install__tab:hover { color: var(--color-fg); }
+  .hero-install__tab[aria-selected="true"] { color: var(--color-accent-dark); border-bottom-color: var(--color-accent); }
+  /* 面板叠在同一格里：隐藏面板 visibility:hidden 占位 → 切换 tab 时命令条高度不变 */
+  .hero-install__panels { display: grid; }
+  .hero-install__panel { grid-area: 1 / 1; }
+  .hero-install__panel[hidden] { display: block; visibility: hidden; }
+  .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .hero-install__cmd { display: flex; }
+  /* 命令条本体：纸白底 + shadow-as-border（0 0 0 1px，Vercel 手法）+ 圆角；宽度由内容决定 */
+  .hero-install__row {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 1px var(--color-line-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+    max-width: 100%;
+  }
+  /* $ 提示符：终端信号，不参与复制 */
+  .hero-install__prompt {
+    flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--font-size-caption);
+    color: var(--color-accent-dark); user-select: none;
+  }
+  .hero-install__code {
+    flex: 1; min-width: 0;
+    /* 命令完整显示：超宽就换行 */
+    white-space: pre-wrap; overflow-wrap: anywhere;
+    font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-code);
+    background: none; padding: 0; line-height: 1.5;
+  }
+  .hero-install__copy {
+    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border: none; border-radius: 6px;
+    background: none; color: var(--color-fg-muted); cursor: pointer; transition: all 0.2s;
+  }
+  .hero-install__copy:hover { color: var(--color-accent-dark); background: var(--color-accent-tint); }
+  .hero-install__meta { margin: var(--space-3) 0 0; font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
+
+  /* ===== Showcase (scroll-driven agent cards) ===== */
+  .showcase { padding: var(--section-pad) 0; overflow: hidden; }
+  /* 头部内容居中，不需要额外的 24px 水平内边距（去掉后盒子与其它板块同在 104px 上） */
+  .showcase__header { text-align: center; margin-bottom: var(--space-8); }
+  .showcase__label {
+    font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); text-transform: uppercase; color: var(--color-accent-dark); margin-bottom: var(--space-3);
+    letter-spacing: var(--letter-spacing-label);
+}
+  .showcase__heading {
+    font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
+}
+
+  /* ===== Agent 扇形扑克牌 =====
+     六张角色卡像被握在手里：所有牌绕**同一个轴心**（牌下方远处）旋转 → 自然成扇，
+     错开距离由轴距 × sin(角度) 决定。悬停抬升、选中则整张抽到眼前。 */
+  .showcase__hand {
+    position: relative;
+    height: 520px;
+    cursor: grab;
+    user-select: none;
+    touch-action: pan-y;
+  }
+  .showcase__hand.is-dragging { cursor: grabbing; }
+  /* 单张牌：绝对定位在中轴，统一轴心旋转成扇 */
+  .showcase__hand .showcase__card {
+    position: absolute;
+    left: 50%;
+    bottom: 88px;
+    width: 240px;
+    /* 真实扑克牌比例：poker size 2.5×3.5 英寸 = 5:7 ≈ 0.714（用户要求「参考真实的扑克牌」）*/
+    aspect-ratio: 5 / 7;
+    flex: none;
+    /* 扇形几何：轴心在牌下方 420px（到牌心约 620px）。错开量 = sin(角度)×620。
+       相邻牌错开 16° ≈ 171px —— 这个量是**身份区可读性**决定的：扇形里每张牌只露出左边一条，
+       必须放得下 图标+汉字+代号+职责（约 165px），否则右侧的牌连名字都读不到
+       （实测 12.5° 时「艺/寻/持」三张的名字与职责全被邻牌盖住）。
+       上限则由容器决定：旋转后的外接矩形要留在 1232px 内 ——
+       最外边缘 ≈ 轴距×sin(2.5θ) + 卡旋转半宽，18° 时实测超出 46px 被裁，16° 留出余量。 */
+    transform-origin: 50% calc(100% + 420px);
+    transform: translateX(-50%) rotate(calc(var(--i) * 16deg));
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s ease, border-color 0.35s ease;
+    z-index: calc(10 - var(--ai));
+  }
+  /* 悬停：沿扇形方向再抬一点（视觉上是「往上抽」） */
+  .showcase__hand .showcase__card:hover {
+    transform: translateX(-50%) rotate(calc(var(--i) * 16deg)) translateY(-30px);
+    z-index: 30;
+  }
+  /* 选中（抽出）：沿**自身扇形径向**滑出（rotate 在 translateY 之前 → 走扇面法线方向），
+     而不是横躺上移 —— 横躺会让牌的下半身压住右邻居的头部（实测「持」的三件套全被盖住）。
+     不放大：扇形相邻牌本就紧邻，放大必然互相侵吞。选中感由阴影加深 + 高光加速表达。 */
+  .showcase__hand .showcase__card.is-picked {
+    transform: translateX(-50%) rotate(calc(var(--i) * 16deg)) translateY(-56px);
+    z-index: 40;
+  }
+  /* 拖动中的牌跟随指针（--dx/--dy 由 JS 写入） */
+  .showcase__hand .showcase__card.is-dragging {
+    transition: none;
+    transform: translateX(calc(-50% + var(--dx, 0px))) translateY(var(--dy, 0px)) rotate(0deg) scale(1.05);
+    z-index: 50;
+    cursor: grabbing;
+  }
+
+  .showcase__card {
+    background: var(--color-surface);
+    /* 牌厚：多层堆叠阴影（近距实、远距虚）+ 右侧一道实体边 —— 看起来是一张有厚度的卡 */
+    border: 1px solid var(--color-line-soft);
+    border-right-color: var(--color-line);
+    border-bottom-color: var(--color-line);
+    border-radius: var(--radius-lg); padding: var(--space-5);
+    display: flex; flex-direction: column; gap: var(--space-2);
+    position: relative; overflow: hidden;
+    min-height: 0;
+    box-shadow:
+      0 1px 0 0 #fff inset,
+      0 2px 4px rgba(43, 42, 39, 0.04),
+      0 10px 22px -10px rgba(43, 42, 39, 0.14),
+      0 22px 40px -26px rgba(43, 42, 39, 0.18);
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  /* 流动高光边缘：一道细光沿卡边缓慢环游（conic-gradient 描边 + 旋转），
+     边缘因此像有金属反光——卡面有厚度的关键；常态就可见（淡），悬停/选中变亮变快。 */
+  .showcase__card::before {
+    content: ''; position: absolute; inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--glow, 0deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--card-accent) 40%, transparent) 34deg,
+      color-mix(in srgb, #fff 85%, transparent) 58deg,
+      color-mix(in srgb, var(--card-accent) 45%, transparent) 82deg,
+      transparent 126deg,
+      transparent 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: 0.5;                       /* 常态可见：边缘始终有一道流动的薄光 */
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    animation: card-sheen 14s linear infinite;
+  }
+  /* 高光旋转：用 @property 让角度可动画（Chromium/Safari 支持；不支持则静态停在 0deg，仍然好看） */
+  @property --glow {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+  }
+  @keyframes card-sheen { to { --glow: 360deg; } }
+  .showcase__hand .showcase__card:hover::before,
+  .showcase__hand .showcase__card.is-picked::before { opacity: 1; }
+  .showcase__hand .showcase__card:hover::before { animation-duration: 3.4s; }
+  .showcase__hand .showcase__card.is-picked::before { animation-duration: 2.2s; }
+  /* 悬停 / 选中：牌被抬起，阴影加深（配合上面的 transform） */
+  .showcase__hand .showcase__card:hover {
+    box-shadow:
+      0 1px 0 0 #fff inset,
+      0 4px 8px rgba(43, 42, 39, 0.06),
+      0 18px 34px -12px rgba(43, 42, 39, 0.20),
+      0 32px 56px -28px rgba(43, 42, 39, 0.24);
+  }
+  .showcase__hand .showcase__card.is-picked {
+    box-shadow:
+      0 1px 0 0 #fff inset,
+      0 6px 12px rgba(43, 42, 39, 0.07),
+      0 26px 44px -14px rgba(43, 42, 39, 0.22),
+      0 44px 72px -32px rgba(43, 42, 39, 0.26);
+    border-color: color-mix(in srgb, var(--card-accent) 45%, var(--color-line));
+  }
+
+  .showcase__card-icon { color: var(--card-accent); }
+  .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); }
+  .showcase__card-cn { font-family: var(--font-sans); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
+  /* P2-11: ≥18.66px + weight 700 → 大文本资格 → 3:1 阈值（六角色色 3.14–4.23:1 全过） */
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-h3); font-weight: var(--font-weight-bold); color: var(--card-accent); }
+  /* 团队特性卡底色是暖底 #efe8db：accent 赤陶在此只有 2.61:1（大文本需 3:1）→ 用同色相压暗版 */
+  .showcase__card-role--team { color: var(--role-men-text); }
+  .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
+  .showcase__card-skills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .showcase__skill {
+    font-family: var(--font-mono); color: var(--color-fg-tertiary);
+    background: var(--color-bg-warm); padding: 2px 8px; border-radius: var(--radius-xs);
+    border: 1px solid var(--color-line-soft);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-ui);
+}
+  .showcase__card-constraint {
+    font-style: italic;
+    display: flex; align-items: center; gap: var(--space-1);
+    /* 卡片等高（track: align-items: stretch）后，此行 margin-top: auto 推到卡底收尾。
+       等高差只有 19px，不会再出现当年 20/185px 的 9 倍视觉差（那是因为卡被拉高 170px）。 */
+    margin-top: auto;
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-ui);
+    color: var(--color-fg-tertiary);
+}
+
+  /* 团队特性卡：横排三列收在扇形下方（告别「塞进牌堆」）*/
+  .showcase__card--team {
+    background: var(--color-bg-warm);
+    max-width: 900px; margin: var(--space-8) auto 0;
+    box-shadow: none; border-color: var(--color-line);
+  }
+  .showcase__team-traits { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4) var(--space-6); align-content: start; }
+  .showcase__trait { display: flex; gap: var(--space-3); align-items: flex-start; }
+  .showcase__trait svg { color: var(--color-accent); flex-shrink: 0; margin-top: 2px; }
+  .showcase__trait strong { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 1px; }
+  .showcase__trait span {
+    color: var(--color-fg-tertiary);
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-ui);
+}
+
+  /* Showcase nav */
+  .showcase__nav { display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-top: var(--space-5); }
+  .showcase__arrow {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--color-line); background: var(--color-surface);
+    color: var(--color-fg-secondary); cursor: pointer;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .showcase__arrow:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); }
+  .showcase__arrow:active { transform: scale(0.92); }
+  /* 分页点由 JS 的 document.createElement 动态创建，不会带上 Astro scoped 样式的
+     data-astro-cid-* 属性，故这些规则必须用 :global()，否则永不匹配 ——
+     实测曾导致分页点渲染为 0×0、完全不可见不可点。 */
+  :global(.showcase__dots) { display: flex; gap: 0; align-items: center; }
+  /* 分页点：可见圆点仍是 8px，但按钮触控区放大到 24×44（WCAG 2.2 §2.5.8 ≥24px）；
+     点间距与改版前一致（原 8px 点 + 8px 间隙 = 16px 节距）。 */
+  :global(.showcase__dot) {
+    position: relative; width: 24px; height: 44px; padding: 0; background: none; border: none; cursor: pointer;
+  }
+  :global(.showcase__dot)::before {
+    content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    /* 裸控件边界须满足 WCAG 2.2 §1.4.11 的 3:1；--color-line 仅 1.35:1 */
+    width: 8px; height: 8px; border-radius: 50%; background: var(--color-line-ui); transition: all 0.25s;
+  }
+  :global(.showcase__dot--active)::before { width: 24px; border-radius: 4px; background: var(--color-accent); }
+
+  /* ===== Topology ===== */
+  /* 去掉这里原有的 padding-left/right: 24px —— 它让本板块标题落在 128px，
+     而 hero / 核心机制 / 常见问题都在 104px，肉眼可见地错开一档。 */
+  .topo { padding: var(--section-pad) 0; max-width: var(--container-max); margin: 0 auto; }
+  .topo__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-3); }
+  .topo__title {
+    font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
+}
+  .topo__all {
+    min-height: 44px;
+    font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
+    font-size: var(--font-size-small);
+}
+  .topo__all:hover { color: var(--color-accent-dark); text-decoration: none; }
+  .topo__desc {
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    /* 描述→内容的视觉间距由图的墨迹内缩决定，硬调 margin 到 29px 实际视觉是 38px，
+       达不到对齐目的，反而脱离 4px 刻度 → 回到 --space-6(24px) */
+    margin-bottom: var(--space-6);
+    max-width: var(--measure-prose);
+}
+  .topo-diagram { overflow-x: auto; }
+  /* SVG 内 font-size 是用户单位，实际字号 = font-size × (渲染宽 / 1200)。
+     容器放宽 + min-width 1080px 后桌面约 0.9×；小标签字号一并抬到 13.5px（实际 ≥12px）。 */
+  .topo-svg { width: 100%; height: auto; min-width: 1080px; }
+
+  /* Bézier lines */
+  .topo-bezier { fill: none; stroke-width: 1.5; }
+  .topo-bezier--input { stroke: var(--color-fg-muted); }
+  .topo-bezier--branch { stroke: var(--color-accent); stroke-opacity: 0.45; }
+  .topo-bezier--return { stroke: var(--role-ji); stroke-opacity: 0.6; stroke-dasharray: 6 4; }
+  .topo-bezier--verdict { stroke: var(--role-ji); stroke-width: 1.8; }
+  .topo-bezier--fail { stroke: var(--role-chi); stroke-opacity: 0.7; stroke-dasharray: 5 4; }
+  .topo-bezier--report { stroke: var(--role-ji); stroke-opacity: 0.7; stroke-width: 1.8; }
+  .topo-bezier--learn { stroke: var(--role-xun); stroke-opacity: 0.85; stroke-dasharray: 2 4; }
+  .topo-bezier--judge { stroke: var(--role-chi); stroke-opacity: 0.7; stroke-dasharray: 4 3; stroke-width: 1.2; }
+
+  /* Animated dots */
+  .topo-dot { fill: var(--color-accent); }
+  .topo-dot--input { fill: var(--color-fg-muted); }
+  .topo-dot--return { fill: var(--role-ji); }
+  .topo-dot--verdict { fill: var(--role-ji); }
+  .topo-dot--fail { fill: var(--role-chi); }
+  .topo-dot--report { fill: var(--role-ji); }
+  .topo-dot--learn { fill: var(--role-xun); }
+  .topo-dot--judge { fill: var(--role-chi); }
+
+  /* Nodes */
+  .topo-node { rx: 10; ry: 10; }
+  .topo-node--input { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
+  /* hub 用赤陶填充 + 深字（4.52:1）；配合 --color-accent-on-accent(深) 使用 */
+  /* 中枢节点里是白字 → 填充用 accent-fill；亮赤陶配白字只有 3.17:1 */
+  .topo-node--hub { fill: var(--color-accent-fill); stroke: none; }
+  .topo-node--agent { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
+  .topo-node--judge { fill: var(--color-bg-paper); stroke: var(--role-chi); stroke-width: 1.5; }
+  .topo-node--output { fill: var(--color-bg-paper); stroke: var(--color-line); stroke-width: 1; }
+  .topo-node--verify { fill: var(--color-bg-paper); stroke: var(--role-ji); stroke-width: 1.5; }
+  .topo-node--knowledge { fill: var(--color-bg); stroke: var(--role-xun); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .topo-badge { fill: var(--role-chi); fill-opacity: 0.14; stroke: var(--role-chi); stroke-opacity: 0.5; stroke-width: 1; }
+
+  /* Labels */
+  .topo-label { font-family: var(--font-mono); }
+  .topo-label--input { fill: var(--color-fg); font-size: 16px; font-weight: 600; }
+  .topo-label--sub { fill: var(--color-fg-tertiary); font-size: 13.5px; font-weight: 400; }
+  /* hub 上的文字：赤陶底 #d77656 → 深字 4.52:1
+     注意不要用半透明来弱化副标题 —— alpha 会把对比度拉到 4.5 以下，改用字号/字重区分 */
+  .topo-label--hub-cn { fill: var(--color-on-accent-fill); font-size: 20px; font-weight: 700; }
+  .topo-label--hub-sub { fill: var(--color-on-accent-fill); font-size: 13.5px; font-weight: 500; }
+  .topo-label--agent-cn { fill: var(--color-fg); font-size: 16px; font-weight: 700; }
+  .topo-label--agent-id { fill: var(--color-fg-tertiary); font-size: 13.5px; }
+  .topo-label--judge-cn { fill: var(--color-fg); font-size: 15px; font-weight: 600; }
+  .topo-label--judge-sub { fill: var(--color-fg-tertiary); font-size: 13.5px; }
+  .topo-label--judge-tag { fill: var(--role-chi-text); font-size: 13.5px; font-weight: 600; }
+  .topo-label--badge { fill: var(--role-chi-text); font-size: 13.5px; font-weight: 600; }
+  .topo-label--hub-sub2 { fill: var(--color-on-accent-fill); font-size: 13.5px; }
+  .topo-label--node-title { fill: var(--color-fg); font-size: 15px; font-weight: 600; }
+  .topo-label--node-sub { fill: var(--color-fg-tertiary); font-size: 13.5px; }
+  .topo-label--node-micro { fill: var(--color-fg-muted); font-size: 13.5px; }
+  .topo-elabel { font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; }
+  .topo-elabel--pass { fill: var(--role-ji-text); }
+  .topo-elabel--fail { fill: var(--role-chi-text); }
+  .topo-elabel--report { fill: var(--role-ji-text); }
+  .topo-label--output { fill: var(--color-fg); font-size: 16px; font-weight: 600; }
+
+  /* Pulse animation on hub */
+  .topo-pulse {
+    fill: none; stroke: var(--color-accent); stroke-width: 2; opacity: 0;
+    animation: topo-pulse 3s ease-out infinite;
+  }
+  @keyframes topo-pulse {
+    0% { opacity: 0.6; stroke-width: 2; }
+    100% { opacity: 0; stroke-width: 8; }
+  }
+
+  /* Status dots on nodes */
+  .topo-status { fill: var(--role-ji-text); }
+  .topo-status--active { animation: topo-blink 2s ease-in-out infinite; }
+  .topo-status--verify { fill: var(--role-chi-text); animation: topo-blink 1.5s ease-in-out infinite; }
+  @keyframes topo-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .topo-legend { display: flex; gap: var(--space-5); justify-content: center; padding-top: 30px; flex-wrap: wrap; }
+  .topo-legend__item { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
+  .topo-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
+  .topo-legend__dot--input { background: var(--color-fg-muted); }
+  .topo-legend__dot--hub { background: var(--color-accent-fill); }
+  .topo-legend__dot--agent { background: var(--color-bg-paper); border: 1px solid var(--color-line); }
+  .topo-legend__dot--judge { background: var(--color-bg-paper); border: 1.5px solid var(--role-chi); }
+  .topo-legend__dot--verify { background: var(--color-bg-paper); border: 1.5px solid var(--role-ji); }
+  .topo-legend__dot--report { background: var(--role-ji); }
+  .topo-legend__dot--fail { background: var(--role-chi); }
+
+  /* ===== Mechanisms ===== */
+  /* 板块居中（margin auto），但内部文字保持左对齐 —— 收窄后靠左会留下 592px 空白，
+     居中后左右对称；文字本身没有加 text-align:center，仍从左边排起。 */
+  .mechanisms { padding: var(--section-pad) 0; max-width: var(--section-measure); margin: 0 auto; }
+  .mechanisms__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); }
+  .mechanisms__title {
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    /* eyebrow→h2 实测 24 vs 团队总览 25，差 1px 本就在容差内；硬加 1px 无实际收益 */
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
+}
+  .mechanisms__all {
+    min-height: 44px;        /* 触控目标：原来只有 24px 高 */
+    font-family: var(--font-mono); color: var(--color-fg-muted); text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); transition: color 0.2s;
+    font-size: var(--font-size-small);
+}
+  .mechanisms__all:hover { color: var(--color-accent-dark); text-decoration: none; }
+  .mechanisms__list { display: flex; flex-direction: column; }
+  .mechanisms__item { display: flex; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-line-soft); transition: background 0.2s; }
+  .mechanisms__item:last-child { border-bottom: none; }
+  .mechanisms__idx { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); flex-shrink: 0; padding-top: 2px; letter-spacing: 0.05em; }
+  .mechanisms__item-body { flex: 1; }
+  .mechanisms__item-title {
+    font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 2px;
+    font-size: var(--font-size-h4);
+    line-height: var(--line-height-subhead);
+    letter-spacing: var(--letter-spacing-heading);
+}
+  /* 列宽由板块的 --section-measure 决定，正文填满整列 → 与 border-bottom 右端对齐 */
+  .mechanisms__item-desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); line-height: var(--line-height-relaxed); }
+
+  /* ===== FAQ ===== */
+  .faq { padding: var(--section-pad) 0; max-width: var(--section-measure); margin: 0 auto; }
+  .faq__title {
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
+    margin: 0;
+    margin-bottom: var(--space-5);
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
+}
+  .faq__item { border-bottom: 1px solid var(--color-line-soft); }
+  .faq__q { font-size: var(--font-size-body); font-weight: var(--font-weight-semi); color: var(--color-fg); padding: var(--space-3) 0; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .faq__q::-webkit-details-marker { display: none; }
+  .faq__q::after { content: '+'; font-family: var(--font-mono); font-size: var(--font-size-h4); color: var(--color-fg-muted); transition: transform 0.2s; }
+  .faq__item[open] .faq__q::after { transform: rotate(45deg); }
+  .faq__a {
+    /* 原来 max-width: var(--measure-prose) 重复声明两次，且与板块宽度冲突 → 交给板块 */
+    font-size: var(--font-size-caption);
+    color: var(--color-fg-tertiary);
+    line-height: var(--line-height-relaxed);
+    padding-bottom: var(--space-3);
+}
+  .faq__a code { font-family: var(--font-mono); background: var(--color-bg-warm); padding: 1px var(--space-1); border-radius: var(--radius-xs); color: var(--color-fg); font-size: 0.85em; }
+
+  /* ===== CTA ===== */
+  /* CTA 收尾板块：内容在「FAQ 末条下边框 → 页脚上边框」之间垂直居中。
+     实测视觉带 526px、内容 141px → 自由空间 385px，每侧应各 193px（原来上 137 / 下 248）。
+     上方 = FAQ 底内边距 48 + 本板块上内边距 + inner 上内边距 40 + 分隔线 1
+     下方 = inner 下内边距 + 本板块下内边距 + main 底内边距 64 + 页脚 margin-top 96（后两项全站共用）
+     代入 104 / 32、inner 下边距 0 → 上 193 / 下 192，居中；总高不变，只是把偏上的 56px 挪到上方。 */
+  .cta { padding: calc(var(--space-24) + var(--space-2)) 0 var(--space-8); }
+  /* inner 下内边距交给板块统一管，避免两处叠加 */
+  .cta__inner { text-align: center; padding: var(--space-10) 0 0; border-top: 1px solid var(--color-line-soft); }
+  .cta__title {
+    font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-3);
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-heading);
+    letter-spacing: var(--letter-spacing-heading);
+}
+  /* p.label→box 视觉间距对齐 topo 板块的 33px（原 20 → 29px，Δ 4px 报 △；同为「说明→内容」关系） */
+  .cta__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-6); }
+  /* CTA 是居中窄块：整栏宽下把内容收在 44em 内居中（水平）*/
+  .cta__inner { max-width: 44em; margin: 0 auto; }
+  .cta__actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
+  /* hero-cta 样式（现仅 CTA 板块使用） */
+  .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
+  /* 橘色按钮：白字（产品决定 2026-10-11）。填充用 accent-fill(#bc513a) 白字 4.80:1；
+     hover 不能往更亮处混白（白字对比度会掉到 3:1 以下），改为压暗 12%。 */
+  .hero-cta--primary { background: var(--color-accent-fill); border-color: var(--color-accent-fill); color: var(--color-on-accent-fill); }
+  .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent-fill) 88%, #000); border-color: color-mix(in srgb, var(--color-accent-fill) 88%, #000); text-decoration: none; }
+  .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
+  .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    /* 窄屏：hero 两栏叠成单列（481–768px 两栏会把命令卡挤到 ~240px） */
+    .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
+    /* 窄屏命令条已满宽，右侧装饰标识无处安放 → 隐藏（主线是安装本身，装饰不抢位） */
+    .hero-install__art { display: none; }
+    :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
+    .topo__header { flex-direction: column; gap: var(--space-2); }
+    /* 窄屏：扇形改成可横滑的直排（手指左右拨牌），不再叠成扇 */
+    .showcase__hand {
+      height: auto; display: flex; justify-content: flex-start;
+      gap: var(--space-4); padding: 0 var(--space-4) var(--space-6);
+      overflow-x: auto; scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .showcase__hand::-webkit-scrollbar { display: none; }
+    .showcase__hand .showcase__card {
+      position: static; flex: 0 0 274px; scroll-snap-align: center;
+      transform: none; transition: box-shadow 0.3s ease;
+    }
+    .showcase__hand .showcase__card:hover,
+    .showcase__hand .showcase__card.is-picked { transform: translateY(-6px); }
+    .showcase__card--team { max-width: none; }
+    .showcase__team-traits { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .hero-title { font-size: clamp(1.8rem, 8vw, 2.2rem); }
+    /* 窄屏下拓扑图是「固定宽度 + 横向滚动」，右侧渐隐提示还有内容 */
+    .topo-diagram {
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+      mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    }
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .hero-cta { justify-content: center; }
+    /* 0.5 倍缩放下小字只剩 5–7px → 抬到 1000px（横向可滚动），并隐藏最密两行小字 */
+    .topo-svg { min-width: 1000px; }
+    .topo-label--node-micro,
+    .topo-label--hub-sub2 { display: none; }
+  }
+</style>
+
+<script>
+  /* 平台切换（hero 安装卡）：默认按访问者系统自动选中对应标签页，其余收在标签里 */
+  document.querySelectorAll('.hero-install__tabs').forEach(tablist => {
+    const panels = tablist.parentElement ? tablist.parentElement.querySelector('.hero-install__panels') : null;
+    const select = (id) => {
+      tablist.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', String((t as HTMLElement).dataset.platform === id)));
+      if (!panels) return;
+      panels.querySelectorAll('[role="tabpanel"]').forEach(p => { (p as HTMLElement).hidden = p.id !== 'ipanel-' + id; });
+    };
+    // 自动检测：Windows → windows；macOS / Linux / 移动端 → bash；
+    // 识别不出来就保持服务端默认（面向 Agent，对新手最友好）
+    const ua = ((navigator as any).userAgentData && (navigator as any).userAgentData.platform) || navigator.platform || navigator.userAgent || '';
+    if (/win/i.test(ua)) select('windows');
+    else if (/mac|linux|android|iphone|ipad/i.test(ua)) select('bash');
+    tablist.querySelectorAll('[role="tab"]').forEach(tab => {
+      tab.addEventListener('click', () => select((tab as HTMLElement).dataset.platform as string));
+    });
+  });
+
+  /* Copy buttons */
+  document.querySelectorAll('.hero-install__copy').forEach(btn => {
+    const ICON_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const label = btn.getAttribute('aria-label') || '复制命令';
+    btn.setAttribute('aria-live', 'polite');
+    btn.addEventListener('click', async () => {
+      const cmd = (btn as HTMLElement).dataset.cmd;
+      if (!cmd) return;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
+        (btn as HTMLElement).style.color = 'var(--role-ji-text)';
+        btn.setAttribute('aria-label', '已复制');
+        setTimeout(() => {
+          btn.innerHTML = ICON_COPY;
+          (btn as HTMLElement).style.color = '';
+          btn.setAttribute('aria-label', label);
+        }, 1500);
+      } catch {
+        /* 剪贴板写入失败（权限被拒 / 非安全上下文）：显式报错并指明替代做法 */
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+        (btn as HTMLElement).style.color = '#a83a2e';
+        btn.setAttribute('aria-label', '复制失败：请手动选中并复制');
+        setTimeout(() => {
+          btn.innerHTML = ICON_COPY;
+          (btn as HTMLElement).style.color = '';
+          btn.setAttribute('aria-label', label);
+        }, 1500);
+      }
+    });
+  });
+
+  /* 扇形扑克牌：点击 / 拖拽抽出一张
+     —— 点击一张牌 → 抽出（is-picked），再点一次收回或换一张
+     —— 按住拖动 → 牌随手走；松手后若拖出足够距离就抽出，否则弹回扇面
+     —— 左右方向键切换选中的牌（列表用 role=listbox/option，可被屏幕阅读器朗读） */
+  (() => {
+    const hand = document.querySelector<HTMLElement>('.showcase__hand');
+    if (!hand) return;
+    const cards = [...hand.querySelectorAll<HTMLElement>('.showcase__card')];
+    if (!cards.length) return;
+    let picked = 2;                                    // 默认抽出正中间那张
+    let drag: { el: HTMLElement; id: number; sx: number; sy: number; moved: boolean } | null = null;
+
+    const setPicked = (idx: number) => {
+      picked = ((idx % cards.length) + cards.length) % cards.length;
+      cards.forEach((c, i) => {
+        const on = i === picked;
+        c.classList.toggle('is-picked', on);
+        c.setAttribute('aria-selected', String(on));
+      });
+      dots.forEach((d, i) => d.classList.toggle('showcase__dot--active', i === picked));
+    };
+
+    // 分页点：与牌一一对应
+    const dotsHost = document.getElementById('showcase-dots');
+    const dots: HTMLElement[] = [];
+    if (dotsHost) {
+      dotsHost.innerHTML = '';
+      cards.forEach((c, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'showcase__dot';
+        dot.setAttribute('aria-label', `第 ${i + 1} 张：${c.querySelector('.showcase__card-cn')?.textContent ?? ''}`);
+        dot.addEventListener('click', () => setPicked(i));
+        dotsHost.appendChild(dot);
+        dots.push(dot);
+      });
+    }
+
+    cards.forEach((card, i) => {
+      // 点击抽出（拖拽结束后不再触发）
+      card.addEventListener('click', () => { if (!drag) setPicked(i); });
+
+      card.addEventListener('pointerdown', (e: PointerEvent) => {
+        if (e.button !== 0) return;
+        drag = { el: card, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false };
+        card.setPointerCapture(e.pointerId);
+      });
+
+      card.addEventListener('pointermove', (e: PointerEvent) => {
+        if (!drag || drag.el !== card || drag.id !== e.pointerId) return;
+        const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+        if (!drag.moved && Math.hypot(dx, dy) < 8) return;   // 8px 死区：轻点不算拖
+        drag.moved = true;
+        hand.classList.add('is-dragging');
+        card.classList.add('is-dragging');
+        card.style.setProperty('--dx', dx + 'px');
+        card.style.setProperty('--dy', dy + 'px');
+      });
+
+      const finish = (e: PointerEvent) => {
+        if (!drag || drag.el !== card || drag.id !== e.pointerId) return;
+        const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+        const moved = drag.moved;
+        drag = null;
+        hand.classList.remove('is-dragging');
+        card.classList.remove('is-dragging');
+        card.style.removeProperty('--dx');
+        card.style.removeProperty('--dy');
+        // 拖出 60px 以上 → 抽出；否则弹回扇面
+        if (moved && Math.hypot(dx, dy) > 60) setPicked(i);
+      };
+      card.addEventListener('pointerup', finish);
+      card.addEventListener('pointercancel', finish);
+    });
+
+    // 键盘：左右切换
+    hand.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') { setPicked(picked + 1); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { setPicked(picked - 1); e.preventDefault(); }
+      if (e.key === 'Enter' || e.key === ' ') { setPicked(picked); e.preventDefault(); }
+    });
+
+    // 箭头按钮：与点/键盘同一套语义
+    document.getElementById('showcase-prev')?.addEventListener('click', () => setPicked(picked - 1));
+    document.getElementById('showcase-next')?.addEventListener('click', () => setPicked(picked + 1));
+
+    setPicked(picked);
+  })();
+</script>

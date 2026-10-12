@@ -149,30 +149,32 @@ const faq = install.faq || [];
       <h2 class="showcase__heading">六个角色，一个核心</h2>
     </div>
 
-    <!-- 扇形手牌：六张角色卡像拿在手里一样散开；点击 / 拖拽把某张抽出来 -->
-    <div class="showcase__hand" id="showcase-hand" role="listbox" tabindex="0"
-         aria-label="六个角色卡片，点击或拖动抽出一张，也可用左右方向键选择">
+    <!-- 角色牌：六张真实扑克牌尺寸（2.5×3.5in = 240×336）横向排列，按住拖动浏览 -->
+    <div class="showcase__track" id="showcase-track" role="listbox" tabindex="0"
+         aria-label="六个角色卡片，可按住拖动浏览，或用左右方向键切换">
       {showcaseAgents.map((a, i) => (
-        <article class="showcase__card" role="option" aria-selected={i === 2 ? 'true' : 'false'}
+        <article class="showcase__card" role="option" aria-selected={i === 0 ? 'true' : 'false'}
                  data-agent={a.id} data-index={i}
-                 style={`--card-accent: var(--role-${a.id}); --i: ${i - 2.5}; --ai: ${Math.abs(i - 2.5)}; --idx: ${i};`}>
-          <div class="showcase__card-icon">
-            <Icon name={a.icon} width="32" height="32" />
+                 style={`--card-accent: var(--role-${a.id});`}>
+          <div class="showcase__card-top">
+            <div class="showcase__card-icon">
+              <Icon name={a.icon} width="20" height="20" />
+            </div>
+            <span class="showcase__card-id">{a.id}</span>
           </div>
           <div class="showcase__card-head">
             <span class="showcase__card-cn">{a.cn}</span>
-            <span class="showcase__card-id">{a.id}</span>
+            <span class="showcase__card-role">{a.role}</span>
           </div>
-          <p class="showcase__card-role">{a.role}</p>
-          <p class="showcase__card-desc">{a.desc}</p>
+          <p class="showcase__card-desc">{a.desc.length > 22 ? a.desc.slice(0, 22) + '…' : a.desc}</p>
           <div class="showcase__card-skills">
-            {a.skills.map((s) => (
+            {a.skills.slice(0, 3).map((s) => (
               <span class="showcase__skill">{s}</span>
             ))}
           </div>
           <p class="showcase__card-constraint">
-            <Icon name="lucide:shield" width="13" height="13" />
-            {a.constraint}
+            <Icon name="lucide:shield" width="11" height="11" />
+            {a.constraint.length > 18 ? a.constraint.slice(0, 18) + '…' : a.constraint}
           </p>
         </article>
       ))}
@@ -220,7 +222,7 @@ const faq = install.faq || [];
           <Icon name="lucide:brain" width="16" height="16" />
           <div>
             <strong>越用越聪明</strong>
-            <span>经验自动总结，踩过的坑下次绕开</span>
+            <span>经验自动总结，坑下次绕开</span>
           </div>
         </div>
         <div class="showcase__trait">
@@ -546,11 +548,15 @@ const faq = install.faq || [];
       display: grid;
       /* 左栏文字区吃余量，右栏命令卡按内容收缩（fit-content 由子元素决定） */
       grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-      align-items: start;            /* 不等高（用户已定） */
+      /* 大标题与安装命令卡**水平中线对齐**（用户要求）：两栏各自垂直居中 → 中线重合。
+         实测：居中前 h1 中线 161 vs 命令条中线 213（差 52px）；居中后都落在 200 附近。 */
+      align-items: center;
       gap: var(--space-12);
       position: relative; z-index: 1;
     }
-    .hero-content { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; min-width: 0; }
+    /* 大标题与右侧命令条中线对齐（实测 h1 中线 183 / row 中线 213 → 左栏下移 27px 归一）
+       注：align-items:center 让两栏块级中线对齐（206/210），这里再对齐「标题 ↔ 命令条」内容级中线 */
+    .hero-content { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; min-width: 0; margin-top: 47px; }
     .hero-title {
       /* 层级微调：标题从 display 令牌 56px 提到 clamp 68px（A 方案的字号落差手法），
          与副标题（17px）拉开 4 倍，L1 定海神针 */
@@ -723,65 +729,45 @@ const faq = install.faq || [];
     letter-spacing: var(--letter-spacing-heading);
 }
 
-  /* ===== Agent 扇形扑克牌 =====
-     六张角色卡像被握在手里：所有牌绕**同一个轴心**（牌下方远处）旋转 → 自然成扇，
-     错开距离由轴距 × sin(角度) 决定。悬停抬升、选中则整张抽到眼前。 */
-  .showcase__hand {
+  /* ===== 角色牌：真实扑克牌尺寸，横向排列 =====
+     poker size 2.5×3.5 英寸 = 5:7 比例。按住拖动浏览（跟手），
+     悬停浮起 + 高光边缘（厚度感）。 */
+  .showcase__track {
     position: relative;
-    height: 520px;
+    display: flex; gap: var(--space-6);
+    overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--space-4) var(--space-2) var(--space-8);
     cursor: grab;
     user-select: none;
-    touch-action: pan-y;
   }
-  .showcase__hand.is-dragging { cursor: grabbing; }
-  /* 单张牌：绝对定位在中轴，统一轴心旋转成扇 */
-  .showcase__hand .showcase__card {
-    position: absolute;
-    left: 50%;
-    bottom: 88px;
-    width: 240px;
-    flex: none;
-    /* 扇形几何：轴心在牌下方 420px（到牌心约 620px）。错开量 = sin(角度)×620。
-       相邻牌错开 16° ≈ 171px —— 这个量是**身份区可读性**决定的：扇形里每张牌只露出左边一条，
-       必须放得下 图标+汉字+代号+职责（约 165px），否则右侧的牌连名字都读不到
-       （实测 12.5° 时「艺/寻/持」三张的名字与职责全被邻牌盖住）。
-       上限则由容器决定：旋转后的外接矩形要留在 1232px 内 ——
-       最外边缘 ≈ 轴距×sin(2.5θ) + 卡旋转半宽，18° 时实测超出 46px 被裁，16° 留出余量。 */
-    transform-origin: 50% calc(100% + 420px);
-    transform: translateX(-50%) rotate(calc(var(--i) * 16deg));
-    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.35s ease, border-color 0.35s ease;
-    z-index: calc(10 - var(--ai));
-  }
-  /* 悬停：沿扇形方向再抬一点（视觉上是「往上抽」） */
-  .showcase__hand .showcase__card:hover {
-    transform: translateX(-50%) rotate(calc(var(--i) * 16deg)) translateY(-30px);
-    z-index: 30;
-  }
-  /* 选中（抽出）：沿**自身扇形径向**滑出（rotate 在 translateY 之前 → 走扇面法线方向），
-     而不是横躺上移 —— 横躺会让牌的下半身压住右邻居的头部（实测「持」的三件套全被盖住）。
-     不放大：扇形相邻牌本就紧邻，放大必然互相侵吞。选中感由阴影加深 + 高光加速表达。 */
-  .showcase__hand .showcase__card.is-picked {
-    transform: translateX(-50%) rotate(calc(var(--i) * 16deg)) translateY(-56px);
-    z-index: 40;
-  }
-  /* 拖动中的牌跟随指针（--dx/--dy 由 JS 写入） */
-  .showcase__hand .showcase__card.is-dragging {
-    transition: none;
-    transform: translateX(calc(-50% + var(--dx, 0px))) translateY(var(--dy, 0px)) rotate(0deg) scale(1.05);
-    z-index: 50;
-    cursor: grabbing;
-  }
-
+  .showcase__track.is-dragging { cursor: grabbing; }
+  .showcase__track::-webkit-scrollbar { display: none; }
+  .showcase__hand { display: none; }   /* 扇形布局已废弃 */
+  /* 单张牌：poker size 5:7 比例（236×330），纸面质感 + 牌厚 */
   .showcase__card {
-    background: var(--color-surface);
-    /* 牌厚：多层堆叠阴影（近距实、远距虚）+ 右侧一道实体边 —— 看起来是一张有厚度的卡 */
+    /* 牌面：自上而下的微暖渐变（顶部受光），与纸白内描边形成「纸缘」层次 */
+    background: linear-gradient(180deg, var(--color-surface) 0%, color-mix(in srgb, var(--color-surface) 90%, var(--color-bg-warm)) 100%);
     border: 1px solid var(--color-line-soft);
     border-right-color: var(--color-line);
     border-bottom-color: var(--color-line);
-    border-radius: var(--radius-lg); padding: var(--space-6);
-    display: flex; flex-direction: column; gap: var(--space-3);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex; flex-direction: column; gap: var(--space-2);
     position: relative; overflow: hidden;
+    width: 236px;
+    aspect-ratio: 5 / 7;          /* 真实扑克牌比例（用户要求）*/
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    min-height: 0;
+    /* 牌厚：内描边纸白高光 + 多层投影（近实远虚）+ 右/下边略深（受光方向一致） */
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+      inset -1px -1px 0 0 color-mix(in srgb, var(--color-bg-warm) 60%, transparent),
+      0 2px 4px rgba(43, 42, 39, 0.05),
+      0 12px 24px -10px rgba(43, 42, 39, 0.16),
+      0 24px 44px -26px rgba(43, 42, 39, 0.2);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
     box-shadow:
       0 1px 0 0 #fff inset,
       0 2px 4px rgba(43, 42, 39, 0.04),
@@ -842,15 +828,18 @@ const faq = install.faq || [];
     border-color: color-mix(in srgb, var(--card-accent) 45%, var(--color-line));
   }
 
+  /* 卡顶行：图标 + 代号（扑克牌的「角标」位置） */
+  .showcase__card-top { display: flex; align-items: center; justify-content: space-between; }
+  .showcase__card-top .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
   .showcase__card-icon { color: var(--card-accent); }
-  .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); }
-  .showcase__card-cn { font-family: var(--font-sans); font-size: var(--font-size-h2); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .showcase__card-cn { font-family: var(--font-sans); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi); color: var(--card-accent); }
   .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
-  /* P2-11: ≥18.66px + weight 700 → 大文本资格 → 3:1 阈值（六角色色 3.14–4.23:1 全过） */
-  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-h3); font-weight: var(--font-weight-bold); color: var(--card-accent); }
   /* 团队特性卡底色是暖底 #efe8db：accent 赤陶在此只有 2.61:1（大文本需 3:1）→ 用同色相压暗版 */
   .showcase__card-role--team { color: var(--role-men-text); }
-  .showcase__card-desc { font-size: var(--font-size-caption); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
+  /* 描述字号压到 small（13px，中文下限）——用户要求「描述标签不用太大」 */
+  .showcase__card-desc { font-size: var(--font-size-small); color: var(--color-fg-secondary); line-height: var(--line-height-relaxed); }
   .showcase__card-skills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
   .showcase__skill {
     font-family: var(--font-mono); color: var(--color-fg-tertiary);
@@ -1212,91 +1201,102 @@ const faq = install.faq || [];
     });
   });
 
-  /* 扇形扑克牌：点击 / 拖拽抽出一张
-     —— 点击一张牌 → 抽出（is-picked），再点一次收回或换一张
-     —— 按住拖动 → 牌随手走；松手后若拖出足够距离就抽出，否则弹回扇面
-     —— 左右方向键切换选中的牌（列表用 role=listbox/option，可被屏幕阅读器朗读） */
+  /* 扑克牌横向排列：按住拖动跟手浏览（真实扑克的手感）
+     —— 5px 死区（轻点不算拖）；拖动中 card pointer-events:none 保证帧帧跟手
+     —— 松手后按拖出距离决定是否惯性滑行；左右方向键切卡（aria-selected 同步） */
   (() => {
-    const hand = document.querySelector<HTMLElement>('.showcase__hand');
-    if (!hand) return;
-    const cards = [...hand.querySelectorAll<HTMLElement>('.showcase__card')];
+    const track = document.querySelector<HTMLElement>('.showcase__track');
+    if (!track) return;
+    const cards = [...track.querySelectorAll<HTMLElement>('.showcase__card')];
     if (!cards.length) return;
-    let picked = 2;                                    // 默认抽出正中间那张
-    let drag: { el: HTMLElement; id: number; sx: number; sy: number; moved: boolean } | null = null;
+    let selected = 0;
+    let down = false, moved = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vx = 0, raf = 0;
 
-    const setPicked = (idx: number) => {
-      picked = ((idx % cards.length) + cards.length) % cards.length;
-      cards.forEach((c, i) => {
-        const on = i === picked;
-        c.classList.toggle('is-picked', on);
-        c.setAttribute('aria-selected', String(on));
-      });
-      dots.forEach((d, i) => d.classList.toggle('showcase__dot--active', i === picked));
+    const stopInertia = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+
+    const setSelected = (idx: number) => {
+      selected = ((idx % cards.length) + cards.length) % cards.length;
+      cards.forEach((c, i) => c.setAttribute('aria-selected', String(i === selected)));
+      const d = document.querySelectorAll('.showcase__dot');
+      d.forEach((x, i) => x.classList.toggle('showcase__dot--active', i === selected));
     };
 
-    // 分页点：与牌一一对应
+    // 分页点
     const dotsHost = document.getElementById('showcase-dots');
-    const dots: HTMLElement[] = [];
     if (dotsHost) {
       dotsHost.innerHTML = '';
       cards.forEach((c, i) => {
         const dot = document.createElement('button');
         dot.className = 'showcase__dot';
         dot.setAttribute('aria-label', `第 ${i + 1} 张：${c.querySelector('.showcase__card-cn')?.textContent ?? ''}`);
-        dot.addEventListener('click', () => setPicked(i));
+        dot.addEventListener('click', () => setSelected(i));
         dotsHost.appendChild(dot);
-        dots.push(dot);
       });
     }
 
-    cards.forEach((card, i) => {
-      // 点击抽出（拖拽结束后不再触发）
-      card.addEventListener('click', () => { if (!drag) setPicked(i); });
+    track.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      down = true; moved = false;
+      startX = e.clientX; startScroll = track.scrollLeft;
+      lastX = e.clientX; lastT = performance.now(); vx = 0;
+      stopInertia();
+    });
 
-      card.addEventListener('pointerdown', (e: PointerEvent) => {
-        if (e.button !== 0) return;
-        drag = { el: card, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false };
-        card.setPointerCapture(e.pointerId);
-      });
+    track.addEventListener('pointermove', (e: PointerEvent) => {
+      if (!down) return;
+      const dx = e.clientX - startX;
+      if (!moved && Math.abs(dx) < 5) return;
+      if (!moved) { moved = true; track.classList.add('is-dragging'); track.setPointerCapture(e.pointerId); }
+      const now = performance.now();
+      const dt = Math.max(1, now - lastT);
+      vx = (e.clientX - lastX) / dt;
+      lastX = e.clientX; lastT = now;
+      track.scrollLeft = startScroll - dx;
+      e.preventDefault();
+    });
 
-      card.addEventListener('pointermove', (e: PointerEvent) => {
-        if (!drag || drag.el !== card || drag.id !== e.pointerId) return;
-        const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
-        if (!drag.moved && Math.hypot(dx, dy) < 8) return;   // 8px 死区：轻点不算拖
-        drag.moved = true;
-        hand.classList.add('is-dragging');
-        card.classList.add('is-dragging');
-        card.style.setProperty('--dx', dx + 'px');
-        card.style.setProperty('--dy', dy + 'px');
-      });
-
-      const finish = (e: PointerEvent) => {
-        if (!drag || drag.el !== card || drag.id !== e.pointerId) return;
-        const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
-        const moved = drag.moved;
-        drag = null;
-        hand.classList.remove('is-dragging');
-        card.classList.remove('is-dragging');
-        card.style.removeProperty('--dx');
-        card.style.removeProperty('--dy');
-        // 拖出 60px 以上 → 抽出；否则弹回扇面
-        if (moved && Math.hypot(dx, dy) > 60) setPicked(i);
+    const end = (e: PointerEvent) => {
+      if (!down) return;
+      down = false;
+      if (!moved) return;
+      track.classList.remove('is-dragging');
+      if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
+      // 惯性滑行
+      let v = vx * 16;
+      const glide = () => {
+        v *= 0.94;
+        if (Math.abs(v) < 0.4) { raf = 0; return; }
+        track.scrollLeft -= v;
+        raf = requestAnimationFrame(glide);
       };
-      card.addEventListener('pointerup', finish);
-      card.addEventListener('pointercancel', finish);
+      if (Math.abs(v) > 1) raf = requestAnimationFrame(glide);
+    };
+    track.addEventListener('pointerup', end);
+    track.addEventListener('pointercancel', end);
+
+    // 键盘
+    track.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') { setSelected(selected + 1); track.scrollTo({ left: cards[selected].offsetLeft - 24, behavior: 'smooth' }); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { setSelected(selected - 1); track.scrollTo({ left: cards[selected].offsetLeft - 24, behavior: 'smooth' }); e.preventDefault(); }
     });
 
-    // 键盘：左右切换
-    hand.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') { setPicked(picked + 1); e.preventDefault(); }
-      if (e.key === 'ArrowLeft') { setPicked(picked - 1); e.preventDefault(); }
-      if (e.key === 'Enter' || e.key === ' ') { setPicked(picked); e.preventDefault(); }
-    });
+    // 箭头
+    document.getElementById('showcase-prev')?.addEventListener('click', () => setSelected(selected - 1));
+    document.getElementById('showcase-next')?.addEventListener('click', () => setSelected(selected + 1));
 
-    // 箭头按钮：与点/键盘同一套语义
-    document.getElementById('showcase-prev')?.addEventListener('click', () => setPicked(picked - 1));
-    document.getElementById('showcase-next')?.addEventListener('click', () => setPicked(picked + 1));
+    // 滚动同步选中
+    track.addEventListener('scroll', () => {
+      if (down) return;
+      const center = track.getBoundingClientRect().left + track.clientWidth / 2;
+      let closest = 0, minDist = Infinity;
+      cards.forEach((c, i) => {
+        const r = c.getBoundingClientRect();
+        const dist = Math.abs(r.left + r.width / 2 - center);
+        if (dist < minDist) { minDist = dist; closest = i; }
+      });
+      if (closest !== selected) setSelected(closest);
+    }, { passive: true });
 
-    setPicked(picked);
+    setSelected(0);
   })();
 </script>
