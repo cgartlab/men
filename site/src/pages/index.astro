@@ -155,7 +155,7 @@ const faq = install.faq || [];
       {showcaseAgents.map((a, i) => (
         <article class="showcase__card" role="option" aria-selected={i === 0 ? 'true' : 'false'}
                  data-agent={a.id} data-index={i}
-                 style={`--card-accent: var(--role-${a.id});`}>
+                 style={`--card-accent: var(--role-${a.id}); --card-accent-text: var(--role-${a.id}-text);`}>
           <div class="showcase__card-top">
             <div class="showcase__card-icon">
               <Icon name={a.icon} width="20" height="20" />
@@ -201,7 +201,7 @@ const faq = install.faq || [];
           <Icon name="lucide:git-branch" width="16" height="16" />
           <div>
             <strong>同时开工</strong>
-            <span>没有依赖关系的任务同时做，有先后关系的就得排队等着</span>
+            <span>独立任务同时做，依赖排队</span>
           </div>
         </div>
         <div class="showcase__trait">
@@ -737,6 +737,9 @@ const faq = install.faq || [];
     display: flex; gap: var(--space-6);
     overflow-x: auto; scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    /* proximity 而非 mandatory：拖动是 JS 直接改 scrollLeft，mandatory 会在跟手阶段抢滚动；
+       proximity 只在松手后接近对齐点时吸附（P1-3） */
+    scroll-snap-type: x proximity;
     padding: var(--space-4) var(--space-2) var(--space-8);
     cursor: grab;
     user-select: none;
@@ -768,13 +771,6 @@ const faq = install.faq || [];
       0 12px 24px -10px rgba(43, 42, 39, 0.16),
       0 24px 44px -26px rgba(43, 42, 39, 0.2);
     transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
-    box-shadow:
-      0 1px 0 0 #fff inset,
-      0 2px 4px rgba(43, 42, 39, 0.04),
-      0 10px 22px -10px rgba(43, 42, 39, 0.14),
-      0 22px 40px -26px rgba(43, 42, 39, 0.18);
-    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.35s ease, border-color 0.35s ease;
   }
   /* 流动高光边缘：一道细光沿卡边缓慢环游（conic-gradient 描边 + 旋转），
      边缘因此像有金属反光——卡面有厚度的关键；常态就可见（淡），悬停/选中变亮变快。 */
@@ -807,21 +803,27 @@ const faq = install.faq || [];
     initial-value: 0deg;
   }
   @keyframes card-sheen { to { --glow: 360deg; } }
-  .showcase__hand .showcase__card:hover::before,
-  .showcase__hand .showcase__card.is-picked::before { opacity: 1; }
-  .showcase__hand .showcase__card:hover::before { animation-duration: 3.4s; }
-  .showcase__hand .showcase__card.is-picked::before { animation-duration: 2.2s; }
+  /* 高光提亮：悬停 / 键盘选中（aria-selected）都要响应 —— 
+     原来挂在 .showcase__hand（已废弃容器，DOM 中不存在）→ 反馈全死（P0-1） */
+  .showcase__card:hover::before,
+  .showcase__card[aria-selected="true"]::before { opacity: 1; }
+  .showcase__card:hover::before { animation-duration: 3.4s; }
+  .showcase__card[aria-selected="true"]::before { animation-duration: 2.2s; }
   /* 悬停 / 选中：牌被抬起，阴影加深（配合上面的 transform） */
-  .showcase__hand .showcase__card:hover {
+  /* 悬停 / 选中：牌被抬起，阴影加深 + 边缘着色（P0-1：去掉失效的 .showcase__hand 前缀） */
+  .showcase__card:hover {
+    transform: translateY(-6px);
     box-shadow:
-      0 1px 0 0 #fff inset,
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+      inset -1px -1px 0 0 color-mix(in srgb, var(--color-bg-warm) 60%, transparent),
       0 4px 8px rgba(43, 42, 39, 0.06),
       0 18px 34px -12px rgba(43, 42, 39, 0.20),
       0 32px 56px -28px rgba(43, 42, 39, 0.24);
   }
-  .showcase__hand .showcase__card.is-picked {
+  .showcase__card[aria-selected="true"] {
     box-shadow:
-      0 1px 0 0 #fff inset,
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+      inset -1px -1px 0 0 color-mix(in srgb, var(--color-bg-warm) 60%, transparent),
       0 6px 12px rgba(43, 42, 39, 0.07),
       0 26px 44px -14px rgba(43, 42, 39, 0.22),
       0 44px 72px -32px rgba(43, 42, 39, 0.26);
@@ -834,7 +836,9 @@ const faq = install.faq || [];
   .showcase__card-icon { color: var(--card-accent); }
   .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
   .showcase__card-cn { font-family: var(--font-sans); font-size: var(--font-size-h3); font-weight: var(--font-weight-semi); color: var(--color-fg); }
-  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi); color: var(--card-accent); }
+  /* role 标签是 13px 小字 → 必须用 role-*-text 深色变体（亮色 3.01–3.24:1 不达 AA 4.5:1，P1-1）
+     团队卡沿用 --role-men-text（已在下方覆盖） */
+  .showcase__card-role { font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi); color: var(--card-accent-text, var(--role-men-text)); }
   .showcase__card-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-fg-muted); }
   /* 团队特性卡底色是暖底 #efe8db：accent 赤陶在此只有 2.61:1（大文本需 3:1）→ 用同色相压暗版 */
   .showcase__card-role--team { color: var(--role-men-text); }
@@ -1117,20 +1121,11 @@ const faq = install.faq || [];
     .hero-install__art { display: none; }
     :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
     .topo__header { flex-direction: column; gap: var(--space-2); }
-    /* 窄屏：扇形改成可横滑的直排（手指左右拨牌），不再叠成扇 */
-    .showcase__hand {
-      height: auto; display: flex; justify-content: flex-start;
-      gap: var(--space-4); padding: 0 var(--space-4) var(--space-6);
-      overflow-x: auto; scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    }
-    .showcase__hand::-webkit-scrollbar { display: none; }
-    .showcase__hand .showcase__card {
-      position: static; flex: 0 0 274px; scroll-snap-align: center;
-      transform: none; transition: box-shadow 0.3s ease;
-    }
-    .showcase__hand .showcase__card:hover,
-    .showcase__hand .showcase__card.is-picked { transform: translateY(-6px); }
+    /* 窄屏：横向牌堆紧凑化（手指左右拨牌；卡宽收到 200px 一屏能露出下一张的边缘）*/
+    .showcase__track { gap: var(--space-4); padding: var(--space-2) var(--space-4) var(--space-6); }
+    .showcase__card { width: 220px; }
+    /* 窄屏触控目标：tab 补到 44px（站内标准，P2-4） */
+    .hero-install__tab { min-height: 44px; }
     .showcase__card--team { max-width: none; }
     .showcase__team-traits { grid-template-columns: 1fr; }
   }

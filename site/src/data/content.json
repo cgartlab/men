@@ -745,7 +745,7 @@
       },
       {
         "q": "我不会写代码，能用吗？",
-        "a": "能用。日常使用只需要用大白话说出你想做什么。如果你有兴趣自己改角色或调试脚本，可以看 <a href='{base}docs'>文档</a>。"
+        "a": "能用。日常使用只需要用大白话说出你想做什么。如果你有兴趣自己改角色或调试脚本，可以看 <a href='/docs'>文档</a>。"
       },
       {
         "q": "可以自己加角色吗？",
@@ -753,15 +753,11 @@
       },
       {
         "q": "怎么检查装对了？",
-        "a": "运行 <code>安装完成后运行验证命令</code>，它会跑五项检查——文件在不在、有没有泄露密钥、有没有遗留 TODO 等。全绿就对了。"
+        "a": "运行 <code>node scripts/verify.mjs</code>，它会跑五项检查——文件在不在、有没有泄露密钥、有没有遗留 TODO 等。全绿就对了。"
       },
       {
         "q": "怎么部署到 GitHub Pages？",
         "a": "在 GitHub 仓库 Settings → Pages → Source 选 GitHub Actions，然后跑 <code>npm run deploy</code> 就行。"
-      },
-      {
-        "q": "怎么自己加新角色？",
-        "a": "在 <code>.opencode/agent/</code> 新建 .md 文件，按现有角色的格式写——YAML 头部定义名字和模型，下面写职责和约束。改完在 <code>opencode.json</code> 里注册就行。"
       }
     ]
   },

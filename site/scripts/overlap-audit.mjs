@@ -84,8 +84,8 @@ const DETECT = String.raw`(() => {
         const h = document.elementFromPoint(Math.round(rr.left + rr.width / 2), Math.round(rr.top + rr.height / 2));
         return !(h && (h === el || el.contains(h)));
       };
-      const inHand = (el) => el.closest && el.closest('.showcase__hand');
-      if (inHand(a) || inHand(b)) {
+      const inTrack = (el) => el.closest && (el.closest('.showcase__track') || el.closest('.showcase__hand'));
+      if (inTrack(a) || inTrack(b)) {
         if (!identityCovered(a) && !identityCovered(b)) continue;   // 身份区都可读 → 层叠是设计
       }
       // 已知无害：代码块头部条里，语言标签的**盒子**横跨整条（display:block），
