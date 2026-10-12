@@ -143,7 +143,7 @@ const faq = install.faq || [];
       <p class="showcase__label">THE TEAM</p>
       <h2 class="showcase__heading">六个角色，一个核心</h2>
     </div>
-    <div class="showcase__track">
+    <div class="showcase__track" tabindex="0" role="region" aria-label="角色卡片，可用左右方向键或拖动浏览">
       {showcaseAgents.map((a) => (
         <article class="showcase__card" data-agent={a.id} style={`--card-accent: var(--role-${a.id})`}>
           <div class="showcase__card-icon">
@@ -468,17 +468,20 @@ const faq = install.faq || [];
   :root { --section-pad: var(--space-12); --section-measure: 640px; }
 
   /* ===== Hero（左右两栏：左=标题+副标题+次级文字链；右=安装命令卡，唯一主 CTA）===== */
-    .hero { padding: var(--section-pad) 0 var(--space-10); position: relative; overflow: hidden; }
+    .hero { padding: var(--section-pad) 0 var(--space-10); position: relative; }
     /* 背景层：巨大有机环 logo 居中 + 体积光线（赤陶）。
        拆层之前 logo 与光线同处一层 blur(25px)，两个都被糊没了；现在各自控模糊：
        logo 轻糊 10px（形体仍可辨），光线只有 6px（光束能看见）。
        logo 填充改赤陶 accent α0.10（品牌规则：accent 用于图形装饰）——
        实测文字区底色 #f6ebe5，正文 12.34:1 / 三级文本 5.67:1，仍稳稳过 AA。 */
+    /* 背景层：整页背景（position: fixed 铺满视口，不产生滚动条），
+       四边用椭圆 mask 淡出 —— 图形在边界前就淡到 0，不会被任何盒子硬切。 */
     .hero-backdrop {
-      position: absolute; inset: 0; z-index: 0;
+      position: fixed; inset: 0; z-index: 0;
       display: grid; place-items: center;
       pointer-events: none;
-      /* 不再整层模糊：由子层各自控制 */
+      -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 34%, rgba(0,0,0,0.5) 62%, transparent 100%);
+      mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 34%, rgba(0,0,0,0.5) 62%, transparent 100%);
     }
     .hero-backdrop svg {
       width: min(74vmin, 600px); height: auto;
@@ -643,7 +646,13 @@ const faq = install.faq || [];
     padding: var(--space-4) var(--space-6);
     overflow-x: auto; scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    /* 扑克牌式拖动：手型提示可拖 + 拖动中禁用文字选择 */
+    cursor: grab;
+    user-select: none;
   }
+  /* 拖动中：手感 —— grab→grabbing，且临时关掉 scroll-snap（否则每帧被吸附拽回，拖不动） */
+  .showcase__track.is-dragging { cursor: grabbing; scroll-snap-type: none; }
+  .showcase__track.is-dragging .showcase__card { pointer-events: none; }
   .showcase__track::-webkit-scrollbar { display: none; }
 
   .showcase__card {
@@ -1028,6 +1037,69 @@ const faq = install.faq || [];
   }, { threshold: 0.15, rootMargin: '0px -40px 0px' });
 
   document.querySelectorAll('.showcase__card').forEach(card => observer.observe(card));
+
+  /* 扑克牌式拖动：鼠标按住横向拖，像推开一把牌
+     —— 只接管鼠标指针（pointerType === 'mouse'）；触屏/触控板走原生惯性滚动，不打架。
+     —— 5px 死区：小于它算点击（卡内文字可选中），超过才进入拖拽。
+     —— 拖拽中临时关闭 scroll-snap（否则每帧被吸附拽回），松手恢复 + 惯性衰减。 */
+  (() => {
+    const track = document.querySelector<HTMLElement>('.showcase__track');
+    if (!track) return;
+    let down = false, moved = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vx = 0, raf = 0;
+
+    const stopInertia = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+
+    track.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      down = true; moved = false;
+      startX = e.clientX; startScroll = track.scrollLeft;
+      lastX = e.clientX; lastT = performance.now(); vx = 0;
+      stopInertia();
+    });
+
+    track.addEventListener('pointermove', (e: PointerEvent) => {
+      if (!down) return;
+      const dx = e.clientX - startX;
+      if (!moved && Math.abs(dx) < 5) return;            // 死区：未超阈值不算拖拽
+      if (!moved) {
+        moved = true;
+        track.classList.add('is-dragging');
+        track.setPointerCapture(e.pointerId);
+      }
+      const now = performance.now();
+      const dt = Math.max(1, now - lastT);
+      vx = (e.clientX - lastX) / dt;                     // px/ms，供惯性用
+      lastX = e.clientX; lastT = now;
+      track.scrollLeft = startScroll - dx;
+      e.preventDefault();
+    });
+
+    const end = (e: PointerEvent) => {
+      if (!down) return;
+      down = false;
+      if (!moved) return;                                 // 没拖动 → 交给点击逻辑
+      track.classList.remove('is-dragging');
+      if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
+      // 惯性滑行：速度衰减到阈值以下停止（像牌摊开后的余滑）
+      let v = vx * 14;
+      const glide = () => {
+        v *= 0.94;
+        if (Math.abs(v) < 0.4) { raf = 0; return; }
+        track.scrollLeft -= v;
+        raf = requestAnimationFrame(glide);
+      };
+      if (Math.abs(v) > 1) raf = requestAnimationFrame(glide);
+    };
+
+    track.addEventListener('pointerup', end);
+    track.addEventListener('pointercancel', end);
+    track.addEventListener('pointerleave', (e: PointerEvent) => { if (down && !moved) down = false; });
+    // 键盘可达：方向键滚动（WCAG 2.1.1）
+    track.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') { track.scrollBy({ left: 160, behavior: 'smooth' }); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { track.scrollBy({ left: -160, behavior: 'smooth' }); e.preventDefault(); }
+    });
+  })();
 
   /* Showcase arrow navigation */
   (() => {

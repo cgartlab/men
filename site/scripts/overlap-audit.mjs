@@ -104,7 +104,11 @@ const DETECT = String.raw`(() => {
   }
 
   const fixeds = all.filter((el) => ['fixed', 'sticky'].includes(getComputedStyle(el).position))
-    .filter((el) => !el.className || !String(el.className).includes('bg-layer'));
+    // 排除装饰层：纯背景层（.bg-layer）与任何 pointer-events:none 的固定层（如 .hero-backdrop）。
+    // 后者不会接收指针事件、也不绘制不透明内容，几何相交是假阳性 ——
+    // 判定它是否真遮挡要看 elementFromPoint 命中谁，不是中心点是否落在盒内。
+    .filter((el) => !(el.className && String(el.className).includes('bg-layer')))
+    .filter((el) => getComputedStyle(el).pointerEvents !== 'none');
   for (const f of fixeds) {
     const rf = rects.get(f);
     for (const t of interesting) {
