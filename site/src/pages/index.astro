@@ -19,13 +19,13 @@ const platformTabs = [
 ];
 const manualCmds: Record<string, { label: string; cmd: string }[]> = {
   bash: [
-    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
-    { label: '一键安装（管道）', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)' },
+    { label: 'npm 安装', cmd: 'npx @cgartlab/men' },
+    { label: '一键安装', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)' },
     { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
   ],
   windows: [
-    { label: 'npm 一行安装', cmd: 'npx @cgartlab/men' },
-    { label: '一键安装（管道）', cmd: 'irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex' },
+    { label: 'npm 安装', cmd: 'npx @cgartlab/men' },
+    { label: '一键安装', cmd: 'irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex' },
     { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
   ],
 };
@@ -129,7 +129,7 @@ const faq = install.faq || [];
 
         <div class="hero-install__panels">
           <div class="hero-install__panel" id="ipanel-agent" role="tabpanel" aria-labelledby="itab-agent">
-            <p class="hero-install__hint">把这句话复制给 AI 助手（OpenCode / Claude / Cursor），让它自动帮你装好：</p>
+            <p class="hero-install__hint">复制给 AI 助手（OpenCode / Claude / Cursor），自动装好：</p>
             <div class="hero-install__row">
               <code class="hero-install__code" data-lang="text">{agentPrompt}</code>
               <button class="hero-install__copy" data-cmd={agentPrompt} aria-label="复制提示词">
@@ -232,14 +232,14 @@ const faq = install.faq || [];
             <Icon name="lucide:lock" width="16" height="16" />
             <div>
               <strong>防死循环</strong>
-              <span>最多重试 5 次，不行就老实说卡住了</span>
+              <span>最多重试 5 次，<br />不行就老实说卡住了</span>
             </div>
           </div>
           <div class="showcase__trait">
             <Icon name="lucide:file-code" width="16" height="16" />
             <div>
               <strong>轻量运行</strong>
-              <span>所有脚本零依赖，装好 Node 就能跑</span>
+              <span>所有脚本零依赖，<br />装好 Node 就能跑</span>
             </div>
           </div>
         </div>
@@ -514,7 +514,8 @@ const faq = install.faq || [];
        （max-width 1360 + padding 0 64px → 桌面 1232px / 手机 342px），
        不再自己收窄到 --page-max(720px)。 */
   }
-  .hero-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; min-width: 0; }
+  /* 顶端对齐：左栏第一行文字与右侧安装卡顶边对齐（用户要求）——去掉垂直居中 */
+  .hero-content { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; min-width: 0; }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
   /* hero-title：原属性顶格，统一为 2 空格缩进 */
   .hero-title {
@@ -627,7 +628,9 @@ const faq = install.faq || [];
   .showcase__track {
     position: relative;
     display: flex; gap: var(--space-5);
-    align-items: flex-start;  /* 不拉齐高度 → 每张卡高度由内容决定，底部不留大块空白 */
+    /* 等高卡片：六张角色卡拉到同一高度（= 最高卡），constraint 行（卡内最后一项）推到底部收尾。
+       高度差只有 19px（382 vs 363），等高后矮卡底部多出的空间由卡内 flex 吸收，不出现大块空洞。 */
+    align-items: stretch;
     padding: var(--space-4) var(--space-6);
     overflow-x: auto; scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
@@ -671,16 +674,20 @@ const faq = install.faq || [];
   .showcase__card-constraint {
     font-style: italic;
     display: flex; align-items: center; gap: var(--space-1);
-    /* 原 margin-top: auto 把此行推到卡片底部，同卡片内实测视觉间距 20 / 185px
-       （差 9 倍）。去掉后卡片高度由内容自然决定，所有兄弟视觉间距一致 20px。 */
+    /* 卡片等高（track: align-items: stretch）后，此行 margin-top: auto 推到卡底收尾。
+       等高差只有 19px，不会再出现当年 20/185px 的 9 倍视觉差（那是因为卡被拉高 170px）。 */
+    margin-top: auto;
     font-size: var(--font-size-small);
     line-height: var(--line-height-ui);
     color: var(--color-fg-tertiary);
 }
 
   /* Team traits card */
-  .showcase__card--team { flex: 0 0 360px; background: var(--color-bg-warm); }
-  .showcase__team-traits { display: flex; flex-direction: column; gap: var(--space-3); }
+  /* 团队卡：500px 横卡压轴。原来 360px 竖排 6 条 trait 撑到 552px 高（角色卡只有 363–382），
+     把 track 撑高后，可见角色卡（382px）与下方导航之间留出 205px 视觉空白。
+     改 2 列网格后每条 trait 宽 ~190px，卡高回到 ~340 与角色卡齐平。 */
+  .showcase__card--team { flex: 0 0 500px; background: var(--color-bg-warm); }
+  .showcase__team-traits { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-4); align-content: start; }
   .showcase__trait { display: flex; gap: var(--space-3); align-items: flex-start; }
   .showcase__trait svg { color: var(--color-accent); flex-shrink: 0; margin-top: 2px; }
   .showcase__trait strong { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 1px; }
@@ -910,7 +917,8 @@ const faq = install.faq || [];
     line-height: var(--line-height-heading);
     letter-spacing: var(--letter-spacing-heading);
 }
-  .cta__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-5); }
+  /* p.label→box 视觉间距对齐 topo 板块的 33px（原 20 → 29px，Δ 4px 报 △；同为「说明→内容」关系） */
+  .cta__desc { font-size: var(--font-size-caption); color: var(--color-fg-tertiary); margin-bottom: var(--space-6); }
   /* CTA 是居中窄块：整栏宽下把内容收在 44em 内居中（水平）*/
   .cta__inner { max-width: 44em; margin: 0 auto; }
   .cta__actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
@@ -928,7 +936,9 @@ const faq = install.faq || [];
     .hero-install__label { display: block; }
     .topo__header { flex-direction: column; gap: var(--space-2); }
     .showcase__card { flex: 0 0 280px; }
+    /* 窄屏团队卡回到单列竖排（2 列在 280px 里每列只有 ~100px，trait 文字会碎成 4 行） */
     .showcase__card--team { flex: 0 0 300px; }
+    .showcase__team-traits { grid-template-columns: 1fr; }
   }
   @media (max-width: 480px) {
     .hero-title { font-size: clamp(1.8rem, 8vw, 2.2rem); }
