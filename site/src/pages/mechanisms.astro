@@ -456,7 +456,8 @@ const pipeline = [
     gap: var(--space-2);
   }
   .step-card {
-    padding: var(--space-4);
+    /* border-left 3px 占空间 → 左 padding 加 3px 补偿，左右视觉对称 */
+    padding: var(--space-4) var(--space-4) var(--space-4) calc(var(--space-4) + 3px);
     background: var(--color-surface);
     border: 1px solid var(--color-line-soft);
     border-radius: var(--radius-md);

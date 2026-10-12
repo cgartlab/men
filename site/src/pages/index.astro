@@ -551,7 +551,7 @@ const faq = install.faq || [];
     border: 1px solid var(--color-line);
     border-radius: var(--radius-md);
     background: var(--color-surface);
-    padding: var(--space-4) var(--space-5);
+    padding: var(--space-5);
     /* 关键：网格项默认 min-width:auto，安装命令里的长 URL（nowrap）会把整列撑到 ~787px，
        再被 .hero 的 overflow:hidden 裁掉 —— 必须允许收缩，让 .hero-install__code 自己横向滚动。 */
     min-width: 0;
@@ -627,6 +627,7 @@ const faq = install.faq || [];
   .showcase__track {
     position: relative;
     display: flex; gap: var(--space-5);
+    align-items: flex-start;  /* 不拉齐高度 → 每张卡高度由内容决定，底部不留大块空白 */
     padding: var(--space-4) var(--space-6);
     overflow-x: auto; scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
@@ -672,7 +673,6 @@ const faq = install.faq || [];
     display: flex; align-items: center; gap: var(--space-1);
     /* 原 margin-top: auto 把此行推到卡片底部，同卡片内实测视觉间距 20 / 185px
        （差 9 倍）。去掉后卡片高度由内容自然决定，所有兄弟视觉间距一致 20px。 */
-    padding-top: var(--space-2); border-top: 1px solid var(--color-line-soft);
     font-size: var(--font-size-small);
     line-height: var(--line-height-ui);
     color: var(--color-fg-tertiary);
@@ -856,7 +856,7 @@ const faq = install.faq || [];
 }
   .mechanisms__all:hover { color: var(--color-accent-dark); text-decoration: none; }
   .mechanisms__list { display: flex; flex-direction: column; }
-  .mechanisms__item { display: flex; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-line-soft); transition: background 0.2s; }
+  .mechanisms__item { display: flex; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-line-soft); transition: background 0.2s; }
   .mechanisms__item:last-child { border-bottom: none; }
   .mechanisms__idx { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); flex-shrink: 0; padding-top: 2px; letter-spacing: 0.05em; }
   .mechanisms__item-body { flex: 1; }
