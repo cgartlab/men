@@ -4,7 +4,7 @@
  */
 
 export const MANUAL = {
-  title: 'men（门）Wiki 手册',
+  title: 'Men Wiki 手册',
   url: 'https://men.cgartlab.com',
   chapters: [
     { slug: 'overview',     title: '概览',     group: '入门', desc: '系统定义、设计原则与团队组成' },
