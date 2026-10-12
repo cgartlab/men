@@ -82,30 +82,14 @@ const faq = install.faq || [];
 ---
 
 <BaseLayout title={pageTitle}>
-  <!-- ===== Hero ===== -->
+  <!-- ===== Hero（居中单列：eyebrow → 大标题 → 副标题 → 安装命令条 → 次级行） ===== -->
   <header class="hero" aria-labelledby="hero-title">
-    <div class="hero__grid">
-      <!-- 左栏：文字说明，统一左对齐 -->
-      <div class="hero-content">
-        <p class="hero-eyebrow">{content.hero.brandLine}</p>
-        <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
-        <p class="hero-desc">{content.hero.subtitle}</p>
-        <div class="hero-actions">
-          <a href={base + 'docs'} class="hero-cta hero-cta--primary">
-            <Icon name="lucide:book-open" width="16" height="16" />阅读文档
-          </a>
-          <a href="https://github.com/cgartlab/men" class="hero-cta hero-cta--ghost" target="_blank" rel="noopener">
-            <Icon name="lucide:github" width="16" height="16" />GitHub
-            <Icon name="lucide:arrow-up-right" width="12" height="12" />
-          </a>
-        </div>
-        <div class="hero-version">
-          <span class="hero-version-badge">{SITE.version}</span>
-          <span>{content.hero.version.topic}</span>
-        </div>
-      </div>
+    <div class="hero__stack">
+      <p class="hero-eyebrow">{content.hero.brandLine}</p>
+      <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
+      <p class="hero-desc">{content.hero.subtitle}</p>
 
-      <!-- 右栏：安装（可切换平台，信息完整；样式从简 —— 无终端装饰） -->
+      <!-- 安装命令条：hero 主 CTA（tab 融入条上方居中） -->
       <aside class="hero-install" aria-label="安装">
         <div class="hero-install__tabs" role="tablist" aria-label="安装方式">
           {platformTabs.map((t, i) => (
@@ -135,6 +119,23 @@ const faq = install.faq || [];
 
         <p class="hero-install__meta">Node ≥ 18 · 零依赖 · 不用克隆仓库</p>
       </aside>
+
+      <!-- 次级行：CTA 按钮 + 版本信息同一行，弱化为辅助导航 -->
+      <div class="hero-sub">
+        <div class="hero-actions">
+          <a href={base + 'docs'} class="hero-cta hero-cta--primary">
+            <Icon name="lucide:book-open" width="16" height="16" />阅读文档
+          </a>
+          <a href="https://github.com/cgartlab/men" class="hero-cta hero-cta--ghost" target="_blank" rel="noopener">
+            <Icon name="lucide:github" width="16" height="16"/>GitHub
+            <Icon name="lucide:arrow-up-right" width="12" height="12" />
+          </a>
+        </div>
+        <div class="hero-version">
+          <span class="hero-version-badge">{SITE.version}</span>
+          <span>{content.hero.version.topic}</span>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -470,28 +471,15 @@ const faq = install.faq || [];
      每条的 border-bottom 比正文宽 672px，「没收窄」的观感就来自这里。 */
   :root { --section-pad: var(--space-12); --section-measure: 640px; }
 
-  /* ===== Hero ===== */
-  /* ===== Hero（第一板块）：左栏文字说明 + 右栏一行安装命令 ===== */
-  /* 页头偏移由 main 承担 → hero 自身只留少量呼吸空间 */
-  /* 顶部留白原来只有 --space-4(16px)，与下方各板块的 --section-pad(48px) 不一致 → 统一 */
-  .hero { padding: var(--section-pad) 0; position: relative; overflow: hidden; }
-  .hero__grid {
-    display: grid;
-    /* 右栏 320px 起，左栏吃掉其余空间：桌面 1232px 内容宽下约为 733 / 459 */
-    /* 安装卡需要更宽才能完整显示命令 → 左文 0.95fr / 右卡 1.05fr（1440 下约 565 / 627） */
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    /* 两列各自顶部对齐、高度独立（用户要求：安装卡不与左栏等高）——
-       参考 Astro/shadcn 的 install 命令条：紧凑、高度由内容决定 */
-    align-items: start;
-    gap: var(--space-10);
-    position: relative;
-    z-index: 1;
-    /* 宽度对齐下方「角色卡片」区块（.showcase）：两者都用 <main> 的内容宽度
-       （max-width 1360 + padding 0 64px → 桌面 1232px / 手机 342px），
-       不再自己收窄到 --page-max(720px)。 */
+  /* ===== Hero（居中单列，参考 Astro/shadcn/Vercel 的 dev-tool hero）=====
+     层级（视觉权重降序）：eyebrow → 大标题 → 副标题 → 安装命令条（主 CTA）→ 次级行（按钮+版本） */
+  .hero { padding: var(--section-pad) 0 var(--space-10); position: relative; overflow: hidden; }
+  .hero__stack {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    /* 内容收在 720px 内居中，与 hero 背景同宽 */
+    max-width: 720px; margin: 0 auto;
+    position: relative; z-index: 1;
   }
-  /* 顶端对齐：左栏第一行文字与右侧安装卡顶边对齐（用户要求）——去掉垂直居中 */
-  .hero-content { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; min-width: 0; }
   .hero-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); font-weight: var(--font-weight-semi); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: var(--space-3); }
   /* hero-title：原属性顶格，统一为 2 空格缩进 */
   .hero-title {
@@ -512,7 +500,14 @@ const faq = install.faq || [];
     margin: 0;
     max-width: 32em;
 }
-  .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: flex-start; margin-top: var(--space-6); }
+  /* 安装命令条紧跟副标题：hero 的主 CTA（Astro/shadcn 模式） */
+  .hero-install { margin-top: var(--space-6); }
+  /* 次级行：按钮 + 版本同行居中，间距与命令条拉开一级 */
+  .hero-sub {
+    display: flex; align-items: center; gap: var(--space-5); flex-wrap: wrap; justify-content: center;
+    margin-top: var(--space-8);
+  }
+  .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
   /* 橘色按钮：白字（产品决定 2026-10-11）。填充用 accent-fill(#bc513a) 白字 4.80:1；
      hover 不能往更亮处混白（白字对比度会掉到 3:1 以下），改为压暗 12%。 */
@@ -520,7 +515,7 @@ const faq = install.faq || [];
   .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent-fill) 88%, #000); border-color: color-mix(in srgb, var(--color-accent-fill) 88%, #000); text-decoration: none; }
   .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
-  .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
+  .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
 
   /* 右栏安装（重设计）：不再是「面板卡」，而是裸排在 hero 背景上的紧凑命令条组合 ——
      tab 在上、命令条居中、meta 在下。参考 Astro / shadcn 的 install 命令条 +
@@ -534,8 +529,8 @@ const faq = install.faq || [];
   .hero-install__panel, .hero-install__cmds, .hero-install__cmd, .hero-install__row { min-width: 0; }
   /* 平台切换：轻文字 tab，选中项加下划线 */
   .hero-install__tabs {
-    display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4);
-    margin-bottom: var(--space-3);
+    display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); justify-content: center;
+    margin-bottom: var(--space-2);
   }
   .hero-install__tab {
     font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi);
@@ -549,14 +544,16 @@ const faq = install.faq || [];
   .hero-install__panels { display: grid; }
   .hero-install__panel { grid-area: 1 / 1; }
   .hero-install__panel[hidden] { display: block; visibility: hidden; }
-  .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-  /* 命令条本体：纸白底 + shadow-as-border（0 0 0 1px，Vercel 手法）+ 圆角 */
+  .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; }
+  .hero-install__cmd { display: flex; justify-content: center; }
+  /* 命令条本体：纸白底 + shadow-as-border（0 0 0 1px，Vercel 手法）+ 圆角；宽度由内容决定 */
   .hero-install__row {
-    display: flex; align-items: center; gap: var(--space-2);
+    display: inline-flex; align-items: center; gap: var(--space-2);
     background: var(--color-surface);
     box-shadow: 0 0 0 1px var(--color-line-soft);
     border-radius: var(--radius-md);
     padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+    max-width: 100%;
   }
   /* $ 提示符：终端信号，不参与复制 */
   .hero-install__prompt {
@@ -895,14 +892,8 @@ const faq = install.faq || [];
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
-    /* 窄屏：第一板块改单列并整体居中（两栏在 481–768px 会把卡片挤到 ~240px） */
-    .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
+    /* 窄屏：hero 已是居中单列，只需收紧留白 */
     :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
-    .hero-content { align-items: center; text-align: center; }
-    .hero-title, .hero-desc { margin-left: auto; margin-right: auto; }
-    .hero-actions { justify-content: center; }
-    .hero-version { justify-content: center; }
-    .hero-install__tabs { justify-content: center; }
     .topo__header { flex-direction: column; gap: var(--space-2); }
     .showcase__card { flex: 0 0 280px; }
     /* 窄屏团队卡回到单列竖排（2 列在 280px 里每列只有 ~100px，trait 文字会碎成 4 行） */
