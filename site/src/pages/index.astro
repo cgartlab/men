@@ -8,26 +8,14 @@ const base = '/';
 const pageTitle = content.hero.title + ' — ' + content.hero.subtitle;
 const install = content.install || {};
 
-/* ---------- 安装：三种方式（信息完整，样式从简）---------- */
-const agentPrompt =
-  '帮我安装并启动 Men：npx @cgartlab/men && opencode';
-
+/* ---------- 安装：两个平台各一条 npx 命令 ---------- */
 const platformTabs = [
-  { id: 'agent', label: '面向 Agent' },
   { id: 'bash', label: 'macOS / Linux' },
   { id: 'windows', label: 'Windows' },
 ];
 const manualCmds: Record<string, { label: string; cmd: string }[]> = {
-  bash: [
-    { label: 'npm 安装', cmd: 'npx @cgartlab/men' },
-    { label: '一键安装', cmd: 'bash <(curl -fsSL https://raw.githubusercontent.com/cgartlab/men/main/install.sh)' },
-    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
-  ],
-  windows: [
-    { label: 'npm 安装', cmd: 'npx @cgartlab/men' },
-    { label: '一键安装', cmd: 'irm https://raw.githubusercontent.com/cgartlab/men/main/install.ps1 | iex' },
-    { label: '启动预览', cmd: 'cd men && npx astro dev --config site/astro.config.mjs' },
-  ],
+  bash: [{ label: 'npx 安装', cmd: 'npx @cgartlab/men' }],
+  windows: [{ label: 'npx 安装', cmd: 'npx @cgartlab/men' }],
 };
 
 /* ---------- 滚动展示：Agent 数据 ---------- */
@@ -126,18 +114,8 @@ const faq = install.faq || [];
         </div>
 
         <div class="hero-install__panels">
-          <div class="hero-install__panel" id="ipanel-agent" role="tabpanel" aria-labelledby="itab-agent">
-            <p class="hero-install__hint">复制给 AI 助手（OpenCode / Claude / Cursor），自动装好：</p>
-            <div class="hero-install__row">
-              <code class="hero-install__code" data-lang="text">{agentPrompt}</code>
-              <button class="hero-install__copy" data-cmd={agentPrompt} aria-label="复制提示词">
-                <Icon name="lucide:copy" width="14" height="14" />
-              </button>
-            </div>
-          </div>
-
-          {platformTabs.filter((t) => t.id !== 'agent').map((t) => (
-            <div class="hero-install__panel" id={`ipanel-${t.id}`} role="tabpanel" aria-labelledby={`itab-${t.id}`} hidden>
+          {platformTabs.map((t) => (
+            <div class="hero-install__panel" id={`ipanel-${t.id}`} role="tabpanel" aria-labelledby={`itab-${t.id}`} hidden={t.id !== 'bash'}>
               <ul class="hero-install__cmds">
                 {manualCmds[t.id].map((c) => (
                   <li class="hero-install__cmd">
@@ -575,7 +553,6 @@ const faq = install.faq || [];
   .hero-install__panels { display: grid; }
   .hero-install__panel { grid-area: 1 / 1; }
   .hero-install__panel[hidden] { display: block; visibility: hidden; }
-  .hero-install__hint { font-size: var(--font-size-small); color: var(--color-fg-tertiary); line-height: 1.6; margin: 0 0 var(--space-2); }
   .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
   .hero-install__row {
     display: flex; align-items: center; gap: var(--space-2);
