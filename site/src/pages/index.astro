@@ -120,9 +120,9 @@ const faq = install.faq || [];
                 {manualCmds[t.id].map((c) => (
                   <li class="hero-install__cmd">
                     <div class="hero-install__row">
-                      <span class="hero-install__cmd-label">{c.label}</span>
+                      <span class="hero-install__prompt" aria-hidden="true">$</span>
                       <code class="hero-install__code" data-lang={t.id === 'windows' ? 'powershell' : 'bash'}>{c.cmd}</code>
-                      <button class="hero-install__copy" data-cmd={c.cmd} aria-label={`复制 ${c.label}`}>
+                      <button class="hero-install__copy" data-cmd={c.cmd} aria-label={`复制安装命令`}>
                         <Icon name="lucide:copy" width="14" height="14" />
                       </button>
                     </div>
@@ -480,9 +480,9 @@ const faq = install.faq || [];
     /* 右栏 320px 起，左栏吃掉其余空间：桌面 1232px 内容宽下约为 733 / 459 */
     /* 安装卡需要更宽才能完整显示命令 → 左文 0.95fr / 右卡 1.05fr（1440 下约 565 / 627） */
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    /* 两列等高：卡片与左侧信息块上下边界对齐（原来这里是 align-items: center，
-       卡片比文字高时就会上下各突出一截） */
-    align-items: stretch;
+    /* 两列各自顶部对齐、高度独立（用户要求：安装卡不与左栏等高）——
+       参考 Astro/shadcn 的 install 命令条：紧凑、高度由内容决定 */
+    align-items: start;
     gap: var(--space-10);
     position: relative;
     z-index: 1;
@@ -522,19 +522,17 @@ const faq = install.faq || [];
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
   .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); margin-top: var(--space-6); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
 
-  /* 右栏安装卡：可切换平台，样式从简（不用终端窗口装饰，只留标签页 + 命令行） */
+  /* 右栏安装（重设计）：不再是「面板卡」，而是裸排在 hero 背景上的紧凑命令条组合 ——
+     tab 在上、命令条居中、meta 在下。参考 Astro / shadcn 的 install 命令条 +
+     Vercel 的 shadow-as-border 描边。高度由内容决定，不与左栏等高。 */
   .hero-install {
-    display: flex; flex-direction: column; justify-content: space-between;   /* 高度跟随左侧文字列，meta 落到卡片底部 */
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    padding: var(--space-5);
-    /* 关键：网格项默认 min-width:auto，安装命令里的长 URL（nowrap）会把整列撑到 ~787px，
-       再被 .hero 的 overflow:hidden 裁掉 —— 必须允许收缩，让 .hero-install__code 自己横向滚动。 */
+    display: flex; flex-direction: column;
+    /* 关键：网格项默认 min-width:auto，安装命令（pre-wrap）会把整列撑宽，
+       必须允许收缩，让 .hero-install__code 自己换行。 */
     min-width: 0;
   }
   .hero-install__panel, .hero-install__cmds, .hero-install__cmd, .hero-install__row { min-width: 0; }
-  /* 平台切换：文字标签 + 选中下划线（不用胶囊/描边，保持轻） */
+  /* 平台切换：轻文字 tab，选中项加下划线 */
   .hero-install__tabs {
     display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4);
     margin-bottom: var(--space-3);
@@ -547,26 +545,29 @@ const faq = install.faq || [];
   }
   .hero-install__tab:hover { color: var(--color-fg); }
   .hero-install__tab[aria-selected="true"] { color: var(--color-accent-dark); border-bottom-color: var(--color-accent); }
-  /* 面板叠在同一格里：隐藏的面板只做 visibility: hidden（仍占位），
-     这样卡片高度 = 最高面板的高度 → 切换标签时卡片不变高矮，
-     左侧大标题也不会因为 hero 的 align-items: center 被顶着上下移动。 */
+  /* 面板叠在同一格里：隐藏面板 visibility:hidden 占位 → 切换 tab 时命令条高度不变 */
   .hero-install__panels { display: grid; }
   .hero-install__panel { grid-area: 1 / 1; }
   .hero-install__panel[hidden] { display: block; visibility: hidden; }
   .hero-install__cmds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  /* 命令条本体：纸白底 + shadow-as-border（0 0 0 1px，Vercel 手法）+ 圆角 */
   .hero-install__row {
     display: flex; align-items: center; gap: var(--space-2);
-    /* 简约版：命令行直接坐在卡面上，不再套代码底/边框（--color-code 在白底 13+:1，无忧） */
+    background: var(--color-surface);
+    box-shadow: 0 0 0 1px var(--color-line-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
   }
-  .hero-install__cmd-label {
-    flex: 0 0 auto; font-size: var(--font-size-small); color: var(--color-fg-tertiary);
-    white-space: nowrap; padding-right: var(--space-1);
+  /* $ 提示符：终端信号，不参与复制 */
+  .hero-install__prompt {
+    flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--font-size-caption);
+    color: var(--color-accent-dark); user-select: none;
   }
   .hero-install__code {
     flex: 1; min-width: 0;
-    /* 命令完整显示：超宽就换行（长 URL 也允许断），不再横向滚动/截断 */
+    /* 命令完整显示：超宽就换行 */
     white-space: pre-wrap; overflow-wrap: anywhere;
-    font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--color-code);
+    font-family: var(--font-mono); font-size: var(--font-size-body); color: var(--color-code);
     background: none; padding: 0; line-height: 1.5;
   }
   .hero-install__copy {
