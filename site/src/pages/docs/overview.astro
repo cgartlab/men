@@ -22,6 +22,7 @@ const infobox = [
 const toc = [
   { id: 'definition', label: 'Men 是什么' },
   { id: 'usecases', label: '你能用它做什么' },
+  { id: 'fit', label: '什么时候不太合适' },
   { id: 'principles', label: '它做事的原则' },
   { id: 'team', label: '团队成员' },
   { id: 'quickstart', label: '快速开始' },
@@ -50,7 +51,7 @@ const seealso = [
       <h2>Men 是什么</h2>
       <p>
         <strong>Men</strong> 是一套安装在 OpenCode 里的 AI 团队配置。
-        它不是一个单独的软件，而是 6 个 AI 角色的设定文件加上一些自动检查的脚本。
+        它由 6 个 AI 角色的设定文件加上一些自动检查的脚本组成。
         门是整个团队的编排与路由核心——所有指令先经过它，它来决定谁去干。
       </p>
       <p>
@@ -108,6 +109,19 @@ const seealso = [
       </div>
       <div class="wiki-note">
         所有任务只需一条指令。门会自动判断该派谁做，做完了还要检查——你不需要记住每个角色的名字。
+      </div>
+    </section>
+
+    <section id="fit" class="doc-section">
+      <h2>什么时候不太合适</h2>
+      <p>把边界也说清楚，方便你判断：</p>
+      <ul>
+        <li><strong>只想打开浏览器就用</strong> —— Men 装在 OpenCode 里，用它要先会打开终端、跑一条命令。完全不想碰命令行的场景，它不合适。</li>
+        <li><strong>还没配置模型</strong> —— 干活的其实是你配置的 AI 模型，Men 负责分工和检查。模型没配好之前它跑不起来，装完记得先看<a href={base + 'docs/configure'}>配置页</a>。</li>
+        <li><strong>希望它替你拍板</strong> —— 它干活、检查、汇报，拿主意的是你。发邮件、公开发布这类对外的事，它一定先问过你才做。</li>
+      </ul>
+      <div class="wiki-note">
+        拿不准适不适合？把你的具体情况写进任务里问门，它会直说。
       </div>
     </section>
 
