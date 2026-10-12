@@ -70,7 +70,7 @@ const showcaseAgents = [
     cn: '寻',
     role: '研究员',
     icon: 'lucide:search',
-    desc: '搜网页、查资料、交叉核实，标来源。',
+    desc: '搜网页、查资料、交叉核实信息真假，每条都标来源。',
     skills: ['搜网页', '扫订阅源', '交叉核实', '查知识库', '标来源'],
     constraint: '只查不改，搜不到就老实说',
   },
@@ -674,7 +674,8 @@ const faq = install.faq || [];
   .team__cell {
     padding: var(--space-8) var(--space-6) var(--space-6);
     background: var(--color-bg);
-    display: grid; grid-template-rows: 1fr auto; row-gap: var(--space-6);
+    display: grid; grid-template-rows: auto auto; row-gap: var(--space-6);
+    align-content: start;          /* 内容从顶部排，短描述不会把 top 行推偏 */
     min-height: 260px; position: relative; transition: background .25s ease;
   }
   .team__cell:hover { background: #fdfcfa; }
