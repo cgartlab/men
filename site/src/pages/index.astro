@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import content from '../data/content.json';
-import { SITE } from '../data/site';
 import { Icon } from 'astro-icon/components';
 
 const base = '/';
@@ -94,14 +93,6 @@ const faq = install.faq || [];
       <div class="hero-content">
         <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
         <p class="hero-desc">{content.hero.subtitle}</p>
-        <!-- 次级导航：文字链弱化（主 CTA 是右侧安装卡） -->
-        <div class="hero-links">
-          <a href={base + 'docs'} class="hero-link">阅读文档 <Icon name="lucide:arrow-right" width="14" height="14" /></a>
-          <a href="https://github.com/cgartlab/men" class="hero-link" target="_blank" rel="noopener">
-            GitHub <Icon name="lucide:arrow-up-right" width="14" height="14" />
-          </a>
-          <span class="hero-version">{SITE.version}</span>
-        </div>
       </div>
 
       <aside class="hero-install" aria-label="安装">
@@ -581,18 +572,6 @@ const faq = install.faq || [];
       margin: 0;
       max-width: 32em;
     }
-    /* 次级导航：文字链（阅读文档 / GitHub / 版本号），弱化为主 CTA 的陪衬 */
-    .hero-links {
-      display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;
-      margin-top: var(--space-6);
-    }
-    .hero-link {
-      display: inline-flex; align-items: center; gap: var(--space-1); min-height: 44px;
-      font-family: var(--font-mono); font-size: var(--font-size-small); font-weight: var(--font-weight-semi);
-      color: var(--color-fg-tertiary); text-decoration: none; transition: color 0.2s;
-    }
-    .hero-link:hover { color: var(--color-accent-dark); text-decoration: none; }
-    .hero-version { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
 
   /* 右栏安装（重设计）：不再是「面板卡」，而是裸排在 hero 背景上的紧凑命令条组合 ——
      tab 在上、命令条居中、meta 在下。参考 Astro / shadcn 的 install 命令条 +
