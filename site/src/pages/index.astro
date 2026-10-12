@@ -142,7 +142,6 @@ const faq = install.faq || [];
     <div class="showcase__header">
       <p class="showcase__label">THE TEAM</p>
       <h2 class="showcase__heading">六个角色，一个核心</h2>
-      <p class="showcase__sub">你说一句话，剩下交给它们。</p>
     </div>
     <div class="showcase__track">
       {showcaseAgents.map((a) => (
@@ -477,7 +476,33 @@ const faq = install.faq || [];
       position: absolute; inset: 0; z-index: 0;
       display: grid; place-items: center;
       pointer-events: none;
-      filter: blur(28px);
+      filter: blur(25px);   /* 用户定：比初始 28px 降 10% 模糊 */
+    }
+    /* 体积光线：从 logo 中心向四周辐射的赤陶微光束，缓慢旋转无限循环。
+       用户明确要求的动效（打破本区「无动效」旧例）；保持极淡：
+       光束峰值 alpha 0.05，blur 层内再柔化一遍，绝不与正文争读。
+       仅 opacity/transform 动画（合成器路径），40s 一圈几乎不可察觉但「活着」。 */
+    .hero-backdrop::before {
+      content: ''; position: absolute;
+      width: 120vmax; height: 120vmax;
+      left: 50%; top: 50%;
+      translate: -50% -50%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(215, 118, 86, 0) 0deg,
+        rgba(215, 118, 86, 0.05) 4deg,
+        rgba(215, 118, 86, 0) 12deg
+      );
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.4) 30%, transparent 62%);
+      mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.4) 30%, transparent 62%);
+      animation: hero-rays 40s linear infinite;
+    }
+    @keyframes hero-rays {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-backdrop::before { animation: none; }
     }
     .hero-backdrop svg {
       width: min(72vmin, 560px); height: auto;
@@ -599,12 +624,11 @@ const faq = install.faq || [];
     letter-spacing: var(--letter-spacing-label);
 }
   .showcase__heading {
-    font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: var(--space-3);
+    font-family: var(--font-sans); font-weight: var(--font-weight-semi); color: var(--color-fg);
     font-size: var(--font-size-h2);
     line-height: var(--line-height-heading);
     letter-spacing: var(--letter-spacing-heading);
 }
-  .showcase__sub { font-size: var(--font-size-body); color: var(--color-fg-tertiary); }
 
   .showcase__track {
     position: relative;
