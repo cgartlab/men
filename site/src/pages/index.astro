@@ -474,14 +474,22 @@ const faq = install.faq || [];
        logo 轻糊 10px（形体仍可辨），光线只有 6px（光束能看见）。
        logo 填充改赤陶 accent α0.10（品牌规则：accent 用于图形装饰）——
        实测文字区底色 #f6ebe5，正文 12.34:1 / 三级文本 5.67:1，仍稳稳过 AA。 */
-    /* 背景层：整页背景（position: fixed 铺满视口，不产生滚动条），
-       四边用椭圆 mask 淡出 —— 图形在边界前就淡到 0，不会被任何盒子硬切。 */
+    /* 背景层：随页面上滚的绝对定位层（用户要「固定在后方、会向上滚动、不停在屏幕上」）。
+       几何：从视口顶起、铺满第一屏（100vh），随文档一起上移。
+       不被硬切的做法：椭圆 mask 在 62% 处就淡到全透明 —— 明显早于元素边界，
+       所以外层 overflow:hidden 裁掉的是已经透明的部分，肉眼看不到切口。 */
     .hero-backdrop {
-      position: fixed; inset: 0; z-index: 0;
+      position: absolute;
+      top: calc(-1 * var(--header-h, 84px));   /* 从视口顶开始（抵消 main 的页头内边距） */
+      left: 50%;
+      translate: -50% 0;
+      width: 100%;
+      height: 100vh;
       display: grid; place-items: center;
       pointer-events: none;
-      -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 34%, rgba(0,0,0,0.5) 62%, transparent 100%);
-      mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 34%, rgba(0,0,0,0.5) 62%, transparent 100%);
+      overflow: hidden;                        /* 裁掉超出的光线盘，掩膜已保证切口不可见 */
+      -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 0%, rgba(0,0,0,0.5) 45%, transparent 62%);
+      mask-image: radial-gradient(ellipse 72% 68% at 50% 44%, #000 0%, rgba(0,0,0,0.5) 45%, transparent 62%);
     }
     .hero-backdrop svg {
       width: min(74vmin, 600px); height: auto;
@@ -542,6 +550,13 @@ const faq = install.faq || [];
       letter-spacing: var(--letter-spacing-heading);
       max-width: 14em;
       margin: 0 0 var(--space-4);
+    }
+    /* 「这扇门」强调色：中文无斜体字形（浏览器会做剪切变形，字会「歪」）→ font-style 必须 normal。
+       用 accent-soft（对纸底 4.55:1）而非亮 accent（3.01:1，贴 3:1 大文本线太紧）。
+       字重保持 600 与其余三字一致 —— 中文靠颜色表达强调，不靠合成加粗。 */
+    .hero-title em {
+      font-style: normal;
+      color: var(--color-accent-soft);
     }
     .hero-desc {
       font-size: var(--font-size-body-lg);
