@@ -291,8 +291,8 @@ const faq = install.faq || [];
           <path id="tz-verdict" d="M980,286 L1036,286" />
 
           <!-- FAIL loops back to dispatch -->
-          <path id="tz-fail-1" d="M905,252 C905,44 390,44 390,228" />
-          <path id="tz-fail-2" d="M1110,252 C1110,16 390,16 390,228" />
+          <path id="tz-fail-1" d="M905,252 C905,8 390,8 390,228" />
+          <path id="tz-fail-2" d="M1110,252 C1110,8 390,8 390,228" />
 
           <!-- REPORT back to user -->
           <path id="tz-report" d="M1110,320 C1110,452 120,452 120,322" />
@@ -320,7 +320,7 @@ const faq = install.faq || [];
         <use href="#tz-learn" class="topo-bezier topo-bezier--learn" marker-end="url(#mk-purple)" />
 
         <!-- Edge labels -->
-        <text x="1010" y="274" text-anchor="middle" class="topo-elabel topo-elabel--pass">全 PASS</text>
+        <text x="1010" y="244" text-anchor="middle" class="topo-elabel topo-elabel--pass">全 PASS</text>
         <text x="650" y="34" text-anchor="middle" class="topo-elabel topo-elabel--fail">FAIL · LOOP 重试 ≤5 次</text>
         <text x="615" y="442" text-anchor="middle" class="topo-elabel topo-elabel--report">REPORT · 四段结构化汇报</text>
 
