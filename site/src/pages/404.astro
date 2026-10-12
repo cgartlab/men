@@ -118,7 +118,10 @@ import { SITE } from '../data/site';
     color: var(--color-accent-dark);
     text-decoration: underline;
     text-underline-offset: 2px;
-  }
+  
+  min-height: 44px;      /* WCAG §2.5.8 触控目标下限 24px；站内导航链接统一 44px */
+  display: inline-flex; align-items: center;
+}
 
   .notfound__link:hover {
     color: var(--color-accent-dark);

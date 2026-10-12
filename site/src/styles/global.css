@@ -465,6 +465,10 @@ code {
   border-radius: var(--radius-xs);
 }
 
+/* 代码块内的 code 不受上面的行内缩放影响：字号跟随 pre（14px caption）。
+   原实现漏了这条：.doc-section code 等行内规则把 .line 缩到 13.16px（实测）。 */
+pre code { font-size: inherit; }
+
 pre {
   position: relative;
   font-family: var(--font-mono);
@@ -1058,7 +1062,7 @@ main {
 }
 .wiki-infobox dd { margin: 0; color: var(--color-fg-secondary); line-height: 1.65; }
 .wiki-infobox dd strong { color: var(--color-fg); }
-.wiki-infobox code {
+.wiki-infobox code:not(pre code) {
   font-family: var(--font-mono);
   font-size: max(13px, 0.94em);
   background: var(--color-bg-warm);
@@ -1140,7 +1144,7 @@ main {
   text-wrap: pretty;
 }
 .doc-section p strong, .doc-section li strong { color: var(--color-fg); }
-.doc-section code {
+.doc-section code:not(pre code) {
   font-family: var(--font-mono);
   background: var(--color-bg-warm);
   padding: 1px var(--space-1);
@@ -1175,6 +1179,7 @@ main {
 }
 
 /* ---- 提示框 ---- */
+.wiki-note--after-grid { margin-top: var(--space-8); }
 .wiki-note {
   border-left: 3px solid var(--color-accent);
   background: var(--color-bg-warm);
@@ -1222,7 +1227,7 @@ main {
 .wiki-table td strong { white-space: nowrap; }
 /* 通用工具类：短标签单元格不折行（用于不带 <strong> 的标签格） */
 .nowrap { white-space: nowrap; }
-.wiki-table td code {
+.wiki-table td code:not(pre code) {
   font-family: var(--font-mono);
   font-size: max(13px, 0.94em);
   background: var(--color-bg-warm);
@@ -1304,15 +1309,19 @@ main {
 }
 
 /* ---- 来源引用 ---- */
-.src-ref {
+/* 来源引用行：注意必须压过 .doc-section p（0,2,0），否则字号/颜色/行高/段距全被正文规则吃掉
+     （实测 bug：docs 页的 src-ref 渲染成 16px 正文，mechanisms 页却是 13px mono —— 同组件两副面孔）。
+     用 .src-ref.src-ref（0,2,0）+ 靠后的源码顺序胜出。 */
+.src-ref.src-ref {
   font-family: var(--font-mono);
   font-size: var(--font-size-small);
   line-height: 1.6;
-  /* 来源行是正文级的引用信息，fg-muted（4.54:1）太淡 → fg-tertiary（6.41:1） */
+  margin-bottom: 0;   /* 段距交给 margin-top，正文段距 16px 会把来源行与上文拉开过远 */
   color: var(--color-fg-tertiary);
   margin-top: var(--space-2);
 }
 .src-ref code { background: none; padding: 0; color: var(--color-accent-dark); }
+.src-ref__sec { overflow-wrap: anywhere; }   /* 窄屏下章名内部可断行，避免 2 字符孤行 */
 
 /* ---- 参见 ---- */
 .wiki-seealso h3 {

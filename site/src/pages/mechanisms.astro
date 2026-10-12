@@ -340,12 +340,8 @@ const pipeline = [
     margin-bottom: var(--space-4);
     line-height: var(--line-height-body);
   }
-  .src-ref {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-eyebrow);
-    color: var(--color-fg-muted);
-    margin-top: var(--space-2);
-  }
+  /* .src-ref 的字号/颜色/行高由 global.css 统一定义（这里不再重复定义，
+     此前的 scoped 覆盖让本页与 docs 页的来源行一个 fg-muted 一个 fg-tertiary） */
 
   /* ===== Pipeline Diagram ===== */
   .pipeline-diagram {
