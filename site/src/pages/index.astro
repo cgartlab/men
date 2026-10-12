@@ -111,6 +111,7 @@ const faq = install.faq || [];
           ))}
         </div>
 
+        <div class="hero-install__body">
         <div class="hero-install__panels">
           {platformTabs.map((t) => (
             <div class="hero-install__panel" id={`ipanel-${t.id}`} role="tabpanel" aria-labelledby={`itab-${t.id}`} hidden={t.id !== 'bash'}>
@@ -131,7 +132,20 @@ const faq = install.faq || [];
           ))}
         </div>
 
-        <p class="hero-install__meta">Node ≥ 18 · 零依赖 · 不用克隆仓库</p>
+        <!-- 装饰标识：有机环 + 穿过门孔的命令光点（呼应「一行命令进门，团队开工」）。
+            纯装饰 → aria-hidden；不承载文字，故可用亮赤陶 accent（品牌规则：accent 用于图形）。 -->
+        <div class="hero-install__art" aria-hidden="true">
+          <span class="hero-install__art-halo"></span>
+          <span class="hero-install__art-orbit"></span>
+          <svg class="hero-install__art-mark" viewBox="0 0 100 83.7963">
+            <path fill="currentColor" fill-rule="evenodd" d="M 49.4949,12.2222 C 34.4265,12.2222 33.9309,0.0 25.5529,0.0 C -3.0669,0.0 0.104,11.5407 0.104,41.3544 C 0.104,70.5679 -0.8861,74.2725 20.6975,83.2112 C 32.2645,88.0015 27.2247,61.9479 49.8298,61.9479 C 71.9301,61.9479 67.6945,87.8998 78.962,83.0437 C 100.8451,73.6126 100.8205,70.6946 99.5555,40.5173 C 98.3835,12.557 102.3083,0.0 74.4415,0.0 C 66.6945,0.0 67.0189,12.2222 49.4949,12.2222 Z M 69.0118,40.6010 A 19.0983,19.0983 0 1 0 30.8152,40.6010 A 19.0983,19.0983 0 1 0 69.0118,40.6010 Z" />
+          </svg>
+          <span class="hero-install__art-dot"></span>
+          <span class="hero-install__art-spark"></span>
+        </div>
+        </div>
+
+        <p class="hero-install__meta">粘贴命令到终端</p>
       </aside>
     </div>
   </header>
@@ -551,11 +565,13 @@ const faq = install.faq || [];
       max-width: 14em;
       margin: 0 0 var(--space-4);
     }
-    /* 「这扇门」强调色：中文无斜体字形（浏览器会做剪切变形，字会「歪」）→ font-style 必须 normal。
-       用 accent-soft（对纸底 4.55:1）而非亮 accent（3.01:1，贴 3:1 大文本线太紧）。
-       字重保持 600 与其余三字一致 —— 中文靠颜色表达强调，不靠合成加粗。 */
+    /* 「这扇门」强调色 + 斜体（用户明确要求斜体）。
+       中文无真斜体字形，浏览器只能合成倾斜 → 用 oblique <angle> 明确指定 12deg，
+       比 Chrome 默认合成的 ~14deg 更克制、更贴合中文方块字的节奏。
+       色用 accent-soft（对纸底 4.55:1）而非亮 accent（3.01:1，贴 3:1 线太紧）。
+       字重保持 600 与其余三字一致。 */
     .hero-title em {
-      font-style: normal;
+      font-style: oblique 12deg;
       color: var(--color-accent-soft);
     }
     .hero-desc {
@@ -589,6 +605,75 @@ const faq = install.faq || [];
     min-width: 0;
   }
   .hero-install__panel, .hero-install__cmds, .hero-install__cmd, .hero-install__row { min-width: 0; }
+  /* 命令条 + 右侧装饰标识 同一行（标识落在命令条右边的空白里，用户红框位置） */
+  .hero-install__body { display: flex; align-items: center; gap: var(--space-6); }
+  /* 装饰标识：有机环（空心的「门」）+ 一颗沿门孔飞过的小光点（无限循环）——
+     表达「一行命令穿过这扇门，团队开工」。纯装饰，不参与语义。 */
+  .hero-install__art {
+    position: relative;
+    flex: 1 1 auto; min-width: 0;
+    height: 96px;
+    display: grid; place-items: center;
+  }
+  /* 外圈柔光：呼吸（放大 + 淡出），把标识与背景连起来 */
+  .hero-install__art-halo {
+    position: absolute;
+    width: 116px; height: 116px; border-radius: 50%;
+    background: radial-gradient(circle, var(--color-accent-tint) 0%, transparent 68%);
+    animation: art-halo 5s ease-in-out infinite;
+  }
+  /* 细描边轨道：缓慢自转，给静止的标识一点「活着」的动静 */
+  .hero-install__art-orbit {
+    position: absolute;
+    width: 84px; height: 84px; border-radius: 50%;
+    border: 1px dashed color-mix(in srgb, var(--color-accent) 45%, transparent);
+    animation: art-orbit 24s linear infinite;
+  }
+  .hero-install__art-mark {
+    position: relative;
+    width: 62px; height: auto;
+    color: var(--color-accent);          /* 图形装饰：亮赤陶（品牌规则允许） */
+    filter: drop-shadow(0 2px 10px color-mix(in srgb, var(--color-accent) 22%, transparent));
+  }
+  /* 小光点：从左穿过门孔到右，无限循环 */
+  .hero-install__art-dot {
+    position: absolute;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--color-accent-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+    animation: art-pass 6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  /* 门内的小闪点：门开合的呼吸感（与光点错相位） */
+  .hero-install__art-spark {
+    position: absolute;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--color-accent-dark);
+    animation: art-spark 3s ease-in-out infinite;
+  }
+  @keyframes art-halo {
+    0%, 100% { transform: scale(0.86); opacity: 0.55; }
+    50%      { transform: scale(1.06); opacity: 0.95; }
+  }
+  @keyframes art-orbit { to { transform: rotate(360deg); } }
+  /* 从左外 → 穿门孔（中心稍作停留）→ 右外，然后淡出重来 */
+  @keyframes art-pass {
+    0%   { translate: -58px 0; opacity: 0; }
+    12%  { opacity: 1; }
+    42%  { translate: -2px 0; opacity: 1; }
+    58%  { translate: 2px 0; opacity: 1; }
+    88%  { opacity: 1; }
+    100% { translate: 58px 0; opacity: 0; }
+  }
+  @keyframes art-spark {
+    0%, 100% { transform: scale(0.7); opacity: 0.35; }
+    50%      { transform: scale(1.5); opacity: 0.9; }
+  }
+  /* 无障碍：用户要求减少动效时全部静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-install__art-halo, .hero-install__art-orbit,
+    .hero-install__art-dot, .hero-install__art-spark { animation: none; }
+    .hero-install__art-dot { opacity: 1; translate: 0 0; }
+  }
   /* 平台切换：轻文字 tab，选中项加下划线 */
   .hero-install__tabs {
     display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4);
@@ -968,6 +1053,8 @@ const faq = install.faq || [];
   @media (max-width: 768px) {
     /* 窄屏：hero 两栏叠成单列（481–768px 两栏会把命令卡挤到 ~240px） */
     .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
+    /* 窄屏命令条已满宽，右侧装饰标识无处安放 → 隐藏（主线是安装本身，装饰不抢位） */
+    .hero-install__art { display: none; }
     :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
     .topo__header { flex-direction: column; gap: var(--space-2); }
     .showcase__card { flex: 0 0 280px; }
