@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import content from '../data/content.json';
+import { SITE } from '../data/site';
 import { Icon } from 'astro-icon/components';
 
 const base = '/';
@@ -90,54 +91,48 @@ const faq = install.faq || [];
       </svg>
     </div>
     <div class="hero__grid">
+      <!-- 左栏：标题 → 副标题 → 安装命令（参考 magpie：左对齐内容流 + 底部小字）-->
       <div class="hero-content">
         <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
         <p class="hero-desc">{content.hero.subtitle}</p>
+
+        <aside class="hero-install" aria-label="安装">
+          <div class="hero-install__tabs" role="tablist" aria-label="安装方式">
+            {platformTabs.map((t, i) => (
+              <button class="hero-install__tab" role="tab" id={`itab-${t.id}`} aria-controls={`ipanel-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-platform={t.id}>{t.label}</button>
+            ))}
+          </div>
+
+          <div class="hero-install__panels">
+            {platformTabs.map((t) => (
+              <div class="hero-install__panel" id={`ipanel-${t.id}`} role="tabpanel" aria-labelledby={`itab-${t.id}`} hidden={t.id !== 'bash'}>
+                <ul class="hero-install__cmds">
+                  {manualCmds[t.id].map((c) => (
+                    <li class="hero-install__cmd">
+                      <div class="hero-install__row">
+                        <span class="hero-install__prompt" aria-hidden="true">$</span>
+                        <code class="hero-install__code" data-lang={t.id === 'windows' ? 'powershell' : 'bash'}>{c.cmd}</code>
+                        <button class="hero-install__copy" data-cmd={c.cmd} aria-label={`复制安装命令`}>
+                          <Icon name="lucide:copy" width="14" height="14" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <p class="hero-install__meta">粘贴命令到终端</p>
+        </aside>
+
+        <p class="hero-meta">{SITE.version} · 开源 · Node ≥ 18</p>
       </div>
 
-      <aside class="hero-install" aria-label="安装">
-        <div class="hero-install__tabs" role="tablist" aria-label="安装方式">
-          {platformTabs.map((t, i) => (
-            <button class="hero-install__tab" role="tab" id={`itab-${t.id}`} aria-controls={`ipanel-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-platform={t.id}>{t.label}</button>
-          ))}
-        </div>
-
-        <div class="hero-install__body">
-        <div class="hero-install__panels">
-          {platformTabs.map((t) => (
-            <div class="hero-install__panel" id={`ipanel-${t.id}`} role="tabpanel" aria-labelledby={`itab-${t.id}`} hidden={t.id !== 'bash'}>
-              <ul class="hero-install__cmds">
-                {manualCmds[t.id].map((c) => (
-                  <li class="hero-install__cmd">
-                    <div class="hero-install__row">
-                      <span class="hero-install__prompt" aria-hidden="true">$</span>
-                      <code class="hero-install__code" data-lang={t.id === 'windows' ? 'powershell' : 'bash'}>{c.cmd}</code>
-                      <button class="hero-install__copy" data-cmd={c.cmd} aria-label={`复制安装命令`}>
-                        <Icon name="lucide:copy" width="14" height="14" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <!-- 装饰标识：有机环 + 穿过门孔的命令光点（呼应「一行命令进门，团队开工」）。
-            纯装饰 → aria-hidden；不承载文字，故可用亮赤陶 accent（品牌规则：accent 用于图形）。 -->
-        <div class="hero-install__art" aria-hidden="true">
-          <span class="hero-install__art-halo"></span>
-          <span class="hero-install__art-orbit"></span>
-          <svg class="hero-install__art-mark" viewBox="0 0 100 83.7963">
-            <path fill="currentColor" fill-rule="evenodd" d="M 49.4949,12.2222 C 34.4265,12.2222 33.9309,0.0 25.5529,0.0 C -3.0669,0.0 0.104,11.5407 0.104,41.3544 C 0.104,70.5679 -0.8861,74.2725 20.6975,83.2112 C 32.2645,88.0015 27.2247,61.9479 49.8298,61.9479 C 71.9301,61.9479 67.6945,87.8998 78.962,83.0437 C 100.8451,73.6126 100.8205,70.6946 99.5555,40.5173 C 98.3835,12.557 102.3083,0.0 74.4415,0.0 C 66.6945,0.0 67.0189,12.2222 49.4949,12.2222 Z M 69.0118,40.6010 A 19.0983,19.0983 0 1 0 30.8152,40.6010 A 19.0983,19.0983 0 1 0 69.0118,40.6010 Z" />
-          </svg>
-          <span class="hero-install__art-dot"></span>
-          <span class="hero-install__art-spark"></span>
-        </div>
-        </div>
-
-        <p class="hero-install__meta">粘贴命令到终端</p>
-      </aside>
+      <!-- 右栏：产品截图（OpenCode 界面中 Men 出现的位置，用户素材原样使用）-->
+      <figure class="hero-shot">
+        <img src="/hero-opencode.png" alt="OpenCode 界面中 Men 作为默认 Agent 出现" loading="lazy" />
+      </figure>
     </div>
   </header>
 
@@ -544,23 +539,21 @@ const faq = install.faq || [];
         var(--color-bg) 0%, rgba(250, 249, 245, 0) 22%,
         rgba(250, 249, 245, 0) 78%, var(--color-bg) 100%);
     }
+    /* 左右两栏：左=标题+副标题+安装命令+版本小字；右=产品截图。
+       参考 magpie hero 布局：左对齐内容流 + 右侧产品展示。 */
     .hero__grid {
       display: grid;
-      /* 左栏文字区吃余量，右栏命令卡按内容收缩（fit-content 由子元素决定） */
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-      /* 大标题与安装命令卡**水平中线对齐**（用户要求）：两栏各自垂直居中 → 中线重合。
-         实测：居中前 h1 中线 161 vs 命令条中线 213（差 52px）；居中后都落在 200 附近。 */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       align-items: center;
       gap: var(--space-12);
       position: relative; z-index: 1;
     }
-    /* 大标题与右侧命令条中线对齐（实测 h1 中线 183 / row 中线 213 → 左栏下移 27px 归一）
-       注：align-items:center 让两栏块级中线对齐（206/210），这里再对齐「标题 ↔ 命令条」内容级中线 */
-    .hero-content { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; min-width: 0; margin-top: 47px; }
+    .hero-content {
+      display: flex; flex-direction: column; justify-content: center;
+      align-items: flex-start; text-align: left; min-width: 0;
+    }
     .hero-title {
-      /* 层级微调：标题从 display 令牌 56px 提到 clamp 68px（A 方案的字号落差手法），
-         与副标题（17px）拉开 4 倍，L1 定海神针 */
-      font-size: clamp(52px, 5.5vw, 68px);
+      font-size: clamp(48px, 5vw, 64px);
       font-weight: var(--font-weight-semi);
       color: var(--color-fg);
       text-wrap: balance;
@@ -569,11 +562,6 @@ const faq = install.faq || [];
       max-width: 14em;
       margin: 0 0 var(--space-4);
     }
-    /* 「这扇门」强调色 + 斜体（用户明确要求斜体）。
-       中文无真斜体字形，浏览器只能合成倾斜 → 用 oblique <angle> 明确指定 12deg，
-       比 Chrome 默认合成的 ~14deg 更克制、更贴合中文方块字的节奏。
-       色用 accent-soft（对纸底 4.55:1）而非亮 accent（3.01:1，贴 3:1 线太紧）。
-       字重保持 600 与其余三字一致。 */
     .hero-title em {
       font-style: oblique 12deg;
       color: var(--color-accent-soft);
@@ -582,9 +570,22 @@ const faq = install.faq || [];
       font-size: var(--font-size-body-lg);
       color: var(--color-fg-secondary);
       line-height: var(--line-height-body);
-      margin: 0;
+      margin: 0 0 var(--space-8);
       max-width: 32em;
     }
+    .hero-meta {
+      margin-top: var(--space-4);
+      font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted);
+    }
+
+    /* 右栏产品截图：圆角 + 阴影浮起（不加任何修饰，原图原样）*/
+    .hero-shot {
+      margin: 0;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 4px 16px -4px rgba(43,42,39,0.08), 0 16px 40px -12px rgba(43,42,39,0.12);
+    }
+    .hero-shot img { display: block; width: 100%; height: auto; }
 
   /* 右栏安装（重设计）：不再是「面板卡」，而是裸排在 hero 背景上的紧凑命令条组合 ——
      tab 在上、命令条居中、meta 在下。参考 Astro / shadcn 的 install 命令条 +
@@ -1115,10 +1116,8 @@ const faq = install.faq || [];
 
   /* ===== Responsive ===== */
   @media (max-width: 768px) {
-    /* 窄屏：hero 两栏叠成单列（481–768px 两栏会把命令卡挤到 ~240px） */
-    .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); }
-    /* 窄屏命令条已满宽，右侧装饰标识无处安放 → 隐藏（主线是安装本身，装饰不抢位） */
-    .hero-install__art { display: none; }
+    /* 窄屏：hero 两栏叠成单列（截图移到文字下方） */
+    .hero__grid { grid-template-columns: 1fr; gap: var(--space-8); }
     :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
     .topo__header { flex-direction: column; gap: var(--space-2); }
     /* 窄屏：横向牌堆紧凑化（手指左右拨牌；卡宽收到 200px 一屏能露出下一张的边缘）*/
