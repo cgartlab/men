@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import content from '../data/content.json';
-import { SITE } from '../data/site';
 import { Icon } from 'astro-icon/components';
 
 const base = '/';
@@ -82,14 +81,27 @@ const faq = install.faq || [];
 ---
 
 <BaseLayout title={pageTitle}>
-  <!-- ===== Hero（居中单列：eyebrow → 大标题 → 副标题 → 安装命令条 → 次级行） ===== -->
+  <!-- ===== Hero（居中单列，信息层级：是什么 → 价值 → 怎么开始） ===== -->
   <header class="hero" aria-labelledby="hero-title">
     <div class="hero__stack">
       <p class="hero-eyebrow">{content.hero.brandLine}</p>
       <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
       <p class="hero-desc">{content.hero.subtitle}</p>
+      <!-- 价值主张：从最底行升级，紧跟副标题（用户确认「就用这个」后由主 agent 评估层级） -->
+      <p class="hero-value">{content.hero.version.topic}</p>
 
-      <!-- 安装命令条：hero 主 CTA（tab 融入条上方居中） -->
+      <!-- 主 CTA：新访客路径（先看懂）；GitHub 给直接想看代码的人 -->
+      <div class="hero-actions">
+        <a href={base + 'docs'} class="hero-cta hero-cta--primary">
+          <Icon name="lucide:book-open" width="16" height="16" />阅读文档
+        </a>
+        <a href="https://github.com/cgartlab/men" class="hero-cta hero-cta--ghost" target="_blank" rel="noopener">
+          <Icon name="lucide:github" width="16" height="16"/>GitHub
+          <Icon name="lucide:arrow-up-right" width="12" height="12" />
+        </a>
+      </div>
+
+      <!-- 安装命令条：给已决定要装的人的快捷路径（仍在此屏，视觉轻于按钮） -->
       <aside class="hero-install" aria-label="安装">
         <div class="hero-install__tabs" role="tablist" aria-label="安装方式">
           {platformTabs.map((t, i) => (
@@ -119,23 +131,6 @@ const faq = install.faq || [];
 
         <p class="hero-install__meta">Node ≥ 18 · 零依赖 · 不用克隆仓库</p>
       </aside>
-
-      <!-- 次级行：CTA 按钮 + 版本信息同一行，弱化为辅助导航 -->
-      <div class="hero-sub">
-        <div class="hero-actions">
-          <a href={base + 'docs'} class="hero-cta hero-cta--primary">
-            <Icon name="lucide:book-open" width="16" height="16" />阅读文档
-          </a>
-          <a href="https://github.com/cgartlab/men" class="hero-cta hero-cta--ghost" target="_blank" rel="noopener">
-            <Icon name="lucide:github" width="16" height="16"/>GitHub
-            <Icon name="lucide:arrow-up-right" width="12" height="12" />
-          </a>
-        </div>
-        <div class="hero-version">
-          <span class="hero-version-badge">{SITE.version}</span>
-          <span>{content.hero.version.topic}</span>
-        </div>
-      </div>
     </div>
   </header>
 
@@ -500,14 +495,17 @@ const faq = install.faq || [];
     margin: 0;
     max-width: 32em;
 }
-  /* 安装命令条紧跟副标题：hero 的主 CTA（Astro/shadcn 模式） */
-  .hero-install { margin-top: var(--space-6); }
-  /* 次级行：按钮 + 版本同行居中，间距与命令条拉开一级 */
-  .hero-sub {
-    display: flex; align-items: center; gap: var(--space-5); flex-wrap: wrap; justify-content: center;
-    margin-top: var(--space-8);
+  /* 价值主张行：紧跟副标题，是「为什么值得试」的一句话 */
+  .hero-value {
+    margin: var(--space-4) 0 0;
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-semi);
+    color: var(--color-fg);
   }
-  .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; }
+  /* 主 CTA 行：阅读文档（主）+ GitHub（次） */
+  .hero-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-top: var(--space-6); }
+  /* 安装命令条：次级路径（给已决定要装的人），视觉轻于按钮 */
+  .hero-install { margin-top: var(--space-8); }
   .hero-cta { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-5); font-family: var(--font-mono); font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); text-decoration: none; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); transition: background 0.2s, border-color 0.2s, color 0.2s; }
   /* 橘色按钮：白字（产品决定 2026-10-11）。填充用 accent-fill(#bc513a) 白字 4.80:1；
      hover 不能往更亮处混白（白字对比度会掉到 3:1 以下），改为压暗 12%。 */
@@ -515,7 +513,6 @@ const faq = install.faq || [];
   .hero-cta--primary:hover { background: color-mix(in srgb, var(--color-accent-fill) 88%, #000); border-color: color-mix(in srgb, var(--color-accent-fill) 88%, #000); text-decoration: none; }
   .hero-cta--ghost { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-line); }
   .hero-cta--ghost:hover { border-color: var(--color-accent); color: var(--color-accent-dark); background: var(--color-accent-tint); text-decoration: none; }
-  .hero-version { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-eyebrow); color: var(--color-fg-muted); }
 
   /* 右栏安装（重设计）：不再是「面板卡」，而是裸排在 hero 背景上的紧凑命令条组合 ——
      tab 在上、命令条居中、meta 在下。参考 Astro / shadcn 的 install 命令条 +
@@ -574,7 +571,6 @@ const faq = install.faq || [];
   }
   .hero-install__copy:hover { color: var(--color-accent-dark); background: var(--color-accent-tint); }
   .hero-install__meta { margin: var(--space-3) 0 0; font-size: var(--font-size-small); color: var(--color-fg-tertiary); }
-  .hero-version-badge { font-weight: var(--font-weight-semi); color: var(--color-on-accent-fill); background: var(--color-accent-fill); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
 
   /* ===== Showcase (scroll-driven agent cards) ===== */
   .showcase { padding: var(--section-pad) 0; overflow: hidden; }
