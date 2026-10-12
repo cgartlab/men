@@ -469,33 +469,41 @@ const faq = install.faq || [];
 
   /* ===== Hero（左右两栏：左=标题+副标题+次级文字链；右=安装命令卡，唯一主 CTA）===== */
     .hero { padding: var(--section-pad) 0 var(--space-10); position: relative; overflow: hidden; }
-    /* 背景层：巨大有机环 logo 居中 + blur（C 方案「纸肌理」手法）。
-       bg-warm #efe8db 对纸底仅 1.16:1 —— 是肌理不是信息；blur 柔化形体；
-       上下渐变再压淡，护住左右两栏文字区。pointer-events:none + aria-hidden。 */
+    /* 背景层：巨大有机环 logo 居中 + 体积光线（赤陶）。
+       拆层之前 logo 与光线同处一层 blur(25px)，两个都被糊没了；现在各自控模糊：
+       logo 轻糊 10px（形体仍可辨），光线只有 6px（光束能看见）。
+       logo 填充改赤陶 accent α0.10（品牌规则：accent 用于图形装饰）——
+       实测文字区底色 #f6ebe5，正文 12.34:1 / 三级文本 5.67:1，仍稳稳过 AA。 */
     .hero-backdrop {
       position: absolute; inset: 0; z-index: 0;
       display: grid; place-items: center;
       pointer-events: none;
-      filter: blur(25px);   /* 用户定：比初始 28px 降 10% 模糊 */
+      /* 不再整层模糊：由子层各自控制 */
     }
-    /* 体积光线：从 logo 中心向四周辐射的赤陶微光束，缓慢旋转无限循环。
-       用户明确要求的动效（打破本区「无动效」旧例）；保持极淡：
-       光束峰值 alpha 0.05，blur 层内再柔化一遍，绝不与正文争读。
-       仅 opacity/transform 动画（合成器路径），40s 一圈几乎不可察觉但「活着」。 */
+    .hero-backdrop svg {
+      width: min(74vmin, 600px); height: auto;
+      color: var(--color-accent);
+      opacity: 0.10;
+      filter: blur(10px);   /* 原 25px：形体糊成一片；10px 保留有机环轮廓与孔洞 */
+    }
+    /* 体积光线：从 logo 中心向四周辐射的赤陶光束，缓慢旋转无限循环。
+       峰值 alpha 0.14、光束带 5deg（原 0.05 / 4deg 弱到看不见），
+       radial mask 扩到 74% 让光线铺得更开；6px 模糊只做柔边不糊光束。 */
     .hero-backdrop::before {
       content: ''; position: absolute;
-      width: 120vmax; height: 120vmax;
+      width: 130vmax; height: 130vmax;
       left: 50%; top: 50%;
       translate: -50% -50%;
       background: repeating-conic-gradient(
         from 0deg,
         rgba(215, 118, 86, 0) 0deg,
-        rgba(215, 118, 86, 0.05) 4deg,
-        rgba(215, 118, 86, 0) 12deg
+        rgba(215, 118, 86, 0.14) 3deg,
+        rgba(215, 118, 86, 0) 14deg
       );
-      -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.4) 30%, transparent 62%);
-      mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.4) 30%, transparent 62%);
-      animation: hero-rays 40s linear infinite;
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.55) 34%, transparent 74%);
+      mask-image: radial-gradient(circle at 50% 50%, #000 0%, rgba(0,0,0,0.55) 34%, transparent 74%);
+      filter: blur(6px);
+      animation: hero-rays 32s linear infinite;
     }
     @keyframes hero-rays {
       from { transform: rotate(0deg); }
@@ -504,16 +512,12 @@ const faq = install.faq || [];
     @media (prefers-reduced-motion: reduce) {
       .hero-backdrop::before { animation: none; }
     }
-    .hero-backdrop svg {
-      width: min(72vmin, 560px); height: auto;
-      color: var(--color-bg-warm);
-      opacity: 0.9;
-    }
+    /* 上下渐变压淡：护住文字区（现在只压顶部/底部，中段留给 logo 与光线） */
     .hero-backdrop::after {
       content: ''; position: absolute; inset: 0;
       background: linear-gradient(180deg,
-        var(--color-bg) 0%, rgba(250, 249, 245, 0) 30%,
-        rgba(250, 249, 245, 0) 70%, var(--color-bg) 100%);
+        var(--color-bg) 0%, rgba(250, 249, 245, 0) 22%,
+        rgba(250, 249, 245, 0) 78%, var(--color-bg) 100%);
     }
     .hero__grid {
       display: grid;
