@@ -82,8 +82,14 @@ const faq = install.faq || [];
 ---
 
 <BaseLayout title={pageTitle}>
-  <!-- ===== Hero（左右两栏：左=标题+副标题+次级链接；右=安装命令卡，唯一主 CTA） ===== -->
+  <!-- ===== Hero（左右两栏：左=标题+副标题+次级链接；右=安装命令卡，唯一主 CTA。
+       背景：巨大有机环 logo 居中 + blur —— C 方案的「纸肌理」手法，bg-warm 色不引入新色相） ===== -->
   <header class="hero" aria-labelledby="hero-title">
+    <div class="hero-backdrop" aria-hidden="true">
+      <svg viewBox="0 0 100 83.7963" aria-hidden="true">
+        <path fill="currentColor" fill-rule="evenodd" d="M 49.4949,12.2222 C 34.4265,12.2222 33.9309,0.0 25.5529,0.0 C -3.0669,0.0 0.104,11.5407 0.104,41.3544 C 0.104,70.5679 -0.8861,74.2725 20.6975,83.2112 C 32.2645,88.0015 27.2247,61.9479 49.8298,61.9479 C 71.9301,61.9479 67.6945,87.8998 78.962,83.0437 C 100.8451,73.6126 100.8205,70.6946 99.5555,40.5173 C 98.3835,12.557 102.3083,0.0 74.4415,0.0 C 66.6945,0.0 67.0189,12.2222 49.4949,12.2222 Z M 69.0118,40.6010 A 19.0983,19.0983 0 1 0 30.8152,40.6010 A 19.0983,19.0983 0 1 0 69.0118,40.6010 Z" />
+      </svg>
+    </div>
     <div class="hero__grid">
       <div class="hero-content">
         <h1 id="hero-title" class="hero-title">推开<em>这扇门</em></h1>
@@ -464,6 +470,26 @@ const faq = install.faq || [];
 
   /* ===== Hero（左右两栏：左=标题+副标题+次级文字链；右=安装命令卡，唯一主 CTA）===== */
     .hero { padding: var(--section-pad) 0 var(--space-10); position: relative; overflow: hidden; }
+    /* 背景层：巨大有机环 logo 居中 + blur（C 方案「纸肌理」手法）。
+       bg-warm #efe8db 对纸底仅 1.16:1 —— 是肌理不是信息；blur 柔化形体；
+       上下渐变再压淡，护住左右两栏文字区。pointer-events:none + aria-hidden。 */
+    .hero-backdrop {
+      position: absolute; inset: 0; z-index: 0;
+      display: grid; place-items: center;
+      pointer-events: none;
+      filter: blur(28px);
+    }
+    .hero-backdrop svg {
+      width: min(72vmin, 560px); height: auto;
+      color: var(--color-bg-warm);
+      opacity: 0.9;
+    }
+    .hero-backdrop::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg,
+        var(--color-bg) 0%, rgba(250, 249, 245, 0) 30%,
+        rgba(250, 249, 245, 0) 70%, var(--color-bg) 100%);
+    }
     .hero__grid {
       display: grid;
       /* 左栏文字区吃余量，右栏命令卡按内容收缩（fit-content 由子元素决定） */
@@ -474,7 +500,9 @@ const faq = install.faq || [];
     }
     .hero-content { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; text-align: left; min-width: 0; }
     .hero-title {
-      font-size: var(--font-size-display);
+      /* 层级微调：标题从 display 令牌 56px 提到 clamp 68px（A 方案的字号落差手法），
+         与副标题（17px）拉开 4 倍，L1 定海神针 */
+      font-size: clamp(52px, 5.5vw, 68px);
       font-weight: var(--font-weight-semi);
       color: var(--color-fg);
       text-wrap: balance;
