@@ -35,7 +35,7 @@ const showcaseAgents = [
     icon: 'lucide:pen-tool',
     desc: '把大任务拆成小任务，标好先后顺序，给每个小任务写"做成什么样算完"。',
     skills: ['拆任务', '标先后顺序', '写验收标准', '记经验'],
-    constraint: '只拆任务不写代码，方案要经持审核',
+    constraint: '拆任务不写代码，方案持复核',
   },
   {
     id: 'ji',
@@ -44,7 +44,7 @@ const showcaseAgents = [
     icon: 'lucide:code-2',
     desc: '写代码、管 GitHub、写文章和文档。代码写完先跑检查，过了才交。',
     skills: ['写代码', '管 GitHub', '跑检查', '写文章文档', '整理文件'],
-    constraint: '检查全过才交，不编"我做完了"',
+    constraint: '检查全过才交，不编"做完了"',
   },
   {
     id: 'chi',
@@ -62,7 +62,7 @@ const showcaseAgents = [
     icon: 'lucide:palette',
     desc: '做设计决策——配色、字体、间距、布局。也生成配图和插画。',
     skills: ['做设计', '生配图', '配色', '查无障碍', '做 Logo'],
-    constraint: '生图只有艺能直接出，别人要经过艺',
+    constraint: '生图只有艺能出，别人要经艺',
   },
   {
     id: 'xun',
@@ -141,16 +141,21 @@ const faq = install.faq || [];
     </div>
   </header>
 
-  <!-- ===== Agent 滚动展示 ===== -->
+  <!-- ===== Agent 扇形扑克牌 ===== -->
   <section class="showcase" aria-labelledby="showcase-title">
     <h2 id="showcase-title" class="sr-only">Agent 团队</h2>
     <div class="showcase__header">
       <p class="showcase__label">THE TEAM</p>
       <h2 class="showcase__heading">六个角色，一个核心</h2>
     </div>
-    <div class="showcase__track" tabindex="0" role="region" aria-label="角色卡片，可用左右方向键或拖动浏览">
-      {showcaseAgents.map((a) => (
-        <article class="showcase__card" data-agent={a.id} style={`--card-accent: var(--role-${a.id})`}>
+
+    <!-- 扇形手牌：六张角色卡像拿在手里一样散开；点击 / 拖拽把某张抽出来 -->
+    <div class="showcase__hand" id="showcase-hand" role="listbox" tabindex="0"
+         aria-label="六个角色卡片，点击或拖动抽出一张，也可用左右方向键选择">
+      {showcaseAgents.map((a, i) => (
+        <article class="showcase__card" role="option" aria-selected={i === 2 ? 'true' : 'false'}
+                 data-agent={a.id} data-index={i}
+                 style={`--card-accent: var(--role-${a.id}); --i: ${i - 2.5}; --ai: ${Math.abs(i - 2.5)}; --idx: ${i};`}>
           <div class="showcase__card-icon">
             <Icon name={a.icon} width="32" height="32" />
           </div>
@@ -171,67 +176,69 @@ const faq = install.faq || [];
           </p>
         </article>
       ))}
-      <!-- 团队特性卡片 -->
-      <article class="showcase__card showcase__card--team" style={`--card-accent: var(--color-accent)`}>
-        <div class="showcase__card-icon">
-          <Icon name="lucide:users" width="32" height="32" />
-        </div>
-        <p class="showcase__card-role showcase__card-role--team">团队特性</p>
-        <div class="showcase__team-traits">
-          <div class="showcase__trait">
-            <Icon name="lucide:git-branch" width="16" height="16" />
-            <div>
-              <strong>同时开工</strong>
-              <span>没有依赖关系的任务同时做，有先后关系的就得排队等着</span>
-            </div>
-          </div>
-          <div class="showcase__trait">
-            <Icon name="lucide:shield-check" width="16" height="16" />
-            <div>
-              <strong>两层检查</strong>
-              <span>先跑脚本查文件，再由持用全新的视角再审一遍</span>
-            </div>
-          </div>
-          <div class="showcase__trait">
-            <Icon name="lucide:activity" width="16" height="16" />
-            <div>
-              <strong>全程留痕</strong>
-              <span>每一步都记下来，事后可以回看整个过程和细节</span>
-            </div>
-          </div>
-          <div class="showcase__trait">
-            <Icon name="lucide:brain" width="16" height="16" />
-            <div>
-              <strong>越用越聪明</strong>
-              <span>每次做完自动总结经验——踩过的坑下次绕开</span>
-            </div>
-          </div>
-          <div class="showcase__trait">
-            <Icon name="lucide:lock" width="16" height="16" />
-            <div>
-              <strong>防死循环</strong>
-              <span>最多重试 5 次，<br />不行就老实说卡住了</span>
-            </div>
-          </div>
-          <div class="showcase__trait">
-            <Icon name="lucide:file-code" width="16" height="16" />
-            <div>
-              <strong>轻量运行</strong>
-              <span>所有脚本零依赖，<br />装好 Node 就能跑</span>
-            </div>
-          </div>
-        </div>
-      </article>
     </div>
+
     <div class="showcase__nav">
-      <button class="showcase__arrow" id="showcase-prev" aria-label="上一个">
+      <button class="showcase__arrow" id="showcase-prev" aria-label="上一张">
         <Icon name="lucide:chevron-left" width="20" height="20" />
       </button>
       <div class="showcase__dots" id="showcase-dots"></div>
-      <button class="showcase__arrow" id="showcase-next" aria-label="下一个">
+      <button class="showcase__arrow" id="showcase-next" aria-label="下一张">
         <Icon name="lucide:chevron-right" width="20" height="20" />
       </button>
     </div>
+
+    <!-- 团队特性卡片：六条特性横排三列，收在扇形下方 -->
+    <article class="showcase__card showcase__card--team" style={`--card-accent: var(--color-accent)`}>
+      <div class="showcase__card-icon">
+        <Icon name="lucide:users" width="32" height="32" />
+      </div>
+      <p class="showcase__card-role showcase__card-role--team">团队特性</p>
+      <div class="showcase__team-traits">
+        <div class="showcase__trait">
+          <Icon name="lucide:git-branch" width="16" height="16" />
+          <div>
+            <strong>同时开工</strong>
+            <span>没有依赖关系的任务同时做，有先后关系的就得排队等着</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:shield-check" width="16" height="16" />
+          <div>
+            <strong>两层检查</strong>
+            <span>先跑脚本查文件，再由持用全新视角复核</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:activity" width="16" height="16" />
+          <div>
+            <strong>全程留痕</strong>
+            <span>每一步都记下来，事后可回看完整过程</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:brain" width="16" height="16" />
+          <div>
+            <strong>越用越聪明</strong>
+            <span>经验自动总结，踩过的坑下次绕开</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:lock" width="16" height="16" />
+          <div>
+            <strong>防死循环</strong>
+            <span>最多重试 5 次，<br />不行就老实说卡住了</span>
+          </div>
+        </div>
+        <div class="showcase__trait">
+          <Icon name="lucide:file-code" width="16" height="16" />
+          <div>
+            <strong>轻量运行</strong>
+            <span>所有脚本零依赖，<br />装好 Node 就能跑</span>
+          </div>
+        </div>
+      </div>
+    </article>
   </section>
   <section class="topo" aria-labelledby="topo-title">
     <div class="topo__header">
@@ -716,40 +723,124 @@ const faq = install.faq || [];
     letter-spacing: var(--letter-spacing-heading);
 }
 
-  .showcase__track {
+  /* ===== Agent 扇形扑克牌 =====
+     六张角色卡像被握在手里：所有牌绕**同一个轴心**（牌下方远处）旋转 → 自然成扇，
+     错开距离由轴距 × sin(角度) 决定。悬停抬升、选中则整张抽到眼前。 */
+  .showcase__hand {
     position: relative;
-    display: flex; gap: var(--space-5);
-    /* 等高卡片：六张角色卡拉到同一高度（= 最高卡），constraint 行（卡内最后一项）推到底部收尾。
-       高度差只有 19px（382 vs 363），等高后矮卡底部多出的空间由卡内 flex 吸收，不出现大块空洞。 */
-    align-items: stretch;
-    padding: var(--space-4) var(--space-6);
-    overflow-x: auto; scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    /* 扑克牌式拖动：手型提示可拖 + 拖动中禁用文字选择 */
+    height: 520px;
     cursor: grab;
     user-select: none;
+    touch-action: pan-y;
   }
-  /* 拖动中：手感 —— grab→grabbing，且临时关掉 scroll-snap（否则每帧被吸附拽回，拖不动） */
-  .showcase__track.is-dragging { cursor: grabbing; scroll-snap-type: none; }
-  .showcase__track.is-dragging .showcase__card { pointer-events: none; }
-  .showcase__track::-webkit-scrollbar { display: none; }
+  .showcase__hand.is-dragging { cursor: grabbing; }
+  /* 单张牌：绝对定位在中轴，统一轴心旋转成扇 */
+  .showcase__hand .showcase__card {
+    position: absolute;
+    left: 50%;
+    bottom: 88px;
+    width: 240px;
+    flex: none;
+    /* 扇形几何：轴心在牌下方 420px（到牌心约 620px）。错开量 = sin(角度)×620。
+       相邻牌错开 16° ≈ 171px —— 这个量是**身份区可读性**决定的：扇形里每张牌只露出左边一条，
+       必须放得下 图标+汉字+代号+职责（约 165px），否则右侧的牌连名字都读不到
+       （实测 12.5° 时「艺/寻/持」三张的名字与职责全被邻牌盖住）。
+       上限则由容器决定：旋转后的外接矩形要留在 1232px 内 ——
+       最外边缘 ≈ 轴距×sin(2.5θ) + 卡旋转半宽，18° 时实测超出 46px 被裁，16° 留出余量。 */
+    transform-origin: 50% calc(100% + 420px);
+    transform: translateX(-50%) rotate(calc(var(--i) * 16deg));
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s ease, border-color 0.35s ease;
+    z-index: calc(10 - var(--ai));
+  }
+  /* 悬停：沿扇形方向再抬一点（视觉上是「往上抽」） */
+  .showcase__hand .showcase__card:hover {
+    transform: translateX(-50%) rotate(calc(var(--i) * 16deg)) translateY(-30px);
+    z-index: 30;
+  }
+  /* 选中（抽出）：沿**自身扇形径向**滑出（rotate 在 translateY 之前 → 走扇面法线方向），
+     而不是横躺上移 —— 横躺会让牌的下半身压住右邻居的头部（实测「持」的三件套全被盖住）。
+     不放大：扇形相邻牌本就紧邻，放大必然互相侵吞。选中感由阴影加深 + 高光加速表达。 */
+  .showcase__hand .showcase__card.is-picked {
+    transform: translateX(-50%) rotate(calc(var(--i) * 16deg)) translateY(-56px);
+    z-index: 40;
+  }
+  /* 拖动中的牌跟随指针（--dx/--dy 由 JS 写入） */
+  .showcase__hand .showcase__card.is-dragging {
+    transition: none;
+    transform: translateX(calc(-50% + var(--dx, 0px))) translateY(var(--dy, 0px)) rotate(0deg) scale(1.05);
+    z-index: 50;
+    cursor: grabbing;
+  }
 
   .showcase__card {
-    flex: 0 0 320px; scroll-snap-align: start;
-    background: var(--color-surface); border: 1px solid var(--color-line-soft);
+    background: var(--color-surface);
+    /* 牌厚：多层堆叠阴影（近距实、远距虚）+ 右侧一道实体边 —— 看起来是一张有厚度的卡 */
+    border: 1px solid var(--color-line-soft);
+    border-right-color: var(--color-line);
+    border-bottom-color: var(--color-line);
     border-radius: var(--radius-lg); padding: var(--space-6);
     display: flex; flex-direction: column; gap: var(--space-3);
-    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
     position: relative; overflow: hidden;
+    box-shadow:
+      0 1px 0 0 #fff inset,
+      0 2px 4px rgba(43, 42, 39, 0.04),
+      0 10px 22px -10px rgba(43, 42, 39, 0.14),
+      0 22px 40px -26px rgba(43, 42, 39, 0.18);
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s ease, border-color 0.35s ease;
   }
+  /* 流动高光边缘：一道细光沿卡边缓慢环游（conic-gradient 描边 + 旋转），
+     边缘因此像有金属反光——卡面有厚度的关键；常态就可见（淡），悬停/选中变亮变快。 */
   .showcase__card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--card-accent); opacity: 0; transition: opacity 0.3s;
+    content: ''; position: absolute; inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--glow, 0deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--card-accent) 40%, transparent) 34deg,
+      color-mix(in srgb, #fff 85%, transparent) 58deg,
+      color-mix(in srgb, var(--card-accent) 45%, transparent) 82deg,
+      transparent 126deg,
+      transparent 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: 0.5;                       /* 常态可见：边缘始终有一道流动的薄光 */
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    animation: card-sheen 14s linear infinite;
   }
-  .showcase__card:hover { border-color: var(--card-accent); box-shadow: 0 8px 32px rgba(0,0,0,0.06); transform: translateY(-2px); }
-  .showcase__card:hover::before { opacity: 1; }
-  .showcase__card.is-visible { opacity: 1; transform: translateY(0); }
-  .showcase__card:not(.is-visible) { opacity: 0; transform: translateY(24px); }
+  /* 高光旋转：用 @property 让角度可动画（Chromium/Safari 支持；不支持则静态停在 0deg，仍然好看） */
+  @property --glow {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+  }
+  @keyframes card-sheen { to { --glow: 360deg; } }
+  .showcase__hand .showcase__card:hover::before,
+  .showcase__hand .showcase__card.is-picked::before { opacity: 1; }
+  .showcase__hand .showcase__card:hover::before { animation-duration: 3.4s; }
+  .showcase__hand .showcase__card.is-picked::before { animation-duration: 2.2s; }
+  /* 悬停 / 选中：牌被抬起，阴影加深（配合上面的 transform） */
+  .showcase__hand .showcase__card:hover {
+    box-shadow:
+      0 1px 0 0 #fff inset,
+      0 4px 8px rgba(43, 42, 39, 0.06),
+      0 18px 34px -12px rgba(43, 42, 39, 0.20),
+      0 32px 56px -28px rgba(43, 42, 39, 0.24);
+  }
+  .showcase__hand .showcase__card.is-picked {
+    box-shadow:
+      0 1px 0 0 #fff inset,
+      0 6px 12px rgba(43, 42, 39, 0.07),
+      0 26px 44px -14px rgba(43, 42, 39, 0.22),
+      0 44px 72px -32px rgba(43, 42, 39, 0.26);
+    border-color: color-mix(in srgb, var(--card-accent) 45%, var(--color-line));
+  }
 
   .showcase__card-icon { color: var(--card-accent); }
   .showcase__card-head { display: flex; align-items: baseline; gap: var(--space-2); }
@@ -779,12 +870,13 @@ const faq = install.faq || [];
     color: var(--color-fg-tertiary);
 }
 
-  /* Team traits card */
-  /* 团队卡：500px 横卡压轴。原来 360px 竖排 6 条 trait 撑到 552px 高（角色卡只有 363–382），
-     把 track 撑高后，可见角色卡（382px）与下方导航之间留出 205px 视觉空白。
-     改 2 列网格后每条 trait 宽 ~190px，卡高回到 ~340 与角色卡齐平。 */
-  .showcase__card--team { flex: 0 0 500px; background: var(--color-bg-warm); }
-  .showcase__team-traits { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-4); align-content: start; }
+  /* 团队特性卡：横排三列收在扇形下方（告别「塞进牌堆」）*/
+  .showcase__card--team {
+    background: var(--color-bg-warm);
+    max-width: 900px; margin: var(--space-8) auto 0;
+    box-shadow: none; border-color: var(--color-line);
+  }
+  .showcase__team-traits { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4) var(--space-6); align-content: start; }
   .showcase__trait { display: flex; gap: var(--space-3); align-items: flex-start; }
   .showcase__trait svg { color: var(--color-accent); flex-shrink: 0; margin-top: 2px; }
   .showcase__trait strong { display: block; font-size: var(--font-size-caption); font-weight: var(--font-weight-semi); color: var(--color-fg); margin-bottom: 1px; }
@@ -1036,9 +1128,21 @@ const faq = install.faq || [];
     .hero-install__art { display: none; }
     :root { --section-pad: var(--space-8); }   /* 窄屏板块间距 64px（仍统一） */
     .topo__header { flex-direction: column; gap: var(--space-2); }
-    .showcase__card { flex: 0 0 280px; }
-    /* 窄屏团队卡回到单列竖排（2 列在 280px 里每列只有 ~100px，trait 文字会碎成 4 行） */
-    .showcase__card--team { flex: 0 0 300px; }
+    /* 窄屏：扇形改成可横滑的直排（手指左右拨牌），不再叠成扇 */
+    .showcase__hand {
+      height: auto; display: flex; justify-content: flex-start;
+      gap: var(--space-4); padding: 0 var(--space-4) var(--space-6);
+      overflow-x: auto; scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .showcase__hand::-webkit-scrollbar { display: none; }
+    .showcase__hand .showcase__card {
+      position: static; flex: 0 0 274px; scroll-snap-align: center;
+      transform: none; transition: box-shadow 0.3s ease;
+    }
+    .showcase__hand .showcase__card:hover,
+    .showcase__hand .showcase__card.is-picked { transform: translateY(-6px); }
+    .showcase__card--team { max-width: none; }
     .showcase__team-traits { grid-template-columns: 1fr; }
   }
   @media (max-width: 480px) {
@@ -1108,137 +1212,91 @@ const faq = install.faq || [];
     });
   });
 
-  /* Scroll-driven showcase cards */
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-      }
-    });
-  }, { threshold: 0.15, rootMargin: '0px -40px 0px' });
-
-  document.querySelectorAll('.showcase__card').forEach(card => observer.observe(card));
-
-  /* 扑克牌式拖动：鼠标按住横向拖，像推开一把牌
-     —— 只接管鼠标指针（pointerType === 'mouse'）；触屏/触控板走原生惯性滚动，不打架。
-     —— 5px 死区：小于它算点击（卡内文字可选中），超过才进入拖拽。
-     —— 拖拽中临时关闭 scroll-snap（否则每帧被吸附拽回），松手恢复 + 惯性衰减。 */
+  /* 扇形扑克牌：点击 / 拖拽抽出一张
+     —— 点击一张牌 → 抽出（is-picked），再点一次收回或换一张
+     —— 按住拖动 → 牌随手走；松手后若拖出足够距离就抽出，否则弹回扇面
+     —— 左右方向键切换选中的牌（列表用 role=listbox/option，可被屏幕阅读器朗读） */
   (() => {
-    const track = document.querySelector<HTMLElement>('.showcase__track');
-    if (!track) return;
-    let down = false, moved = false, startX = 0, startScroll = 0, lastX = 0, lastT = 0, vx = 0, raf = 0;
+    const hand = document.querySelector<HTMLElement>('.showcase__hand');
+    if (!hand) return;
+    const cards = [...hand.querySelectorAll<HTMLElement>('.showcase__card')];
+    if (!cards.length) return;
+    let picked = 2;                                    // 默认抽出正中间那张
+    let drag: { el: HTMLElement; id: number; sx: number; sy: number; moved: boolean } | null = null;
 
-    const stopInertia = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
-
-    track.addEventListener('pointerdown', (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse' || e.button !== 0) return;
-      down = true; moved = false;
-      startX = e.clientX; startScroll = track.scrollLeft;
-      lastX = e.clientX; lastT = performance.now(); vx = 0;
-      stopInertia();
-    });
-
-    track.addEventListener('pointermove', (e: PointerEvent) => {
-      if (!down) return;
-      const dx = e.clientX - startX;
-      if (!moved && Math.abs(dx) < 5) return;            // 死区：未超阈值不算拖拽
-      if (!moved) {
-        moved = true;
-        track.classList.add('is-dragging');
-        track.setPointerCapture(e.pointerId);
-      }
-      const now = performance.now();
-      const dt = Math.max(1, now - lastT);
-      vx = (e.clientX - lastX) / dt;                     // px/ms，供惯性用
-      lastX = e.clientX; lastT = now;
-      track.scrollLeft = startScroll - dx;
-      e.preventDefault();
-    });
-
-    const end = (e: PointerEvent) => {
-      if (!down) return;
-      down = false;
-      if (!moved) return;                                 // 没拖动 → 交给点击逻辑
-      track.classList.remove('is-dragging');
-      if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
-      // 惯性滑行：速度衰减到阈值以下停止（像牌摊开后的余滑）
-      let v = vx * 14;
-      const glide = () => {
-        v *= 0.94;
-        if (Math.abs(v) < 0.4) { raf = 0; return; }
-        track.scrollLeft -= v;
-        raf = requestAnimationFrame(glide);
-      };
-      if (Math.abs(v) > 1) raf = requestAnimationFrame(glide);
+    const setPicked = (idx: number) => {
+      picked = ((idx % cards.length) + cards.length) % cards.length;
+      cards.forEach((c, i) => {
+        const on = i === picked;
+        c.classList.toggle('is-picked', on);
+        c.setAttribute('aria-selected', String(on));
+      });
+      dots.forEach((d, i) => d.classList.toggle('showcase__dot--active', i === picked));
     };
 
-    track.addEventListener('pointerup', end);
-    track.addEventListener('pointercancel', end);
-    track.addEventListener('pointerleave', (e: PointerEvent) => { if (down && !moved) down = false; });
-    // 键盘可达：方向键滚动（WCAG 2.1.1）
-    track.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') { track.scrollBy({ left: 160, behavior: 'smooth' }); e.preventDefault(); }
-      if (e.key === 'ArrowLeft') { track.scrollBy({ left: -160, behavior: 'smooth' }); e.preventDefault(); }
-    });
-  })();
-
-  /* Showcase arrow navigation */
-  (() => {
-    const track = document.querySelector<HTMLElement>('.showcase__track');
-    const cards = document.querySelectorAll('.showcase__card');
-    const prevBtn = document.getElementById('showcase-prev');
-    const nextBtn = document.getElementById('showcase-next');
-    const dotsContainer = document.getElementById('showcase-dots');
-    if (!track || !cards.length || !prevBtn || !nextBtn || !dotsContainer) return;
-
-    const cardCount = cards.length;
-    let current = 0;
-    let animating = false;
-
-    // Build dots
-    for (let i = 0; i < cardCount; i++) {
-      const dot = document.createElement('button');
-      dot.className = 'showcase__dot' + (i === 0 ? ' showcase__dot--active' : '');
-      dot.setAttribute('aria-label', '卡片 ' + (i + 1));
-      dot.addEventListener('click', () => scrollToCard(i));
-      dotsContainer.appendChild(dot);
-    }
-    const dots = dotsContainer.querySelectorAll('.showcase__dot');
-
-    function centerOf(idx: number): number {
-      const card = cards[idx] as HTMLElement;
-      return card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
-    }
-
-    function scrollToCard(idx: number) {
-      // 环绕：首卡向左 → 末卡；末卡向右 → 首卡
-      const next = ((idx % cardCount) + cardCount) % cardCount;
-      current = next;
-      animating = true;
-      track.scrollTo({ left: centerOf(next), behavior: 'smooth' });
-      updateDots();
-      setTimeout(() => { animating = false; }, 500);
-    }
-
-    function updateDots() {
-      dots.forEach((d, i) => d.classList.toggle('showcase__dot--active', i === current));
-    }
-
-    prevBtn.addEventListener('click', () => scrollToCard(current - 1));
-    nextBtn.addEventListener('click', () => scrollToCard(current + 1));
-
-    // 手动拖动/触摸滚动时同步指示点
-    track.addEventListener('scroll', () => {
-      if (animating) return;
-      const trackRect = track.getBoundingClientRect();
-      const center = trackRect.left + trackRect.width / 2;
-      let closest = 0, minDist = Infinity;
-      cards.forEach((card, i) => {
-        const r = (card as HTMLElement).getBoundingClientRect();
-        const dist = Math.abs(r.left + r.width / 2 - center);
-        if (dist < minDist) { minDist = dist; closest = i; }
+    // 分页点：与牌一一对应
+    const dotsHost = document.getElementById('showcase-dots');
+    const dots: HTMLElement[] = [];
+    if (dotsHost) {
+      dotsHost.innerHTML = '';
+      cards.forEach((c, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'showcase__dot';
+        dot.setAttribute('aria-label', `第 ${i + 1} 张：${c.querySelector('.showcase__card-cn')?.textContent ?? ''}`);
+        dot.addEventListener('click', () => setPicked(i));
+        dotsHost.appendChild(dot);
+        dots.push(dot);
       });
-      if (closest !== current) { current = closest; updateDots(); }
-    }, { passive: true });
+    }
+
+    cards.forEach((card, i) => {
+      // 点击抽出（拖拽结束后不再触发）
+      card.addEventListener('click', () => { if (!drag) setPicked(i); });
+
+      card.addEventListener('pointerdown', (e: PointerEvent) => {
+        if (e.button !== 0) return;
+        drag = { el: card, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false };
+        card.setPointerCapture(e.pointerId);
+      });
+
+      card.addEventListener('pointermove', (e: PointerEvent) => {
+        if (!drag || drag.el !== card || drag.id !== e.pointerId) return;
+        const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+        if (!drag.moved && Math.hypot(dx, dy) < 8) return;   // 8px 死区：轻点不算拖
+        drag.moved = true;
+        hand.classList.add('is-dragging');
+        card.classList.add('is-dragging');
+        card.style.setProperty('--dx', dx + 'px');
+        card.style.setProperty('--dy', dy + 'px');
+      });
+
+      const finish = (e: PointerEvent) => {
+        if (!drag || drag.el !== card || drag.id !== e.pointerId) return;
+        const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+        const moved = drag.moved;
+        drag = null;
+        hand.classList.remove('is-dragging');
+        card.classList.remove('is-dragging');
+        card.style.removeProperty('--dx');
+        card.style.removeProperty('--dy');
+        // 拖出 60px 以上 → 抽出；否则弹回扇面
+        if (moved && Math.hypot(dx, dy) > 60) setPicked(i);
+      };
+      card.addEventListener('pointerup', finish);
+      card.addEventListener('pointercancel', finish);
+    });
+
+    // 键盘：左右切换
+    hand.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') { setPicked(picked + 1); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { setPicked(picked - 1); e.preventDefault(); }
+      if (e.key === 'Enter' || e.key === ' ') { setPicked(picked); e.preventDefault(); }
+    });
+
+    // 箭头按钮：与点/键盘同一套语义
+    document.getElementById('showcase-prev')?.addEventListener('click', () => setPicked(picked - 1));
+    document.getElementById('showcase-next')?.addEventListener('click', () => setPicked(picked + 1));
+
+    setPicked(picked);
   })();
 </script>

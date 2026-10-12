@@ -15,8 +15,10 @@ const infobox = [
 ];
 
 const toc = [
+  { id: 'timeline', label: '一条任务的完整时间线' },
   { id: 'protocol', label: '10 步流程' },
   { id: 'checks', label: '自动检查' },
+  { id: 'trouble', label: '出问题了怎么办' },
   { id: 'learn', label: '越用越聪明' },
 ];
 
@@ -36,6 +38,37 @@ const seealso = [
     toc={toc}
     seealso={seealso}
   >
+    <section id="timeline" class="doc-section">
+      <h2>一条任务的完整时间线</h2>
+      <p>抽象的 10 步不好想象，先看一个具体例子。假设你输入这条任务：</p>
+      <div class="code-block">
+        <span class="code-block__lang">text</span>
+        <pre><code>帮我查一下本周 AI 圈的大新闻，写成一篇 800 字的中文简报</code></pre>
+      </div>
+      <p>接下来发生的事，按顺序是：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>到哪一步</th><th>谁在动</th><th>发生了什么</th></tr></thead>
+          <tbody>
+            <tr><td>收到任务</td><td><strong>你</strong></td><td>在 OpenCode 里输入任务，回车。这就是你要做的全部操作。</td></tr>
+            <tr><td>第 1 步</td><td><strong>门</strong></td><td>看任务说清楚没有。这个例子说清了，直接往下走；没说清会先问你一句再走。</td></tr>
+            <tr><td>第 2 步</td><td><strong>门</strong></td><td>把任务分成两半：查新闻归寻，写简报归记。</td></tr>
+            <tr><td>第 3 步</td><td><strong>思</strong></td><td>把步骤拆开排好顺序：先查、后写、再检查。</td></tr>
+            <tr><td>第 4 步</td><td><strong>寻 + 记</strong></td><td>两边同时开工：寻在查本周新闻，记在搭文章框架。互不等待。</td></tr>
+            <tr><td>第 5 步</td><td><strong>门</strong></td><td>两边都交活了，收齐。</td></tr>
+            <tr><td>第 6 步</td><td><strong>思</strong></td><td>看一遍初稿好不好，把问题指出来——只评不改。</td></tr>
+            <tr><td>第 7 步</td><td><strong>脚本 + 持</strong></td><td>脚本先查 5 项（文件在不在、有没有漏密钥等），过了之后持再用全新视角复核一遍内容。</td></tr>
+            <tr><td>第 8 步</td><td><strong>门</strong></td><td>把报告交给你：结论、关键信息、来源、待定问题。</td></tr>
+            <tr><td>第 9 步</td><td><strong>门</strong></td><td>哪一步没检查过，就回到那一步重做，最多 5 次。</td></tr>
+            <tr><td>第 10 步</td><td><strong>门</strong></td><td>把这次的经验存起来，下次类似任务做得更快。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="wiki-note">
+        <strong>你实际看到的</strong>：终端里会看到各角色轮流输出进度，中间不需要你操作——除非门问你问题。最后收到一份报告。整个过程对你是透明的：你只管提需求，检查和重试都在背后自动完成。
+      </div>
+      <SrcRef files={['.opencode/command/ultrawork.md']} />
+    </section>
     <section id="protocol" class="doc-section">
       <h2>10 步流程</h2>
       <p>每次你发一条 /ultrawork 指令，Men 会自动走完下面 10 步。你不需要记住这些步骤——它们全部自动执行。这张表供你了解"背后发生了什么"时查阅。</p>
@@ -79,6 +112,27 @@ const seealso = [
       </div>
       <SrcRef files={['scripts/verify.mjs']} />
     </section>
+
+    <section id="trouble" class="doc-section">
+      <h2>出问题了怎么办</h2>
+      <p>大部分情况你什么都不用做——重试是自动的。下面这张表告诉你每种情况会发生什么：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>情况</th><th>系统会怎么做</th><th>你需要做什么</th></tr></thead>
+          <tbody>
+            <tr><td>某一步检查没通过</td><td>自动回到那一步重做，最多重试 5 次</td><td>什么都不用做，等它自己修</td></tr>
+            <tr><td>重试 5 次还不行</td><td>停下来，如实告诉你卡在哪一步、什么原因</td><td>看清卡住的原因，补充信息或缩小任务范围</td></tr>
+            <tr><td>审核连续 3 次不通过</td><td>停止整个任务并汇报，不硬编一个结果交差</td><td>决定是改需求还是拆成更小的任务重跑</td></tr>
+            <tr><td>你发现结果内容不对</td><td>门会重新判断、重新派活</td><td>说清楚哪里不对，越具体越好</td></tr>
+            <tr><td>你想中途停掉任务</td><td>进程收到中断信号后停止</td><td>按 <code>Esc</code> 取消；无响应时 <code>Ctrl+C</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="wiki-note">
+        <strong>底线保证</strong>：检查不过就绝不交付。宁可停下来告诉你卡住了，也不把没做完的东西说成做完了。
+      </div>
+    </section>
+
 
     <section id="learn" class="doc-section">
       <h2>越用越聪明</h2>

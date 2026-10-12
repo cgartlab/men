@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import WikiManual from '../../components/WikiManual.astro';
+import SrcRef from '../../components/SrcRef.astro';
 import content from '../../data/content.json';
 
 const pageTitle = '角色说明 — ' + content.hero.title;
@@ -20,6 +21,7 @@ const toc = [
   { id: 'agent-chi', label: '持（chi）' },
   { id: 'agent-yi', label: '艺（yi）' },
   { id: 'agent-xun', label: '寻（xun）' },
+  { id: 'relay', label: '一次任务的接力' },
   { id: 'redlines', label: '7 条底线' },
 ];
 
@@ -43,37 +45,72 @@ const seealso = [
       <h2>门（men）</h2>
       <p><strong>团队老大，唯一和你对话的人。</strong></p>
       <p>你说一句话，门来判断该谁来做、然后分出去。所有指令先到门这里，做完再由门汇总给你。它本身不写代码、不写文章、不画图——只负责分工和检查。</p>
+
+            <p><strong>你不需要专门派它</strong>：你打的每句话本来就到门这里，它自己就动了。</p>
     </section>
 
     <section id="agent-si" class="doc-section">
       <h2>思（si）</h2>
       <p><strong>想事情的。</strong></p>
       <p>遇到复杂任务时，思会先拆解成小步骤、写出方案。比如"写一篇关于 AI 的博客"，思会先想清楚结构再交给你。它也负责评估其他角色的产出质量——但只评不改。</p>
+
+            <p><strong>你可能会这样用到它</strong>：「帮我规划一个个人博客项目，拆成能直接执行的步骤。」</p>
     </section>
 
     <section id="agent-j" class="doc-section">
       <h2>记（ji）</h2>
       <p><strong>写代码、写文章的。</strong></p>
       <p>记是干实际活的角色：写代码、写文章、修 bug、做前端页面。它做完后会先跑一遍语法检查，确认没问题才交出去。</p>
+
+            <p><strong>你可能会这样用到它</strong>：「帮我写一个个人主页」「这里有个报错，帮我修一下」。</p>
     </section>
 
     <section id="agent-chi" class="doc-section">
       <h2>持（chi）</h2>
       <p><strong>看质量的，用全新视角审核。</strong></p>
       <p>持有两个身份：一是做投资分析和财务数据；二是检查其他人的产出。检查的时候它会用一个全新的上下文——不看别人说了什么，只看到底做了什么。这样做能避免"自己查自己"的盲区。</p>
+
+            <p><strong>你可能会这样用到它</strong>：检查是自动的，不用你派（任务做完它会自己上场）。投资分析则是你直接提：「帮我看看这组财务数据」。</p>
     </section>
 
     <section id="agent-yi" class="doc-section">
       <h2>艺（yi）</h2>
       <p><strong>画图的。</strong></p>
       <p>艺负责生成配图。你给它一个想法，它会先写出详细的描述提示词，然后生成图片。也负责整体视觉风格和配色方案。</p>
+
+            <p><strong>你可能会这样用到它</strong>：「给这篇文章配一张头图」「首页想要温暖一点的配色」。</p>
     </section>
 
     <section id="agent-xun" class="doc-section">
       <h2>寻（xun）</h2>
       <p><strong>查资料的。</strong></p>
       <p>寻负责搜网页、查新闻、核实事实。它会交叉验证信息来源，确保给你的信息是准确的。比如"查一下本周 AI 领域最新发布的大模型"——就是寻的活。</p>
+
+            <p><strong>你可能会这样用到它</strong>：「查一下本周 AI 圈的大新闻，每个结论给来源链接」。</p>
     </section>
+
+    <section id="relay" class="doc-section">
+      <h2>一次任务的接力</h2>
+      <p>单个角色看过了，再看它们怎么配合。拿「写一篇带配图的博客」举例，一个任务从进到出：</p>
+      <div class="wiki-table">
+        <table>
+          <thead><tr><th>顺序</th><th>谁</th><th>做什么</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><strong>你 → 门</strong></td><td>你说：「帮我写一篇介绍 Men 的博客，配张头图」。</td></tr>
+            <tr><td>2</td><td><strong>门 → 思</strong></td><td>思拆出结构：查资料、写正文、配图三块。</td></tr>
+            <tr><td>3</td><td><strong>门 → 寻 + 记</strong></td><td>同时开工：寻查资料，记写初稿。</td></tr>
+            <tr><td>4</td><td><strong>门 → 艺</strong></td><td>正文方向定了，艺按内容生成头图。</td></tr>
+            <tr><td>5</td><td><strong>脚本 + 持</strong></td><td>脚本查文件，持用全新视角审内容。</td></tr>
+            <tr><td>6</td><td><strong>门 → 你</strong></td><td>交给你：文章文件、配图、来源清单。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="wiki-note">
+        <strong>规则很简单</strong>：只有门能派活，5 个帮手之间不能互相塞任务。谁先做完都交给门，由门汇总后统一交给你。
+      </div>
+      <SrcRef files={['docs/architecture.md']} />
+    </section>
+
 
     <section id="redlines" class="doc-section">
       <h2>7 条底线</h2>

@@ -17,6 +17,7 @@
     "verify-widow-fix": "node scripts/widow-verify.mjs",
     "check:source": "npm run check-contrast && npm run check-tokens && npm run check-text-contrast && npm run check-dynamic-el",
     "check-overlap": "node scripts/overlap-audit.mjs",
+    "check-fan": "node scripts/fan-identity-check.mjs",
     "check-spacing": "node scripts/spacing-audit.mjs",
     "check-vspace": "node scripts/visual-spacing-audit.mjs"
   },
