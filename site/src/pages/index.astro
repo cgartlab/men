@@ -156,7 +156,7 @@ const faq = install.faq || [];
           <div class="team__cell-role">
             <span class="team__cell-cn" style={a.id !== 'men' ? `color: var(--role-${a.id}-text)` : ''}>{a.cn}</span>
             <div class="team__cell-info">
-              <span class="team__cell-name">{a.id} · {a.id === 'men' ? 'Men' : a.id.charAt(0).toUpperCase() + a.id.slice(1)}</span>
+              <span class="team__cell-name">{a.id === 'men' ? 'Men' : a.id.charAt(0).toUpperCase() + a.id.slice(1)}</span>
               <span class="team__cell-en">{a.role}</span>
             </div>
           </div>
