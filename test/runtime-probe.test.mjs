@@ -8,6 +8,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert';
+import * as path from 'node:path';
 
 import {
   parseYamlLite,
@@ -18,15 +19,19 @@ import {
 } from '../scripts/runtime-probe.mjs';
 
 // ── 构造夹具 ─────────────────────────────────────────────
+// 注意：HERMES_HOME 用 path.join 构造（跨平台），不要硬编码 Windows 盘符路径
+// （C:\hermes\... 在 Linux CI 上 path.resolve 解析不同，导致测试 flaky）。
+// path.join 在 Windows 生成 C:\hermes\profiles\si，在 POSIX 生成 hermes/profiles/si，
+// 两种形态下 resolveHome 的「最后一段是 profiles → named profile」逻辑一致。
 
 /** named profile 夹具：HERMES_HOME=.../profiles/si */
 function namedProfileEnv() {
-  return { HERMES_HOME: 'C:\\hermes\\profiles\\si', HERMES_SESSION_ID: 'sid-1' };
+  return { HERMES_HOME: path.join('hermes', 'profiles', 'si'), HERMES_SESSION_ID: 'sid-1' };
 }
 
 /** default profile 夹具 */
 function defaultProfileEnv() {
-  return { HERMES_HOME: 'C:\\hermes' };
+  return { HERMES_HOME: path.join('hermes') };
 }
 
 /** profile.yaml 内容（含 Bot-Mode 标记、section、group） */
@@ -131,17 +136,18 @@ test('probe parseYamlLite: 空输入返回空对象，不抛', () => {
 
 // ── resolveHome ──────────────────────────────────────────
 test('probe resolveHome: named profile 路径', () => {
-  const r = resolveHome('C:\\hermes\\profiles\\si');
+  const r = resolveHome(path.join('hermes', 'profiles', 'si'));
   assert.strictEqual(r.profile, 'si');
   assert.strictEqual(r.isNamedProfile, true);
   assert.ok(r.root.replace(/\\/g, '/').endsWith('/hermes'));
 });
 
 test('probe resolveHome: default profile 路径', () => {
-  const r = resolveHome('C:\\hermes');
+  const r = resolveHome(path.join('hermes'));
   assert.strictEqual(r.profile, 'default');
   assert.strictEqual(r.isNamedProfile, false);
-  assert.strictEqual(r.root.replace(/\\/g, '/'), 'c:/hermes'.replace(/^c/, 'C'));
+  // root 即 home 本身（default profile 无父级 profiles 目录）
+  assert.ok(r.root.replace(/\\/g, '/').endsWith('/hermes'));
 });
 
 test('probe resolveHome: null 返回 null', () => {

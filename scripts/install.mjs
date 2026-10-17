@@ -388,11 +388,14 @@ function detectModelConfig() {
 // 允许用户自行改写的文件；注释曾只点名顶层配置 + .opencode/package.json，与真实覆盖面不符（F14）。
 const CONFLICT_BACKUP_SUFFIX = ".men.bak";
 
-// 逐字节比对两个文件（先比 size/mtime 短路，再比内容）
+// 逐字节比对两个文件（先比 size 短路，再比内容）。
+// 注意：不能拿 mtimeMs 做短路 —— fs.copyFileSync 是否保留源 mtime 是平台相关的
+// （Windows 保留、Linux 不保留），会导致「内容相同却误判不同」→ 重装产生噪音备份
+// （CI 上 F14 回归，Issue #156 排查时定位）。
 function sameFileContent(a, b) {
   const sa = fs.statSync(a);
   const sb = fs.statSync(b);
-  if (sa.size !== sb.size || sa.mtimeMs !== sb.mtimeMs) return false;
+  if (sa.size !== sb.size) return false;
   return fs.readFileSync(a).equals(fs.readFileSync(b));
 }
 
