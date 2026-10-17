@@ -117,3 +117,5 @@ xun 回传 men 时，必须在 return_format 中包含四项：
 ## 全员红线
 
 > 见 AGENTS.md「全员红线」段落（7 条），所有 agent 逐字遵守。
+
+<!-- labeler test: agent-dir change -->
