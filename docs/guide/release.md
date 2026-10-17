@@ -54,6 +54,9 @@ node scripts/release.mjs --push --npm
 
 # 全部（= --push + --gh-release + --npm）
 npm run release:all
+
+# 发布前强制校验远端 CI 状态（Issue #156 方案 B：CI 红/未完成则拒绝发布）
+node scripts/release.mjs --push --gh-release --npm --require-ci
 ```
 
 **`--push`**：`git push origin HEAD` + `git push origin --tags`
@@ -66,6 +69,13 @@ npm run release:all
 **`--npm`**：`npm publish`（需已登录或 `NPM_TOKEN` 环境变量）
 
 **`--all`**：同时启用 `--push` + `--gh-release` + `--npm`
+
+**`--require-ci`**（Issue #156 方案 B）：发布前调用 GitHub API 查询当前 HEAD 的
+combined status 与 check-runs；任一 check 为 failure / cancelled / timed_out /
+action_required，或 combined status 非 success（含 pending）时**拒绝发布**（exit 1），
+避免「本地打 tag 绕过 CI 状态」的盲区。与 `--dry-run` 组合时可预览校验结果而不执行。
+发布 tag 推送后，`release-guard.yml`（Release Guard）会在 CI 侧对 tag commit 再跑一次
+完整门禁（verify + tests + dry-run + 版本/CHANGELOG 一致性），双保险。
 
 ### 站点发布页自动更新
 

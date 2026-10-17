@@ -146,7 +146,8 @@ men/
 │
 ├── .github/
 │   ├── workflows/
-│   │   └── ci.yml              ← CI 工作流
+│   │   ├── ci.yml              ← CI 工作流
+│   │   └── release-guard.yml   ← 发布门禁（tag push 触发，Issue #156）
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── ISSUE_TEMPLATE/         ← bug_report + feature_request（.md + .yml）
 │   ├── CODEOWNERS

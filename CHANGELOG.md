@@ -12,6 +12,8 @@
 
 ### Added
 
+- **发布门禁（Issue #156）**：新增 `.github/workflows/release-guard.yml`（Release Guard），tag push（`v*`）触发时对 tag commit 跑完整门禁（语法检查 / tests / verify.mjs / release dry-run / tag↔package.json 版本一致性 / CHANGELOG 条目检查），失败即 workflow 红，让「本地打 tag 绕过 CI 状态」的发布立即可见、可审计
+- **`release.mjs --require-ci`（Issue #156 方案 B）**：发布前调用 GitHub API 查询目标 commit 的 combined status 与 check-runs，任一 check 为 failure / cancelled / timed_out / action_required 或 combined status 非 success（含 pending）时拒绝发布（exit 1）；`--dry-run` 组合可预览校验结果。与 Release Guard 构成本地+CI 双保险
 - **`docs/brand.md`：品牌规范**——记录已定的标识造型（有机环 + 中心负形孔，单条复合路径 `fill-rule="evenodd"` 真负形）、孔径随尺寸切换的 φ 依据、配色令牌表与对比度基准。`global.css` 的 `:root` 注释此前已引用 `docs/brand`，本文件补上该引用目标
 
 ### Changed

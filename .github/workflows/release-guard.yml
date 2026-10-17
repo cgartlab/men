@@ -1,0 +1,73 @@
+name: Release Guard
+
+# 发布门禁（Issue #156）：tag 推送时验证该 commit 是否通过全部门禁。
+# 背景：本地 release.mjs 的 --all 可绕过 CI 直接打 tag 建 release（tag push 不受
+# branch protection 约束）。本 workflow 在 tag 推送时立即暴露「这个 tag 没通过门禁」，
+# 让发布质量可见、可审计。tag 推送后若本 workflow 红，人工应拒绝创建 GitHub Release。
+# 注意：本 workflow 不阻止 tag 推送（tag 已推），它是「最后一道可见防线」。
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-guard-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-before-release:
+    name: Verify release tag passes gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Node syntax check (scripts + tests)
+        run: |
+          for f in scripts/*.mjs test/*.mjs; do
+            node --check "$f" || exit 1
+          done
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify deliverables (mechanical checks)
+        run: node scripts/verify.mjs . --json
+
+      - name: Release dry-run (script itself must pass)
+        run: node scripts/release.mjs --dry-run --json
+
+      - name: Confirm tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "tag=$GITHUB_REF_NAME pkg=$PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag version ($TAG_VERSION) != package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Confirm CHANGELOG has entry for this version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if ! grep -q "## \[v${TAG_VERSION}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md 缺少 [v${TAG_VERSION}] 条目"
+            exit 1
+          fi
+
+      - name: Summary
+        run: |
+          echo "✅ Release Guard passed for tag ${{ github.ref_name }}"

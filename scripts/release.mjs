@@ -7,6 +7,7 @@
  * 用法：
  *   node scripts/release.mjs [patch|minor|major] [--dry-run] [--json]
  *                          [--push] [--gh-release] [--npm] [--all]
+ *                          [--require-ci]
  *
  * 流程（本地准备，始终执行）：
  *   1. 读 package.json version，校验 SemVer（非法退出码 2）
@@ -22,6 +23,10 @@
  *   --gh-release   用 release-notes.mjs 提取 notes → gh release create
  *   --npm          npm publish（需已登录或 NPM_TOKEN 环境变量）
  *   --all          = --push + --gh-release + --npm
+ *   --require-ci   发布前校验远端 CI 状态（combined status + check-runs 全绿才继续）。
+ *                  与 --push / --gh-release / --all 组合使用时，在打 tag / 推送前先查询
+ *                  当前 HEAD 的 GitHub commit status；任一 check 非 success 则拒绝发布
+ *                  （exit 1）。可配 --dry-run 预览校验结果而不执行。Issue #156 方案 B。
  *
  *   若非 git 仓库：提示"尚未 git init，已更新版本号与 CHANGELOG，跳过 tag"
  *   7. 输出摘要，退出码 0
@@ -123,7 +128,7 @@ function eprintf(...args) {
 
 export function parseArgs(argv) {
   const args = argv.slice(2);
-  const out = { bump: "patch", dryRun: false, json: false, push: false, ghRelease: false, npm: false };
+  const out = { bump: "patch", dryRun: false, json: false, push: false, ghRelease: false, npm: false, requireCi: false };
   for (const a of args) {
     if (a === "--dry-run") out.dryRun = true;
     else if (a === "--json") out.json = true;
@@ -131,6 +136,7 @@ export function parseArgs(argv) {
     else if (a === "--gh-release") out.ghRelease = true;
     else if (a === "--npm") out.npm = true;
     else if (a === "--all") { out.push = true; out.ghRelease = true; out.npm = true; }
+    else if (a === "--require-ci") out.requireCi = true;
     else if (a === "--help" || a === "-h") {
       printHelp();
       return { ...out, help: true };
@@ -162,6 +168,7 @@ export function printHelp() {
   --gh-release   用 release-notes.mjs 提取 notes → gh release create
   --npm          npm publish（需已登录或 NPM_TOKEN 环境变量）
   --all          = --push + --gh-release + --npm
+  --require-ci   发布前校验远端 CI 状态（combined status + check-runs 全绿才继续）
   --help, -h     显示本帮助
 
 流程: 校验 SemVer → 更新 package.json → 更新 CHANGELOG.md
@@ -325,6 +332,125 @@ export function procFailInfo(r, timeoutMs) {
   return `exit ${r?.status ?? -1}`;
 }
 
+/**
+ * 校验远端 GitHub CI 状态（Issue #156 方案 B）。
+ *
+ * 用 `gh api` 查询给定 commit 的 combined status 与 check-runs：
+ *  - combined status：`/repos/{owner}/{repo}/commits/{sha}/status`（传统 statuses）
+ *  - check-runs：`/repos/{owner}/{repo}/commits/{sha}/check-runs`
+ *  任一 check 状态为 failure / cancelled / timed_out / action_required →
+ *  判为 CI 红，发布应被拒绝。
+ *
+ * @param {object} opts
+ * @param {string} opts.owner  GitHub owner（默认从 `gh api user` 或仓库 remote 解析）
+ * @param {string} opts.repo   GitHub repo
+ * @param {string} opts.sha    目标 commit SHA（默认 HEAD）
+ * @param {number} opts.timeoutMs 超时毫秒（默认 30s）
+ * @returns {{ ok: boolean, reason?: string, details?: object }}
+ *   ok=true 表示 CI 全绿（或查询到明确 success）；ok=false 表示 CI 红或查询失败。
+ *   查询失败（gh 不可用 / 网络错误 / 无权限）时 ok=false 但 reason 以 "(查询失败)" 开头，
+ *   调用方可决定是硬拒绝还是仅告警——本函数只报告事实。
+ */
+export function checkRemoteCiStatus({ owner, repo, sha, timeoutMs = 30_000 } = {}) {
+  const gh = (args) =>
+    spawnSync("gh", args, { encoding: "utf-8", shell: false, timeout: timeoutMs });
+
+  // 解析 owner/repo：优先显式传入，否则从 `gh repo view --json nameWithOwner` 推断，最后回退 remote
+  let nameWithOwner = "";
+  if (owner && repo) {
+    nameWithOwner = `${owner}/${repo}`;
+  } else {
+    const rv = gh(["repo", "view", "--json", "nameWithOwner"]);
+    if (rv.status === 0) {
+      try { nameWithOwner = JSON.parse(rv.stdout).nameWithOwner || ""; } catch { nameWithOwner = ""; }
+    }
+    if (!nameWithOwner) {
+      const rr = spawnSync("git", ["config", "--get", "remote.origin.url"], {
+        encoding: "utf-8", shell: false, timeout: 10_000, cwd: ROOT,
+      });
+      if (rr.status === 0) {
+        const u = (rr.stdout || "").trim().replace(/\.git$/, "");
+        const m = u.match(/(?:github\.com[:/])([^/]+)\/([^/]+)$/);
+        if (m) nameWithOwner = `${m[1]}/${m[2]}`;
+      }
+    }
+  }
+  if (!nameWithOwner) {
+    return { ok: false, reason: "(查询失败) 无法解析 GitHub 仓库 owner/repo" };
+  }
+
+  // 目标 SHA：显式传入优先，否则 HEAD
+  let headSha = sha;
+  if (!headSha) {
+    const rv = spawnSync("git", ["rev-parse", "HEAD"], {
+      encoding: "utf-8", shell: false, timeout: 10_000, cwd: ROOT,
+    });
+    if (rv.status !== 0) {
+      return { ok: false, reason: "(查询失败) 无法获取 HEAD SHA" };
+    }
+    headSha = (rv.stdout || "").trim();
+  }
+
+  // 1) combined status（传统 statuses）
+  const statusRes = gh(["api", `repos/${nameWithOwner}/commits/${headSha}/status`, "--jq", ".state"]);
+  const statusState = statusRes.status === 0 ? (statusRes.stdout || "").trim() : null;
+
+  // 2) check-runs
+  const checksRes = gh([
+    "api", `repos/${nameWithOwner}/commits/${headSha}/check-runs`, "--jq",
+    '.check_runs[] | "\(.name)|\(.status)|\(.conclusion)"',
+  ]);
+
+  let checks = [];
+  let checksLookupFailed = false;
+  if (checksRes.status === 0) {
+    checks = (checksRes.stdout || "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => {
+        const [name, status, conclusion] = l.split("|");
+        return { name: name || l, status: status || "", conclusion: conclusion || "" };
+      });
+  } else {
+    checksLookupFailed = true;
+  }
+
+  // 解析失败 → 查询失败（gh api 报 404/超时等）
+  if (statusState === null && checksLookupFailed) {
+    return {
+      ok: false,
+      reason: `(查询失败) git status 与 check-runs 均不可用；statusRes=${procFailInfo(statusRes, timeoutMs)} checksRes=${procFailInfo(checksRes, timeoutMs)}`,
+      details: { nameWithOwner, headSha, statusState: null, checks: [] },
+    };
+  }
+
+  // 判定：编译成统一结论
+  const FAIL_CONCLUSIONS = new Set(["failure", "cancelled", "timed_out", "action_required"]);
+  const failedChecks = checks.filter((c) => FAIL_CONCLUSIONS.has(c.conclusion));
+  const red =
+    (statusState !== null && statusState !== "success") ||
+    failedChecks.length > 0;
+
+  if (red) {
+    const reasons = [];
+    if (statusState !== null && statusState !== "success") {
+      reasons.push(`combined status = "${statusState}"`);
+    }
+    if (failedChecks.length > 0) {
+      reasons.push(`失败 checks: ${failedChecks.map((c) => c.name).join(", ")}`);
+    }
+    return {
+      ok: false,
+      reason: reasons.join("；") || "CI 非绿",
+      details: { nameWithOwner, headSha, statusState, checks },
+      failedChecks,
+    };
+  }
+
+  return { ok: true, details: { nameWithOwner, headSha, statusState, checks } };
+}
+
 // ─────────────────────────── 主流程 ───────────────────────────
 
 export function main(argv = process.argv) {
@@ -383,6 +509,16 @@ export function main(argv = process.argv) {
     for (const r of syncResults) {
       actions.push(`同步 version → ${newVersion}: ${r.file} (${r.changed ? "将变更" : "无需变更"})`);
     }
+    if (cfg.requireCi) {
+      // --require-ci dry-run：真实查询远端 CI（不写盘不发布），预览校验结果
+      const ci = checkRemoteCiStatus();
+      if (ci.ok) {
+        actions.push("CI 校验: 远端 CI 全绿（combined status + check-runs）");
+      } else {
+        actions.push(`CI 校验: 拒绝发布 — ${ci.reason}`);
+        failures.push(ci.reason);
+      }
+    }
     if (cfg.push || cfg.ghRelease) {
       actions.push(`releases.astro 更新 → v${newVersion}`);
     }
@@ -398,6 +534,21 @@ export function main(argv = process.argv) {
     if (cfg.npm) actions.push("npm publish");
   } else {
     // ── 构建新内容（内存中全部完成，再统一写盘，避免半成品）──
+    // --require-ci 且在 git 仓库中：先校验远端 CI，红则拒绝整个发布（Issue #156 方案 B）
+    if (cfg.requireCi && gitOk) {
+      const ci = checkRemoteCiStatus();
+      if (!ci.ok) {
+        eprintf(`错误: --require-ci 校验未通过，拒绝发布 — ${ci.reason}`);
+        return {
+          ok: false,
+          exitCode: 1,
+          error: `CI 校验未通过，拒绝发布: ${ci.reason}`,
+          result: { ok: false, name: "men（门）Agent 团队 版本发布", dryRun: false, oldVersion, newVersion, date, ci: ci.details },
+        };
+      }
+      actions.push(`CI 校验: 远端 CI 全绿（${ci.details.headSha}）`);
+    }
+
     const newPkg = { ...pkg, version: newVersion };
     const changelog = fs.existsSync(CHANGELOG_PATH)
       ? fs.readFileSync(CHANGELOG_PATH, "utf-8")
