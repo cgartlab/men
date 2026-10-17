@@ -338,3 +338,5 @@ men/
 - **[OpenCode](https://opencode.ai/) 团队** -- 提供优秀的原生 agent 框架与 MCP 生态
 - **Men Agent 团队** -- 角色设计、架构决策、工程实现
 - **社区贡献者** -- 每一个 Issue、PR 与反馈
+
+<!-- labeler test: readme-only change -->
