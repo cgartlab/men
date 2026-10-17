@@ -1,5 +1,7 @@
 # AGENTS.md — Men Agent 团队
 
+> **会话约定**：开始任何工作前，先读根目录 `LESSONS.md`（本仓库从真实失误沉淀的「教训→规则」清单）并遵循其中所有规则；遇到新失误按其 §维护 追加。依据：Anthropic Claude Code memory/best practices + 社区 lessons.md 惯例。
+
 > **仓库用途**：OpenCode Agent 团队配置（6 个角色定义）+ 纯 Node 脚本 + OpenCode 插件。运行时全部靠 `.opencode/` 配置。
 
 ## 项目状态
