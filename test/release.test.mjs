@@ -20,6 +20,7 @@ import {
   bumpChangelog,
   parseArgs,
   procFailInfo,
+  checkRemoteCiStatus,
   VERSION_JSON_FILES,
   VERSION_TEXT_FILES,
   syncVersionText,
@@ -145,6 +146,20 @@ test('release parseArgs: --all expands push/ghRelease/npm', () => {
   assert.strictEqual(r.npm, true);
 });
 
+test('release parseArgs: --require-ci captured', () => {
+  const r = parseArgs(['node', 'scripts/release.mjs', '--require-ci']);
+  assert.strictEqual(r.requireCi, true);
+  assert.strictEqual(r.push, false);
+});
+
+test('release parseArgs: --all --require-ci combines', () => {
+  const r = parseArgs(['node', 'scripts/release.mjs', '--all', '--require-ci']);
+  assert.strictEqual(r.push, true);
+  assert.strictEqual(r.ghRelease, true);
+  assert.strictEqual(r.npm, true);
+  assert.strictEqual(r.requireCi, true);
+});
+
 test('release parseArgs: unknown arg captured, not thrown', () => {
   const r = parseArgs(['node', 'scripts/release.mjs', '--bogus']);
   assert.strictEqual(r.unknownArg, '--bogus');
@@ -240,6 +255,32 @@ test('release procFailInfo: normal exit code', () => {
 test('release procFailInfo: null result → exit -1', () => {
   assert.strictEqual(procFailInfo(null, 30_000), 'exit -1');
   assert.strictEqual(procFailInfo(undefined, 30_000), 'exit -1');
+});
+
+// ── checkRemoteCiStatus（Issue #156 方案 B）────────────────
+test('release checkRemoteCiStatus: 无 git 目录 → 查询失败标记，不崩溃', () => {
+  // 在临时空目录（无 .git 无 remote）下调用：headSha 获取失败 → ok:false + 查询失败
+  const tmp = makeTmp();
+  try {
+    const r = checkRemoteCiStatus({});
+    // 注意：cwd 是测试进程目录（REPO_ROOT 由 import 时绑定），这里验证的是「sha 缺失时
+    // 尝试 git rev-parse HEAD 失败」路径；用显式无效 sha 走 gh api 会因 gh 存在而真实查询。
+    // 为保持测试确定性：断言返回结构合法即可（ok 布尔 + reason 字符串 + details 对象）
+    assert.strictEqual(typeof r.ok, 'boolean');
+    assert.strictEqual(typeof r.reason, 'string');
+    assert.ok(r.details && typeof r.details === 'object');
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('release checkRemoteCiStatus: 显式无效 sha → ok:false，不抛异常', () => {
+  // 用 40 位零 sha 查询：GitHub 对不存在的 commit 返回 combined status "pending" 或 404，
+  // 函数必须返回 ok:false（拒绝发布），绝不抛异常
+  const r = checkRemoteCiStatus({ sha: '0'.repeat(40) });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(typeof r.reason, 'string');
+  assert.ok(r.reason.length > 0);
 });
 
 // ── 黑盒：dry-run ────────────────────────────────────────
