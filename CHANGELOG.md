@@ -5,15 +5,27 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
 
-每个版本按六大类组织：✨ Added（新增）/ 🔄 Changed（变化）/ 🐛 Fixed（修复）/ 🗑️ Removed（移除）/ ⚠️ Deprecated（弃用）/ 🔒 Security（安全）。
-无内容的类别不写小标题。
+## 怎么读这份日志
 
-## [Unreleased]
+**每个版本的三层结构**：
+
+1. **TL;DR（顶部一句话）** —— 这版改了什么 + 你需不需要动。只想知道"要不要升级"，读这一行就够。
+2. **分类条目** —— ✨ Added / 🔄 Changed / 🐛 Fixed / 🗑️ Removed / ⚠️ Deprecated / 🔒 Security（无内容的类别不写小标题）。工程细节完整保留，不删减。
+3. **`<details>` 折叠** —— 纯内部质量项（测试守卫、审计脚本等使用者不直接感知的部分）默认折叠，点开即看。
+
+版本标题带 **compare 链接**，直接跳转到两个 tag 之间的 commit 差异；条目中的 issue/PR 编号可直接点击。
+
+---
+
+## [Unreleased](https://github.com/cgartlab/men/compare/v0.6.1...main)
+
+> **TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。
+> **你需要做什么**：无。纯 CI 与文档站改动，无 API / 配置 / CLI 变化。
 
 ### Added
 
-- **发布门禁（Issue #156）**：新增 `.github/workflows/release-guard.yml`（Release Guard），tag push（`v*`）触发时对 tag commit 跑完整门禁（语法检查 / tests / verify.mjs / release dry-run / tag↔package.json 版本一致性 / CHANGELOG 条目检查），失败即 workflow 红，让「本地打 tag 绕过 CI 状态」的发布立即可见、可审计
-- **`release.mjs --require-ci`（Issue #156 方案 B）**：发布前调用 GitHub API 查询目标 commit 的 combined status 与 check-runs，任一 check 为 failure / cancelled / timed_out / action_required 或 combined status 非 success（含 pending）时拒绝发布（exit 1）；`--dry-run` 组合可预览校验结果。与 Release Guard 构成本地+CI 双保险
+- **发布门禁**（[#156](https://github.com/cgartlab/men/issues/156)）：新增 `.github/workflows/release-guard.yml`（Release Guard），tag push（`v*`）触发时对 tag commit 跑完整门禁（语法检查 / tests / verify.mjs / release dry-run / tag↔package.json 版本一致性 / CHANGELOG 条目检查），失败即 workflow 红，让「本地打 tag 绕过 CI 状态」的发布立即可见、可审计
+- **`release.mjs --require-ci`**（[#156](https://github.com/cgartlab/men/issues/156) 方案 B）：发布前调用 GitHub API 查询目标 commit 的 combined status 与 check-runs，任一 check 为 failure / cancelled / timed_out / action_required 或 combined status 非 success（含 pending）时拒绝发布（exit 1）；`--dry-run` 组合可预览校验结果。与 Release Guard 构成本地+CI 双保险
 - **`docs/brand.md`：品牌规范**——记录已定的标识造型（有机环 + 中心负形孔，单条复合路径 `fill-rule="evenodd"` 真负形）、孔径随尺寸切换的 φ 依据、配色令牌表与对比度基准。`global.css` 的 `:root` 注释此前已引用 `docs/brand`，本文件补上该引用目标
 
 ### Changed
@@ -22,25 +34,31 @@
 - **站点品牌换新 · 标识**：`favicon.svg` 与 `GateLogo.astro` 换为新造型；孔径按尺寸在 `R`（≥48px）与 `R/φ`（<48px）之间切换，避免下方凹口在小尺寸下断线
 - **站点文案去术语化**：首页与文档页把内部术语（IntentGate / plan envelope / subagent / Wave / L1 验证 等）改写为面向读者的日常表达，`content.json` 与各页面同步
 
-### Fixed
+## [v0.6.1](https://github.com/cgartlab/men/compare/v0.6.0...v0.6.1) - 2026-10-07
 
-## [v0.6.1] - 2026-10-07
+> **TL;DR**：完成 **OpenCode V2 迁移**（插件 API、权限配置、类型包全部切换），站点排版治理收敛，新增 5 项 CI 质量守卫，并修复一批 Windows 上必然失败的脚本 bug。
+> **你需要做什么**：老用户如仍用 V1 `men.jsonc`，参考 `v1-compat` 分支的 `V1-COMPAT.md` 迁移；新装用户**什么都不用做**。
 
 ### Added
 
 - **OpenCode V2 兼容回归守护**：新增 `test/opencode-v2-compat.test.mjs`（13 项黑盒源码扫描），断言 3 插件用 `Plugin.define` + `@opencode/plugin`（非 V1 `@opencode-ai/plugin`）、各插件用对应 V2 Context API（`ctx.tool.hook` / `ctx.event.subscribe` / `ctx.ui.slot`）、agent frontmatter 无 V1 `tools` 字段、配置 `$schema` 指向 opencode.ai、V1 类型包已移除、README badge 为 v2。审计依据见 `docs/research/opencode-v2-compat-audit.md`
 - **OpenCode V2 兼容审计**：新增 `docs/research/opencode-v2-compat-audit.md`，对照官方 V2 `migrate-v1` / `permissions` / `plugins` / `cli/plugins` / `build/plugins/migrate-v1` 文档逐项核实。结论：插件 API native V2；V2 自动发现覆盖 men-sidebar（实测 `opencode v2.0.24 plugin list` 确认 3 插件加载）；V1 类型包已清理；`tui.json` 与权限 `permission` 已转 native V2（见下 Changed/Removed）
 - **`v1-compat` 分支**：新增 `v1-compat` 分支（含 `V1-COMPAT.md` 说明），保留 V1 配置形态（`tui.json` + `permission` V1 + `@opencode-ai/plugin`），供习惯 V1 配置或需逐步迁移的用户。仍需 V2 OpenCode 运行（插件 API 是 V2，V1 OpenCode 无法运行 V2 插件）
+- **`check-site.mjs` 新增两类产物级守卫**：① **转义 HTML 泄漏**——模板里用 `.map().join()` 拼 HTML 会被 Astro 转义、页面直接显示标签字面量（曾真实发生 19 处），现断言产物中不得出现带 `class` 的转义标签（白名单：`<code>--dir &lt;path&gt;</code>` 这类刻意占位符）；② **来源死链**——`blob/main/` 后的路径必须真实存在于 `git ls-files`，此前治理页把中文章节名当文件名传入、install 页传 Windows 绝对路径，共 24 条 404 无人拦截。两项均随 `site.yml` 在 CI 执行，并做了负向验证（注入即 FAIL exit 1）
+
+<details><summary>内部质量与测试（点开看）——使用者不直接感知的测试守卫与审计脚本</summary>
+
 - **`dynamic-el-audit.mjs`：JS 动态元素样式作用域守卫**：静态扫描全部 `.astro` 的 `<style>` 块，取出经 `createElement` + `className` 赋值的类名，校验其**每一条**规则都已被 `:global(...)` 覆盖；只要还剩一条 scoped 规则即失败。零依赖、**不需要浏览器**，故可进 CI（浏览器审计因 CI runner 未装浏览器本就覆盖不到此问题）。首次运行除已知的两处外，另揪出 `AgentFlow.astro` 一条冗余规则（该处因内联样式已覆盖，实为死 CSS 而非可见故障）。已对「整体未 `:global`」与「混用」两类回归分别做负向验证
 - **状态路径与 cwd 无关的回归测试**：`event.test.mjs` 新增黑盒用例，从临时目录 spawn `event.mjs append`，断言事件落在仓库内、且该目录下不会被另建 `.agents`。此前无任何测试覆盖 cwd 相关性，而 `npm test` 的 spawn 一律用 `cwd: REPO_ROOT`，因此这类分裂恰好从测试视野里漏过
 - **写入方契约回归测试**：新增黑盒测试跑一遍 `verify.mjs` / `gate.mjs`，再用 `event.mjs validate` 复核其产出的日志——不做源码正则匹配。此前两个写入方漏写 `eventId`（`event.mjs` 的 `REQUIRED_FIELDS` 要求），仓库自己的 verify/gate 日志一律校验失败，而没有任何测试能发现
 - **meta description 产物级守卫**：`check-site.mjs` 现断言每页 `<meta name="description">` 存在、非空、互不重复、长度落在 20–160 字符，并已随 `site.yml` 在 CI 执行。此前若全部页面共用「men（门）Agent 团队 — XXX」这类同构短句，检查不会报警，搜索结果与分享卡片也拿不到任何页面信息
-- **`check-site.mjs` 新增两类产物级守卫**：① **转义 HTML 泄漏**——模板里用 `.map().join()` 拼 HTML 会被 Astro 转义、页面直接显示标签字面量（曾真实发生 19 处），现断言产物中不得出现带 `class` 的转义标签（白名单：`<code>--dir &lt;path&gt;</code>` 这类刻意占位符）；② **来源死链**——`blob/main/` 后的路径必须真实存在于 `git ls-files`，此前治理页把中文章节名当文件名传入、install 页传 Windows 绝对路径，共 24 条 404 无人拦截。两项均随 `site.yml` 在 CI 执行，并做了负向验证（注入即 FAIL exit 1）
 - **`role-token-verify.mjs` 断言过期导致长期假红**：`.topo-status` 期望值硬编码为修复前的亮色 `--role-ji`（`#2ea043`），而 v0.6.0 已把该小字换成合规的 `--role-ji-text`（`#258036`）——脚本在浏览器可跑通后第一件事就是 exit 1。现**拓扑图一节的期望值改为从页面令牌推导**（`--role-*` / `--role-*-text` 实时读取，令牌再变不会过期；令牌定义与 SVG marker 两节仍按固定黄金值比对），并新增 `--role-*-text` 的 4.5:1 对比度实测断言（6 项 4.64–4.67:1）
 - **`text-contrast-audit.mjs`：全规则文本着色对比度门**：新增零依赖脚本，扫描全部 `.astro` CSS 规则，找出「颜色令牌用作 `color:` 但对比度不足」的写法（区分大/小文本阈值 3:1 与 4.5:1；按规则内显式 `background` 取真实承载体，避免把深底反白字误判）。已并入 `npm run check:source` → `site.yml`。此前 `contrast-check.mjs` 只覆盖手工登记的令牌级颜色对，页面里新写的规则无人拦截，只能靠人工发现
 - **`text-contrast-audit.mjs` 覆盖盲区收敛**：`clamp()` 令牌按**下界 min** 判定（实际渲染只会更大，故不会漏报小文本风险），可判定规则 149 → **150**、字号待定 40 → 38（clamp 令牌 + 复合选择器伪元素）→ **37**（装饰分隔符豁免）、非文本/装饰跳过 → 13；装饰伪元素豁免改为锚定选择器末尾（原 `/^::(before|after)$/` 匹配不到 `.x li::before` 这类复合选择器），并只豁免「已证明是纯装饰」的带引号 `content`（`counter()`/`attr()` 等生成内容按 fail-safe 继续检查）。纯继承字号的规则不再静默丢弃——SVG 图形按非文本判据 1.4.11（3:1）处理，其余对比度 <4.5:1 的显式列出待人工复核；本轮收敛后该列表为 **0 条**
 - **站点审计支持系统浏览器**：`site/scripts/lib/browser.mjs` 统一启动器 —— 先试 playwright 自带 chromium，失败回退系统 Edge/Chrome（`channel`）。此前 10 个审计脚本一律 `chromium.launch()`，依赖已下载的浏览器二进制；本机 `ms-playwright` 缓存为 0 字节、CDN 下载两次均卡死，这批审计因此长期无法运行。系统 Edge 可直接驱动（实测 ~790ms），`tiny-text-audit` / `overflow-check` 等随即可跑
 - **站点源码级质量门进 CI**：`contrast-check.mjs`（WCAG 2.2 AA 对比度）与 `token-ratio-check.mjs`（令牌注释声称值 vs 实测）此前只能手工运行，回归无人拦截。两者零依赖、秒级，现经 `npm run check:source` 接入 `.github/workflows/site.yml`，且排在 astro 构建**之前**，配色回归在 ~1s 内失败而非等构建完成
+
+</details>
 
 ### Changed
 
@@ -60,7 +78,7 @@
 
 ### Fixed
 
-- **新增的事件契约测试自身形成递归，把整套测试拖到约 60s 并让 CI 变红**：PR #149 加的「verify/gate 写出的事件通过 validate」测试 spawn 了 `verify.mjs men`；而 `verify.mjs` 的 gate 步骤会对**仓库内**目标执行 `npm run test` —— 那正是本测试所在的套件，于是形成嵌套。Windows 上内层 `node --test` 被 `NODE_TEST_CONTEXT=child-v8` 短路而侥幸无事，CI（Linux）上则：内层套件跑满 **120s** 被杀，外层测试报 `verify.mjs 未在超时内结束`（`duration_ms: 120065`）；同时 gate 那层的 60s 预算耗尽，`status` 为 `null` 被记成 `exitCode: -1`，对外误报 `test 非零退出` —— 把超时说成了测试失败。
+- **新增的事件契约测试自身形成递归，把整套测试拖到约 60s 并让 CI 变红**：PR [#149](https://github.com/cgartlab/men/pull/149) 加的「verify/gate 写出的事件通过 validate」测试 spawn 了 `verify.mjs men`；而 `verify.mjs` 的 gate 步骤会对**仓库内**目标执行 `npm run test` —— 那正是本测试所在的套件，于是形成嵌套。Windows 上内层 `node --test` 被 `NODE_TEST_CONTEXT=child-v8` 短路而侥幸无事，CI（Linux）上则：内层套件跑满 **120s** 被杀，外层测试报 `verify.mjs 未在超时内结束`（`duration_ms: 120065`）；同时 gate 那层的 60s 预算耗尽，`status` 为 `null` 被记成 `exitCode: -1`，对外误报 `test 非零退出` —— 把超时说成了测试失败。
   修复：测试改为指向**仓库外的临时目标**，使 `checkGate` 走 scaffold 分支直接 SKIP（`verify.mjs:315`）；`emitEvent` 与目标无关、照常写事件，断言强度不变。该测试耗时由约 120s 降到 **707ms**，整套 `npm test` 由约 60s 降到 **2.3s**，`npm run verify` 由约 60s 降到 **2.4s**
 - **verify 的 gate 步骤不再把「超时」误报成「测试失败」**：除上面的根因修复外，保留两项防御性改进 —— ①按脚本分档预算（`test` 300s、`lint`/`typecheck` 仍 60s，以便真出问题时快速失败）；②记录 `timedOut` 并在 evidence 中分开表述 `test（超时 300s）超时被杀（非测试失败）`，真实失败仍报「X 非零退出」。反向验证：把 test 预算压到 1ms，evidence 如期输出「超时被杀（非测试失败）」而非「非零退出」
 - **运行时状态按 cwd 解析，导致事件流被劈成两半、门禁上限可被绕过**：`event.mjs` 用 `process.cwd()`、`gate.mjs` / `learn.mjs` / `eval-metrics.mjs` 用相对路径（由 `fs` 按 cwd 解析），而 `verify.mjs` 早已按模块位置解析。后果：
@@ -92,13 +110,16 @@
 - **`token-ratio-check.mjs` 路径依赖 CWD**：用相对路径 `site/src/styles/global.css`，而脚本位于 `site/scripts/`、约定从 `site/` 运行，实际解析成 `site/site/src/...` 直接 ENOENT——即**从未被真正执行过**。改为基于 `import.meta.url` 解析（与 `check-site.mjs` 一致）
 - **`contrast-check.mjs` 调色板漂移会假阳性通过**：脚本内 `colors` 是 global.css 令牌的手工副本，改了 global.css 而脚本没改时，审计仍用旧值跑出 PASS。现从 `global.css` 读真值逐项校验，不一致直接失败（与 `install.mjs` 兜底依赖漂移同源问题）
 
-## [v0.6.0] - 2026-10-04
+## [v0.6.0](https://github.com/cgartlab/men/compare/v0.5.0...v0.6.0) - 2026-10-04
+
+> **TL;DR**：OpenCode **V2 API 迁移** + Argus 集成 + CI 加固；`install.mjs` 命令注入（CWE-78）与 `release.mjs` 版本同步污染历史引用两个严重 bug 修复；新增 116 项测试基线。
+> **你需要做什么**：老用户参考 [#133](https://github.com/cgartlab/men/issues/133) 的 V2 迁移说明；MCP 配置**回归 CC Switch 统一管理**（仓库 `opencode.json` 不再带 MCP），需重新通过 CC Switch UI 配置。
 
 ### Added
 
 - **Agent 自洽性机械检查**：新增 `test/agent-consistency.test.mjs`，锁定 6 个 agent 的红线引用、模型分配、角色边界、技能清单与关键流程表述，防后续提示词漂移
-- **OpenCode V2 API 迁移**：3 个插件（`men-verify` / `men-learn` / `men-sidebar`）迁移到 OpenCode V2 API，并新增 SenseNova 混合预设（`config/models.json`、`config/models.schema.json`、`opencode.json`、`scripts/setup.mjs`）（#133）
-- **跨 Agent 执行契约**：补齐 prompt 模板、临时产物协议、事件类型、验收可消费性与重试归属，落到 6 个 agent 定义与 `ultrawork` / `verify` 命令（#122）
+- **OpenCode V2 API 迁移**：3 个插件（`men-verify` / `men-learn` / `men-sidebar`）迁移到 OpenCode V2 API，并新增 SenseNova 混合预设（`config/models.json`、`config/models.schema.json`、`opencode.json`、`scripts/setup.mjs`）（[#133](https://github.com/cgartlab/men/issues/133)）
+- **跨 Agent 执行契约**：补齐 prompt 模板、临时产物协议、事件类型、验收可消费性与重试归属，落到 6 个 agent 定义与 `ultrawork` / `verify` 命令（[#122](https://github.com/cgartlab/men/issues/122)）
 - **SkillHub 发布链路**：新增 `scripts/skillhub-publish.mjs`、`.github/workflows/skillhub-publish.yml` 与 `docs/integrations/skillhub.md`
 - **DSH 定制文档**：新增 `docs/dsh-customization.md`
 
@@ -108,7 +129,7 @@
 - **流程阈值统一**：意图门判定永远先行；chi 连续 3 次 FAIL 即 BLOCKED，编排层立即停止，不再与通用 5 次上限冲突；judge 每轮复验所有标准
 - **Exa MCP 表述修正**：xun 定义与 xun-search 技能改为「由 CC Switch 统一管理」，与仓库 `opencode.json` 不含 MCP 的实际配置一致
 - **架构文档同步**：si 角色描述、命令数量与 gh-issue 命令补齐
-- **依赖升级**：undici 8.10.0 → 8.11.2（#127）、astro 7.2.9 → 7.3.5（#131）、@iconify-json/lucide 1.2.127 → 1.2.138（#129）、@opentui/solid 0.5.9 → 0.5.14（#130）
+- **依赖升级**：undici 8.10.0 → 8.11.2（[#127](https://github.com/cgartlab/men/issues/127)）、astro 7.2.9 → 7.3.5（[#131](https://github.com/cgartlab/men/issues/131)）、@iconify-json/lucide 1.2.127 → 1.2.138（[#129](https://github.com/cgartlab/men/issues/129)）、@opentui/solid 0.5.9 → 0.5.14（[#130](https://github.com/cgartlab/men/issues/130)）
 - **网页质量审查 R1–R22 闭环**：12 维度多轮修复，无障碍 AA 违规 21 → 6 → 0；新增 CWV / 字号 / 对比度 / 溢出等实测脚本与 12 张截图，报告见 `docs/reports/web-quality-2026-09-19.md`
 
 ### Fixed
@@ -118,7 +139,7 @@
 - **两处文档版本引用陈旧**：`docs/dsh-customization.md` 的「关联」行仍写 v0.5.0、`docs/integrations/skillhub.md` 的 frontmatter 示例仍写 `version: 0.5.0`；两者均已纳入版本同步清单
 - **SkillHub 文档 token 占位符是脱敏残留**：`docs/integrations/skillhub.md` 写的是 `SKILLHUB_TOKEN=***`（730627d 脱敏事故残留），照抄会把 token 设成字面量 `***` 导致认证失败；改为 `skh_xxx` + 注释说明
 - **设计文档日期在未来**：`docs/design/agent-flow-webgl.md` 标注 `2026-10-21`，而其提交日期为 2026-10-03（且晚于当前日期）；修正为 2026-10-03
-- **SkillHub Publish 工作流 token 表达式损坏**：`skillhub-publish.yml` 的 `SKILLHUB_TOKEN` 被写成 `*** secrets.SKILLHUB_API_KEY }}`（自 730627d 起），工作流文件非法导致每次 push 都产生一条失败运行；恢复为 `${{ secrets.SKILLHUB_API_KEY }}`（#135）
+- **SkillHub Publish 工作流 token 表达式损坏**：`skillhub-publish.yml` 的 `SKILLHUB_TOKEN` 被写成 `*** secrets.SKILLHUB_API_KEY }}`（自 730627d 起），工作流文件非法导致每次 push 都产生一条失败运行；恢复为 `${{ secrets.SKILLHUB_API_KEY }}`（[#135](https://github.com/cgartlab/men/issues/135)）
 - **men-update 技能 v0.5.0 同步**：移除「必须删除 npm 缓存」的陈旧流程，改为相对路径部署说明
 - **评审转交修正**：chi-judge 不再把语义/视觉评审推给 si/yi；yi-design 内容写作转交 ji
 - **数据源与文档冲突**：8888 端口注明与 Wealth Tracker 共用；release.md 的 MCP 声明规则与 AGENTS.md 统一；si-plan-compose 示例移除框架 `.tsx`
@@ -127,54 +148,58 @@
 
 ### Security
 
-- **brace-expansion 2.1.4 → 2.1.7**（#132）：清除 high 级 advisory（`GHSA-q2hr-2g5m-vwhr`、`GHSA-qhr7-859c-m2p7`、`GHSA-6j4f-fj2g-mc7p`）。此前 `npm audit --audit-level=high` 在 CI 第 6 步失败，导致其后的 tests / verify / release --dry-run / install 全部被 skip——一个依赖告警掩盖了整条验证链
-- **gate.mjs 命令注入**（#124）：`scripts/gate.mjs` 不再经 shell 执行 `package.json` 脚本，改用固定 npm 入口 + 危险字符拒绝（修复 #123）
-- **http-cache-semantics 4.2.0 → 4.3.0**（#136）：修复 `GHSA-ch52-4w7c-c8xp`（high，`max-stale` 处理不当可泄露跨用户缓存响应）。`site/package-lock.json` 此前不在根目录 `npm audit` 的覆盖范围内，故 CI 全绿而 Dependabot 仍报 7 条告警
-- **devalue 5.9.1 → 5.9.4**（#134）：清除 6 条 advisory。与上一条合计使默认分支 Dependabot 告警 7 → 0
+- **brace-expansion 2.1.4 → 2.1.7**（[#132](https://github.com/cgartlab/men/issues/132)）：清除 high 级 advisory（[GHSA-q2hr-2g5m-vwhr](https://github.com/advisories/GHSA-q2hr-2g5m-vwhr)、[GHSA-qhr7-859c-m2p7](https://github.com/advisories/GHSA-qhr7-859c-m2p7)、[GHSA-6j4f-fj2g-mc7p](https://github.com/advisories/GHSA-6j4f-fj2g-mc7p)）。此前 `npm audit --audit-level=high` 在 CI 第 6 步失败，导致其后的 tests / verify / release --dry-run / install 全部被 skip——一个依赖告警掩盖了整条验证链
+- **gate.mjs 命令注入**（[#124](https://github.com/cgartlab/men/issues/124)）：`scripts/gate.mjs` 不再经 shell 执行 `package.json` 脚本，改用固定 npm 入口 + 危险字符拒绝（修复 [#123](https://github.com/cgartlab/men/issues/123)）
+- **http-cache-semantics 4.2.0 → 4.3.0**（[#136](https://github.com/cgartlab/men/issues/136)）：修复 [GHSA-ch52-4w7c-c8xp](https://github.com/advisories/GHSA-ch52-4w7c-c8xp)（high，`max-stale` 处理不当可泄露跨用户缓存响应）。`site/package-lock.json` 此前不在根目录 `npm audit` 的覆盖范围内，故 CI 全绿而 Dependabot 仍报 7 条告警
+- **devalue 5.9.1 → 5.9.4**（[#134](https://github.com/cgartlab/men/issues/134)）：清除 6 条 advisory。与上一条合计使默认分支 Dependabot 告警 7 → 0
 
-## [v0.5.0] - 2026-09-11
+## [v0.5.0](https://github.com/cgartlab/men/compare/v0.4.0...v0.5.0) - 2026-09-11
 
-> Argus 云端设计评审 + 全局模型配置 + 工程加固
+> **TL;DR**：**Argus 云端设计评审** + `men.jsonc` 全局模型配置 + PR 阶段站点构建检查 + 侧边栏全局化（不再依赖 npm 缓存）。
+> **你需要做什么**：如启用 Argus 评审，注意其 **BSL 1.1 许可证**限制（`docs/integrations/argus.md` §5）；模型配置改由 `men.jsonc` 管理，**provider/key 仍在 CC Switch**。
 
 ### Added
 
-- **Argus 云端设计评审集成**：新增 `.github/workflows/design-review.yml` 与 `docs/integrations/argus.md`，PR 打开/同步时自动调用 `cgartlab/argus` 的 composite action，按 P0–P3 分级输出前端设计评审（设计 token、硬编码值、暗色覆盖、无障碍、CSS 质量），文档中同时标注 argus 的 **BSL 1.1** 许可证警告（#109 #110 #111）
-- **`men.jsonc` 全局配置**：新增 `~/.config/opencode/men.jsonc`，支持预设切换 + 逐 Agent 模型覆盖，职责切分为「CC Switch 管 provider/key，Men 管 agent 分配」；配套 `config/men.schema.json` 提供校验（#88）
-- **动态免费预设**：`setup.mjs` 实时拉取 OpenCode Zen 可用模型清单，不再依赖硬编码模型名（#94）
-- **安装前置条件检查 + 对话式模型引导**：安装前检测 OpenCode / Node 版本 / CC Switch 冲突，并引导完成模型配置（#93）
-- **PR 阶段站点构建检查**：新增 `.github/workflows/site.yml`，`site/**` 改动在 PR 阶段即跑 `npm ci && build && check-site`（此前只在 push main 的 `deploy.yml` 里构建）——仓库约定的产物级检查 `check-site.mjs`（UTF-8/mojibake/base 守卫 + 锚点）正式进入 CI（#117）
+- **Argus 云端设计评审集成**：新增 `.github/workflows/design-review.yml` 与 `docs/integrations/argus.md`，PR 打开/同步时自动调用 `cgartlab/argus` 的 composite action，按 P0–P3 分级输出前端设计评审（设计 token、硬编码值、暗色覆盖、无障碍、CSS 质量），文档中同时标注 argus 的 **BSL 1.1** 许可证警告（[#109](https://github.com/cgartlab/men/issues/109) [#110](https://github.com/cgartlab/men/issues/110) [#111](https://github.com/cgartlab/men/issues/111)）
+- **`men.jsonc` 全局配置**：新增 `~/.config/opencode/men.jsonc`，支持预设切换 + 逐 Agent 模型覆盖，职责切分为「CC Switch 管 provider/key，Men 管 agent 分配」；配套 `config/men.schema.json` 提供校验（[#88](https://github.com/cgartlab/men/issues/88)）
+- **动态免费预设**：`setup.mjs` 实时拉取 OpenCode Zen 可用模型清单，不再依赖硬编码模型名（[#94](https://github.com/cgartlab/men/issues/94)）
+- **安装前置条件检查 + 对话式模型引导**：安装前检测 OpenCode / Node 版本 / CC Switch 冲突，并引导完成模型配置（[#93](https://github.com/cgartlab/men/issues/93)）
+- **PR 阶段站点构建检查**：新增 `.github/workflows/site.yml`，`site/**` 改动在 PR 阶段即跑 `npm ci && build && check-site`（此前只在 push main 的 `deploy.yml` 里构建）——仓库约定的产物级检查 `check-site.mjs`（UTF-8/mojibake/base 守卫 + 锚点）正式进入 CI（[#117](https://github.com/cgartlab/men/issues/117)）
 
 ### Changed
 
-- **`--global` 插件本地部署**：men-sidebar 直接部署到 `~/.config/opencode/plugins/men-sidebar/`，tui.json 改用相对路径 `./plugins/men-sidebar/tui.js` 注册——侧边栏不再依赖 opencode 的 npm 缓存（`men@latest`），升级后无需删缓存即可读到最新版本；同时避免与 CC Switch 管理的全局配置冲突（opencode.json 仅合并 default_agent，不再写 plugin 字段）（#87）
-- **安装文档同步**：补充 `--global` 只合并 `default_agent` 的新行为描述，避免与 CC Switch 加载顺序混淆（#92）
-- **`@opencode-ai/plugin` pin 同步**：`.opencode/package.json` 1.18.29 → 1.18.30，与 CI 内 opencode CLI 版本对齐（否则评审 job 会把 pin 改写后当作无关提交推回 PR 分支）（#117）
+- **`--global` 插件本地部署**：men-sidebar 直接部署到 `~/.config/opencode/plugins/men-sidebar/`，tui.json 改用相对路径 `./plugins/men-sidebar/tui.js` 注册——侧边栏不再依赖 opencode 的 npm 缓存（`men@latest`），升级后无需删缓存即可读到最新版本；同时避免与 CC Switch 管理的全局配置冲突（opencode.json 仅合并 default_agent，不再写 plugin 字段）（[#87](https://github.com/cgartlab/men/issues/87)）
+- **安装文档同步**：补充 `--global` 只合并 `default_agent` 的新行为描述，避免与 CC Switch 加载顺序混淆（[#92](https://github.com/cgartlab/men/issues/92)）
+- **`@opencode-ai/plugin` pin 同步**：`.opencode/package.json` 1.18.29 → 1.18.30，与 CI 内 opencode CLI 版本对齐（否则评审 job 会把 pin 改写后当作无关提交推回 PR 分支）（[#117](https://github.com/cgartlab/men/issues/117)）
 
 ### Fixed
 
 - **侧边栏版本号滞后不更新**：此前 `--global` 用 npm 包名注册，OpenCode 从 `~/.cache/opencode/packages/@cgartlab/men@latest` 加载并锁死在旧版（实测缓存停留 0.3.4），导致 `npx @cgartlab/men` 更新后侧边栏版本号不刷新——现改为部署 VERSION 标记文件（scaffold + global 均写入），tui.js 优先读取真实发布版本
 - **卸载误删风险**：`--global-remove` 不再触碰 opencode.json 的 plugin 数组（CC Switch 统一管理），仅还原 default_agent；tui.json 迁移时移除旧 npm 包名注册避免重复加载侧边栏
-- **men-sidebar 启动日志噪音**：移除启动时打印的 `[men-sidebar] SERVER ENTRY LOADED` 等日志，不再污染终端输出（#113 #114）
-- **argus-review workflow 两处解析失败**：`!` 开头的 YAML tag 使表达式被当作 tag 解析（#110）、`jobs.<id>.if` 使用 `env` 上下文导致 422 parse error（#111），并补上 job 级 `contents: write` 修复评审产物 push 403（#108）
-- **`check-site.mjs` 吞掉锚点检查错误**：catch 块保留错误详情，锚点缺失不再静默通过（#101 #108）
-- **dependabot PR 的 argus 检查假红**：dependabot 触发的 run 拿不到仓库 secrets（只认 Dependabot secrets），密钥 fail-fast 必然失败——改为按 `github.actor` 跳过该 job（lockfile bump 无前端设计可评审），并补齐 `chore`/`dependencies` 标签（#116 #117）
+- **men-sidebar 启动日志噪音**：移除启动时打印的 `[men-sidebar] SERVER ENTRY LOADED` 等日志，不再污染终端输出（[#113](https://github.com/cgartlab/men/issues/113) [#114](https://github.com/cgartlab/men/issues/114)）
+- **argus-review workflow 两处解析失败**：`!` 开头的 YAML tag 使表达式被当作 tag 解析（[#110](https://github.com/cgartlab/men/issues/110)）、`jobs.<id>.if` 使用 `env` 上下文导致 422 parse error（[#111](https://github.com/cgartlab/men/issues/111)），并补上 job 级 `contents: write` 修复评审产物 push 403（[#108](https://github.com/cgartlab/men/issues/108)）
+- **`check-site.mjs` 吞掉锚点检查错误**：catch 块保留错误详情，锚点缺失不再静默通过（[#101](https://github.com/cgartlab/men/issues/101) [#108](https://github.com/cgartlab/men/issues/108)）
+- **dependabot PR 的 argus 检查假红**：dependabot 触发的 run 拿不到仓库 secrets（只认 Dependabot secrets），密钥 fail-fast 必然失败——改为按 `github.actor` 跳过该 job（lockfile bump 无前端设计可评审），并补齐 `chore`/`dependencies` 标签（[#116](https://github.com/cgartlab/men/issues/116) [#117](https://github.com/cgartlab/men/issues/117)）
 - **发版漏同步版本号**：`site/package-lock.json` 根版本、`.opencode/skills/men-status/SKILL.md`、`docs/integrations/argus.md` 纳入自动同步；lockfile 根版本改为对任意 `*-lock.json` 生效——发版残留清单只剰 `releases.astro`（v0.3.2 曾漏 6 处、v0.4.0 漏 2 处）
-- **批量 issue 修复**：发布前修正、`spawnSync`/`fetch` 超时、空 catch 块、知识库索引重建等六项（#86 #91 #89 #90 #73 #71）
+- **批量 issue 修复**：发布前修正、`spawnSync`/`fetch` 超时、空 catch 块、知识库索引重建等六项（[#86](https://github.com/cgartlab/men/issues/86) [#91](https://github.com/cgartlab/men/issues/91) [#89](https://github.com/cgartlab/men/issues/89) [#90](https://github.com/cgartlab/men/issues/90) [#73](https://github.com/cgartlab/men/issues/73) [#71](https://github.com/cgartlab/men/issues/71)）
 
 ### Security
 
-- **svgo 4.0.2 → 4.1.0**（site 传递依赖，经 astro 引入）：修复 `GHSA-w27v-7q3p-w38r`（high，`removeScripts` 可被 namespace / 控制字符绕过而放行可执行链接）与 `GHSA-4vpr-x523-8j87`（medium，`foreignObject` 内可执行 HTML 清理不完整）（#116）
+- **svgo 4.0.2 → 4.1.0**（site 传递依赖，经 astro 引入）：修复 [GHSA-w27v-7q3p-w38r](https://github.com/advisories/GHSA-w27v-7q3p-w38r)（high，`removeScripts` 可被 namespace / 控制字符绕过而放行可执行链接）与 [GHSA-4vpr-x523-8j87](https://github.com/advisories/GHSA-4vpr-x523-8j87)（medium，`foreignObject` 内可执行 HTML 清理不完整）（[#116](https://github.com/cgartlab/men/issues/116)）
 
-## [v0.4.0] - 2026-09-03
+## [v0.4.0](https://github.com/cgartlab/men/compare/v0.3.7...v0.4.0) - 2026-09-03
+
+> **TL;DR**：**半自动化 GitHub 工作流**（本地意图 → 云端执行 → 人工 merge）+ 新用户默认 OpenCode Zen 免费模型；6 角色 system prompt 全面重构；修复 Windows 安装与 agent-run 工作流缺陷。
+> **你需要做什么**：无。如需云端执行，见 `/gh-issue` 命令。
 
 ### Added
 
-- **半自动化 GitHub 开发工作流**：新增 `/gh-issue` 命令、`gh-flow/` 远程工作区模板与 `.github/workflows/agent-run.yml` + issue 模板，实现「本地意图 → 云端执行 → 人工 merge」的轻量远端执行流程（#77）
-- **新用户默认 OpenCode Zen 免费模型 + 自动引导**：新用户零成本开箱即用，启动时自动引导（#76）
+- **半自动化 GitHub 开发工作流**：新增 `/gh-issue` 命令、`gh-flow/` 远程工作区模板与 `.github/workflows/agent-run.yml` + issue 模板，实现「本地意图 → 云端执行 → 人工 merge」的轻量远端执行流程（[#77](https://github.com/cgartlab/men/issues/77)）
+- **新用户默认 OpenCode Zen 免费模型 + 自动引导**：新用户零成本开箱即用，启动时自动引导（[#76](https://github.com/cgartlab/men/issues/76)）
 
 ### Changed
 
-- **Agent 提示词与行为规范优化**：重构全 6 角色 system prompt、行为准则与 OpenCode 集成（#75）
+- **Agent 提示词与行为规范优化**：重构全 6 角色 system prompt、行为准则与 OpenCode 集成（[#75](https://github.com/cgartlab/men/issues/75)）
 
 ### Fixed
 
@@ -183,25 +208,26 @@
 - **install.ps1 退出码传播**：直接运行 `./install.ps1` 时传播 node 的退出码（`irm | iex` 管道模式仍 `return` 不关会话）
 - **verify.mjs 路径解析修正**：`extractSuccessPaths` 正则跳过 `//` 注释与单字符路径，修复 Windows 上 `verify.mjs men` 将目标解析为驱动器根目录 `D:\`（导致扫描全盘）的问题
 - **@opencode-ai/plugin 版本同步**：`.opencode/package.json` 缺失时模板 fallback 版本 1.18.23 → 1.18.25，并补充 `@opentui/core` / `@opentui/solid` 兜底依赖
-- **agent-run 工作流三处缺陷修复**（#79/#81/#82/#84）：`actions/checkout` 清空工作目录导致 `issue-body.md` 丢失；gh 命令执行前无法推断仓库（补 `GH_REPO` 环境变量）；CI 缺少 opencode-go provider 配置并增强失败诊断
+- **agent-run 工作流三处缺陷修复**（[#79](https://github.com/cgartlab/men/issues/79)/[#81](https://github.com/cgartlab/men/issues/81)/[#82](https://github.com/cgartlab/men/issues/82)/[#84](https://github.com/cgartlab/men/issues/84)）：`actions/checkout` 清空工作目录导致 `issue-body.md` 丢失；gh 命令执行前无法推断仓库（补 `GH_REPO` 环境变量）；CI 缺少 opencode-go provider 配置并增强失败诊断
 
-## [v0.3.7] - 2026-09-02
+## [v0.3.7](https://github.com/cgartlab/men/compare/v0.3.6...v0.3.7) - 2026-09-02
 
-### Added
+> **TL;DR**：无实质变更，纯修复发版（空条目版本，仅补齐 tag 序列）。
+> **你需要做什么**：无需升级。
 
-### Changed
+## [v0.3.6](https://github.com/cgartlab/men/compare/v0.3.5...v0.3.6) - 2026-09-02
 
-### Fixed
-
-## [v0.3.6] - 2026-09-02
+> **TL;DR**：`--global` **完整全局安装 + 一键卸载**（补齐 v0.3.2 只注册 tui.json 未覆盖的完整全局能力）。
+> **你需要做什么**：需要全局使用 Men 侧边栏时改用 `--global` / `--global-remove`。
 
 ### Added
 
 - **install.mjs 全局安装/卸载**：新增 `--global` 完整全局安装（部署 agents/commands/skills 到 `~/.config/opencode`，含 opencode.json 与 TUI 注册，任意目录生效）；新增 `--global-remove` 一键卸载（删除部署资产 + 还原 opencode.json + 注销 TUI 插件）——补齐 v0.3.2 侧边栏全局化（仅注册 tui.json）未覆盖的完整全局能力
 
-## [v0.3.5] - 2026-09-02
+## [v0.3.5](https://github.com/cgartlab/men/compare/v0.3.4...v0.3.5) - 2026-09-02
 
-> 工程化加固 + MCP 归属回归
+> **TL;DR**：**工程化加固**（116 项测试基线 + code-hygiene 扫描防线 + 知识沉淀）；**MCP 归属回归 CC Switch**（`opencode.json` 移除全部 7 个 MCP 配置）；men-update 新增刷新 npm 缓存步骤解决侧边栏版本滞后。
+> **你需要做什么**：**MCP 配置全部移到 CC Switch 管理**（此前仓库 `opencode.json` 越权携带过时 MCP 导致 MCP 大面积瘫痪，本次修正）；更新后请执行 men-update 第 4 步刷新缓存。
 
 ### Added
 
@@ -218,9 +244,12 @@
 
 ### Fixed
 
-- 7 个 tech-debt issue 修复：`#63` console.log MEN_DEBUG 门控 / `#66` update-check 超时常量 / `#67` release 超时分支防御 / `#64` 空 catch 分级日志
+- 7 个 tech-debt issue 修复：[#63](https://github.com/cgartlab/men/issues/63) console.log MEN_DEBUG 门控 / [#66](https://github.com/cgartlab/men/issues/66) update-check 超时常量 / [#67](https://github.com/cgartlab/men/issues/67) release 超时分支防御 / [#64](https://github.com/cgartlab/men/issues/64) 空 catch 分级日志
 
-## [v0.3.4] - 2026-08-31
+## [v0.3.4](https://github.com/cgartlab/men/compare/v0.3.3...v0.3.4) - 2026-08-31
+
+> **TL;DR**：安装体验大修 —— 运行环境检测、进度反馈、配置自动备份（不再静默覆盖）、更友好的错误提示；修复 Windows 一键安装误关终端。
+> **你需要做什么**：无。首次使用且未配置模型的用户，文档已明确引导先配置。
 
 ### Added
 
@@ -242,7 +271,10 @@
 - 官网修正一处必然报错的 Windows 安装示例（带参数的管道安装）
 - 一键脚本网络失败时提供中文修复引导（git clone / curl 场景）
 
-## [v0.3.3] - 2026-08-29
+## [v0.3.3](https://github.com/cgartlab/men/compare/v0.3.2...v0.3.3) - 2026-08-29
+
+> **TL;DR**：**两个自动化插件**（men-verify 自动验证 + men-learn 自动学习）+ 全量 rebrand 为「Men Agent 团队」+ 删除手写调度器（−1433 行，转 OpenCode 原生插件架构）；`question` 工具启用交互式建议。
+> **你需要做什么**：无。若你的文档引用了旧协议步数（9 步），现为 **10 步**。
 
 ### Added
 - men-verify 自动化插件：写产物后自动跑 `verify.mjs` 五项机械验证
@@ -262,27 +294,28 @@
 - `learn.mjs` 事件 type 对齐 14 种 KINDS 枚举（消除坏事件行）
 - 站点：10 步编排 SVG 标签、技能包计数 14→15 修正
 
-## [v0.3.2] - 2026-08-28
+## [v0.3.2](https://github.com/cgartlab/men/compare/v0.3.1...v0.3.2) - 2026-08-28
 
-### Added
-
-### Changed
+> **TL;DR**：侧边栏**全局化**（`--global` 把 `@cgartlab/men` 注册进全局 `tui.json`），任意目录启动 OpenCode 都能看到 Men 侧边栏。
+> **你需要做什么**：希望侧边栏全局可用时运行 `npx @cgartlab/men --global`。
 
 ### Fixed
 
 - 侧边栏全局化：新增 `install.mjs --global`（把 `@cgartlab/men` 注册进全局 `tui.json`）；根 `package.json` 补 `exports["./server"]`/`exports["./tui"]` 与 `@opentui/*` 依赖，使 OpenCode 启动自动安装 npm 包后，**任意目录**都能显示 Men 侧边栏（仅改 tui.json，不触碰 CC Switch 管理的 opencode.json）
 
-## [v0.3.1] - 2026-08-27
+## [v0.3.1](https://github.com/cgartlab/men/compare/v0.3.0...v0.3.1) - 2026-08-27
 
-### Added
-
-### Changed
+> **TL;DR**：修复 OpenCode 侧边栏不显示 Men 配置（TUI 插件无目录自动发现，必须在 `tui.json` 显式声明）。
+> **你需要做什么**：重新安装即可修复侧边栏不显示的问题。
 
 ### Fixed
 
 - 修复 OpenCode 侧边栏不显示 Men 配置：新增 `.opencode/tui.json` 声明 TUI 插件入口（TUI 插件无目录自动发现，必须在 `tui.json` 显式列出），并补 `@opentui/*` 依赖（`@opencode-ai/plugin` 的 peer deps），安装器 `npm install --prefix .opencode` 自动安装
 
-## [v0.3.0] - 2026-08-27
+## [v0.3.0](https://github.com/cgartlab/men/compare/v0.2.1...v0.3.0) - 2026-08-27
+
+> **TL;DR**：**npm 一行安装**（`npx @cgartlab/men` 完成脚手架+依赖+环境+端到端验证）+ 插件启动自动版本检查 + men-status / men-update 内置 skill；MCP 从 4 个可用补到 7 个全部可加载；删除孤儿配置。
+> **你需要做什么**：重新安装以获取一键安装能力；MCP 补齐 transport 后需在 `opencode.json` 重新启用。
 
 ### Added
 
@@ -304,13 +337,12 @@
 
 - config/mcporter.json：未被 opencode.json 引用的孤儿配置（exa 已由 opencode.json 原生声明），删除并清理全部残留引用
 
-## [v0.2.1] - 2026-08-27
+## [v0.2.1](https://github.com/cgartlab/men/compare/v0.2.0...v0.2.1) - 2026-08-27
 
-### ✨ Added
+> **TL;DR**：**6 个 agent 角色定位重构** —— men 确立为唯一任务编排核心（子角色不直接互编）、si 转思考者与知识管理者、ji 强化代码与写作执行、yi 转文生图提示词工程、chi 补数据统计、xun 强化"不核实不输出"；删除与 CC Switch 冲突的全局同步脚本。
+> **你需要做什么**：无（角色行为内部调整）；如你此前用 `scripts/sync-to-opencode.ps1`，改为通过 CC Switch UI 手动管理全局配置。
 
-_下一版本的新增内容将记录在此。_（当前为占位，保持空）
-
-### 🔄 Changed
+### Changed
 
 - **6 个 agent 角色定位重构**（`.opencode/agent/*.md`）— **是什么**：men 确立为**唯一任务编排与分工核心**（子角色不直接互编、协作经 men 分发）；si 从"规划器"转向**思考者与知识管理者**（深度思考、多角度方案，写作移交 ji）；ji 强化代码与写作执行、**文本绝对精准**；yi 核心转为**文生图提示词工程**（多方案提示词 → 出图，视频列为开发计划）；chi 补充**数据记录/统计/市场分析**；xun 强化**不核实不输出**。**为什么重要**：角色边界与调用关系更清晰，路由不再歧义。**怎么用**：任务分派直接按新定位执行。
 - **网站角色信息同步**（`site/`）— **是什么**：9 个站点文件 + README 的角色描述、路由表、协作拓扑图全部同步新定位；协作图**删除 si→ji/yi 直接连线**（协作经 men 分发）。**为什么重要**：站点展示与 agent 定义一致，避免误导。**怎么用**：访问站点角色页即可看到新定位。
@@ -318,18 +350,17 @@ _下一版本的新增内容将记录在此。_（当前为占位，保持空）
 - **技能计数修正**：14 → 13 个技能包（`si-content-write` 为历史空壳，移除；实际 si×2 / ji×4 / xun×3 / chi×2 / yi×2），AGENTS.md 与站点配置同步。
 - **hyperplan 术语同步**：`.opencode/command/hyperplan.md`、README、men 意图门表的"访谈式规划"统一为"深度思考与方案规划"。
 
-### 🗑️ Removed
+### Removed
 
 - **scripts/sync-to-opencode.ps1** — 删除 OpenCode 全局同步脚本。原因：全局配置由 CC Switch 统一管理，脚本写入会与 CC Switch 冲突（`provider`/`mcp`/`instructions` 等字段被覆盖后又被 CC Switch 回滚）。替代方案：通过 CC Switch UI 手动管理 agent / skills / commands 的全局配置。
 
-## [v0.2.0] - 2026-08-21
+## [v0.2.0](https://github.com/cgartlab/men/compare/v0.1.0...v0.2.0) - 2026-08-21
 <!-- 注：此日期为发布日（CHANGELOG 记录日）；对应 git tag `v0.2.0` 创建于 2026-08-22。 -->
 
-> 🏷️ **发布主题：「从代码仓库到可协作团队」**
-> 这一次，men 从"一个能跑的仓库"升级为"有标准、有流程、能自我学习的团队"。
-> **是什么**：补齐全部 GitHub 开源基础设施 + 接入自主学习回路。
+> 🏷️ **TL;DR**：从代码仓库到可协作团队 —— 补齐全部 GitHub 开源基础设施（LICENSE / CONTRIBUTING / SECURITY / 模板 / CODEOWNERS / Dependabot / CI）+ 接入 M7 自主学习回路（learn/eval 脚本 + knowledge/ 知识库）。
+> **你需要做什么**：无。推送后自动获得 PR 模板与 CI 检查；每次 `/ultrawork` 完成后系统自动沉淀经验到 `knowledge/`，无需手动整理。
+>
 > **为什么重要**：开源项目要有统一贡献规范（否则别人不知道怎么参与）；团队要有自动学习能力（否则同样的错误会重复犯）。
-> **怎么用**：推送到 GitHub 后自动获得 PR 模板、CI 检查、依赖更新提醒；每次 /ultrawork 完成后系统自动沉淀经验到 knowledge/，无需手动整理。
 
 ### ✨ Added（新增）
 
@@ -398,14 +429,13 @@ _下一版本的新增内容将记录在此。_（当前为占位，保持空）
 | ci.yml | 最近 5 次 CI run | 全部 success ✅ |
 | chi judge | 7/7 核心文档验收 | 全部 PASS ✅ |
 
-## [v0.1.0] - 2026-08-20
+## [v0.1.0](https://github.com/cgartlab/men/compare/v0.1.0) - 2026-08-20
 <!-- 注：此日期为发布日（CHANGELOG 记录日）；对应 git tag `v0.1.0` 创建于 2026-08-21。 -->
 
-> 🏷️ **发布主题：「首发：6+1 Agent 团队系统」**
-> 从零构建完整的 Agent 协作框架。
-> **是什么**：一次性搭建 6 个角色 + 1 个编排者（门/思/记/持/艺/寻）的完整 Agent 团队。
+> 🏷️ **TL;DR**：首发 —— 6+1 Agent 团队系统。从零搭建 6 个角色 + 1 个编排者（门/思/记/持/艺/寻）的完整 Agent 团队框架。
+> **你需要做什么**：`/ultrawork` 让团队并行干活，`/verify` 机械验证产物，`/hyperplan` 做深度规划。
+>
 > **为什么重要**：这是 men 的骨架，后续所有版本都在这个框架上长出来的。
-> **怎么用**：/ultrawork 让团队并行干活，/verify 机械验证产物，/hyperplan 做深度规划。
 
 ### ✨ Added（新增）
 
