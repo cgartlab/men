@@ -84,5 +84,11 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           api-key: ${{ secrets.OPENCODE_API_KEY }}
+          # 显式 pin 模型：argus config/free-models.yml（@main）生成于 2026-09-21，
+          # primary opencode/nemotron-3-ultra-free 与队列里 7 个 fallback 全已不在 live 免费目录，
+          # 导致 8 个模型全部返回 "Model access is disabled"（见 issue #164）。
+          # 此处覆盖为直接探测到的 live 免费模型；若本覆盖仍失败，则属账号级模型访问问题。
+          model: opencode/beam-free
+          fallback-models: opencode/deepseek-v4.1-flash-free,opencode/nemotron-3.5-super-vl-free,opencode/space-bunny-free
           # 消费方配置：使用仓库根 .argus.yml（已在 main，见 commit 48f79c8）
           config-path: .argus.yml
