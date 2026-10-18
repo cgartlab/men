@@ -8,7 +8,7 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:                # 维护者手动重跑
 
-# secrets 直接暴露为 env 变量，供 step 级 fail-fast 检查缺省（参考 v0.5.0 PR #98 / #104）。
+# secrets 直接暴露为 env 变量，供 step 级检查缺省（参考 v0.5.0 PR #98 / #104）。
 # 注意：env 上下文在 jobs.<job_id>.if 不可用（422 parse error），故缺 secret 检查放在 step 内。
 # 双引号包裹避免 YAML tag 歧义（PR #110 经验）。
 env:
@@ -29,8 +29,8 @@ concurrency:
 jobs:
   argus-review:
     # dependabot 触发的 run 拿不到仓库 secrets（GitHub 安全模型：只认 Dependabot secrets），
-    # 下方 fail-fast 必然假红；且 lockfile bump 没有前端设计可评审 → 直接跳过整个 job。
-    # 人类 PR 不受影响，缺 secret 仍 fail-fast。复盘见 PR #116。
+    # 下方 secrets 检查必然不通过；且 lockfile bump 没有前端设计可评审 → 直接跳过整个 job。
+    # 人类 PR 缺 secret 时不再 fail-fast，改为跳过评审并告警（issue #164）。复盘见 PR #116。
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15              # 兜底超时（argus 自身有 fallback 队列 + OpenCode 30min 保护）
@@ -45,31 +45,56 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---- secrets 校验（fail-fast，直接中断 job）----
-      - name: 校验密钥存在（fail-fast）
+      # ---- secrets 校验（缺 secret 时跳过评审，而不是让 job 失败）----
+      # 历史：原先缺 secret 直接 exit 1 → 每个未配置 secrets 的人类 PR 都带一个红 check，
+      # 与 #155（labeler 误标）同类的「假红噪音」，削弱 CI 信号可信度（issue #164）。
+      # 现改为：缺 secret 时输出 warning 并把 has_secrets=false 传给后续步骤，
+      # 后续步骤据此跳过。job 结论为 success，但会明确显示「评审未运行」的告警。
+      - name: 校验密钥存在
+        id: secrets-check
         run: |
           missing=""
-          [ "$ARGUS_FLASH_APP_ID" = "" ] && missing="ARGUS_FLASH_APP_ID"
+          [ "$ARGUS_FLASH_APP_ID" = "" ] && missing="$missing ARGUS_FLASH_APP_ID"
           [ "$ARGUS_FLASH_PRIVATE_KEY" = "" ] && missing="$missing ARGUS_FLASH_PRIVATE_KEY"
           [ "$OPENCODE_API_KEY" = "" ] && missing="$missing OPENCODE_API_KEY"
           if [ -n "$missing" ]; then
-            echo "::error::缺少 secrets:$missing"
-            echo "::error::配置指南见 docs/integrations/argus.md §3"
-            exit 1
+            echo "::warning::argus 设计评审未运行：缺少 secrets:$missing"
+            echo "::warning::这是配置缺失，不是代码问题。配置指南见 docs/integrations/argus.md §3"
+            echo "has_secrets=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "所有 secrets 就绪"
+            echo "has_secrets=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "所有 secrets 就绪"
 
       - name: Generate GitHub App token
         id: app-token
+        if: steps.secrets-check.outputs.has_secrets == 'true'
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.ARGUS_FLASH_APP_ID }}
           private-key: ${{ secrets.ARGUS_FLASH_PRIVATE_KEY }}
 
       - name: Run Argus Design Review
+        if: steps.secrets-check.outputs.has_secrets == 'true'
         uses: cgartlab/argus/.github/actions/argus-review@main
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           api-key: ${{ secrets.OPENCODE_API_KEY }}
           # 消费方配置：使用仓库根 .argus.yml（已在 main，见 commit 48f79c8）
           config-path: .argus.yml
+
+      - name: 评审跳过的说明（写入 job summary）
+        if: steps.secrets-check.outputs.has_secrets != 'true'
+        run: |
+          {
+            echo "## ⚠️ Argus 设计评审未运行"
+            echo ""
+            echo "本 job 因以下 secrets 未配置而跳过，**不代表代码有问题**："
+            echo ""
+            echo '```'
+            echo "ARGUS_FLASH_APP_ID / ARGUS_FLASH_PRIVATE_KEY / OPENCODE_API_KEY"
+            echo '```'
+            echo ""
+            echo "配置步骤见 \`docs/integrations/argus.md §3\`。"
+            echo "追踪：issue #164"
+          } >> "$GITHUB_STEP_SUMMARY"
