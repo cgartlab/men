@@ -35,6 +35,9 @@
 ## Web 与 a11y
 
 - 失误：小字强调色 12 处 AA 对比度违规 → 规则：小字用 `--color-accent-dark`，改色后实算 WCAG（commit f0928ea）
+- 失误：首页把信息做成"罗列卡片"，像 PPT 而不是有吸引力的门面；安装命令代码块看不清 → 规则：首页优先视觉叙事与信息层级，禁止罗列式卡片堆叠；安装命令块必须可读（等宽、足够字号、对比达标）（用户 2026-10 会话明确否决）
+- 失误：首页使用 emoji 充当图标 → 规则：首页**禁止任何 emoji**，改用与项目风格一致的开源免费图标库（用户明确要求）
+- 失误：文档页直接贴入未经适配的原始内容，风格不统一 → 规则：`site/src/pages/docs/*` 统一按 wiki 体改写（releases/quickstart/install/configure/architecture/governance 六页同一标准）
 - 失误：角色标签 14px 达不到 3:1 阈值 → 规则：标签文本按实算值升级到 20px/700（commit 9459700）
 - 失误：令牌注释里写"声称的对比度"而非实算 → 规则：注释写 WCAG 实算值，并加防回归检查器（commit a9cd200）
 - 失误：SVG 容器用 `role="img"` 吞掉 6 个交互节点的 AT 可见性 → 规则：交互型 SVG 用 `role="group"`（commit db4775d）
