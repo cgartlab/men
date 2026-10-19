@@ -89,11 +89,16 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           api-key: ${{ secrets.OPENCODE_API_KEY }}
-          # 显式 pin 模型：argus 的 config/free-models.yml（@main）生成于 2026-09-21，
-          # primary opencode/nemotron-3-ultra-free 与队列里 7 个 fallback 全已不在
-          # live 免费目录，导致全部模型返回 "Model access is disabled"（issue #164）。
-          # 此处覆盖为本机 `opencode models` 实测存在的 live 免费模型。
-          model: opencode/beam-free
-          fallback-models: opencode/deepseek-v4.1-flash-free,opencode/nemotron-3.5-super-vl-free,opencode/space-bunny-free
+          # 显式 pin 模型，不依赖 argus 自动生成的 free-models.yml：
+          # 那份清单按「模型是否存在于目录」生成，但**目录存在 ≠ 本账号/本地区可调用**。
+          #
+          # 实测（2026-10-19，opencode CLI + 本仓库的 OPENCODE_API_KEY）：
+          #   opencode/beam-free                     -> "This model is not available in your country"（地区封锁）
+          #   opencode/deepseek-v4.1-flash-free      -> OK（连跑 2 次均成功）
+          #   opencode/nemotron-3.5-super-vl-free    -> OK（连跑 2 次均成功）
+          #   opencode/space-bunny-free              -> OK（连跑 2 次均成功）
+          # 因此 primary 不能再用 beam-free，改用实测可用的 deepseek-v4.1-flash。
+          model: opencode/deepseek-v4.1-flash-free
+          fallback-models: opencode/nemotron-3.5-super-vl-free,opencode/space-bunny-free
           # 消费方配置：使用仓库根 .argus.yml（已在 main，见 commit 48f79c8）
           config-path: .argus.yml
