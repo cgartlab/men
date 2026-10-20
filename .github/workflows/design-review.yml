@@ -89,18 +89,9 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           api-key: ${{ secrets.OPENCODE_API_KEY }}
-          # 显式 pin 模型，不依赖 argus 自动生成的 free-models.yml：
-          # 那份清单按「模型是否存在于目录」生成，但**目录存在 ≠ 本账号/本地区可调用**。
-          #
-          # 实测（2026-10-19，opencode CLI + 本仓库的 OPENCODE_API_KEY）：
-          #   opencode/beam-free                     -> "This model is not available in your country"（地区封锁）
-          #   opencode/deepseek-v4.1-flash-free      -> OK（连跑 2 次均成功）
-          #   opencode/nemotron-3.5-super-vl-free    -> OK（连跑 2 次均成功）
-          # 因此 primary 不能再用 beam-free，改用实测可用的 deepseek-v4.1-flash。
-          #
-          # 2026-10-20 更新：space-bunny-free 已从 Zen 目录下架
-          # （GET /zen/v1/models 已无此条目），故从 fallback 移除。
-          model: opencode/deepseek-v4.1-flash-free
-          fallback-models: opencode/nemotron-3.5-super-vl-free
+          # 不 pin 模型：使用 argus 自动刷新的队列（config/free-models.yml）。
+          # 该队列有 3 层防护——refresh 过滤 deprecated / regions:[] 标记，
+          # --check 拦截非法队列，上游 CI 每次 push 校验。
+          # 需要排查模型可用性时见 docs/integrations/argus.md §6.2。
           # 消费方配置：使用仓库根 .argus.yml（已在 main，见 commit 48f79c8）
           config-path: .argus.yml
