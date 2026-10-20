@@ -71,7 +71,8 @@ Argus 的评审结果直接对应 men 的汇总报告模板：
 
 ```bash
 # 本地手动触发（模拟 GitHub Action 流程）
-# 模型用本仓库 pin 的可用模型（见 design-review.yml；Zen 目录会漂移，用前先核对）
+# 模型用 argus 当前队列的 primary（见 argus 的 config/free-models.yml；
+# Zen 目录会漂移，用前先核对，或用本仓库的 OPENCODE_API_KEY 实测）
 opencode github run --model opencode/deepseek-v4.1-flash-free --auto --print-logs "
 你是云端执行 agent。处理 men 仓库的 PR #PR_NUMBER。
 
@@ -135,9 +136,11 @@ opencode github run --model opencode/deepseek-v4.1-flash-free --auto --print-log
 3. 拉当前目录确认模型是否还在：`curl -s https://opencode.ai/zen/v1/models` —— 目录会漂移（实测 `space-bunny-free` 于 2026-10-20 前后下架）
 4. 在 argus 仓库的 `config/model-scores.yml` 补标记 → 上游 weekly workflow 会自动生成正确的清单 PR
 
-**本仓库（men）的 model pin 是独立的一份清单**：`design-review.yml` 里显式 pin 了 `model` / `fallback-models`，**会覆盖** argus 自动生成的队列。两份清单各自漂移——上游队列更新时本仓库不会自动跟随。
+**本仓库不 pin 模型**：`design-review.yml` 不传 `model` / `fallback-models`，直接使用 argus 自动刷新的队列（`config/free-models.yml`）——**单一事实源**，上游更新时本仓库自动跟随。
 
-> **维护约定**：argus 侧队列更新后，务必核对本仓库 `design-review.yml` 的 pin 是否仍指向可用模型；发现已下架的模型，从 `fallback-models` 移除并在注释中标注下架事实（参见 PR #173 的处理方式）。
+> **为什么不 pin**：2026-10-19 ~ 10-20 期间，men 曾显式 pin 模型（PR #173），当时上游队列机制尚未修好，pin 是临时止血。该止血完成后两份清单内容已完全相同，保留 pin 反而制造了「两份要同步、各自漂移、无告警」的问题。已于 PR #175 移除。
+>
+> **上游队列的 3 层防护**：`refresh()` 过滤 `deprecated` / `regions: []` 标记 → `--check` 拦截非法队列 → 上游 CI 每次 push 跑 `Model Config Change Tests`。模型可用性问题在上游修（改 `model-scores.yml`），本仓库无需改动。
 
 ## 7. 版本同步
 
@@ -145,7 +148,7 @@ opencode github run --model opencode/deepseek-v4.1-flash-free --auto --print-log
 |------|----------|
 | `AGENTS.md` | 本项目 v0.6.1（版本号由 `release.mjs` 发版时同步，不手写日期） |
 | `docs/integrations/argus.md` | Sync: 每次发版重审，确认 BSL/license 状态未变；§6.2 模型队列条目随上游 argus 队列机制变化复核 |
-| `design-review.yml` | Sync: CI 变更同步至 main 分支；`model` / `fallback-models` pin 需与上游 argus 队列可用集保持一致（见 §6.2 维护约定） |
+| `design-review.yml` | Sync: CI 变更同步至 main 分支；**不 pin 模型**——模型队列由上游 argus 自动刷新维护（见 §6.2） |
 | `.argus.yml` | Sync: 2026-08-31 commit，见 `git log 48f79c8` |
 
 --- 
@@ -153,6 +156,6 @@ opencode github run --model opencode/deepseek-v4.1-flash-free --auto --print-log
 **相关文件**
 
 - `.argus.yml` —— 本地消费方配置（已在 main，commit 48f79c8）
-- `.github/workflows/design-review.yml` —— CI 流程（已升级：secrets fail-fast + model pin）
+- `.github/workflows/design-review.yml` —— CI 流程（已升级：secrets fail-fast；模型用上游自动队列）
 - `AGENTS.md` 项目状态段 --- Argus 集成说明
 - `docs/men-integration.md` --- men-api-version: 1 契约定义（外部契约）
