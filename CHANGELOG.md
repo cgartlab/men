@@ -19,7 +19,7 @@
 
 ## [Unreleased](https://github.com/cgartlab/men/compare/v0.6.1...main)
 
-> **TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。
+> **TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。
 > **你需要做什么**：无。纯 CI 与文档站改动，无 API / 配置 / CLI 变化。
 
 ### Added
@@ -33,6 +33,12 @@
 - **站点品牌换新 · 配色**：全站令牌切换到暖纸底 `#faf9f5` + 暖墨褐 `#2b2a27`（非纯黑）+ 赤陶 `#d77656` 体系；角色色整体降饱和（雾蓝 / 苔绿 / 赭金 / 灰紫 / 蓝紫灰），并为每个角色补 `--role-*-text` 深色变体使小字达标；五级前景梯度重新校准到「纸底 + 暖底」双基准 ≥4.5:1
 - **站点品牌换新 · 标识**：`favicon.svg` 与 `GateLogo.astro` 换为新造型；孔径按尺寸在 `R`（≥48px）与 `R/φ`（<48px）之间切换，避免下方凹口在小尺寸下断线
 - **站点文案去术语化**：首页与文档页把内部术语（IntentGate / plan envelope / subagent / Wave / L1 验证 等）改写为面向读者的日常表达，`content.json` 与各页面同步
+- **argus 评审模型改由上游队列提供，本仓库不再 pin**（[#175](https://github.com/cgartlab/men/pull/175)）：`design-review.yml` 不再传 `model` / `fallback-models`，直接使用 `cgartlab/argus` 自动刷新的队列（`config/free-models.yml`）作为单一事实源。此前 pin 是上游队列长期过期时的临时止血；上游已加 `deprecated` / `regions: []` 两道过滤后，pin 与队列内容完全相同，保留只会变成两份各自漂移、无告警的清单
+- **`docs/integrations/argus.md` 补模型队列排查**（[#174](https://github.com/cgartlab/men/pull/174), [#176](https://github.com/cgartlab/men/pull/176)）：新增 §6.2「模型队列类」故障排查——区分三种失效模式（`Model not found` → `deprecated`；`RegionError` → `regions: []`；`Model access is disabled` → 换模型）及判定流程；补 §3 App 权限边界（不需要 `Contents: write`）、§4 本地验证的 OpenCode 1.x 要求
+
+### Fixed
+
+- **argus 评审 fallback 里含已下架的 `space-bunny-free`**（[#173](https://github.com/cgartlab/men/pull/173)）：该模型已从 Zen 目录下架（`GET /zen/v1/models` 不再返回），从 fallback 移除。同时确认上游失败根因不在本仓库的 secrets（三个 secret 均已配置且有效），而是上游队列推荐了不可调用的模型
 
 ## [v0.6.1](https://github.com/cgartlab/men/compare/v0.6.0...v0.6.1) - 2026-10-07
 
