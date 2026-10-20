@@ -332,22 +332,75 @@ export function procFailInfo(r, timeoutMs) {
   return `exit ${r?.status ?? -1}`;
 }
 
+// ── CI 状态判定（纯函数，可单测）────────────────────────────────
+//
+// 从 checkRemoteCiStatus 里抽出来，因为它有两条独立的、都很容易写错的规则：
+//
+// 1) combined status：GitHub 在「该 commit 没有任何 legacy status」时返回
+//    state="pending" —— 那是 API 的默认值，不是"还有 status 没跑完"。
+//    只用 GitHub Actions v2+（check-runs）的仓库 total_count 恒为 0，
+//    只读 .state 会把每一个绿灯 commit 都判成红。
+//    → 只有「state != success 且 total_count > 0」才是真的红。
+//
+// 2) check-runs：结论为 failure/cancelled/timed_out/action_required 的是红；
+//    还没跑完的（status != completed）**也是红** —— 门禁不能在 CI 没跑完时放行。
+export function evaluateCiState({ statusState, statusTotal, checks }) {
+  const FAIL_CONCLUSIONS = new Set(["failure", "cancelled", "timed_out", "action_required"]);
+  const list = Array.isArray(checks) ? checks : [];
+  const failedChecks = list.filter((c) => FAIL_CONCLUSIONS.has(c.conclusion));
+  const pendingChecks = list.filter((c) => c.status !== "completed");
+  const statusIsRed = statusState !== null && statusState !== "success" && (statusTotal || 0) > 0;
+  const hasCheckEvidence = list.length > 0;
+  const hasStatusEvidence = (statusTotal || 0) > 0;
+
+  const reasons = [];
+  if (statusIsRed) {
+    reasons.push(`combined status = "${statusState}"（${statusTotal} 个 legacy status）`);
+  }
+  if (failedChecks.length > 0) {
+    reasons.push(`失败 checks: ${failedChecks.map((c) => c.name).join(", ")}`);
+  }
+  if (pendingChecks.length > 0) {
+    reasons.push(`未完成 checks: ${pendingChecks.map((c) => c.name).join(", ")}`);
+  }
+  // No CI evidence at all → cannot claim "green". A gate that says "publish
+  // ok" must be able to point at something that actually ran.
+  if (!hasCheckEvidence && !hasStatusEvidence) {
+    reasons.push("未找到任何 CI 证据（check-runs 与 legacy status 均为空）");
+  }
+
+  const red =
+    statusIsRed ||
+    failedChecks.length > 0 ||
+    pendingChecks.length > 0 ||
+    (!hasCheckEvidence && !hasStatusEvidence);
+
+  return {
+    ok: !red,
+    reason: reasons.join("；") || "",
+    statusIsRed,
+    failedChecks,
+    pendingChecks,
+    hasCheckEvidence,
+    hasStatusEvidence,
+  };
+}
+
 /**
  * 校验远端 GitHub CI 状态（Issue #156 方案 B）。
  *
  * 用 `gh api` 查询给定 commit 的 combined status 与 check-runs：
  *  - combined status：`/repos/{owner}/{repo}/commits/{sha}/status`（传统 statuses）
  *  - check-runs：`/repos/{owner}/{repo}/commits/{sha}/check-runs`
- *  任一 check 状态为 failure / cancelled / timed_out / action_required →
- *  判为 CI 红，发布应被拒绝。
+ *  判红规则见 evaluateCiState（纯函数，可单测）。
  *
  * @param {object} opts
  * @param {string} opts.owner  GitHub owner（默认从 `gh api user` 或仓库 remote 解析）
  * @param {string} opts.repo   GitHub repo
  * @param {string} opts.sha    目标 commit SHA（默认 HEAD）
  * @param {number} opts.timeoutMs 超时毫秒（默认 30s）
- * @returns {{ ok: boolean, reason?: string, details?: object }}
- *   ok=true 表示 CI 全绿（或查询到明确 success）；ok=false 表示 CI 红或查询失败。
+ * @returns {{ ok: boolean, reason: string, details: object }}
+ *   ok=true 表示 CI 全绿；ok=false 表示 CI 红或查询失败。
  *   查询失败（gh 不可用 / 网络错误 / 无权限）时 ok=false 但 reason 以 "(查询失败)" 开头，
  *   调用方可决定是硬拒绝还是仅告警——本函数只报告事实。
  */
@@ -396,13 +449,46 @@ export function checkRemoteCiStatus({ owner, repo, sha, timeoutMs = 30_000 } = {
   }
 
   // 1) combined status（传统 statuses）
-  const statusRes = gh(["api", `repos/${nameWithOwner}/commits/${headSha}/status`, "--jq", ".state"]);
-  const statusState = statusRes.status === 0 ? (statusRes.stdout || "").trim() : null;
+  //
+  // GitHub returns state="pending" when the commit has NO legacy statuses at
+  // all (total_count == 0) — that is the API's default, not "a status is
+  // still running". Repos that only use GitHub Actions v2+ (check-runs)
+  // always have total_count == 0, so reading .state alone made this gate
+  // reject every green commit. Only a non-success state WITH statuses
+  // present is a real red signal.
+  const statusRes = gh([
+    "api", `repos/${nameWithOwner}/commits/${headSha}/status`,
+    "--jq", '[.state, (.total_count|tostring)] | join("|")',
+  ]);
+  let statusState = null;
+  let statusTotal = null;
+  if (statusRes.status === 0) {
+    const raw = (statusRes.stdout || "").trim();
+    const sep = raw.lastIndexOf("|");
+    if (sep > 0) {
+      statusState = raw.slice(0, sep);
+      const n = Number.parseInt(raw.slice(sep + 1), 10);
+      statusTotal = Number.isFinite(n) ? n : 0;
+    } else {
+      statusState = raw;
+      statusTotal = 0;
+    }
+  }
+  // No legacy statuses at all → the combined status carries no information.
+  // (The red/not-red decision lives in evaluateCiState so it can be unit-tested.)
 
   // 2) check-runs
+  //
+  // NOTE on the jq expression: it must not use the `"\(.name)"` interpolation
+  // form. In a JS single-quoted string, `\(` is an unknown escape, so JS drops
+  // the backslash and gh receives `(.name)` — jq then prints those literals
+  // verbatim. The result was six rows of literally "(.name)|(.status)|
+  // (.conclusion)", so every check parsed as a non-completed, non-failing
+  // placeholder: a genuinely FAILED check was reported as "not failing".
+  // The `[a, b] | join("|")` form needs no backslashes at all.
   const checksRes = gh([
     "api", `repos/${nameWithOwner}/commits/${headSha}/check-runs`, "--jq",
-    '.check_runs[] | "\(.name)|\(.status)|\(.conclusion)"',
+    '.check_runs[] | [.name, .status, (.conclusion // "")] | join("|")',
   ]);
 
   let checks = [];
@@ -421,38 +507,44 @@ export function checkRemoteCiStatus({ owner, repo, sha, timeoutMs = 30_000 } = {
   }
 
   // 解析失败 → 查询失败（gh api 报 404/超时等）
-  if (statusState === null && checksLookupFailed) {
+  //
+  // Fail-closed: EITHER query failing is a hard reject. A green combined
+  // status does NOT prove the checks passed — GitHub Actions v2+ workflow
+  // jobs publish check-runs, not legacy commit statuses, so the combined
+  // status says nothing about them. If the check-runs query failed we have
+  // no evidence about the checks at all, and a release gate must not certify
+  // "green" from partial evidence.
+  if (statusState === null || checksLookupFailed) {
     return {
       ok: false,
-      reason: `(查询失败) git status 与 check-runs 均不可用；statusRes=${procFailInfo(statusRes, timeoutMs)} checksRes=${procFailInfo(checksRes, timeoutMs)}`,
-      details: { nameWithOwner, headSha, statusState: null, checks: [] },
+      reason: `(查询失败) 无法完整读取 CI 状态；statusRes=${procFailInfo(statusRes, timeoutMs)} checksRes=${procFailInfo(checksRes, timeoutMs)}`,
+      details: { nameWithOwner, headSha, statusState, statusTotal, checks: [] },
     };
   }
 
   // 判定：编译成统一结论
-  const FAIL_CONCLUSIONS = new Set(["failure", "cancelled", "timed_out", "action_required"]);
-  const failedChecks = checks.filter((c) => FAIL_CONCLUSIONS.has(c.conclusion));
-  const red =
-    (statusState !== null && statusState !== "success") ||
-    failedChecks.length > 0;
+  const verdict = evaluateCiState({ statusState, statusTotal, checks });
 
-  if (red) {
-    const reasons = [];
-    if (statusState !== null && statusState !== "success") {
-      reasons.push(`combined status = "${statusState}"`);
-    }
-    if (failedChecks.length > 0) {
-      reasons.push(`失败 checks: ${failedChecks.map((c) => c.name).join(", ")}`);
-    }
+  if (!verdict.ok) {
     return {
       ok: false,
-      reason: reasons.join("；") || "CI 非绿",
-      details: { nameWithOwner, headSha, statusState, checks },
-      failedChecks,
+      reason: verdict.reason || "CI 非绿",
+      details: { nameWithOwner, headSha, statusState, statusTotal, checks },
+      failedChecks: verdict.failedChecks,
+      pendingChecks: verdict.pendingChecks,
     };
   }
 
-  return { ok: true, details: { nameWithOwner, headSha, statusState, checks } };
+  // `reason` is present on every branch (empty string when green): the
+  // declared contract is "ok:boolean + reason:string + details:object", and
+  // callers (and tests) read r.reason unconditionally.
+  return {
+    ok: true,
+    reason: "",
+    details: { nameWithOwner, headSha, statusState, statusTotal, checks },
+    failedChecks: verdict.failedChecks,
+    pendingChecks: verdict.pendingChecks,
+  };
 }
 
 // ─────────────────────────── 主流程 ───────────────────────────
