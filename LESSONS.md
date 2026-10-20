@@ -54,3 +54,5 @@
 - 失误：workflow 里含 `!` 的 env 表达式未加引号 → 规则：YAML `!` 开头的表达式加引号；argus-review job 需要 `contents:write`（commit fff47ac）
 - 失误：在根目录安装 node 依赖 → 规则：依赖装在 `.opencode/node_modules/` 本地，不共享根目录（见 AGENTS.md「Node 环境」）
 - 失误：忽略 Argus 的 BSL 1.1 许可 → 规则：对外发布 `@cgartlab/men` 或在商业产品中使用前，评估 BSL 1.1 合规风险（见 AGENTS.md「Argus Design Review 集成」）
+- 失误：门禁 workflow 用了 `verify.mjs .`（扫全仓）而 ci.yml 用 `verify.mjs men`（扫角色产物）——扫全仓会命中**扫描器自己的正则样例**（`password=<redacted>,`）和**测试文件里的标识符**（`checkTodos`），2 项误报让门禁 exit 1；但这个门禁从 v0.6.1 起**一次都没被触发过**（没有 tag push），所以没人发现它必红 → 规则：**门禁里引用的命令必须与 ci.yml 里已在跑的那条完全一致**（`npm run verify`）；且「YAML 结构检查通过」不等于「门禁能跑通」——新 workflow 必须用**干净树 + 干净 remote**实跑一遍全部步骤再合并
+- 失误：测试用例断言 `r.details` 是对象，但 `checkRemoteCiStatus` 的两条早退分支只返回 `{ok, reason}` → 规则：**测试环境依赖要显式声明**（该用例依赖 `gh repo view` 能成功，也就是依赖当前目录有 git remote；用 `git archive` 做的沙箱没有 `.git`，会假失败）
