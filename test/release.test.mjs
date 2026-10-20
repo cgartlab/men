@@ -283,6 +283,35 @@ test('release checkRemoteCiStatus: 显式无效 sha → ok:false，不抛异常'
   assert.ok(r.reason.length > 0);
 });
 
+// 早退分支（无法解析 owner/repo）必须也带 details：调用方把 ci.details 放进
+// 错误报告，而 JSON.stringify 会丢掉 undefined 键 —— 早退时若缺 details，
+// 报告就会静默少一个字段。上一条用例走的是正常路径，覆盖不到这里。
+test('release checkRemoteCiStatus: 无法解析 owner/repo → 早退分支仍返回 details 对象', () => {
+  // 早退分支要同时满足两个条件才能到达：
+  //   1. `gh repo view` 失败 → 用 PATH 前置的假 gh（exit 1）强制
+  //   2. `git config --get remote.origin.url` 失败 → 用 GIT_DIR 指向不存在路径绕开仓库配置
+  // 只传空 owner/repo 是不够的：空串是 falsy，会走 gh 推断分支。
+  const shimDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gh-shim-'));
+  const realPath = process.env.PATH;
+  const realGitDir = process.env.GIT_DIR;
+  try {
+    fs.writeFileSync(path.join(shimDir, 'gh.cmd'), '@echo off\r\nexit /b 1\r\n');
+    process.env.PATH = `${shimDir}${path.delimiter}${realPath}`;
+    process.env.GIT_DIR = path.join(shimDir, 'no-such-git-dir');
+
+    const r = checkRemoteCiStatus({});
+    assert.strictEqual(r.ok, false);
+    assert.match(r.reason, /无法解析 GitHub 仓库 owner\/repo/);
+    assert.strictEqual(typeof r.details, 'object');
+    assert.notStrictEqual(r.details, null);
+  } finally {
+    process.env.PATH = realPath;
+    if (realGitDir === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = realGitDir;
+    fs.rmSync(shimDir, { recursive: true, force: true });
+  }
+});
+
 // ── 黑盒：dry-run ────────────────────────────────────────
 test('release blackbox: --dry-run --json exits 0 with ok:true', () => {
   const tmp = makeTmp();

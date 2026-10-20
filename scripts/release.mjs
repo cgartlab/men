@@ -376,7 +376,11 @@ export function checkRemoteCiStatus({ owner, repo, sha, timeoutMs = 30_000 } = {
     }
   }
   if (!nameWithOwner) {
-    return { ok: false, reason: "(查询失败) 无法解析 GitHub 仓库 owner/repo" };
+    // `details` is always present (see the contract asserted in
+    // test/release.test.mjs): the caller puts it in the error report as
+    // `ci: ci.details`, and JSON.stringify drops undefined keys — so an
+    // early return without it would silently lose the field.
+    return { ok: false, reason: "(查询失败) 无法解析 GitHub 仓库 owner/repo", details: {} };
   }
 
   // 目标 SHA：显式传入优先，否则 HEAD
@@ -386,7 +390,7 @@ export function checkRemoteCiStatus({ owner, repo, sha, timeoutMs = 30_000 } = {
       encoding: "utf-8", shell: false, timeout: 10_000, cwd: ROOT,
     });
     if (rv.status !== 0) {
-      return { ok: false, reason: "(查询失败) 无法获取 HEAD SHA" };
+      return { ok: false, reason: "(查询失败) 无法获取 HEAD SHA", details: {} };
     }
     headSha = (rv.stdout || "").trim();
   }

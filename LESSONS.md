@@ -54,3 +54,6 @@
 - 失误：workflow 里含 `!` 的 env 表达式未加引号 → 规则：YAML `!` 开头的表达式加引号；argus-review job 需要 `contents:write`（commit fff47ac）
 - 失误：在根目录安装 node 依赖 → 规则：依赖装在 `.opencode/node_modules/` 本地，不共享根目录（见 AGENTS.md「Node 环境」）
 - 失误：忽略 Argus 的 BSL 1.1 许可 → 规则：对外发布 `@cgartlab/men` 或在商业产品中使用前，评估 BSL 1.1 合规风险（见 AGENTS.md「Argus Design Review 集成」）
+- 失误：门禁 workflow 用了 `verify.mjs .`（扫全仓）而 ci.yml 用 `verify.mjs men`（扫角色产物）——扫全仓会命中**扫描器自己的正则样例**（`password=<redacted>,`）和**测试文件里的标识符**（`checkTodos`），2 项误报让门禁 exit 1；但这个门禁从 v0.6.1 起**一次都没被触发过**（没有 tag push），所以没人发现它必红 → 规则：**门禁里引用的命令必须与 ci.yml 里已在跑的那条完全一致**（`npm run verify`）；且「YAML 结构检查通过」不等于「门禁能跑通」——新 workflow 必须用**干净树 + 干净 remote**实跑一遍全部步骤再合并
+- 失误：测试用例断言 `r.details` 是对象，但 `checkRemoteCiStatus` 的两条早退分支只返回 `{ok, reason}` → 规则：**函数返回值要么所有分支字段齐全，要么调用方容忍缺字段**（这里调用方把 `ci.details` 放进错误报告，而 `JSON.stringify` 会丢掉 `undefined` 键，报告就静默少一个字段）；且**测试要真的走到目标分支才算数**——原用例名叫「无 git 目录 → 查询失败」，但仓库有 remote 时 `gh repo view` 成功，压根到不了早退分支 → 规则：**造目标分支的测试要显式构造前置条件**（这里用 PATH 前置假 `gh` + `GIT_DIR` 指向不存在路径），并验证「去掉修复后该测试确实失败」
+- 失误：用 `git archive` 造的沙箱跑测试，出现 `checkRemoteCiStatus` 假失败 → 规则：**沙箱环境要复刻 CI 的必要条件**（该沙箱没有 `.git` → 没有 git remote → 早退分支行为不同）；结论不可信前先问「这个失败是我的改动造成的吗」

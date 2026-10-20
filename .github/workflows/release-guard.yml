@@ -45,7 +45,15 @@ jobs:
         run: npm test
 
       - name: Verify deliverables (mechanical checks)
-        run: node scripts/verify.mjs . --json
+        # Use the same target as ci.yml ("npm run verify" = `verify.mjs men`).
+        # `verify.mjs .` scans the WHOLE tree, which includes this repo's own
+        # scanner patterns and test fixtures: checkSecrets matches its own
+        # regex examples (password=<redacted>,) and checkTodos matches the
+        # literal "checkTodos" identifier in test/verify.test.mjs. Those are
+        # false positives — no real secret, no real TODO — but they make the
+        # gate exit 1, so the first tag push would have turned this workflow
+        # red. `npm run verify` is the invocation ci.yml already runs green.
+        run: npm run verify
 
       - name: Release dry-run (script itself must pass)
         run: node scripts/release.mjs --dry-run --json
