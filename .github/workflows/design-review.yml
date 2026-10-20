@@ -96,9 +96,11 @@ jobs:
           #   opencode/beam-free                     -> "This model is not available in your country"（地区封锁）
           #   opencode/deepseek-v4.1-flash-free      -> OK（连跑 2 次均成功）
           #   opencode/nemotron-3.5-super-vl-free    -> OK（连跑 2 次均成功）
-          #   opencode/space-bunny-free              -> OK（连跑 2 次均成功）
           # 因此 primary 不能再用 beam-free，改用实测可用的 deepseek-v4.1-flash。
+          #
+          # 2026-10-20 更新：space-bunny-free 已从 Zen 目录下架
+          # （GET /zen/v1/models 已无此条目），故从 fallback 移除。
           model: opencode/deepseek-v4.1-flash-free
-          fallback-models: opencode/nemotron-3.5-super-vl-free,opencode/space-bunny-free
+          fallback-models: opencode/nemotron-3.5-super-vl-free
           # 消费方配置：使用仓库根 .argus.yml（已在 main，见 commit 48f79c8）
           config-path: .argus.yml
