@@ -21,6 +21,7 @@ import {
   parseArgs,
   procFailInfo,
   checkRemoteCiStatus,
+  evaluateCiState,
   VERSION_JSON_FILES,
   VERSION_TEXT_FILES,
   syncVersionText,
@@ -310,6 +311,70 @@ test('release checkRemoteCiStatus: 无法解析 owner/repo → 早退分支仍�
     else process.env.GIT_DIR = realGitDir;
     fs.rmSync(shimDir, { recursive: true, force: true });
   }
+});
+
+// 门禁的判定逻辑必须「红绿分明」，不能两头出错。evaluateCiState 是从
+// checkRemoteCiStatus 里抽出来的纯函数，直接单测它（不依赖网络）。
+//
+// 1) combined status：GitHub 在「该 commit 没有任何 legacy status」时返回
+//    state="pending" —— 那是 API 默认值，不是"还有 status 没跑完"。
+//    只用 GitHub Actions v2+（check-runs）的仓库 total_count 恒为 0，
+//    只读 .state 会把每一个绿灯 commit 都判成红。
+// 2) 还没跑完的 check（status != completed）也不能当绿灯放行。
+test('release evaluateCiState: total_count=0 + check 全绿 → ok:true', () => {
+  const v = evaluateCiState({
+    statusState: 'pending',
+    statusTotal: 0,
+    checks: [
+      { name: 'build', status: 'completed', conclusion: 'success' },
+      { name: 'CodeQL', status: 'completed', conclusion: 'success' },
+    ],
+  });
+  assert.strictEqual(v.ok, true);
+  assert.strictEqual(v.failedChecks.length, 0);
+  assert.strictEqual(v.pendingChecks.length, 0);
+});
+
+test('release evaluateCiState: 有 check 失败 → ok:false 且指名该 check', () => {
+  const v = evaluateCiState({
+    statusState: 'pending',
+    statusTotal: 0,
+    checks: [
+      { name: 'build', status: 'completed', conclusion: 'failure' },
+      { name: 'CodeQL', status: 'completed', conclusion: 'success' },
+    ],
+  });
+  assert.strictEqual(v.ok, false);
+  assert.match(v.reason, /build/);
+  assert.strictEqual(v.failedChecks.length, 1);
+  assert.strictEqual(v.failedChecks[0].name, 'build');
+});
+
+test('release evaluateCiState: 有 check 未完成 → ok:false（不能当绿灯）', () => {
+  const v = evaluateCiState({
+    statusState: 'pending',
+    statusTotal: 0,
+    checks: [{ name: 'build', status: 'in_progress', conclusion: '' }],
+  });
+  assert.strictEqual(v.ok, false);
+  assert.match(v.reason, /未完成 checks/);
+  assert.strictEqual(v.pendingChecks.length, 1);
+});
+
+test('release evaluateCiState: 真的有 legacy status 且非 success → ok:false', () => {
+  const v = evaluateCiState({
+    statusState: 'failure',
+    statusTotal: 2,
+    checks: [{ name: 'build', status: 'completed', conclusion: 'success' }],
+  });
+  assert.strictEqual(v.ok, false);
+  assert.match(v.reason, /combined status/);
+});
+
+test('release evaluateCiState: 完全无 CI 证据 → ok:false（不能声称绿）', () => {
+  const v = evaluateCiState({ statusState: 'pending', statusTotal: 0, checks: [] });
+  assert.strictEqual(v.ok, false);
+  assert.match(v.reason, /未找到任何 CI 证据/);
 });
 
 // ── 黑盒：dry-run ────────────────────────────────────────
