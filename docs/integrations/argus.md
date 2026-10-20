@@ -57,13 +57,22 @@ Argus 的评审结果直接对应 men 的汇总报告模板：
 
 > ⚠️ **重要**：License 警告（见 §5）。
 
+> ℹ️ **App 权限边界**：argus-flash App 只需 `Pull requests: Read-write` + `Issues: Read-write` 用于回写评论。
+> 它**不需要** `Contents: write`——argus 评审成功时不需要向消费方仓库推代码（评审产物写 PR 评论，不写仓库文件）。
+> 上游 argus 仓库的 weekly 模型刷新 workflow 曾因误用 App token 推送而报 `HTTP 403`，已改用 `GITHUB_TOKEN`（见 argus `3bb224d1`）。
+> 若你的 App 报过 403，先确认是不是被误当成了推送凭据。
+
 ## 4. 本地验证（非必须，Cloud 为主）
 
-若想在本地跑一遍（需 OpenCode + 模型配置）：
+若想在本地跑一遍：
+
+> ⚠️ **版本要求**：argus 依赖 `opencode github run` 命令，**OpenCode 2 已移除该命令**。本地复现必须用 OpenCode **1.x**（CI 侧固定 1.19.3）。用 2.x 会直接报
+> `opencode-version must be an OpenCode 1.x release`。
 
 ```bash
 # 本地手动触发（模拟 GitHub Action 流程）
-opencode github run --model opencode-go/hy3 --auto --print-logs "
+# 模型用本仓库 pin 的可用模型（见 design-review.yml；Zen 目录会漂移，用前先核对）
+opencode github run --model opencode/deepseek-v4.1-flash-free --auto --print-logs "
 你是云端执行 agent。处理 men 仓库的 PR #PR_NUMBER。
 
 约束：
@@ -74,6 +83,9 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 参考 docs/integrations/argus.md §2-§3 处理。
 "
 ```
+
+> **提示**：本地用的 OpenCode CLI 若是 2.x，`opencode models opencode --refresh` 已不被支持——
+> argus 生成模型清单时的 CLI 交叉校验会静默空转，导致清单里混入 CLI 无法解析的模型（见 §6.2）。
 
 ## 5. License & 风险
 
@@ -90,6 +102,8 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 
 ## 6. 故障排除
 
+### 6.1 配置类
+
 | 症状 | 原因 | 解法 |
 |------|------|------|
 | `Missing secret: ARGUS_FLASH_APP_ID` | 未配置 GitHub App 凭证 | 按 §3 添加 secrets |
@@ -99,13 +113,39 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 | dependabot PR 上 argus 检查报「缺少 secrets」 | dependabot 触发的 run 拿不到仓库 secrets（GitHub 安全模型，只认 Dependabot secrets），fail-fast 假红 | 已修：`design-review.yml` 按 `github.actor` 跳过 dependabot（lockfile bump 无设计可评审）；若确实想评，另配 `gh secret set --app dependabot` |
 | PR 没有 Argus 评审评论 | workflow 正在排队 / 超时（30min） | 查看 Actions 日志；打开 issue 重新打 `agent-execute` label（若走 gh-flow 模式）<br>或检查 PR 是否有 `pull_request` 事件触发（本 workflow 用 `pull_request` 类型） |
 
+### 6.2 模型队列类（argus-review 红灯但配置看起来正常）
+
+**核心认知：Zen 目录里存在 ≠ 本账号/本地区可调用。** argus 的自动刷新清单按「模型是否出现在 `GET /zen/v1/models`」生成，因此会周期性失效。三种失效模式：
+
+| 症状（argus 日志） | 原因 | 修法（在上游 argus 仓库操作） |
+|------|------|------|
+| `Model not found: opencode/xxx` / `Model unavailable` | 模型已改名或下线，目录仍列出旧 ID | 在 `config/model-scores.yml` 给该 ID 加 `deprecated: true` |
+| `RegionError: This model is not available in your country` | 目录列出，但本账号所在地区被封锁 | 在 `config/model-scores.yml` 给该 ID 加 `regions: []` |
+| `APIError: Model access is disabled` | 账号/模型访问被禁用 | 换模型；若是账号级问题则检查 API key 权限 |
+
+**判定流程**（不要凭日志猜）：
+
+1. 看 argus-review 日志里**具体哪个模型**报什么错——不同报错对应不同修法
+2. 用本仓库的 `OPENCODE_API_KEY` 逐个实测候选模型（每个连跑 2 次）：
+
+   ```bash
+   opencode run -m opencode/<model-id> "reply ok"
+   ```
+
+3. 拉当前目录确认模型是否还在：`curl -s https://opencode.ai/zen/v1/models` —— 目录会漂移（实测 `space-bunny-free` 于 2026-10-20 前后下架）
+4. 在 argus 仓库的 `config/model-scores.yml` 补标记 → 上游 weekly workflow 会自动生成正确的清单 PR
+
+**本仓库（men）的 model pin 是独立的一份清单**：`design-review.yml` 里显式 pin 了 `model` / `fallback-models`，**会覆盖** argus 自动生成的队列。两份清单各自漂移——上游队列更新时本仓库不会自动跟随。
+
+> **维护约定**：argus 侧队列更新后，务必核对本仓库 `design-review.yml` 的 pin 是否仍指向可用模型；发现已下架的模型，从 `fallback-models` 移除并在注释中标注下架事实（参见 PR #173 的处理方式）。
+
 ## 7. 版本同步
 
 | 文档 | 关联版本 |
 |------|----------|
 | `AGENTS.md` | 本项目 v0.6.1（版本号由 `release.mjs` 发版时同步，不手写日期） |
-| `docs/integrations/argus.md` | Sync: 每次发版重审，确认 BSL/license 状态未变 |
-| `design-review.yml` | Sync: CI 变更同步至 main 分支（已提交） |
+| `docs/integrations/argus.md` | Sync: 每次发版重审，确认 BSL/license 状态未变；§6.2 模型队列条目随上游 argus 队列机制变化复核 |
+| `design-review.yml` | Sync: CI 变更同步至 main 分支；`model` / `fallback-models` pin 需与上游 argus 队列可用集保持一致（见 §6.2 维护约定） |
 | `.argus.yml` | Sync: 2026-08-31 commit，见 `git log 48f79c8` |
 
 --- 
@@ -113,6 +153,6 @@ opencode github run --model opencode-go/hy3 --auto --print-logs "
 **相关文件**
 
 - `.argus.yml` —— 本地消费方配置（已在 main，commit 48f79c8）
-- `.github/workflows/design-review.yml` —— CI 流程（待升级）
+- `.github/workflows/design-review.yml` —— CI 流程（已升级：secrets fail-fast + model pin）
 - `AGENTS.md` 项目状态段 --- Argus 集成说明
 - `docs/men-integration.md` --- men-api-version: 1 契约定义（外部契约）
