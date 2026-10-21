@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cgartlab/men/main/config/free-models.schema.json",
+  "version": "1.0.0",
+  "comment": "Men 团队的 OpenCode free 模型清单 —— 单一事实源（对齐 argus 的 config/free-models.yml）。所有角色模型都从这里取，不在别处硬编码。",
+  "verified_at": "2026-10-21T21:00:00+08:00",
+  "verified_note": "verified_at 是「实测可调用」的日期，不是目录同步日期。只有真正发过一次请求并拿到正确答案的模型才会进 primary/fallback_models。",
+  "provider": "opencode",
+  "provider_note": "OpenCode Zen 免费网关。provider id 是 opencode（CLI 内置，无需在用户 opencode.json 里配 provider/key）；不是 opencode-zen —— 那个 id 在 CLI 里不存在，用了必然解析失败。",
+  "primary": "opencode/deepseek-v4.1-flash-free",
+  "fallback_models": [
+    "opencode/nemotron-3.5-super-vl-free",
+    "opencode/minimax-m3.1-flash-free"
+  ],
+  "roles": {
+    "men": "opencode/deepseek-v4.1-flash-free",
+    "si": "opencode/deepseek-v4.1-flash-free",
+    "ji": "opencode/deepseek-v4.1-flash-free",
+    "chi": "opencode/deepseek-v4.1-flash-free",
+    "yi": "opencode/nemotron-3.5-super-vl-free",
+    "xun": "opencode/nemotron-3.5-super-vl-free"
+  },
+  "role_rationale": {
+    "men/si/ji/chi": "deepseek-v4.1-flash-free —— 实测推理题与代码题都通过，是唯一三项全过的模型；ji 要写代码，men/si/chi 要强推理，统一用它避免能力参差。",
+    "yi/xun": "nemotron-3.5-super-vl-free —— 实测同样三项全过，且是 VL（多模态）模型，适配 yi 的设计/生图提示词与 xun 的图文检索。",
+    "fallback": "minimax-m3.1-flash-free 只作第三顺位：实测推理与指令遵循通过，但代码题超时，不主用。"
+  },
+  "rejected": {
+    "opencode/beam-free": "地区封锁：CLI 能解析，但实际调用报 'This model is not available in your country'。",
+    "opencode/glm-5.3-flash-free": "CLI 无法解析（`opencode models` 不列出），调用直接报模型不可用。",
+    "opencode/jev-1.13-free": "CLI 无法解析。",
+    "opencode/longcat-2.5-preview-free": "CLI 无法解析。",
+    "opencode/mimo-v2.6-flash-free": "CLI 无法解析。",
+    "opencode/nemotron-3.5-lightning-free": "CLI 无法解析。",
+    "opencode/big-pickle": "无 -free 后缀但历史上被当免费模型用；实测 'Model unavailable: opencode/big-pickle'，已从目录消失。"
+  },
+  "selection_rules": {
+    "directory_is_not_callable": "Zen 目录里存在 ≠ 能调用。三种失效要分开记：CLI 解析不出（最常见）、地区封锁、已从目录消失。",
+    "verify_by_calling": "纳入本文件前必须实际发一次请求，并确认返回的是正确答案（不是仅 exit 0）。",
+    "no_provider_pin": "不要把模型 ID 写死在 agent 定义之外的地方 —— 优先级是 frontmatter > 仓库 agent.<name>.model > 全局顶层 model，实测只有 frontmatter 对 subagent 稳定生效。"
+  }
+}

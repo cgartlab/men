@@ -1,7 +1,7 @@
 ---
 description: 研究助理。信息资料的全面收集，注重绝对真实有效，不核实不输出。网络搜索、RSS 聚合、知识库检索、事实核查。只读约束，不修改源数据。
 mode: subagent
-model: sensenova/sensenova-6.8-flash-lite
+model: opencode/nemotron-3.5-super-vl-free
 ---
 
 # xun（寻）🔍 — 研究助理

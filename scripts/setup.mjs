@@ -39,14 +39,18 @@ const MEN_CONFIG_PATH = path.join(os.homedir(), ".config", "opencode", "men.json
 const ROLES = ["men", "si", "ji", "chi", "yi", "xun"];
 
 const PROVIDER_OPTIONS = [
-  { key: "opencode-zen", label: "OpenCode Zen（免费+按量付费）", emoji: "1️⃣" },
+  // provider id 必须与 OpenCode CLI 里的 provider key 一致：Zen 在 CLI 里的 id 是
+  // `opencode`（CLI 内置，不需要在用户 opencode.json 里配 provider/key）。
+  // 之前的 `opencode-zen` 并不存在 —— `opencode models` 在该前缀下是 0 条，
+  // 于是 models.json 里所有 opencode-zen/* 的模型 ID 一个都解析不出来。
+  { key: "opencode", label: "OpenCode Zen（免费）", emoji: "1️⃣" },
   { key: "sensenova", label: "SenseNova（商汤）", emoji: "2️⃣" },
   { key: "huoshan", label: "火山引擎（豆包 / 方舟）", emoji: "3️⃣" },
   { key: "deepseek", label: "DeepSeek 官方", emoji: "4️⃣" },
 ];
 
 const REGISTER_URLS = {
-  "opencode-zen": "https://opencode.ai/zen",
+  opencode: "https://opencode.ai/zen",
   sensenova: "https://console.sensenova.cn",
   huoshan: "https://console.volcengine.com",
   deepseek: "https://platform.deepseek.com",
@@ -339,8 +343,8 @@ function filterModels(subscriptions, hasPaid, models) {
     const provider = models.providers[providerKey];
     if (!provider) continue;
     for (const m of provider.models) {
-      // 老用户：选了 opencode-zen 且已有付费套餐时，把 Zen 的付费模型也纳入候选
-      if (providerKey === "opencode-zen" && !hasPaid && m.tier !== "free") continue;
+      // 老用户：选了 opencode 且已有付费套餐时，把 Zen 的付费模型也纳入候选
+      if (providerKey === "opencode" && !hasPaid && m.tier !== "free") continue;
       candidates.push(m);
     }
   }
@@ -365,7 +369,7 @@ function recommendModel(role, candidates, roleDefaults, preferFree = false) {
   // （models.json 后续加入 Zen 付费模型后，这里会自动优先采用）
   for (const m of candidates) {
     if (
-      providerOf(m.id) === "opencode-zen" &&
+      providerOf(m.id) === "opencode" &&
       m.tier !== "free" &&
       m.free !== true &&
       m.bestFor?.includes(role)
@@ -1123,7 +1127,15 @@ async function confirmAssignment(rl, assignment, models) {
 // ─────────────────────────── OpenCode Zen 动态免费模型 ───────────────────────────
 // OpenCode Zen 免费模型轮换：通过 API 获取当前可用免费模型列表，动态构建 free 预设。
 // API: https://opencode.ai/zen/v1/models — 返回所有模型 ID（仅 id/object/created/owned_by）
-// 免费模型判定：ID 含 -free 或已知免费模型（big-pickle 等）
+//
+// ⚠️ 目录里存在 ≠ 能调用（实测 2026-10-21）：
+//   9 个 -free 模型里只有 3 个真能调。其余 6 个分别是「CLI 无法解析」和「地区封锁」，
+//   而 API 列表把两者都列出来了。把 API 列表直接当可用清单，会给用户分配一个
+//   必然失败的模型 —— 而且失败发生在调用时，不是安装时，排查成本很高。
+//
+//   所以这里不再拿 API 列表直接分配，而是拿它跟「实测可调用」的基准清单求交集：
+//   API 里还在（说明没被下架）**且** 基准清单里有（说明本机调得通）。
+//   基准清单见 config/free-models.json（单一事实源）。
 
 const ZEN_MODELS_API = "https://opencode.ai/zen/v1/models";
 
@@ -1149,6 +1161,24 @@ async function fetchFreeModels() {
   }
 }
 
+// 基准清单里「实测可调用」的模型（与 config/free-models.json 一致）。
+// 这里的集合是硬编码的兜底：config/free-models.json 不可读时仍能正确过滤。
+const VERIFIED_CALLABLE_FREE = new Set([
+  "deepseek-v4.1-flash-free",
+  "nemotron-3.5-super-vl-free",
+  "minimax-m3.1-flash-free",
+]);
+
+// 把 live 目录列表过滤成「实测可调用」的子集
+function filterCallableFree(liveNames) {
+  if (!liveNames) return null;
+  const out = new Set();
+  for (const name of liveNames) {
+    if (VERIFIED_CALLABLE_FREE.has(name)) out.add(name);
+  }
+  return out;
+}
+
 // 从 live 免费模型 + roleDefaults 优先级构建动态 free 分配
 // 每个角色：遍历其 priority 列表，取第一个在 live free 集合中的模型；无匹配则取首个 free 模型
 function buildDynamicFreeAssignment(models, freeNames, menCfg) {
@@ -1167,8 +1197,8 @@ function buildDynamicFreeAssignment(models, freeNames, menCfg) {
 
     // 遍历优先级列表，找第一个可用免费模型
     for (const modelId of priority) {
-      if (!modelId.startsWith("opencode-zen/")) continue;
-      const name = modelId.slice("opencode-zen/".length);
+      if (!modelId.startsWith("opencode/")) continue;
+      const name = modelId.slice("opencode/".length);
       if (freeNames.has(name)) {
         assigned = modelId;
         break;
@@ -1179,7 +1209,7 @@ function buildDynamicFreeAssignment(models, freeNames, menCfg) {
     if (!assigned) {
       for (const name of freeNames) {
         if (name) {
-          assigned = `opencode-zen/${name}`;
+          assigned = `opencode/${name}`;
           break;
         }
       }
@@ -1230,8 +1260,8 @@ async function main(argv = process.argv) {
       // free 预设：优先动态拉取，无 men.jsonc 自定义预设时才启用动态
       const menFreePreset = menCfg?.presets?.["free"];
       if (!menFreePreset) {
-        const freeNames = await fetchFreeModels();
-        if (freeNames) {
+        const freeNames = filterCallableFree(await fetchFreeModels());
+        if (freeNames && freeNames.size > 0) {
           assignment = buildDynamicFreeAssignment(models, freeNames, menCfg);
           source = "dynamic-free";
         } else {
@@ -1326,8 +1356,8 @@ async function main(argv = process.argv) {
       const menFreePreset = menCfg?.presets?.["free"];
       let source = "cached";
       if (!menFreePreset) {
-        const freeNames = await fetchFreeModels();
-        if (freeNames) {
+        const freeNames = filterCallableFree(await fetchFreeModels());
+        if (freeNames && freeNames.size > 0) {
           assignment = buildDynamicFreeAssignment(models, freeNames, menCfg);
           source = "dynamic-free";
         } else {
@@ -1579,6 +1609,8 @@ export {
   createMenConfigWithPreset,
   buildDefaultMenConfig,
   fetchFreeModels,
+  filterCallableFree,
+  VERIFIED_CALLABLE_FREE,
   buildDynamicFreeAssignment,
   MEN_CONFIG_PATH,
 };

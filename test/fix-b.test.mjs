@@ -219,7 +219,9 @@ test('F19: --reset --no-interactive 会实际重写配置，而非只打印当�
   const p = path.join(root, 'opencode.json');
   const cfg = JSON.parse(fs.readFileSync(p, 'utf8'));
   for (const k of Object.keys(cfg.agent)) {
-    if (cfg.agent[k] && typeof cfg.agent[k] === 'object') cfg.agent[k].model = 'opencode-zen/big-pickle';
+    // sentinel 只需与预设里的模型不同即可；用真实存在的 provider 前缀
+    // （opencode），避免测试自身依赖一个不存在的 provider id。
+    if (cfg.agent[k] && typeof cfg.agent[k] === 'object') cfg.agent[k].model = 'opencode/big-pickle';
   }
   fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + '\n');
 
@@ -227,7 +229,7 @@ test('F19: --reset --no-interactive 会实际重写配置，而非只打印当�
   assert.strictEqual(r.status, 0, `stderr: ${r.stderr}`);
   assert.match(r.stdout, /--reset/);
   const after = JSON.parse(fs.readFileSync(p, 'utf8'));
-  assert.notStrictEqual(after.agent.men.model, 'opencode-zen/big-pickle', 'reset 必须改写角色模型');
+  assert.notStrictEqual(after.agent.men.model, 'opencode/big-pickle', 'reset 必须改写角色模型');
   assert.ok(fs.existsSync(`${p}.bak`), '重写前必须备份原文件');
 });
 

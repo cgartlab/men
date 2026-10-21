@@ -18,7 +18,7 @@
     },
     "providers": {
       "type": "object",
-      "description": "模型服务提供商列表。key 为 provider 标识（如 opencode-zen / sensenova / huoshan / deepseek），value 为 provider 配置。",
+      "description": "模型服务提供商列表。key 为 provider 标识（如 opencode / sensenova / huoshan / deepseek），value 为 provider 配置。OpenCode Zen 的 provider id 是 opencode（CLI 内置），不是 opencode-zen。",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
@@ -86,7 +86,7 @@
     "ModelId": {
       "type": "string",
       "pattern": "^[a-z0-9-]+/[a-z0-9._-]+$",
-      "description": "模型 ID，格式 provider/model-name，如 opencode-zen/hy3-free"
+      "description": "模型 ID，格式 provider/model-name，如 opencode/deepseek-v4.1-flash-free"
     },
     "RoleKey": {
       "type": "string",

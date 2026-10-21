@@ -4,27 +4,28 @@
   "instructions": [
     "AGENTS.md"
   ],
+  "model": "opencode/deepseek-v4.1-flash-free",
   "agent": {
     "men": {
-      "model": "sensenova/deepseek-v4-flash",
+      "model": "opencode/deepseek-v4.1-flash-free",
       "permissions": [
         { "action": "question", "resource": "*", "effect": "allow" }
       ]
     },
     "si": {
-      "model": "sensenova/deepseek-v4-flash"
+      "model": "opencode/deepseek-v4.1-flash-free"
     },
     "ji": {
-      "model": "sensenova/sensenova-6.8-flash-lite"
+      "model": "opencode/deepseek-v4.1-flash-free"
     },
     "chi": {
-      "model": "sensenova/deepseek-v4-flash"
+      "model": "opencode/deepseek-v4.1-flash-free"
     },
     "yi": {
-      "model": "sensenova/sensenova-6.8-flash-lite"
+      "model": "opencode/nemotron-3.5-super-vl-free"
     },
     "xun": {
-      "model": "sensenova/sensenova-6.8-flash-lite"
+      "model": "opencode/nemotron-3.5-super-vl-free"
     }
   },
   "skills": {

@@ -19,7 +19,7 @@
 
 ## [Unreleased](https://github.com/cgartlab/men/compare/v0.6.1...main)
 
-> **TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。
+> **TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。**本仓库的 6 个 agent 全部改用 OpenCode free 模型**（此前 free 预设 100% 不可用，已修）。
 > **你需要做什么**：无。纯 CI 与文档站改动，无 API / 配置 / CLI 变化。
 
 ### Added
@@ -27,6 +27,8 @@
 - **发布门禁**（[#156](https://github.com/cgartlab/men/issues/156)）：新增 `.github/workflows/release-guard.yml`（Release Guard），tag push（`v*`）触发时对 tag commit 跑完整门禁（语法检查 / tests / verify.mjs / release dry-run / tag↔package.json 版本一致性 / CHANGELOG 条目检查），失败即 workflow 红，让「本地打 tag 绕过 CI 状态」的发布立即可见、可审计
 - **`release.mjs --require-ci`**（[#156](https://github.com/cgartlab/men/issues/156) 方案 B）：发布前调用 GitHub API 查询目标 commit 的 combined status 与 check-runs，任一 check 为 failure / cancelled / timed_out / action_required 或 combined status 非 success（含 pending）时拒绝发布（exit 1）；`--dry-run` 组合可预览校验结果。与 Release Guard 构成本地+CI 双保险
 - **`docs/brand.md`：品牌规范**——记录已定的标识造型（有机环 + 中心负形孔，单条复合路径 `fill-rule="evenodd"` 真负形）、孔径随尺寸切换的 φ 依据、配色令牌表与对比度基准。`global.css` 的 `:root` 注释此前已引用 `docs/brand`，本文件补上该引用目标
+- **`config/free-models.json`：免费模型单一事实源**（对齐 argus 的 `config/free-models.yml`）：`primary` + `fallback_models` 队列 + 6 角色映射 + `rejected`（被否决模型及原因）+ `selection_rules`（为什么只收实测可调用的模型）。`config/models.json` 的 free 预设与 `roleDefaults.priority` 都从它派生
+- **`verify.mjs` 新增 `free-models-manifest` 检查**（第 10 项机械门禁）：核对 `config/free-models.json` 与 6 个 agent 定义的 frontmatter `model` 是否一致，以及模型是否在清单内。**模型 ID 写错在调用时才失败，不在安装时、不在 CI 里**——此前所有检查都只验证「ID 在本文件内部自洽」，完全没查「这个 ID 在 OpenCode 里存不存在」，于是配置看起来完全健康而实际 100% 不可用
 
 ### Changed
 
@@ -38,7 +40,14 @@
 
 ### Fixed
 
+- **本仓库的 free 预设 100% 不可用**（provider id 写错）：`config/models.json` 里 7 个 `opencode-zen/*` 模型在 OpenCode CLI 里**一个都解析不出来**——Zen 的 provider id 是 `opencode`（CLI 内置，无需在用户 `opencode.json` 里配 provider/key），`opencode-zen` 这个 id 根本不存在（`opencode models` 在该前缀下是 0 条）。`free` 预设的 6 个角色模型因此全部无法调用，而既有检查只看「ID 在本文件内部自洽」，看不出任何问题。已把 provider key 与全部 19 处模型 ID 改为 `opencode/`，并把 `setup.mjs` 里 4 处硬编码前缀（含动态 free 预设的过滤逻辑）一并改正
+- **动态 free 预设会把「目录里有但调不通」当可用**：`setup.mjs` 的 `fetchFreeModels()` 直接拿 `GET /zen/v1/models` 的返回当可用清单，但**目录里存在 ≠ 能调用**。实测 2026-10-21：9 个 `-free` 模型里只有 3 个真能调，其余 6 个是「CLI 无法解析」或「地区封锁」（`beam-free` 报 `This model is not available in your country`）。现在改为取 live 目录与「实测可调用」基准清单的交集
 - **argus 评审 fallback 里含已下架的 `space-bunny-free`**（[#173](https://github.com/cgartlab/men/pull/173)）：该模型已从 Zen 目录下架（`GET /zen/v1/models` 不再返回），从 fallback 移除。同时确认上游失败根因不在本仓库的 secrets（三个 secret 均已配置且有效），而是上游队列推荐了不可调用的模型
+
+### Changed
+
+- **6 个 agent 全部改用 OpenCode free 模型**（此前是 SenseNova 付费/限免通道）：`men`/`si`/`ji`/`chi` → `opencode/deepseek-v4.1-flash-free`，`yi`/`xun` → `opencode/nemotron-3.5-super-vl-free`（VL 多模态，适配设计/研究类角色），`opencode/minimax-m3.1-flash-free` 作第三顺位备援。分配依据是**实测**：三个模型各跑推理题、代码题、指令遵循题，`deepseek` 与 `nemotron` 三项全过，`minimax` 代码题超时故不主用。`opencode.json` 的顶层 `model` 同步改为 `opencode/deepseek-v4.1-flash-free`
+- **`AGENTS.md` 记录实测确定的 model 解析优先级**：subagent 的 frontmatter `model:` > 仓库 `opencode.json` 的 `agent.<name>.model` > 全局 `~/.config/opencode/opencode.json` 的顶层 `model`。**frontmatter 是 subagent 唯一稳定的生效点**——只改 `agent.<name>.model` 而不改 frontmatter，subagent 仍会跑在全局顶层模型上（6 组对照实测）
 
 ## [v0.6.1](https://github.com/cgartlab/men/compare/v0.6.0...v0.6.1) - 2026-10-07
 

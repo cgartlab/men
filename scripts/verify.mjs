@@ -547,6 +547,114 @@ export function checkModelsSchema() {
   };
 }
 
+// 6.5 free 模型清单自洽性（config/free-models.json）
+//
+// 为什么需要这个检查：模型 ID 写错（比如 provider 前缀不存在）在**调用时**才失败，
+// 不在安装时、不在 CI 里。实测踩过：models.json 里 7 个 opencode-zen/* 的模型
+// 一个都解析不出来（CLI 的 provider id 是 opencode），而所有既有检查都只校验
+// 「ID 在本文件内部自洽」，完全没查「这个 ID 在 OpenCode 里到底存不存在」——
+// 于是配置看起来完全健康，实际 100% 不可用。
+//
+// 这里补三条能在 CI 里跑的机械检查：
+//   1. agent frontmatter 的 model 必须在基准清单里（frontmatter 是 subagent
+//      唯一稳定的生效点：实测优先级 frontmatter > 仓库 agent.<name>.model >
+//      全局顶层 model）
+//   2. 基准清单里的模型必须带 opencode/ 前缀且非空
+//   3. agent 定义文件与清单的角色必须一一对应
+export function checkFreeModelsManifest() {
+  const manifestPath = path.join(ROOT, "config", "free-models.json");
+  if (!fs.existsSync(manifestPath)) {
+    return { id: "free-models-manifest", status: "SKIP", evidence: "config/free-models.json 不存在，跳过", details: "" };
+  }
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+  } catch (e) {
+    return { id: "free-models-manifest", status: "FAIL", evidence: "config/free-models.json JSON.parse 失败", details: e.message };
+  }
+
+  const problems = [];
+  const RESERVED_ROLES = ["men", "si", "ji", "chi", "yi", "xun"];
+
+  // 1) manifest 自身的形状
+  if (typeof manifest.primary !== "string" || !manifest.primary.startsWith("opencode/")) {
+    problems.push(`primary 必须是以 opencode/ 开头的模型 ID（当前: ${manifest.primary}）`);
+  }
+  if (!Array.isArray(manifest.fallback_models) || manifest.fallback_models.length === 0) {
+    problems.push("fallback_models 必须是非空数组");
+  } else {
+    for (const id of manifest.fallback_models) {
+      if (typeof id !== "string" || !id.startsWith("opencode/")) {
+        problems.push(`fallback_models 里的 ${id} 不是 opencode/ 前缀`);
+      }
+    }
+  }
+
+  // 2) 清单里的模型集合
+  const known = new Set([manifest.primary, ...(manifest.fallback_models || [])]);
+
+  // 3) roles 必须覆盖 6 个角色，且每个值都在清单里
+  if (!manifest.roles || typeof manifest.roles !== "object") {
+    problems.push("roles 缺失或不是对象");
+  } else {
+    for (const role of RESERVED_ROLES) {
+      const id = manifest.roles[role];
+      if (!id) {
+        problems.push(`roles.${role} 缺失`);
+      } else if (!known.has(id)) {
+        problems.push(`roles.${role} = ${id} 不在 primary/fallback_models 里`);
+      }
+    }
+    for (const role of Object.keys(manifest.roles)) {
+      if (!RESERVED_ROLES.includes(role)) {
+        problems.push(`roles 里有未知角色 ${role}`);
+      }
+    }
+  }
+
+  // 4) agent frontmatter 的 model 必须与清单一致 —— frontmatter 是 subagent
+  //    真正生效的地方，配置与它不一致 = 实际用的模型与清单说的不是一回事
+  const agentDir = path.join(ROOT, ".opencode", "agent");
+  if (fs.existsSync(agentDir)) {
+    for (const role of RESERVED_ROLES) {
+      const f = path.join(agentDir, `${role}.md`);
+      if (!fs.existsSync(f)) {
+        problems.push(`缺 agent 定义 .opencode/agent/${role}.md`);
+        continue;
+      }
+      const text = fs.readFileSync(f, "utf-8");
+      const m = text.match(/^model:\s*(\S+)\s*$/m);
+      if (!m) {
+        problems.push(`.opencode/agent/${role}.md 的 frontmatter 缺 model 字段`);
+        continue;
+      }
+      const actual = m[1];
+      const expected = manifest.roles?.[role];
+      if (expected && actual !== expected) {
+        problems.push(`${role}.md 的 model=${actual}，但清单写的是 ${expected}（frontmatter 才是生效点）`);
+      }
+      if (!known.has(actual)) {
+        problems.push(`${role}.md 的 model=${actual} 不在 free-models.json 的清单里`);
+      }
+    }
+  }
+
+  if (problems.length > 0) {
+    return {
+      id: "free-models-manifest",
+      status: "FAIL",
+      evidence: `${problems.length} 处 free 模型清单问题`,
+      details: problems.slice(0, 20).join("; "),
+    };
+  }
+  return {
+    id: "free-models-manifest",
+    status: "PASS",
+    evidence: "config/free-models.json 与 6 个 agent 定义一致",
+    details: `primary=${manifest.primary} / fallback=${(manifest.fallback_models || []).length} / roles=${RESERVED_ROLES.length}`,
+  };
+}
+
 // 7. bin/exports 目标存在性（package.json 声明的入口必须真实存在）
 export function checkBinExportsTargets(targetPath) {
   const st = fs.statSync(targetPath);
@@ -956,6 +1064,7 @@ export function main(argv = process.argv) {
     try { checks.push(checkStructure(targetPath)); } catch (e) { checks.push({ id: "structure", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkGate(targetPath)); } catch (e) { checks.push({ id: "gate-exit-code", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkModelsSchema()); } catch (e) { checks.push({ id: "models-schema", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
+  try { checks.push(checkFreeModelsManifest()); } catch (e) { checks.push({ id: "free-models-manifest", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkBinExportsTargets(targetPath)); } catch (e) { checks.push({ id: "bin-exports-targets", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkDepsImportConsistency(targetPath)); } catch (e) { checks.push({ id: "deps-import-consistency", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }
     try { checks.push(checkCodeHygiene()); } catch (e) { checks.push({ id: "code-hygiene", status: "SKIP", evidence: `异常：${e.message}`, details: "" }); }

@@ -1,7 +1,7 @@
 ---
 description: 知识管理与方案思考。深度思考、从多角度提出解决方案并拆解为可执行计划；规划验收标准供 chi judge 消费；知识库管理与沉淀。
 mode: subagent
-model: sensenova/deepseek-v4-flash
+model: opencode/deepseek-v4.1-flash-free
 ---
 
 # si（思）— 思考与知识管理
