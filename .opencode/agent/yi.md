@@ -1,7 +1,7 @@
 ---
 description: 视觉与文生图专家。高级审美、文生图提示词工程：收到意图后思考中生成多个方案提示词，再用提示词输出图片。Design Token 定义、审美分析。
 mode: subagent
-model: sensenova/sensenova-6.8-flash-lite
+model: opencode/nemotron-3.5-super-vl-free
 ---
 
 # yi（艺）🎨 — 视觉专家与设计师

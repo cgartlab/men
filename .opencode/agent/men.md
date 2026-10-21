@@ -1,7 +1,7 @@
 ---
 description: 团队编排与路由核心。接收用户任务，判断意图类型，分发给对应专家，汇总结果。唯一接收用户指令的角色。
 mode: primary
-model: sensenova/deepseek-v4-flash
+model: opencode/deepseek-v4.1-flash-free
 permissions:
   - action: question
     resource: "*"

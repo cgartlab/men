@@ -35,6 +35,7 @@ v0.6.1（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 | `.opencode/plugins/men-sidebar/` | TUI 侧边栏插件；V2 自动发现（`index.js`+`tui.js`，无需 `tui.json`），`@opentui/*` 为运行时依赖 |
 | `scripts/*.mjs` | 验证/门禁/审计/学习/发布脚本，纯 Node 零依赖 |
 | `config/models.json` | 模型知识基（providers/roleDefaults/presets），`setup.mjs` 数据源；`config/men.schema.json` 为 men.jsonc schema |
+| `config/free-models.json` | **免费模型单一事实源**：primary + fallback 队列 + 6 角色映射 + 被否决模型及原因；只收实测可调用的模型 |
 | `knowledge/` | 团队知识库（patterns/decisions）；`errors/` 在根目录 |
 | `.opencode/package.json` | `@opencode/plugin` + `@opentui/*` 本地依赖 |
 
@@ -62,11 +63,16 @@ v0.6.1（M0–M7 完成）。npm 包 `@cgartlab/men` 已发布（`npx @cgartlab/
 2. **YAML frontmatter 必须保留**：`description`, `mode`, `model`
 3. **`CHARTER_CHECK` 字段**：每个 agent 必须有（Clarification level / Task domain / Must NOT do / Success criteria）
 4. **`全员红线` 段落**：6 个 agent 必须逐字一致（复制粘贴，不修改）
-5. **model 分配**（配置优先级：`~/.config/opencode/men.jsonc` > 仓库 `opencode.json`；`men.jsonc` 不存在时回退到 `opencode.json`，CC Switch `~/.config/opencode/opencode.json` 会覆盖 provider/key）：
-   - **职责划分**：CC Switch 管理 providers/keys，Men 管理 agent 分配（preset 切换 + 逐 Agent 覆盖）
-   - 当前默认分配：
-     - men/si/chi: `sensenova/deepseek-v4-flash`
-     - ji/yi/xun: `sensenova/sensenova-6.8-flash-lite`
+5. **model 分配**（**实测确定的优先级**：subagent 的 frontmatter `model:` > 仓库 `opencode.json` 的 `agent.<name>.model` > 全局 `~/.config/opencode/opencode.json` 的顶层 `model`）：
+   - **frontmatter 是 subagent 唯一稳定的生效点**：改了仓库 `agent.<name>.model` 而不改 frontmatter，subagent 仍会跑在全局顶层模型上（实测 6 组对照，frontmatter 赢过其余两层）
+   - **职责划分**：CC Switch 管 providers/keys，Men 管 agent 分配；`config/free-models.json` 是模型的**单一事实源**（primary + fallback 队列 + 6 角色映射 + 被否决模型及原因）
+   - **provider id 是 `opencode`**（OpenCode Zen，CLI 内置），**不是 `opencode-zen`** —— 后者在 CLI 里不存在，用了必然解析失败
+   - **目录里存在 ≠ 能调用**：本仓库只收「实际发过请求并拿到正确答案」的模型。被否决的模型及原因记在 `config/free-models.json` 的 `rejected` 里
+   - 当前默认分配（全部免费）：
+     - men/si/ji/chi: `opencode/deepseek-v4.1-flash-free`
+     - yi/xun: `opencode/nemotron-3.5-super-vl-free`（VL 多模态）
+     - 第三顺位备援: `opencode/minimax-m3.1-flash-free`
+   - **改模型后必须跑 `npm run verify`**：新增的 `free-models-manifest` 检查会核对 frontmatter 与清单是否一致
 6. **men 输出规范不得删除或弱化**（决策 D20）：`question` 工具交互、人类阅读优先（代号降噪）、todowrite 跟踪
 
 ## 常用命令
