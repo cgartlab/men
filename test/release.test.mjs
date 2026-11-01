@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import {
   bumpVersion,
   bumpChangelog,
+  shortReleaseTheme,
   parseArgs,
   procFailInfo,
   checkRemoteCiStatus,
@@ -124,6 +125,72 @@ test('release bumpChangelog: no blank-line buildup between theme and first headi
   const gap = entrySection.match(/^> 工程化加固[\s\S]*?(?=### Added)/)?.[0] ?? '';
   assert.ok(!/\n{4,}/.test(gap), `不应出现 3+ 连续空行: ${JSON.stringify(gap)}`);
 });
+
+// ── bumpChangelog：compare 链接 ───────────────────────────
+// 历史缺陷：v0.6.2 发版后，新版本标题与 Unreleased 标题都丢了 compare 链接，
+// 与其余 20 个版本段不一致（其余全是 `## [vX.Y.Z](…/compare/vPrev...vX.Y.Z)`）。
+test('release bumpChangelog: 给出 prevVersion 时新版本标题带 compare 链接', () => {
+  const input = '# Changelog\n\n## [Unreleased](https://github.com/cgartlab/men/compare/v0.1.0...main)\n\n### Added\n\n- x\n\n## [v0.1.0](https://github.com/cgartlab/men/compare/v0.0.9...v0.1.0) - 2026-08-01\n';
+  const out = bumpChangelog(input, '0.1.1', '2026-09-01', '0.1.0');
+  assert.ok(
+    out.includes('## [v0.1.1](https://github.com/cgartlab/men/compare/v0.1.0...v0.1.1) - 2026-09-01'),
+    '新版本标题应带 compare 链接'
+  );
+  // Unreleased 复位后也要带链接（旧版本 → main）
+  assert.ok(
+    out.includes('## [Unreleased](https://github.com/cgartlab/men/compare/v0.1.1...main)'),
+    'Unreleased 复位后应带 compare 链接'
+  );
+});
+
+test('release bumpChangelog: prevVersion 可带或不带 v 前缀', () => {
+  const input = '## [Unreleased](https://github.com/cgartlab/men/compare/v0.1.0...main)\n\n### Added\n\n- x\n';
+  const a = bumpChangelog(input, '0.1.1', '2026-09-01', '0.1.0');
+  const b = bumpChangelog(input, '0.1.1', '2026-09-01', 'v0.1.0');
+  assert.ok(a.includes('compare/v0.1.0...v0.1.1'), '裸版本号应补 v 前缀');
+  assert.ok(b.includes('compare/v0.1.0...v0.1.1'), '不应出现 vv 前缀');
+  assert.ok(!b.includes('vv0.1.0'), '不应出现 vv 前缀');
+});
+
+test('release bumpChangelog: 未给 prevVersion 时退回无链接形式（兼容旧调用）', () => {
+  const out = bumpChangelog('# Changelog\n\n## [Unreleased]\n\n### Added\n\n- x\n', '0.4.0', '2026-09-01');
+  assert.ok(out.includes('## [v0.4.0] - 2026-09-01'));
+  assert.ok(!out.includes('## [v0.4.0]('), '无 prevVersion 时不应凭空造链接');
+});
+
+// ── shortReleaseTheme ────────────────────────────────────
+// 历史缺陷：GitHub Release 的 name 取 CHANGELOG 里首个 `> ` 整行。TL;DR 改成一整段
+// 后，v0.6.2 的 Release 标题变成 263 字（历史惯例 ≤44 字）。
+test('release shortReleaseTheme: 从 TL;DR 整段提炼短标题', () => {
+  const line =
+    '**TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，' +
+    '杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）。';
+  const out = shortReleaseTheme(line);
+  assert.strictEqual(out, '发布在 CI 侧可审计了');
+  assert.ok(out.length <= 44, `短标题不应超过 44 字，实际 ${out.length}`);
+});
+
+test('release shortReleaseTheme: 无 —— 分隔时按中文句号截断', () => {
+  assert.strictEqual(shortReleaseTheme('工程化加固 + MCP 归属回归。其余略'), '工程化加固 + MCP 归属回归');
+});
+
+test('release shortReleaseTheme: 无分隔符时硬截断到 44 字并加省略号', () => {
+  const long = '功能' + '甲'.repeat(60);
+  const out = shortReleaseTheme(long);
+  assert.strictEqual(out.length, 45, '应为 44 字 + 省略号');
+  assert.ok(out.endsWith('…'));
+});
+
+test('release shortReleaseTheme: 剥离 markdown 标记与 > 前缀', () => {
+  assert.strictEqual(shortReleaseTheme('> **TL;DR**：`free` 模型修复 —— 细节'), 'free 模型修复');
+});
+
+test('release shortReleaseTheme: 非字符串/空输入返回空串', () => {
+  assert.strictEqual(shortReleaseTheme(''), '');
+  assert.strictEqual(shortReleaseTheme(undefined), '');
+  assert.strictEqual(shortReleaseTheme(null), '');
+});
+
 
 // ── parseArgs ────────────────────────────────────────────
 test('release parseArgs: default bump patch', () => {
@@ -556,7 +623,10 @@ test('release blackbox synthetic: --push with 2 bullets no longer throws (F1) + 
     assert.strictEqual(JSON.parse(fs.readFileSync(path.join(repo, 'package.json'), 'utf-8')).version, j.newVersion);
     // CHANGELOG 新版本节含全部 2 条 bullet（stdin 通道未丢内容）
     const cl = fs.readFileSync(path.join(repo, 'CHANGELOG.md'), 'utf-8');
-    assert.ok(cl.includes(`## [${tag}] - `), 'CHANGELOG 应插入新版本节');
+    assert.ok(
+      cl.includes(`## [${tag}](${`https://github.com/cgartlab/men/compare/`}v0.1.0...${tag}) - `),
+      'CHANGELOG 应插入带 compare 链接的新版本节'
+    );
     assert.ok(cl.includes('- 要点一：正常发版的第一条 bullet'));
     assert.ok(cl.includes('- 要点二：正常发版的第二条 bullet'));
     // releases.astro 被更新并纳入同一次提交
