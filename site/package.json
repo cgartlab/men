@@ -22,7 +22,7 @@
     "check-vspace": "node scripts/visual-spacing-audit.mjs"
   },
   "dependencies": {
-    "@iconify-json/lucide": "^1.2.138",
+    "@iconify-json/lucide": "^1.2.149",
     "astro": "^7.3.5",
     "astro-icon": "^1.2.0"
   },
