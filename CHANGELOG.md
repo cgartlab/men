@@ -40,6 +40,7 @@
 
 ### Fixed
 
+- **`setup.mjs` 在 Windows 上会随机崩溃（0xC0000409）**：`await fetch(...)` 之后紧接着 `process.exit()`，会在 libuv 里命中 `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c:94`。原因是 undici 的跨线程 async 句柄还在收尾，强制退出把 loop 的 handle 关了，挂起的线程池回调再调 `uv_async_send` 就撞上断言。实测（Node v26.2.0 / Windows）`--json --dry-run` 跑 8 次崩 7 次、`--preset free --dry-run` 同样 8 崩 7、`--preset free` 8 崩 3 —— 也就是说**普通用户跑 `--preset free` 就有约四成概率拿到一个崩溃**。已改为「抛 `SetupExit` 哨兵 + 顶层落 `process.exitCode` 自然退出」：语义不变（仍然立即停止执行、退出码不变），但不再强制退出，实测 6 类调用各 8 次 **0 崩溃**。CI 跑 Linux 不会暴露这个问题，故另加 `F21` 源码级守卫（`main()` 内禁止裸 `process.exit`）
 - **本仓库的 free 预设 100% 不可用**（provider id 写错）：`config/models.json` 里 7 个 `opencode-zen/*` 模型在 OpenCode CLI 里**一个都解析不出来**——Zen 的 provider id 是 `opencode`（CLI 内置，无需在用户 `opencode.json` 里配 provider/key），`opencode-zen` 这个 id 根本不存在（`opencode models` 在该前缀下是 0 条）。`free` 预设的 6 个角色模型因此全部无法调用，而既有检查只看「ID 在本文件内部自洽」，看不出任何问题。已把 provider key 与全部 19 处模型 ID 改为 `opencode/`，并把 `setup.mjs` 里 4 处硬编码前缀（含动态 free 预设的过滤逻辑）一并改正
 - **动态 free 预设会把「目录里有但调不通」当可用**：`setup.mjs` 的 `fetchFreeModels()` 直接拿 `GET /zen/v1/models` 的返回当可用清单，但**目录里存在 ≠ 能调用**。实测 2026-10-21：9 个 `-free` 模型里只有 3 个真能调，其余 6 个是「CLI 无法解析」或「地区封锁」（`beam-free` 报 `This model is not available in your country`）。现在改为取 live 目录与「实测可调用」基准清单的交集
 - **argus 评审 fallback 里含已下架的 `space-bunny-free`**（[#173](https://github.com/cgartlab/men/pull/173)）：该模型已从 Zen 目录下架（`GET /zen/v1/models` 不再返回），从 fallback 移除。同时确认上游失败根因不在本仓库的 secrets（三个 secret 均已配置且有效），而是上游队列推荐了不可调用的模型

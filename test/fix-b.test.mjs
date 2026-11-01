@@ -521,3 +521,32 @@ test('F14: scaffold 重装时用户改过的 opencode.json 与 .opencode/agent/*
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+// ─────────────────────────── F21：Windows 退出路径防护 ───────────────────────────
+// 历史事故（2026-11-01）：`await fetch(...)` 之后直接 process.exit() 会命中 libuv 断言
+//   Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c:94
+// 进程以 0xC0000409 崩溃。实测 `--json --dry-run` 8 次崩 7、`--preset free --dry-run`
+// 同样 8 崩 7；改成「设 exitCode 后自然退出」8 次 0 崩。
+//
+// 这个崩溃是 Windows 独有且概率性的（CI 跑 Linux 永远绿），所以只能用源码级守卫拦住：
+// main() 体内禁出现裸 process.exit()，必须走 exitNow() 抛哨兵，由顶层落 exitCode。
+test('F21: main() 内禁止裸 process.exit（Windows libuv 断言防护）', () => {
+  const src = fs.readFileSync(path.join(REPO_ROOT, 'scripts', 'setup.mjs'), 'utf8');
+  const mainIdx = src.indexOf('async function main(argv = process.argv) {');
+  const topIdx = src.indexOf('if (process.argv[1] && import.meta.url ===');
+  assert.ok(mainIdx > 0, '未能定位 main()');
+  assert.ok(topIdx > mainIdx, '未能定位顶层自执行块');
+
+  const body = src.slice(mainIdx, topIdx);
+  const hits = body.match(/process\.exit\(/g) || [];
+  assert.strictEqual(
+    hits.length,
+    0,
+    `main() 内仍有 ${hits.length} 处裸 process.exit()；Windows 上 fetch 之后强制退出会崩溃，请改用 exitNow()`
+  );
+  assert.match(src, /function exitNow\(code\)/, '缺少 exitNow() 哨兵实现');
+  assert.match(src, /class SetupExit extends Error/, '缺少 SetupExit 哨兵类型');
+  // 顶层必须接管哨兵并落 exitCode，而不是用 process.exit
+  assert.match(src, /e\.name === "SetupExit"/, '顶层 catch 未接管 SetupExit');
+  assert.match(src, /process\.exitCode = e\.code/, '顶层未把哨兵退出码落到 process.exitCode');
+});
