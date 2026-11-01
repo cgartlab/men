@@ -17,7 +17,7 @@
 
 ---
 
-## [Unreleased]
+## [Unreleased](https://github.com/cgartlab/men/compare/v0.6.2...main)
 
 ### Added
 
@@ -25,10 +25,13 @@
 
 ### Fixed
 
-## [v0.6.2] - 2026-11-01
+- **`release.mjs` 产出的 CHANGELOG 版本标题丢失 compare 链接**：`bumpChangelog()` 只写 `## [vX.Y.Z] - <date>`，于是每次发版后新版本段与重置后的 `## [Unreleased]` 都不带链接，而其余 20 个历史版本段全是 `## [vX.Y.Z](…/compare/vPrev...vX.Y.Z)`。v0.6.2 就是这么发出去的。现在 `bumpChangelog` 接收上一个版本号，两处标题都补齐 compare 链接（`prevVersion` 可带或不带 `v` 前缀，缺省时退回无链接形式以兼容旧调用）
+- **GitHub Release 标题被 TL;DR 整段污染**：`gh release create` 的 `--title` 直接取 CHANGELOG 里首个 `> ` 整行，而 TL;DR 后来改成了「一整段」的格式，导致 v0.6.2 的 Release 标题变成 **263 字**（历史惯例是 `vX.Y.Z — 短主题`，≤44 字）。新增 `shortReleaseTheme()`：剥掉 `> ` 与 `**TL;DR**：` 前缀、去掉行内 markdown 标记、按 `——` / 句号截断、超长硬截到 44 字加省略号
+- **`## [v0.6.2]` 与 `## [Unreleased]` 的 compare 链接补回**（v0.6.2 已发布，属产物修正）：`v0.6.2` 段补 `compare/v0.6.1...v0.6.2`，Unreleased 段补 `compare/v0.6.2...main`；同时修掉 v0.6.2 段 TL;DR 与「你需要做什么」之间的多余空行
+
+## [v0.6.2](https://github.com/cgartlab/men/compare/v0.6.1...v0.6.2) - 2026-11-01
 
 > **TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。**本仓库的 6 个 agent 全部改用 OpenCode free 模型**（此前 free 预设 100% 不可用，已修）。
-
 
 > **你需要做什么**：无。纯 CI 与文档站改动，无 API / 配置 / CLI 变化。
 

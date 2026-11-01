@@ -51,6 +51,8 @@ const ROOT = (() => {
 const PKG_PATH = path.join(ROOT, "package.json");
 const CHANGELOG_PATH = path.join(ROOT, "CHANGELOG.md");
 const RELEASE_NOTES_PATH = path.join(ROOT, ".release-notes.md");
+// CHANGELOG 里 compare 链接的前缀（与其余版本段、Unreleased 段保持一致）
+const COMPARE_BASE = "https://github.com/cgartlab/men/compare/";
 const SEMVER_RE = /^\d+\.\d+\.\d+$/;
 // bump 子命令 → 递增的版本段下标（0=major, 1=minor, 2=patch）
 const BUMP_SEGMENTS = { major: 0, minor: 1, patch: 2 };
@@ -186,12 +188,54 @@ export function bumpVersion(v, kind) {
 }
 
 /**
+ * 从 CHANGELOG 的 TL;DR blockquote 行里提炼「短标题」，用于 GitHub Release 的 name。
+ *
+ * 历史惯例：`vX.Y.Z — 短主题`（≤44 字）。CHANGELOG 改成「TL;DR 一整段」格式后，
+ * 直接取整行会把几百字摘要塞进 Release 标题，所以这里做归一：去掉标记、按分隔符
+ * 截断、超长再加省略号。
+ *
+ * @param {string} line 形如 `**TL;DR**：发布在 CI 侧可审计了 —— 新增 ...`
+ * @returns {string} 短主题（可能为空串）
+ */
+export function shortReleaseTheme(line) {
+  if (typeof line !== "string") return "";
+  let s = line.trim().replace(/^>\s*/, "");
+  // 去掉 `**TL;DR**：` / `TL;DR:` 这类前缀
+  s = s.replace(/^\*{0,2}TL;?DR\*{0,2}\s*[:：]\s*/i, "");
+  // 去掉行内粗体/代码标记（Release 标题是纯文本更稳妥）
+  s = s.replace(/\*\*/g, "").replace(/`/g, "");
+  // 优先按 `——` 分隔（本仓库 TL;DR 的习惯写法），其次按中文句号
+  const dash = s.indexOf("——");
+  const period = s.indexOf("。");
+  let cut = -1;
+  if (dash !== -1) cut = dash;
+  else if (period !== -1) cut = period;
+  if (cut !== -1) s = s.slice(0, cut);
+  s = s.trim().replace(/[，,、；;\s]+$/, "");
+  const MAX = 44; // 对齐历史 Release 标题长度
+  if (s.length > MAX) s = s.slice(0, MAX).trimEnd() + "…";
+  return s;
+}
+
+/**
  * 在 CHANGELOG 的 [Unreleased] 下插入新版本节。
  * 返回新全文；若文本不含 [Unreleased]，则插到文件头部。
+ *
+ * @param {string} text 当前 CHANGELOG 全文
+ * @param {string} version 新版本号（不带 v）
+ * @param {string} date YYYY-MM-DD
+ * @param {string} [prevVersion] 上一个已发布版本号；给出时新段落标题会带 compare 链接
  */
-export function bumpChangelog(text, version, date) {
+export function bumpChangelog(text, version, date, prevVersion) {
   const lines = text.split("\n");
-  const entry = `## [v${version}] - ${date}`;
+  // 历史惯例：每个版本标题都带 compare 链接（见 v0.3.x 以来所有段）。
+  // 之前这里只写 `## [vX.Y.Z]`，发版后新段落缺链接、Unreleased 的链接也被抹掉，
+  // 与其余 20 个段落不一致。
+  // prevVersion 传入的是裸版本号（0.6.1），而 compare 链接两侧惯例都带 v 前缀。
+  const prevTag = prevVersion ? `v${String(prevVersion).replace(/^v/, "")}` : "";
+  const entry = prevVersion
+    ? `## [v${version}](${COMPARE_BASE}${prevTag}...v${version}) - ${date}`
+    : `## [v${version}] - ${date}`;
 
   const idx = lines.findIndex((l) => l.startsWith("## [Unreleased]"));
   if (idx === -1) {
@@ -219,7 +263,7 @@ export function bumpChangelog(text, version, date) {
 
   // 保持 [Unreleased] 在文件顶部，新版本节插在其下、旧版本节之上（Keep a Changelog 约定）
   const head = lines.slice(0, idx).join("\n").trimEnd();
-  const reset = `## [Unreleased]\n\n### Added\n\n### Changed\n\n### Fixed\n`;
+  const reset = `## [Unreleased](${COMPARE_BASE}v${version}...main)\n\n### Added\n\n### Changed\n\n### Fixed\n`;
   const after = end < lines.length ? lines.slice(end).join("\n").trimStart() : "";
   return `${head}\n\n${reset}\n${block}\n\n${after}`
     .replace(/\n{3,}/g, "\n\n")
@@ -649,7 +693,7 @@ export function main(argv = process.argv) {
     const changelog = fs.existsSync(CHANGELOG_PATH)
       ? fs.readFileSync(CHANGELOG_PATH, "utf-8")
       : "";
-    const newChangelog = bumpChangelog(changelog, newVersion, date);
+    const newChangelog = bumpChangelog(changelog, newVersion, date, oldVersion);
 
     fs.writeFileSync(PKG_PATH, JSON.stringify(newPkg, null, 2) + "\n");
     fs.writeFileSync(CHANGELOG_PATH, newChangelog);
@@ -750,14 +794,18 @@ export function main(argv = process.argv) {
         });
         if (notesResult.status === 0 && fs.existsSync(RELEASE_NOTES_PATH)) {
           // 2. 读取 CHANGELOG 获取主题行（首个 > 开头的 blockquote）
+          //
+          // 只取「短标题」。此前直接把整条 blockquote 行当标题 —— 自 CHANGELOG 改成
+          // 「TL;DR 一整段」的格式后，Release 标题变成了 263 字的整段摘要
+          // （见 v0.6.2）。历史惯例是 `vX.Y.Z — 短主题`（≤44 字）。
           const changelog = fs.readFileSync(CHANGELOG_PATH, "utf-8");
           const themeMatch = changelog.match(new RegExp(`## \\[v${newVersion}\\][\\s\\S]*?\\n\\n> (.+)`));
-          const theme = themeMatch ? themeMatch[1] : `v${newVersion}`;
+          const theme = themeMatch ? shortReleaseTheme(themeMatch[1]) : "";
           // 3. gh release create
           const ghArgs = [
             "release", "create", `v${newVersion}`,
             "--repo", "cgartlab/men",
-            "--title", `v${newVersion} — ${theme}`,
+            "--title", theme ? `v${newVersion} — ${theme}` : `v${newVersion}`,
             "--notes-file", RELEASE_NOTES_PATH,
           ];
           const ghResult = spawnSync("gh", ghArgs, {
