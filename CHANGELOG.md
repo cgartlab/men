@@ -17,9 +17,19 @@
 
 ---
 
-## [Unreleased](https://github.com/cgartlab/men/compare/v0.6.1...main)
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [v0.6.2] - 2026-11-01
 
 > **TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。**本仓库的 6 个 agent 全部改用 OpenCode free 模型**（此前 free 预设 100% 不可用，已修）。
+
+
 > **你需要做什么**：无。纯 CI 与文档站改动，无 API / 配置 / CLI 变化。
 
 ### Added

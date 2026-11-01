@@ -146,7 +146,7 @@ opencode github run --model opencode/deepseek-v4.1-flash-free --auto --print-log
 
 | 文档 | 关联版本 |
 |------|----------|
-| `AGENTS.md` | 本项目 v0.6.1（版本号由 `release.mjs` 发版时同步，不手写日期） |
+| `AGENTS.md` | 本项目 v0.6.2（版本号由 `release.mjs` 发版时同步，不手写日期） |
 | `docs/integrations/argus.md` | Sync: 每次发版重审，确认 BSL/license 状态未变；§6.2 模型队列条目随上游 argus 队列机制变化复核 |
 | `design-review.yml` | Sync: CI 变更同步至 main 分支；**不 pin 模型**——模型队列由上游 argus 自动刷新维护（见 §6.2） |
 | `.argus.yml` | Sync: 2026-08-31 commit，见 `git log 48f79c8` |

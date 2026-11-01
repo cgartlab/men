@@ -57,7 +57,12 @@ const seealso = [
         <table>
           <thead><tr><th>版本</th><th>日期</th><th>要点</th></tr></thead>
           <tbody>
-                        <tr>
+                                    <tr>
+              <td><strong>v0.6.2</strong></td>
+              <td>2026-11-01</td>
+              <td>发布主题「**TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。**本仓库的 6 个 agent 全部改用 OpenCode free 模型**（此前 free 预设 100% 不可用，已修）。」。</td>
+            </tr>
+<tr>
               <td><strong>v0.6.1</strong></td>
               <td>2026-10-07</td>
               <td>发布主题「OpenCode V2 兼容激进清理」。</td>
@@ -141,7 +146,7 @@ const seealso = [
         </table>
       </div>
       <div class="wiki-note">
-        截至 2026-10-04，共发布 <strong>15 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7、v0.4.0、v0.5.0、v0.6.0、v0.6.1）。
+        截至 2026-11-01，共发布 <strong>16 个正式版本</strong>（v0.1.0、v0.2.0、v0.2.1、v0.3.0、v0.3.1、v0.3.2、v0.3.3、v0.3.4、v0.3.5、v0.3.6、v0.3.7、v0.4.0、v0.5.0、v0.6.0、v0.6.1、v0.6.2）。
         当前版本为 <code>{SITE.version}</code>（site/package.json，经 <code>SITE</code> 单一来源注入）。
       </div>
       <SrcRef files={['CHANGELOG.md','site/src/data/content.json']} />
@@ -150,16 +155,27 @@ const seealso = [
     <section id="current-release" class="doc-section">
       <h2>当前版本亮点</h2>
             <p>
-        当前版本 <code>v0.6.1</code> 于 2026-10-07 发布，主题为「OpenCode V2 兼容激进清理」。
-      </p>
-      <h3>v0.6.1「OpenCode V2 兼容激进清理」</h3>
-      <ul>
-        <li>移除 界面配置文件（V2 靠自动发现）</li>
-        <li>permission 转 native V2（permissions 数组）。</li>
-        <li>移除 V1 类型包 @opencode-ai/plugin</li>
-        <li>新增 v1-compat 分支+V2 形态回归守护</li>
-        <li>修 site 编译错误 + seroval 安全漏洞</li>
-      </ul>
+              当前版本 <code>v0.6.2</code> 于 2026-11-01 发布，主题为「**TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。**本仓库的 6 个 agent 全部改用 OpenCode free 模型**（此前 free 预设 100% 不可用，已修）。」。
+            </p>
+            <h3>v0.6.2「**TL;DR**：发布在 CI 侧可审计了 —— 新增 Release Guard workflow + 本地 `--require-ci` 预检，杜绝"本地打 tag 绕过 CI"的发布；站点品牌换新（暖纸底 + 新标识 + 文案去术语化）；新增 `docs/brand.md` 品牌规范。另外把 argus 设计评审的模型队列交还上游统一维护，不再在本仓库 pin 模型。**本仓库的 6 个 agent 全部改用 OpenCode free 模型**（此前 free 预设 100% 不可用，已修）。」</h3>
+            <ul>
+              <li><strong>发布门禁</strong>（[#156](https://github.com/cgartlab/men/issues/156)）：新增 <code>.github/workflows/release-guard.yml</code>（Release Guard），tag push（<code>v*</code>）触发时对 tag commit 跑完整门禁（语法检查 / tests / verify.mjs / release dry-run / tag↔package.json 版本一致性 / CHANGELOG 条目检查），失败即 workflow 红，让「本地打 tag 绕过 CI 状态」的发布立即可见、可审计</li>
+              <li><strong><code>release.mjs --require-ci</code></strong>（[#156](https://github.com/cgartlab/men/issues/156) 方案 B）：发布前调用 GitHub API 查询目标 commit 的 combined status 与 check-runs，任一 check 为 failure / cancelled / timed_out / action_required 或 combined status 非 success（含 pending）时拒绝发布（exit 1）；<code>--dry-run</code> 组合可预览校验结果。与 Release Guard 构成本地+CI 双保险</li>
+              <li><strong><code>docs/brand.md</code>：品牌规范</strong>——记录已定的标识造型（有机环 + 中心负形孔，单条复合路径 <code>fill-rule="evenodd"</code> 真负形）、孔径随尺寸切换的 φ 依据、配色令牌表与对比度基准。<code>global.css</code> 的 <code>:root</code> 注释此前已引用 <code>docs/brand</code>，本文件补上该引用目标</li>
+              <li><strong><code>config/free-models.json</code>：免费模型单一事实源</strong>（对齐 argus 的 <code>config/free-models.yml</code>）：<code>primary</code> + <code>fallback_models</code> 队列 + 6 角色映射 + <code>rejected</code>（被否决模型及原因）+ <code>selection_rules</code>（为什么只收实测可调用的模型）。<code>config/models.json</code> 的 free 预设与 <code>roleDefaults.priority</code> 都从它派生</li>
+              <li><strong><code>verify.mjs</code> 新增 <code>free-models-manifest</code> 检查</strong>（第 10 项机械门禁）：核对 <code>config/free-models.json</code> 与 6 个 agent 定义的 frontmatter <code>model</code> 是否一致，以及模型是否在清单内。<strong>模型 ID 写错在调用时才失败，不在安装时、不在 CI 里</strong>——此前所有检查都只验证「ID 在本文件内部自洽」，完全没查「这个 ID 在 OpenCode 里存不存在」，于是配置看起来完全健康而实际 100% 不可用</li>
+              <li><strong>站点品牌换新 · 配色</strong>：全站令牌切换到暖纸底 <code>#faf9f5</code> + 暖墨褐 <code>#2b2a27</code>（非纯黑）+ 赤陶 <code>#d77656</code> 体系；角色色整体降饱和（雾蓝 / 苔绿 / 赭金 / 灰紫 / 蓝紫灰），并为每个角色补 <code>--role-*-text</code> 深色变体使小字达标；五级前景梯度重新校准到「纸底 + 暖底」双基准 ≥4.5:1</li>
+              <li><strong>站点品牌换新 · 标识</strong>：<code>favicon.svg</code> 与 <code>GateLogo.astro</code> 换为新造型；孔径按尺寸在 <code>R</code>（≥48px）与 <code>R/φ</code>（<48px）之间切换，避免下方凹口在小尺寸下断线</li>
+              <li><strong>站点文案去术语化</strong>：首页与文档页把内部术语（IntentGate / plan envelope / subagent / Wave / L1 验证 等）改写为面向读者的日常表达，<code>content.json</code> 与各页面同步</li>
+              <li><strong>argus 评审模型改由上游队列提供，本仓库不再 pin</strong>（[#175](https://github.com/cgartlab/men/pull/175)）：<code>design-review.yml</code> 不再传 <code>model</code> / <code>fallback-models</code>，直接使用 <code>cgartlab/argus</code> 自动刷新的队列（<code>config/free-models.yml</code>）作为单一事实源。此前 pin 是上游队列长期过期时的临时止血；上游已加 <code>deprecated</code> / <code>regions: []</code> 两道过滤后，pin 与队列内容完全相同，保留只会变成两份各自漂移、无告警的清单</li>
+              <li><strong><code>docs/integrations/argus.md</code> 补模型队列排查</strong>（[#174](https://github.com/cgartlab/men/pull/174), [#176](https://github.com/cgartlab/men/pull/176)）：新增 §6.2「模型队列类」故障排查——区分三种失效模式（<code>Model not found</code> → <code>deprecated</code>；<code>RegionError</code> → <code>regions: []</code>；<code>Model access is disabled</code> → 换模型）及判定流程；补 §3 App 权限边界（不需要 <code>Contents: write</code>）、§4 本地验证的 OpenCode 1.x 要求</li>
+              <li><strong>6 个 agent 全部改用 OpenCode free 模型</strong>（此前是 SenseNova 付费/限免通道）：<code>men</code>/<code>si</code>/<code>ji</code>/<code>chi</code> → <code>opencode/deepseek-v4.1-flash-free</code>，<code>yi</code>/<code>xun</code> → <code>opencode/nemotron-3.5-super-vl-free</code>（VL 多模态，适配设计/研究类角色），<code>opencode/minimax-m3.1-flash-free</code> 作第三顺位备援。分配依据是<strong>实测</strong>：三个模型各跑推理题、代码题、指令遵循题，<code>deepseek</code> 与 <code>nemotron</code> 三项全过，<code>minimax</code> 代码题超时故不主用。<code>opencode.json</code> 的顶层 <code>model</code> 同步改为 <code>opencode/deepseek-v4.1-flash-free</code></li>
+              <li><strong><code>AGENTS.md</code> 记录实测确定的 model 解析优先级</strong>：subagent 的 frontmatter <code>model:</code> > 仓库 <code>opencode.json</code> 的 <code>agent.<name>.model</code> > 全局 <code>~/.config/opencode/opencode.json</code> 的顶层 <code>model</code>。<strong>frontmatter 是 subagent 唯一稳定的生效点</strong>——只改 <code>agent.<name>.model</code> 而不改 frontmatter，subagent 仍会跑在全局顶层模型上（6 组对照实测）</li>
+              <li><strong><code>setup.mjs</code> 在 Windows 上会随机崩溃（0xC0000409）</strong>：<code>await fetch(...)</code> 之后紧接着 <code>process.exit()</code>，会在 libuv 里命中 <code>Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c:94</code>。原因是 undici 的跨线程 async 句柄还在收尾，强制退出把 loop 的 handle 关了，挂起的线程池回调再调 <code>uv_async_send</code> 就撞上断言。实测（Node v26.2.0 / Windows）<code>--json --dry-run</code> 跑 8 次崩 7 次、<code>--preset free --dry-run</code> 同样 8 崩 7、<code>--preset free</code> 8 崩 3 —— 也就是说<strong>普通用户跑 <code>--preset free</code> 就有约四成概率拿到一个崩溃</strong>。已改为「抛 <code>SetupExit</code> 哨兵 + 顶层落 <code>process.exitCode</code> 自然退出」：语义不变（仍然立即停止执行、退出码不变），但不再强制退出，实测 6 类调用各 8 次 <strong>0 崩溃</strong>。CI 跑 Linux 不会暴露这个问题，故另加 <code>F21</code> 源码级守卫（<code>main()</code> 内禁止裸 <code>process.exit</code>）</li>
+              <li><strong>本仓库的 free 预设 100% 不可用</strong>（provider id 写错）：<code>config/models.json</code> 里 7 个 <code>opencode-zen/*</code> 模型在 OpenCode CLI 里<strong>一个都解析不出来</strong>——Zen 的 provider id 是 <code>opencode</code>（CLI 内置，无需在用户 <code>opencode.json</code> 里配 provider/key），<code>opencode-zen</code> 这个 id 根本不存在（<code>opencode models</code> 在该前缀下是 0 条）。<code>free</code> 预设的 6 个角色模型因此全部无法调用，而既有检查只看「ID 在本文件内部自洽」，看不出任何问题。已把 provider key 与全部 19 处模型 ID 改为 <code>opencode/</code>，并把 <code>setup.mjs</code> 里 4 处硬编码前缀（含动态 free 预设的过滤逻辑）一并改正</li>
+              <li><strong>动态 free 预设会把「目录里有但调不通」当可用</strong>：<code>setup.mjs</code> 的 <code>fetchFreeModels()</code> 直接拿 <code>GET /zen/v1/models</code> 的返回当可用清单，但<strong>目录里存在 ≠ 能调用</strong>。实测 2026-10-21：9 个 <code>-free</code> 模型里只有 3 个真能调，其余 6 个是「CLI 无法解析」或「地区封锁」（<code>beam-free</code> 报 <code>This model is not available in your country</code>）。现在改为取 live 目录与「实测可调用」基准清单的交集</li>
+              <li><strong>argus 评审 fallback 里含已下架的 <code>space-bunny-free</code></strong>（[#173](https://github.com/cgartlab/men/pull/173)）：该模型已从 Zen 目录下架（<code>GET /zen/v1/models</code> 不再返回），从 fallback 移除。同时确认上游失败根因不在本仓库的 secrets（三个 secret 均已配置且有效），而是上游队列推荐了不可调用的模型</li>
+            </ul>
       <p class="wiki-note">
         以下为 v0.4.0（历史）版本的发布亮点回顾。
       </p>
