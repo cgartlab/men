@@ -37,6 +37,8 @@
 - **站点文案去术语化**：首页与文档页把内部术语（IntentGate / plan envelope / subagent / Wave / L1 验证 等）改写为面向读者的日常表达，`content.json` 与各页面同步
 - **argus 评审模型改由上游队列提供，本仓库不再 pin**（[#175](https://github.com/cgartlab/men/pull/175)）：`design-review.yml` 不再传 `model` / `fallback-models`，直接使用 `cgartlab/argus` 自动刷新的队列（`config/free-models.yml`）作为单一事实源。此前 pin 是上游队列长期过期时的临时止血；上游已加 `deprecated` / `regions: []` 两道过滤后，pin 与队列内容完全相同，保留只会变成两份各自漂移、无告警的清单
 - **`docs/integrations/argus.md` 补模型队列排查**（[#174](https://github.com/cgartlab/men/pull/174), [#176](https://github.com/cgartlab/men/pull/176)）：新增 §6.2「模型队列类」故障排查——区分三种失效模式（`Model not found` → `deprecated`；`RegionError` → `regions: []`；`Model access is disabled` → 换模型）及判定流程；补 §3 App 权限边界（不需要 `Contents: write`）、§4 本地验证的 OpenCode 1.x 要求
+- **6 个 agent 全部改用 OpenCode free 模型**（此前是 SenseNova 付费/限免通道）：`men`/`si`/`ji`/`chi` → `opencode/deepseek-v4.1-flash-free`，`yi`/`xun` → `opencode/nemotron-3.5-super-vl-free`（VL 多模态，适配设计/研究类角色），`opencode/minimax-m3.1-flash-free` 作第三顺位备援。分配依据是**实测**：三个模型各跑推理题、代码题、指令遵循题，`deepseek` 与 `nemotron` 三项全过，`minimax` 代码题超时故不主用。`opencode.json` 的顶层 `model` 同步改为 `opencode/deepseek-v4.1-flash-free`
+- **`AGENTS.md` 记录实测确定的 model 解析优先级**：subagent 的 frontmatter `model:` > 仓库 `opencode.json` 的 `agent.<name>.model` > 全局 `~/.config/opencode/opencode.json` 的顶层 `model`。**frontmatter 是 subagent 唯一稳定的生效点**——只改 `agent.<name>.model` 而不改 frontmatter，subagent 仍会跑在全局顶层模型上（6 组对照实测）
 
 ### Fixed
 
@@ -44,11 +46,6 @@
 - **本仓库的 free 预设 100% 不可用**（provider id 写错）：`config/models.json` 里 7 个 `opencode-zen/*` 模型在 OpenCode CLI 里**一个都解析不出来**——Zen 的 provider id 是 `opencode`（CLI 内置，无需在用户 `opencode.json` 里配 provider/key），`opencode-zen` 这个 id 根本不存在（`opencode models` 在该前缀下是 0 条）。`free` 预设的 6 个角色模型因此全部无法调用，而既有检查只看「ID 在本文件内部自洽」，看不出任何问题。已把 provider key 与全部 19 处模型 ID 改为 `opencode/`，并把 `setup.mjs` 里 4 处硬编码前缀（含动态 free 预设的过滤逻辑）一并改正
 - **动态 free 预设会把「目录里有但调不通」当可用**：`setup.mjs` 的 `fetchFreeModels()` 直接拿 `GET /zen/v1/models` 的返回当可用清单，但**目录里存在 ≠ 能调用**。实测 2026-10-21：9 个 `-free` 模型里只有 3 个真能调，其余 6 个是「CLI 无法解析」或「地区封锁」（`beam-free` 报 `This model is not available in your country`）。现在改为取 live 目录与「实测可调用」基准清单的交集
 - **argus 评审 fallback 里含已下架的 `space-bunny-free`**（[#173](https://github.com/cgartlab/men/pull/173)）：该模型已从 Zen 目录下架（`GET /zen/v1/models` 不再返回），从 fallback 移除。同时确认上游失败根因不在本仓库的 secrets（三个 secret 均已配置且有效），而是上游队列推荐了不可调用的模型
-
-### Changed
-
-- **6 个 agent 全部改用 OpenCode free 模型**（此前是 SenseNova 付费/限免通道）：`men`/`si`/`ji`/`chi` → `opencode/deepseek-v4.1-flash-free`，`yi`/`xun` → `opencode/nemotron-3.5-super-vl-free`（VL 多模态，适配设计/研究类角色），`opencode/minimax-m3.1-flash-free` 作第三顺位备援。分配依据是**实测**：三个模型各跑推理题、代码题、指令遵循题，`deepseek` 与 `nemotron` 三项全过，`minimax` 代码题超时故不主用。`opencode.json` 的顶层 `model` 同步改为 `opencode/deepseek-v4.1-flash-free`
-- **`AGENTS.md` 记录实测确定的 model 解析优先级**：subagent 的 frontmatter `model:` > 仓库 `opencode.json` 的 `agent.<name>.model` > 全局 `~/.config/opencode/opencode.json` 的顶层 `model`。**frontmatter 是 subagent 唯一稳定的生效点**——只改 `agent.<name>.model` 而不改 frontmatter，subagent 仍会跑在全局顶层模型上（6 组对照实测）
 
 ## [v0.6.1](https://github.com/cgartlab/men/compare/v0.6.0...v0.6.1) - 2026-10-07
 
