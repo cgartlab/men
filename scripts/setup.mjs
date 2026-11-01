@@ -1238,6 +1238,29 @@ function applyPreset(presetName, models) {
 
 // ─────────────────────────── 主流程 ───────────────────────────
 
+// ── 退出哨兵（Windows 上不要在 fetch 之后直接 process.exit）────────────
+//
+// 实测（2026-11-01，Node v26.2.0 / Windows）：`await fetch(...)` 之后紧接着
+// `process.exit()` 会在 libuv 里命中
+//   Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c:94
+// 进程以 0xC0000409 崩溃（同一脚本跑 8 次，8 次全崩；`--preset free` 也复现）。
+// 原因是 undici 的跨线程 async 句柄还在收尾，强制退出把 loop 的 handle 关了，
+// 挂起的线程池回调再调 uv_async_send 就撞上断言。
+//
+// 改成「设置 exitCode 后自然退出」实测 8 次 0 崩。所以这里抛哨兵，由顶层统一
+// 落 process.exitCode —— 既保留「立即停止执行」的语义，又不强制退出。
+class SetupExit extends Error {
+  constructor(code) {
+    super(`setup-exit:${code}`);
+    this.name = "SetupExit";
+    this.code = typeof code === "number" ? code : 0;
+  }
+}
+
+function exitNow(code) {
+  throw new SetupExit(code);
+}
+
 async function main(argv = process.argv) {
   const cfg = parseArgs(argv);
 
@@ -1245,7 +1268,7 @@ async function main(argv = process.argv) {
   // 否则文件缺失时只会打印「错误: 模型知识基不存在」，帮助文本永远打不出来。
   if (cfg.help) {
     printHelp();
-    process.exit(0);
+    exitNow(0);
   }
 
   const models = loadModels();
@@ -1305,7 +1328,7 @@ async function main(argv = process.argv) {
         result.error = menSync.error;
       }
       process.stdout.write(JSON.stringify(result, null, 2) + "\n");
-      process.exit(result.ok ? 0 : 1);
+      exitNow(result.ok ? 0 : 1);
     }
 
     process.stdout.write(`men（门）Agent 团队 — 应用预设：${cfg.preset}${source === "dynamic-free" ? "（动态，从 OpenCode Zen 实时拉取）" : ""}\n`);
@@ -1316,12 +1339,12 @@ async function main(argv = process.argv) {
 
     if (cfg.dryRun) {
       process.stdout.write("[DRY RUN] 未写入文件\n");
-      process.exit(0);
+      exitNow(0);
     }
 
     if (!wr.ok) {
       eprintf(`错误: ${wr.error}`);
-      process.exit(1);
+      exitNow(1);
     }
     process.stdout.write(`✅ 预设方案已应用，已写入 opencode.json\n`);
     if (wr.backupPath) {
@@ -1334,7 +1357,7 @@ async function main(argv = process.argv) {
     } else if (menSync) {
       eprintf(`警告: men.jsonc 同步失败：${menSync.error ?? "未知错误"}`);
     }
-    process.exit(0);
+    exitNow(0);
   }
 
   // ── 读取当前配置 ──
@@ -1387,7 +1410,7 @@ async function main(argv = process.argv) {
       result.fileWritten = null;
     }
     process.stdout.write(JSON.stringify(result, null, 2) + "\n");
-    process.exit(result.ok ? 0 : 1);
+    exitNow(result.ok ? 0 : 1);
   }
 
    // ── 非交互模式：跳过 readline，适合 CI/管道 ──
@@ -1401,7 +1424,7 @@ async function main(argv = process.argv) {
       const table = renderAssignmentTable(assignment, models);
       process.stdout.write(table + "\n");
       process.stdout.write(`${"=".repeat(54)}\n`);
-      process.exit(0);
+      exitNow(0);
     }
 
     // 无配置 → 自动使用 default 预设；--reset → 同样以 default 预设重写
@@ -1419,19 +1442,19 @@ async function main(argv = process.argv) {
 
     if (cfg.dryRun) {
       process.stdout.write("[DRY RUN] 未写入文件\n");
-      process.exit(0);
+      exitNow(0);
     }
 
     const wr = writeConfig(assignment, models, false);
     if (!wr.ok) {
       eprintf(`错误: ${wr.error}`);
-      process.exit(1);
+      exitNow(1);
     }
     process.stdout.write(`✅ 默认配置已应用，已写入 opencode.json\n`);
     if (wr.backupPath) {
       process.stdout.write(`   原文件已备份为 opencode.json.bak\n`);
     }
-    process.exit(0);
+    exitNow(0);
   }
 
   // ── 已配置 & 未 reset → 打印当前并退出 ──
@@ -1444,7 +1467,7 @@ async function main(argv = process.argv) {
       const rl = createRL();
       try {
         const outcome = await offerPresetSwitch(rl, menCfg, models, cfg);
-        if (outcome.status === "switched") process.exit(0);
+        if (outcome.status === "switched") exitNow(0);
       } finally {
         rl.close();
       }
@@ -1454,7 +1477,7 @@ async function main(argv = process.argv) {
       const rl = createRL();
       try {
         const outcome = await offerPresetCreate(rl, models, cfg);
-        if (outcome.status === "created") process.exit(0);
+        if (outcome.status === "created") exitNow(0);
       } finally {
         rl.close();
       }
@@ -1467,7 +1490,7 @@ async function main(argv = process.argv) {
     process.stdout.write(table + "\n");
     process.stdout.write(`${"=".repeat(54)}\n`);
     process.stdout.write(`如需重新配置，请使用 --reset 参数\n`);
-    process.exit(0);
+    exitNow(0);
   }
 
   // ── 交互模式 ──
@@ -1542,14 +1565,14 @@ async function main(argv = process.argv) {
 
     if (!confirmed) {
       menSay("已取消配置。你可以随时重新运行 node scripts/setup.mjs。");
-      process.exit(0);
+      exitNow(0);
     }
 
     // 写入
     const wr = writeConfig(assignment, models, cfg.dryRun);
     if (!wr.ok) {
       eprintf(`错误: ${wr.error}`);
-      process.exit(1);
+      exitNow(1);
     }
 
     blank();
@@ -1557,7 +1580,7 @@ async function main(argv = process.argv) {
     // 却照常打印「已写入 opencode.json」。与 preset 分支（:1274）/ --no-interactive 分支（:1372）对齐。
     if (cfg.dryRun) {
       process.stdout.write("[DRY RUN] 未写入文件\n");
-      process.exit(0);
+      exitNow(0);
     }
     process.stdout.write(`✅ 配置完成！已写入 opencode.json\n`);
     blank();
@@ -1570,7 +1593,7 @@ async function main(argv = process.argv) {
     process.stdout.write(`  • 运行 /ultrawork 开始使用 Men Agent 团队\n`);
     process.stdout.write(`  • 运行 node scripts/setup.mjs --reset 重新配置\n`);
     blank();
-    process.exit(0);
+    exitNow(0);
   } finally {
     rl.close();
   }
@@ -1579,9 +1602,14 @@ async function main(argv = process.argv) {
 // ── 自执行 ──
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
+    if (e && e.name === "SetupExit") {
+      // 自然退出：这里不能 process.exit()（Windows libuv 断言，见 exitNow 注释）
+      process.exitCode = e.code;
+      return;
+    }
     eprintf(`致命错误: ${e.message}`);
     if (e.stack) eprintf(e.stack);
-    process.exit(1);
+    process.exitCode = 1;
   });
 }
 
