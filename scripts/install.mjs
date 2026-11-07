@@ -130,7 +130,7 @@ export const FALLBACK_OPENCODE_DEPS = Object.freeze({
   "@opencode/plugin": "2.0.6",
   "@opentui/core": "0.5.10",
   "@opentui/solid": "0.5.10",
-  "solid-js": "1.9.12",
+  "solid-js": "1.9.17",
 });
 
 // .opencode/package.json 缺失时的最小模板：从根 package.json 派生运行时依赖，加兜底依赖
