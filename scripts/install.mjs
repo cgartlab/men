@@ -127,7 +127,7 @@ export function checkCCSwitch() {
 // 必须与仓库内 .opencode/package.json 的 dependencies 逐字一致 —— 由
 // test/install.test.mjs 锁定，防止再次漂移（曾出现兜底停在 1.18.25 而实际已 1.18.34）。
 export const FALLBACK_OPENCODE_DEPS = Object.freeze({
-  "@opencode/plugin": "2.0.6",
+  "@opencode/plugin": "2.2.1",
   "@opentui/core": "0.5.10",
   "@opentui/solid": "0.5.10",
   "solid-js": "1.9.17",
